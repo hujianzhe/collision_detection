@@ -1,0 +1,25 @@
+//
+// Created by hujianzhe
+//
+
+#ifndef UTIL_COLLISION_DETECTION_ALL_HEADER_H
+#define	UTIL_COLLISION_DETECTION_ALL_HEADER_H
+
+#include "aabb.h"
+#include "collision.h"
+#include "geometry_def.h"
+#include "line_segment.h"
+#include "list.h"
+#include "math_matrix3.h"
+#include "math_quat.h"
+#include "math_vec3.h"
+#include "mesh.h"
+#include "number_define.h"
+#include "obb.h"
+#include "octree.h"
+#include "plane.h"
+#include "polygon.h"
+#include "sphere.h"
+#include "vertex.h"
+
+#endif
