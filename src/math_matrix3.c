@@ -24,9 +24,9 @@ void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3],
 		S[0] = mathVec3Len(m + 0);
 		S[1] = mathVec3Len(m + 4);
 		S[2] = mathVec3Len(m + 8);
-		mathVec3MultiplyScalar(R + 0, m + 0, 1.0f / S[0]);
-		mathVec3MultiplyScalar(R + 3, m + 4, 1.0f / S[1]);
-		mathVec3MultiplyScalar(R + 6, m + 8, 1.0f / S[2]);
+		mathVec3MultiplyScalar(R + 0, m + 0, CCTNum(1.0) / S[0]);
+		mathVec3MultiplyScalar(R + 3, m + 4, CCTNum(1.0) / S[1]);
+		mathVec3MultiplyScalar(R + 6, m + 8, CCTNum(1.0) / S[2]);
 	}
 	else if (S) {
 		S[0] = mathVec3Len(m + 0);
@@ -170,8 +170,8 @@ CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]) {
 	r[12] = r[3];
 	r[13] = r[7];
 	r[14] = r[11];
-	r[3] = r[7] = r[11] = 0.0f;
-	r[15] = 1.0f;
+	r[3] = r[7] = r[11] = CCTNum(0.0);
+	r[15] = CCTNum(1.0);
 
 	t = m[1];
 	r[1] = m[4];

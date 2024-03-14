@@ -297,7 +297,7 @@ static CCTResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t 
 		}
 		else {
 			const CCTNum_t *p = NULL;
-			if (d[0] > 0.0f) {
+			if (d[0] > CCTNum(0.0)) {
 				if (d[0] < d[1]) {
 					min_d = d[0];
 					p = ls[0];
@@ -595,7 +595,7 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 						mathVec3AddScalar(mathVec3Copy(new_ls[1], ls[1]), dir, d);
 					}
 					else {
-						d = 0.0f;
+						d = CCTNum(0.0);
 						mathVec3Copy(new_ls[0], ls[0]);
 						mathVec3Copy(new_ls[1], ls[1]);
 					}

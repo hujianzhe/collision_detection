@@ -270,9 +270,7 @@ int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB
 	mathVec3Sub(v, o, obb->o);
 	for (i = 0; i < 3; ++i) {
 		CCTNum_t dot = mathVec3Dot(v, obb->axis[i]);
-		if (dot < 0.0f) {
-			dot = -dot;
-		}
+		dot = CCTNum_abs(dot);
 		if (dot > obb->half[i] + radius) {
 			return 0;
 		}

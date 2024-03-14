@@ -129,7 +129,7 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t mark_pos[3], co
 					return 0;
 				}
 				/* check rotate by Y axis ??? */
-				mathVec3Set(axis, 0.0f, 1.0f, 0.0f);
+				mathVec3Set(axis, CCTNums_3(0.0, 1.0, 0.0));
 				mathQuatMulVec3(new_axis, q, axis);
 				if (mathVec3Equal(new_axis, axis)) {
 					CCTNum_t dot;

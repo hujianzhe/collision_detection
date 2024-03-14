@@ -104,7 +104,7 @@ int mathLineIntersectLine(const CCTNum_t ls1v[3], const CCTNum_t ls1dir[3], cons
 		mathVec3AddScalar(mathVec3Copy(v, ls2v), ls2dir, dot);
 		mathVec3Sub(v, v, ls1v);
 		if (mathVec3IsZero(v)) {
-			distance[0] = 0.0f;
+			distance[0] = CCTNum(0.0);
 		}
 		else {
 			distance[0] = mathVec3Normalized(v, v);

@@ -21,7 +21,7 @@ CCTNum_t* mathQuatSet(CCTNum_t q[4], CCTNum_t x, CCTNum_t y, CCTNum_t z, CCTNum_
 CCTNum_t* mathQuatNormalized(CCTNum_t r[4], const CCTNum_t q[4]) {
 	CCTNum_t m = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
 	if (m > CCTNum(0.0)) {
-		m = 1.0f / CCTNum_sqrt(m);
+		m = CCTNum(1.0) / CCTNum_sqrt(m);
 		r[0] = q[0] * m;
 		r[1] = q[1] * m;
 		r[2] = q[2] * m;
