@@ -11,9 +11,9 @@
 extern "C" {
 #endif
 
-__declspec_dll int mathSphereHasPoint(const float o[3], float radius, const float p[3]);
-__declspec_dll int mathSphereIntersectSphere(const float o1[3], float r1, const float o2[3], float r2, float p[3]);
-__declspec_dll int mathSphereContainSphere(const float o1[3], float r1, const float o2[3], float r2);
+__declspec_dll int mathSphereHasPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
+__declspec_dll int mathSphereIntersectSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]);
+__declspec_dll int mathSphereContainSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2);
 
 #ifdef	__cplusplus
 }

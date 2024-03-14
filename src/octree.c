@@ -31,7 +31,7 @@ static size_t octree_total_nodes_cnt(unsigned int max_deep_num) {
 	return total_cnt;
 }
 
-static void octree_node_init(OctreeNode_t* root, const float pos[3], const float half[3]) {
+static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3]) {
 	root->pos[0] = pos[0];
 	root->pos[1] = pos[1];
 	root->pos[2] = pos[2];
@@ -48,7 +48,7 @@ static void octree_node_init(OctreeNode_t* root, const float pos[3], const float
 static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	int i;
 	ListNode_t* cur, *next;
-	float o[8][3], half[3];
+	CCTNum_t o[8][3], half[3];
 
 	if (root->childs) {
 		return;
@@ -79,7 +79,7 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	}
 }
 
-Octree_t* octreeInit(Octree_t* tree, const float pos[3], const float half[3], unsigned int max_deep_num) {
+Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num) {
 	OctreeNode_t* nodes;
 	size_t nodes_cnt;
 
@@ -186,7 +186,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	finder->cnt = 0;
 }
 
-void octreeFindNodes(OctreeNode_t* root, const float pos[3], const float half[3], OctreeFinder_t* finder) {
+void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
 	finder->cnt = 0;
 	if (!mathAABBIntersectAABB(root->pos, root->half, pos, half)) {

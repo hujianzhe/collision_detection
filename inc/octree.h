@@ -6,11 +6,12 @@
 #define	UTIL_C_CRT_OCTREE_H
 
 #include "compiler_define.h"
+#include "number_define.h"
 #include "list.h"
 
 typedef struct OctreeNode_t {
-	float pos[3];
-	float half[3];
+	CCTNum_t pos[3];
+	CCTNum_t half[3];
 	List_t obj_list;
 	int obj_cnt;
 	unsigned int deep_num; // from 1,2,3...
@@ -20,8 +21,8 @@ typedef struct OctreeNode_t {
 
 typedef struct OctreeObject_t {
 	ListNode_t _node;
-	float* pos; // point to your float[3]
-	float* half;	// point to your float[3]
+	CCTNum_t* pos; // point to your CCTNum_t[3]
+	CCTNum_t* half;	// point to your CCTNum_t[3]
 	OctreeNode_t* oct;
 	union {
 		void* ptr;
@@ -45,14 +46,14 @@ typedef struct OctreeFinder_t {
 extern "C" {
 #endif
 
-__declspec_dll Octree_t* octreeInit(Octree_t* tree, const float pos[3], const float half[3], unsigned int max_deep_num);
+__declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num);
 __declspec_dll void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj);
 __declspec_dll void octreeRemoveObject(OctreeObject_t* obj);
 
 __declspec_dll OctreeFinder_t* octreeFinderInit(const Octree_t* tree, OctreeFinder_t* finder);
 __declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder);
 
-__declspec_dll void octreeFindNodes(OctreeNode_t* root, const float pos[3], const float half[3], OctreeFinder_t* finder);
+__declspec_dll void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder);
 __declspec_dll void octreeClear(Octree_t* tree);
 __declspec_dll void octreeDestroy(Octree_t* tree);
 

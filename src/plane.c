@@ -9,8 +9,8 @@
 extern "C" {
 #endif
 
-void mathPointProjectionPlane(const float p[3], const float plane_v[3], const float plane_n[3], float np[3], float* distance) {
-	float pv[3], d;
+void mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t np[3], CCTNum_t* distance) {
+	CCTNum_t pv[3], d;
 	mathVec3Sub(pv, plane_v, p);
 	d = mathVec3Dot(pv, plane_n);
 	if (distance) {
@@ -21,23 +21,23 @@ void mathPointProjectionPlane(const float p[3], const float plane_v[3], const fl
 	}
 }
 
-float mathPlaneNormalByVertices3(const float v0[3], const float v1[3], const float v2[3], float normal[3]) {
-	float v0v1[3], v0v2[3];
+CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]) {
+	CCTNum_t v0v1[3], v0v2[3];
 	mathVec3Sub(v0v1, v1, v0);
 	mathVec3Sub(v0v2, v2, v0);
 	mathVec3Cross(normal, v0v1, v0v2);
 	return mathVec3Normalized(normal, normal);
 }
 
-int mathPlaneHasPoint(const float plane_v[3], const float plane_normal[3], const float p[3]) {
-	float v[3], dot;
+int mathPlaneHasPoint(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) {
+	CCTNum_t v[3], dot;
 	mathVec3Sub(v, plane_v, p);
 	dot = mathVec3Dot(plane_normal, v);
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
 }
 
-int mathPlaneIntersectPlane(const float v1[3], const float n1[3], const float v2[3], const float n2[3]) {
-	float n[3];
+int mathPlaneIntersectPlane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+	CCTNum_t n[3];
 	mathVec3Cross(n, n1, n2);
 	if (!mathVec3IsZero(n)) {
 		return 1;

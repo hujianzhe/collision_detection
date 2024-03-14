@@ -14,8 +14,8 @@
 #include <math.h>
 #include <stddef.h>
 
-int Segment_Intersect_Plane(const float ls[2][3], const float plane_v[3], const float plane_normal[3], float p[3]) {
-	float d[2], lsdir[3], dot;
+int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
+	CCTNum_t d[2], lsdir[3], dot;
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	dot = mathVec3Dot(lsdir, plane_normal);
 	if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
@@ -49,9 +49,9 @@ int Segment_Intersect_Plane(const float ls[2][3], const float plane_v[3], const 
 	return 1;
 }
 
-static int Segment_Intersect_Polygon(const float ls[2][3], const GeometryPolygon_t* polygon, float p[3]) {
+static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
-	float point[3];
+	CCTNum_t point[3];
 	if (!p) {
 		p = point;
 	}
@@ -66,17 +66,17 @@ static int Segment_Intersect_Polygon(const float ls[2][3], const GeometryPolygon
 		return 2;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		float edge[2][3];
+		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (mathSegmentIntersectSegment(ls, (const float(*)[3])edge, NULL, NULL)) {
+		if (mathSegmentIntersectSegment(ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
 			return 2;
 		}
 	}
 	return 0;
 }
 
-int Segment_Intersect_ConvexMesh(const float ls[2][3], const GeometryMesh_t* mesh) {
+int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
 	if (mathConvexMeshHasPoint(mesh, ls[0])) {
 		return 1;
 	}
@@ -92,10 +92,10 @@ static int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const Ge
 		return 0;
 	}
 	for (i = 0; i < polygon1->v_indices_cnt; ) {
-		float edge[2][3];
+		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon1->v[polygon1->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon1->v[polygon1->v_indices[i >= polygon1->v_indices_cnt ? 0 : i]]);
-		if (Segment_Intersect_Polygon((const float(*)[3])edge, polygon2, NULL)) {
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon2, NULL)) {
 			return 1;
 		}
 	}
@@ -105,7 +105,7 @@ static int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const Ge
 static int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh) {
 	unsigned int i;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		const float* p = polygon->v[polygon->v_indices[i]];
+		const CCTNum_t* p = polygon->v[polygon->v_indices[i]];
 		if (mathConvexMeshHasPoint(mesh, p)) {
 			return 1;
 		}
@@ -118,14 +118,14 @@ static int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const 
 	return 0;
 }
 
-static int Polygon_Intersect_Plane(const GeometryPolygon_t* polygon, const float plane_v[3], const float plane_n[3], float p[3]) {
+static int Polygon_Intersect_Plane(const GeometryPolygon_t* polygon, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
 	unsigned int i, has_gt0, has_le0, idx_0;
 	if (!mathPlaneIntersectPlane(polygon->v[polygon->v_indices[0]], polygon->normal, plane_v, plane_n)) {
 		return 0;
 	}
 	idx_0 = has_gt0 = has_le0 = 0;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		float d;
+		CCTNum_t d;
 		mathPointProjectionPlane(polygon->v[polygon->v_indices[i]], plane_v, plane_n, NULL, &d);
 		if (d > CCT_EPSILON) {
 			if (has_le0) {
@@ -152,10 +152,10 @@ static int Polygon_Intersect_Plane(const GeometryPolygon_t* polygon, const float
 	return idx_0;
 }
 
-static int Mesh_Intersect_Plane(const GeometryMesh_t* mesh, const float plane_v[3], const float plane_n[3], float p[3]) {
+static int Mesh_Intersect_Plane(const GeometryMesh_t* mesh, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
 	unsigned int i, has_gt0 = 0, has_le0 = 0, idx_0 = 0;
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		float d;
+		CCTNum_t d;
 		mathPointProjectionPlane(mesh->v[mesh->v_indices[i]], plane_v, plane_n, NULL, &d);
 		if (d > CCT_EPSILON) {
 			if (has_le0) {
@@ -182,9 +182,9 @@ static int Mesh_Intersect_Plane(const GeometryMesh_t* mesh, const float plane_v[
 	return idx_0;
 }
 
-int Sphere_Intersect_Segment(const float o[3], float radius, const float ls[2][3], float p[3]) {
-	float closest_v_lensq, radius_sq;
-	float closest_p[3], closest_v[3];
+int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]) {
+	CCTNum_t closest_v_lensq, radius_sq;
+	CCTNum_t closest_p[3], closest_v[3];
 	mathSegmentClosestPointTo(ls, o, closest_p);
 	mathVec3Sub(closest_v, closest_p, o);
 	closest_v_lensq = mathVec3LenSq(closest_v);
@@ -201,8 +201,8 @@ int Sphere_Intersect_Segment(const float o[3], float radius, const float ls[2][3
 	return 0;
 }
 
-int Sphere_Intersect_Plane(const float o[3], float radius, const float plane_v[3], const float plane_normal[3], float new_o[3], float* new_r) {
-	float pp[3], ppd, ppo[3], ppolensq, radius_sq;
+int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
+	CCTNum_t pp[3], ppd, ppo[3], ppolensq, radius_sq;
 	mathPointProjectionPlane(o, plane_v, plane_normal, pp, &ppd);
 	mathVec3Sub(ppo, o, pp);
 	ppolensq = mathVec3LenSq(ppo);
@@ -215,19 +215,19 @@ int Sphere_Intersect_Plane(const float o[3], float radius, const float plane_v[3
 	}
 	if (ppolensq >= radius_sq - CCT_EPSILON) {
 		if (new_r) {
-			*new_r = 0.0f;
+			*new_r = CCTNum(0.0);
 		}
 		return 1;
 	}
 	if (new_r) {
-		*new_r = sqrtf(radius_sq - ppolensq);
+		*new_r = CCTNum_sqrt(radius_sq - ppolensq);
 	}
 	return 2;
 }
 
-static int Sphere_Intersect_Polygon(const float o[3], float radius, const GeometryPolygon_t* polygon, float p[3]) {
+static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
-	float point[3];
+	CCTNum_t point[3];
 	if (!p) {
 		p = point;
 	}
@@ -239,10 +239,10 @@ static int Sphere_Intersect_Polygon(const float o[3], float radius, const Geomet
 		return res;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		float edge[2][3];
+		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		res = Sphere_Intersect_Segment(o, radius, (const float(*)[3])edge, p);
+		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge, p);
 		if (res != 0) {
 			return res;
 		}
@@ -250,7 +250,7 @@ static int Sphere_Intersect_Polygon(const float o[3], float radius, const Geomet
 	return 0;
 }
 
-int Sphere_Intersect_ConvexMesh(const float o[3], float radius, const GeometryMesh_t* mesh, float p[3]) {
+int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh, CCTNum_t p[3]) {
 	unsigned int i;
 	if (mathConvexMeshHasPoint(mesh, o)) {
 		return 1;
@@ -264,12 +264,12 @@ int Sphere_Intersect_ConvexMesh(const float o[3], float radius, const GeometryMe
 	return 0;
 }
 
-int Sphere_Intersect_OBB(const float o[3], float radius, const GeometryOBB_t* obb) {
+int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) {
 	int i;
-	float v[3];
+	CCTNum_t v[3];
 	mathVec3Sub(v, o, obb->o);
 	for (i = 0; i < 3; ++i) {
-		float dot = mathVec3Dot(v, obb->axis[i]);
+		CCTNum_t dot = mathVec3Dot(v, obb->axis[i]);
 		if (dot < 0.0f) {
 			dot = -dot;
 		}
@@ -280,10 +280,10 @@ int Sphere_Intersect_OBB(const float o[3], float radius, const GeometryOBB_t* ob
 	return 1;
 }
 
-static int Box_Intersect_Plane(const float vertices[8][3], const float plane_v[3], const float plane_n[3], float p[3]) {
+static int Box_Intersect_Plane(const CCTNum_t vertices[8][3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
 	int i, has_gt0 = 0, has_le0 = 0, idx_0 = 0;
 	for (i = 0; i < 8; ++i) {
-		float d;
+		CCTNum_t d;
 		mathPointProjectionPlane(vertices[i], plane_v, plane_n, NULL, &d);
 		if (d > CCT_EPSILON) {
 			if (has_le0) {
@@ -310,26 +310,26 @@ static int Box_Intersect_Plane(const float vertices[8][3], const float plane_v[3
 	return idx_0;
 }
 
-static int OBB_Intersect_Plane(const GeometryOBB_t* obb, const float plane_v[3], const float plane_n[3], float p[3]) {
-	float vertices[8][3];
+static int OBB_Intersect_Plane(const GeometryOBB_t* obb, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
+	CCTNum_t vertices[8][3];
 	mathOBBVertices(obb, vertices);
-	return Box_Intersect_Plane((const float(*)[3])vertices, plane_v, plane_n, p);
+	return Box_Intersect_Plane((const CCTNum_t(*)[3])vertices, plane_v, plane_n, p);
 }
 
-static int AABB_Intersect_Plane(const float o[3], const float half[3], const float plane_v[3], const float plane_n[3], float p[3]) {
-	float vertices[8][3];
+static int AABB_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
+	CCTNum_t vertices[8][3];
 	mathAABBVertices(o, half, vertices);
-	return Box_Intersect_Plane((const float(*)[3])vertices, plane_v, plane_n, p);
+	return Box_Intersect_Plane((const CCTNum_t(*)[3])vertices, plane_v, plane_n, p);
 }
 
-static int AABB_Intersect_Sphere(const float aabb_o[3], const float aabb_half[3], const float sp_o[3], float sp_radius) {
-	float closest_v[3];
+static int AABB_Intersect_Sphere(const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius) {
+	CCTNum_t closest_v[3];
 	mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
 	mathVec3Sub(closest_v, closest_v, sp_o);
 	return mathVec3LenSq(closest_v) <= sp_radius * sp_radius;
 }
 
-static int AABB_Intersect_Segment(const float o[3], const float half[3], const float ls[2][3]) {
+static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
 	int i;
 	GeometryPolygon_t polygon;
 	if (mathAABBHasPoint(o, half, ls[0]) || mathAABBHasPoint(o, half, ls[1])) {
@@ -337,7 +337,7 @@ static int AABB_Intersect_Segment(const float o[3], const float half[3], const f
 	}
 	for (i = 0; i < 6; ++i) {
 		GeometryRect_t rect;
-		float p[4][3];
+		CCTNum_t p[4][3];
 		mathAABBPlaneRect(o, half, i, &rect);
 		mathRectToPolygon(&rect, &polygon, p);
 		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
@@ -347,7 +347,7 @@ static int AABB_Intersect_Segment(const float o[3], const float half[3], const f
 	return 0;
 }
 
-int OBB_Intersect_Segment(const GeometryOBB_t* obb, const float ls[2][3]) {
+int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
 	int i;
 	if (mathOBBHasPoint(obb, ls[0]) || mathOBBHasPoint(obb, ls[1])) {
 		return 1;
@@ -355,7 +355,7 @@ int OBB_Intersect_Segment(const GeometryOBB_t* obb, const float ls[2][3]) {
 	for (i = 0; i < 6; ++i) {
 		GeometryPolygon_t polygon;
 		GeometryRect_t rect;
-		float p[4][3];
+		CCTNum_t p[4][3];
 
 		mathOBBPlaneRect(obb, i, &rect);
 		mathRectToPolygon(&rect, &polygon, p);
@@ -366,9 +366,9 @@ int OBB_Intersect_Segment(const GeometryOBB_t* obb, const float ls[2][3]) {
 	return 0;
 }
 
-static int AABB_Intersect_Polygon(const float o[3], const float half[3], const GeometryPolygon_t* polygon, float p[3]) {
+static int AABB_Intersect_Polygon(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
-	float point[3];
+	CCTNum_t point[3];
 	if (!p) {
 		p = point;
 	}
@@ -384,19 +384,19 @@ static int AABB_Intersect_Polygon(const float o[3], const float half[3], const G
 		return 2;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		float edge[2][3];
+		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (AABB_Intersect_Segment(o, half, (const float(*)[3])edge)) {
+		if (AABB_Intersect_Segment(o, half, (const CCTNum_t(*)[3])edge)) {
 			return 2;
 		}
 	}
 	return 0;
 }
 
-static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, float p[3]) {
+static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
-	float point[3];
+	CCTNum_t point[3];
 	if (!p) {
 		p = point;
 	}
@@ -412,10 +412,10 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 		return 2;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		float edge[2][3];
+		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (OBB_Intersect_Segment(obb, (const float(*)[3])edge)) {
+		if (OBB_Intersect_Segment(obb, (const CCTNum_t(*)[3])edge)) {
 			return 2;
 		}
 	}
@@ -423,7 +423,7 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 }
 
 static int ConvexMesh_HasAny_OBBVertices(const GeometryMesh_t* mesh, const GeometryOBB_t* obb) {
-	float v[8][3];
+	CCTNum_t v[8][3];
 	unsigned int i;
 	mathOBBVertices(obb, v);
 	for (i = 0; i < 8; ++i) {
@@ -450,13 +450,13 @@ static int OBB_Intersect_ConvexMesh(const GeometryOBB_t* obb, const GeometryMesh
 static int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
 	unsigned int i;
 	for (i = 0; i < mesh1->v_indices_cnt; ++i) {
-		const float* p = mesh1->v[mesh1->v_indices[i]];
+		const CCTNum_t* p = mesh1->v[mesh1->v_indices[i]];
 		if (mathConvexMeshHasPoint(mesh2, p)) {
 			return 1;
 		}
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
-		const float* p = mesh2->v[mesh2->v_indices[i]];
+		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
 		if (mathConvexMeshHasPoint(mesh1, p)) {
 			return 1;
 		}
@@ -492,7 +492,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return mathSegmentHasPoint((const float(*)[3])two->segment->v, one->point);
+				return mathSegmentHasPoint((const CCTNum_t(*)[3])two->segment->v, one->point);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -521,7 +521,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		}
 	}
 	else if (GEOMETRY_BODY_SEGMENT == one->type) {
-		const float(*one_segment_v)[3] = (const float(*)[3])one->segment->v;
+		const CCTNum_t(*one_segment_v)[3] = (const CCTNum_t(*)[3])one->segment->v;
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
@@ -529,7 +529,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return mathSegmentIntersectSegment(one_segment_v, (const float(*)[3])two->segment->v, NULL, NULL);
+				return mathSegmentIntersectSegment(one_segment_v, (const CCTNum_t(*)[3])two->segment->v, NULL, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -577,7 +577,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return AABB_Intersect_Segment(one->aabb->o, one->aabb->half, (const float(*)[3])two->segment->v);
+				return AABB_Intersect_Segment(one->aabb->o, one->aabb->half, (const CCTNum_t(*)[3])two->segment->v);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -621,7 +621,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Sphere_Intersect_Segment(one->sphere->o, one->sphere->radius, (const float(*)[3])two->segment->v, NULL);
+				return Sphere_Intersect_Segment(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->segment->v, NULL);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -657,7 +657,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_Plane((const float(*)[3])two->segment->v, one->plane->v, one->plane->normal, NULL);
+				return Segment_Intersect_Plane((const CCTNum_t(*)[3])two->segment->v, one->plane->v, one->plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -677,7 +677,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_Polygon((const float(*)[3])two->segment->v, one->polygon, NULL);
+				return Segment_Intersect_Polygon((const CCTNum_t(*)[3])two->segment->v, one->polygon, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -713,7 +713,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return OBB_Intersect_Segment(one->obb, (const float(*)[3])two->segment->v);
+				return OBB_Intersect_Segment(one->obb, (const CCTNum_t(*)[3])two->segment->v);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -751,7 +751,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_ConvexMesh((const float(*)[3])two->segment->v, one->mesh);
+				return Segment_Intersect_ConvexMesh((const CCTNum_t(*)[3])two->segment->v, one->mesh);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{

@@ -11,14 +11,14 @@
 #include "../inc/collision.h"
 #include <stddef.h>
 
-static void point_rotate(float p[3], const float mark_pos[3], const float q[4]) {
-	float v[3];
+static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
+	CCTNum_t v[3];
 	mathVec3Sub(v, p, mark_pos);
 	mathQuatMulVec3(v, q, v);
 	mathVec3Add(p, mark_pos, v);
 }
 
-static void indices_rotate(float(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const float mark_pos[3], const float q[4]) {
+static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
 	unsigned int i;
 	for (i = 0; i < indices_cnt; ++i) {
 		point_rotate(p[indices[i]], mark_pos, q);
@@ -53,9 +53,9 @@ GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, Geometr
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			float min_v[3], max_v[3];
+			CCTNum_t min_v[3], max_v[3];
 			const GeometryPolygon_t* polygon = b->polygon;
-			if (!mathVertexIndicesFindMinMaxXYZ((const float(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, min_v, max_v)) {
+			if (!mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, min_v, max_v)) {
 				return NULL;
 			}
 			mathAABBFromTwoVertice(min_v, max_v, aabb->o, aabb->half);
@@ -74,11 +74,11 @@ GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, Geometr
 	return aabb;
 }
 
-int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const float q[4]) {
+int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			float* point = b->point;
+			CCTNum_t* point = b->point;
 			if (point == mark_pos || mathVec3Equal(point, mark_pos)) {
 				break;
 			}
@@ -108,13 +108,13 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 		{
 			GeometryAABB_t* aabb = b->aabb;
 			if (aabb->o == mark_pos || mathVec3Equal(aabb->o, mark_pos)) { /* AABB rotate center position */
-				float axis[3], new_axis[3];
+				CCTNum_t axis[3], new_axis[3];
 				/* check rotate by X axis ??? */
-				mathVec3Set(axis, 1.0f, 0.0f, 0.0f);
+				mathVec3Set(axis, CCTNums_3(1.0, 0.0, 0.0));
 				mathQuatMulVec3(new_axis, q, axis);
 				if (mathVec3Equal(new_axis, axis)) {
-					float dot;
-					mathVec3Set(axis, 0.0f, 1.0f, 0.0f);
+					CCTNum_t dot;
+					mathVec3Set(axis, CCTNums_3(0.0, 1.0, 0.0));
 					mathQuatMulVec3(new_axis, q, axis);
 					dot = mathVec3Dot(new_axis, axis);
 					if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) { /* rotate PI/2 */
@@ -123,7 +123,7 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 						aabb->half[2] = dot;
 						break;
 					}
-					else if (dot <= 1.0 + CCT_EPSILON && dot >= 1.0f - CCT_EPSILON) { /* rotate PI */
+					else if (dot <= CCTNum(1.0) + CCT_EPSILON && dot >= CCTNum(1.0) - CCT_EPSILON) { /* rotate PI */
 						break;
 					}
 					return 0;
@@ -132,8 +132,8 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 				mathVec3Set(axis, 0.0f, 1.0f, 0.0f);
 				mathQuatMulVec3(new_axis, q, axis);
 				if (mathVec3Equal(new_axis, axis)) {
-					float dot;
-					mathVec3Set(axis, 1.0f, 0.0f, 0.0f);
+					CCTNum_t dot;
+					mathVec3Set(axis, CCTNums_3(1.0, 0.0, 0.0));
 					mathQuatMulVec3(new_axis, q, axis);
 					dot = mathVec3Dot(new_axis, axis);
 					if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) { /* rotate PI/2 */
@@ -142,17 +142,17 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 						aabb->half[2] = dot;
 						break;
 					}
-					else if (dot <= 1.0f + CCT_EPSILON && dot >= 1.0f - CCT_EPSILON) { /* rotate PI */
+					else if (dot <= CCTNum(1.0) + CCT_EPSILON && dot >= CCTNum(1.0) - CCT_EPSILON) { /* rotate PI */
 						break;
 					}
 					return 0;
 				}
 				/* check rotate by Z axis ??? */
-				mathVec3Set(axis, 0.0f, 0.0f, 1.0f);
+				mathVec3Set(axis, CCTNums_3(0.0, 0.0, 1.0));
 				mathQuatMulVec3(new_axis, q, axis);
 				if (mathVec3Equal(new_axis, axis)) {
-					float dot;
-					mathVec3Set(axis, 1.0f, 0.0f, 0.0f);
+					CCTNum_t dot;
+					mathVec3Set(axis, CCTNums_3(1.0, 0.0, 0.0));
 					mathQuatMulVec3(new_axis, q, axis);
 					dot = mathVec3Dot(new_axis, axis);
 					if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) { /* rotate PI/2 */
@@ -161,7 +161,7 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 						aabb->half[0] = dot;
 						break;
 					}
-					else if (dot <= 1.0f + CCT_EPSILON && dot >= 1.0f - CCT_EPSILON) { /* rotate PI */
+					else if (dot <= CCTNum(1.0) + CCT_EPSILON && dot >= CCTNum(1.0) - CCT_EPSILON) { /* rotate PI */
 						break;
 					}
 					return 0;
@@ -198,7 +198,7 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 		{
 			GeometryMesh_t* mesh = b->mesh;
 			unsigned int i;
-			float min_xyz[3], max_xyz[3];
+			CCTNum_t min_xyz[3], max_xyz[3];
 
 			indices_rotate(mesh->v, mesh->v_indices, mesh->v_indices_cnt, mark_pos, q);
 			point_rotate(mesh->o, mark_pos, q);
@@ -210,7 +210,7 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 				mathQuatMulVec3(polygon->normal, q, polygon->normal);
 				mathVec3Copy(polygon->o, mesh->o);
 			}
-			mathVertexIndicesFindMinMaxXYZ((const float(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, min_xyz, max_xyz);
+			mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, min_xyz, max_xyz);
 			mathAABBFromTwoVertice(min_xyz, max_xyz, mesh->bound_box.o, mesh->bound_box.half);
 			break;
 		}
@@ -220,8 +220,8 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const float mark_pos[3], const
 	return 1;
 }
 
-int mathCollisionBodyRotateAxisRadian(GeometryBodyRef_t* b, const float mark_pos[3], const float axis[3], float radian) {
-	float q[4];
+int mathCollisionBodyRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t mark_pos[3], const CCTNum_t axis[3], CCTNum_t radian) {
+	CCTNum_t q[4];
 	mathQuatFromAxisRadian(q, axis, radian);
 	return mathCollisionBodyRotate(b, mark_pos, q);
 }

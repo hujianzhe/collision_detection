@@ -11,10 +11,10 @@
 static const unsigned int DEFAULT_TRIANGLE_VERTICE_INDICES[3] = { 0, 1, 2 };
 static const unsigned int DEFAULT_RECT_VERTICE_INDICES[4] = { 0, 1, 2, 3 };
 
-int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const float p[3]) {
+int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	unsigned int i;
-	float v[3], dot;
-	float vp[3], eg[3];
+	CCTNum_t v[3], dot;
+	CCTNum_t vp[3], eg[3];
 
 	mathVec3Sub(v, polygon->v[polygon->v_indices[0]], p);
 	dot = mathVec3Dot(polygon->normal, v);
@@ -28,7 +28,7 @@ int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const
 		return 1;
 	}
 	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		float vi[3];
+		CCTNum_t vi[3];
 		mathVec3Sub(vp, p, polygon->v[polygon->v_indices[i]]);
 		mathVec3Sub(eg, polygon->v[polygon->v_indices[i]], polygon->v[polygon->v_indices[i - 1]]);
 		mathVec3Cross(vi, vp, eg);
@@ -36,14 +36,14 @@ int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const
 			return 1;
 		}
 		dot = mathVec3Dot(v, vi);
-		if (dot <= 0.0f) {
+		if (dot <= CCTNum(0.0)) {
 			return 0;
 		}
 	}
 	return 1;
 }
 
-GeometryPolygon_t* PolygonCooking_InternalProc(const float(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
+GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	unsigned int i, s, n, p, last_s, first_s;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
@@ -51,7 +51,7 @@ GeometryPolygon_t* PolygonCooking_InternalProc(const float(*v)[3], const unsigne
 	unsigned int tmp_edge_indices_cnt = 0;
 	unsigned int* ret_v_indices = NULL;
 	unsigned int ret_v_indices_cnt = 0;
-	float v1[3], v2[3], N[3];
+	CCTNum_t v1[3], v2[3], N[3];
 
 	if (tri_indices_cnt < 3 || tri_indices_cnt % 3 != 0) {
 		return NULL;
@@ -241,16 +241,16 @@ GeometryPolygon_t* PolygonCooking_InternalProc(const float(*v)[3], const unsigne
 extern "C" {
 #endif
 
-void mathTriangleGetPoint(const float tri[3][3], float u, float v, float p[3]) {
-	float v0[3], v1[3], v2[3];
-	mathVec3MultiplyScalar(v0, tri[0], 1.0f - u - v);
+void mathTriangleGetPoint(const CCTNum_t tri[3][3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) {
+	CCTNum_t v0[3], v1[3], v2[3];
+	mathVec3MultiplyScalar(v0, tri[0], CCTNum(1.0) - u - v);
 	mathVec3MultiplyScalar(v1, tri[1], u);
 	mathVec3MultiplyScalar(v2, tri[2], v);
 	mathVec3Add(p, mathVec3Add(p, v0, v1), v2);
 }
 
-int mathTrianglePointUV(const float tri[3][3], const float p[3], float* p_u, float* p_v) {
-	float ap[3], ab[3], ac[3], N[3], dot;
+int mathTrianglePointUV(const CCTNum_t tri[3][3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) {
+	CCTNum_t ap[3], ab[3], ac[3], N[3], dot;
 	mathVec3Sub(ap, p, tri[0]);
 	mathVec3Sub(ab, tri[1], tri[0]);
 	mathVec3Sub(ac, tri[2], tri[0]);
@@ -260,19 +260,19 @@ int mathTrianglePointUV(const float tri[3][3], const float p[3], float* p_u, flo
 		return 0;
 	}
 	else {
-		float u, v;
-		float dot_ac_ac = mathVec3Dot(ac, ac);
-		float dot_ac_ab = mathVec3Dot(ac, ab);
-		float dot_ac_ap = mathVec3Dot(ac, ap);
-		float dot_ab_ab = mathVec3Dot(ab, ab);
-		float dot_ab_ap = mathVec3Dot(ab, ap);
-		float tmp = 1.0f / (dot_ac_ac * dot_ab_ab - dot_ac_ab * dot_ac_ab);
-		u = (dot_ab_ab * dot_ac_ap - dot_ac_ab * dot_ab_ap) * tmp;
-		if (u < 0.0f || u > 1.0f) {
+		CCTNum_t u, v;
+		CCTNum_t dot_ac_ac = mathVec3Dot(ac, ac);
+		CCTNum_t dot_ac_ab = mathVec3Dot(ac, ab);
+		CCTNum_t dot_ac_ap = mathVec3Dot(ac, ap);
+		CCTNum_t dot_ab_ab = mathVec3Dot(ab, ab);
+		CCTNum_t dot_ab_ap = mathVec3Dot(ab, ap);
+		CCTNum_t inv = CCTNum(1.0) / (dot_ac_ac * dot_ab_ab - dot_ac_ab * dot_ac_ab);
+		u = (dot_ab_ab * dot_ac_ap - dot_ac_ab * dot_ab_ap) * inv;
+		if (u < CCTNum(0.0) || u > CCTNum(1.0)) {
 			return 0;
 		}
-		v = (dot_ac_ac * dot_ab_ap - dot_ac_ab * dot_ac_ap) * tmp;
-		if (v < 0.0f || v + u > 1.0f) {
+		v = (dot_ac_ac * dot_ab_ap - dot_ac_ab * dot_ac_ap) * inv;
+		if (v < CCTNum(0.0) || v + u > CCTNum(1.0)) {
 			return 0;
 		}
 		if (p_u) {
@@ -285,19 +285,19 @@ int mathTrianglePointUV(const float tri[3][3], const float p[3], float* p_u, flo
 	}
 }
 
-int mathTriangleHasPoint(const float tri[3][3], const float p[3]) {
+int mathTriangleHasPoint(const CCTNum_t tri[3][3], const CCTNum_t p[3]) {
 	return mathTrianglePointUV(tri, p, NULL, NULL);
 }
 
-void mathTriangleToPolygon(const float tri[3][3], GeometryPolygon_t* polygon) {
+void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon) {
 	polygon->v_indices = DEFAULT_TRIANGLE_VERTICE_INDICES;
 	polygon->v_indices_cnt = 3;
-	polygon->v = (float(*)[3])tri;
+	polygon->v = (CCTNum_t(*)[3])tri;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
 }
 
-int mathRectHasPoint(const GeometryRect_t* rect, const float p[3]) {
-	float v[3], dot;
+int mathRectHasPoint(const GeometryRect_t* rect, const CCTNum_t p[3]) {
+	CCTNum_t v[3], dot;
 	mathVec3Sub(v, p, rect->o);
 	dot = mathVec3Dot(rect->normal, v);
 	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
@@ -310,7 +310,7 @@ int mathRectHasPoint(const GeometryRect_t* rect, const float p[3]) {
 	return mathVec3LenSq(v) - dot * dot <= rect->half_w * rect->half_w + CCT_EPSILON;
 }
 
-void mathRectVertices(const GeometryRect_t* rect, float p[4][3]) {
+void mathRectVertices(const GeometryRect_t* rect, CCTNum_t p[4][3]) {
 	mathVec3Copy(p[0], rect->o);
 	mathVec3AddScalar(p[0], rect->h_axis, rect->half_h);
 	mathVec3AddScalar(p[0], rect->w_axis, rect->half_w);
@@ -325,7 +325,7 @@ void mathRectVertices(const GeometryRect_t* rect, float p[4][3]) {
 	mathVec3AddScalar(p[3], rect->w_axis, rect->half_w);
 }
 
-void mathRectToPolygon(const GeometryRect_t* rect, GeometryPolygon_t* polygon, float buf_points[4][3]) {
+void mathRectToPolygon(const GeometryRect_t* rect, GeometryPolygon_t* polygon, CCTNum_t buf_points[4][3]) {
 	mathRectVertices(rect, buf_points);
 	polygon->v_indices = DEFAULT_RECT_VERTICE_INDICES;
 	polygon->v_indices_cnt = 4;
@@ -333,60 +333,60 @@ void mathRectToPolygon(const GeometryRect_t* rect, GeometryPolygon_t* polygon, f
 	mathVec3Copy(polygon->normal, rect->normal);
 }
 
-GeometryRect_t* mathAABBPlaneRect(const float o[3], const float half[3], unsigned int idx, GeometryRect_t* rect) {
+GeometryRect_t* mathAABBPlaneRect(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int idx, GeometryRect_t* rect) {
 	if (idx < 2) {
 		mathVec3Copy(rect->o, o);
 		if (0 == idx) {
 			rect->o[2] += half[2];
-			mathVec3Set(rect->normal, 0.0f, 0.0f, 1.0f);
+			mathVec3Set(rect->normal, CCTNums_3(0.0, 0.0, 1.0));
 		}
 		else {
 			rect->o[2] -= half[2];
-			mathVec3Set(rect->normal, 0.0f, 0.0f, -1.0f);
+			mathVec3Set(rect->normal, CCTNums_3(0.0, 0.0, -1.0));
 		}
 		rect->half_w = half[0];
 		rect->half_h = half[1];
-		mathVec3Set(rect->w_axis, 1.0f, 0.0f, 0.0f);
-		mathVec3Set(rect->h_axis, 0.0f, 1.0f, 0.0f);
+		mathVec3Set(rect->w_axis, CCTNums_3(1.0, 0.0, 0.0));
+		mathVec3Set(rect->h_axis, CCTNums_3(0.0, 1.0, 0.0));
 		return rect;
 	}
 	else if (idx < 4) {
 		mathVec3Copy(rect->o, o);
 		if (2 == idx) {
 			rect->o[0] += half[0];
-			mathVec3Set(rect->normal, 1.0f, 0.0f, 0.0f);
+			mathVec3Set(rect->normal, CCTNums_3(1.0, 0.0, 0.0));
 		}
 		else {
 			rect->o[0] -= half[0];
-			mathVec3Set(rect->normal, -1.0f, 0.0f, 0.0f);
+			mathVec3Set(rect->normal, CCTNums_3(-1.0, 0.0, 0.0));
 		}
 		rect->half_w = half[2];
 		rect->half_h = half[1];
-		mathVec3Set(rect->w_axis, 0.0f, 0.0f, 1.0f);
-		mathVec3Set(rect->h_axis, 0.0f, 1.0f, 0.0f);
+		mathVec3Set(rect->w_axis, CCTNums_3(0.0, 0.0, 1.0));
+		mathVec3Set(rect->h_axis, CCTNums_3(0.0, 1.0, 0.0));
 		return rect;
 	}
 	else if (idx < 6) {
 		mathVec3Copy(rect->o, o);
 		if (4 == idx) {
 			rect->o[1] += half[1];
-			mathVec3Set(rect->normal, 0.0f, 1.0f, 0.0f);
+			mathVec3Set(rect->normal, CCTNums_3(0.0, 1.0, 0.0));
 		}
 		else {
 			rect->o[1] -= half[1];
-			mathVec3Set(rect->normal, 0.0f, -1.0f, 0.0f);
+			mathVec3Set(rect->normal, CCTNums_3(0.0, -1.0, 0.0));
 		}
 		rect->half_w = half[2];
 		rect->half_h = half[0];
-		mathVec3Set(rect->w_axis, 0.0f, 0.0f, 1.0f);
-		mathVec3Set(rect->h_axis, 1.0f, 0.0f, 0.0f);
+		mathVec3Set(rect->w_axis, CCTNums_3(0.0, 0.0, 1.0));
+		mathVec3Set(rect->h_axis, CCTNums_3(1.0, 0.0, 0.0));
 		return rect;
 	}
 	return NULL;
 }
 
 GeometryRect_t* mathOBBPlaneRect(const GeometryOBB_t* obb, unsigned int idx, GeometryRect_t* rect) {
-	float extend[3];
+	CCTNum_t extend[3];
 	if (idx < 2) {
 		mathVec3MultiplyScalar(extend, obb->axis[2], obb->half[2]);
 		if (0 == idx) {
@@ -451,14 +451,14 @@ GeometryRect_t* mathOBBPlaneRect(const GeometryOBB_t* obb, unsigned int idx, Geo
 }
 
 int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
-	float e1[3], e2[3], test_n[3];
+	CCTNum_t e1[3], e2[3], test_n[3];
 	unsigned int i, has_test_n;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
 	has_test_n = 0;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		float n[3];
+		CCTNum_t n[3];
 		unsigned int v_idx1, v_idx2;
 		if (i) {
 			v_idx1 = polygon->v_indices[i - 1];
@@ -478,26 +478,26 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 			continue;
 		}
 		mathVec3Cross(n, e1, e2);
-		if (mathVec3Dot(test_n, n) < 0.0f) {
+		if (mathVec3Dot(test_n, n) < CCTNum(0.0)) {
 			return 0;
 		}
 	}
 	return 1;
 }
 
-int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const float p[3]) {
+int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
 	if (3 == polygon->v_indices_cnt) {
-		float tri[3][3];
+		CCTNum_t tri[3][3];
 		mathVec3Copy(tri[0], polygon->v[polygon->v_indices[0]]);
 		mathVec3Copy(tri[1], polygon->v[polygon->v_indices[1]]);
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
-		return mathTrianglePointUV((const float(*)[3])tri, p, NULL, NULL);
+		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
 	}
 	if (polygon->v_indices == DEFAULT_RECT_VERTICE_INDICES) {
-		float ls_vec[3], v[3], dot;
+		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(polygon->normal, v);
 		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
@@ -518,11 +518,11 @@ int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const float p[3]) {
 	if (polygon->tri_indices && polygon->tri_indices_cnt >= 3) {
 		unsigned int i;
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
-			float tri[3][3];
+			CCTNum_t tri[3][3];
 			mathVec3Copy(tri[0], polygon->v[polygon->tri_indices[i++]]);
 			mathVec3Copy(tri[1], polygon->v[polygon->tri_indices[i++]]);
 			mathVec3Copy(tri[2], polygon->v[polygon->tri_indices[i++]]);
-			if (mathTrianglePointUV((const float(*)[3])tri, p, NULL, NULL)) {
+			if (mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL)) {
 				return 1;
 			}
 		}
@@ -536,7 +536,7 @@ int mathPolygonContainPolygon(const GeometryPolygon_t* polygon1, const GeometryP
 	if (2 == ret) {
 		unsigned int i;
 		for (i = 0; i < polygon2->v_indices_cnt; ++i) {
-			const float* p = polygon2->v[polygon2->v_indices[i]];
+			const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
 			if (!mathPolygonHasPoint(polygon1, p)) {
 				return 0;
 			}
@@ -546,8 +546,8 @@ int mathPolygonContainPolygon(const GeometryPolygon_t* polygon1, const GeometryP
 	return 0;
 }
 
-GeometryPolygon_t* mathPolygonCooking(const float(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
-	float(*dup_v)[3] = NULL;
+GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
+	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int dup_v_cnt;
 	unsigned int* dup_tri_indices = NULL;
 
@@ -558,7 +558,7 @@ GeometryPolygon_t* mathPolygonCooking(const float(*v)[3], unsigned int v_cnt, co
 	if (dup_v_cnt < 3) {
 		return NULL;
 	}
-	dup_v = (float(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
+	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {
 		goto err;
 	}
@@ -567,10 +567,10 @@ GeometryPolygon_t* mathPolygonCooking(const float(*v)[3], unsigned int v_cnt, co
 		goto err;
 	}
 	mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
-	if (!PolygonCooking_InternalProc((const float(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
+	if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
 		goto err;
 	}
-	mathVec3Set(polygon->o, 0.0f, 0.0f, 0.0f);
+	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	polygon->v = dup_v;
 	polygon->tri_indices = dup_tri_indices;
 	polygon->tri_indices_cnt = tri_indices_cnt;
@@ -583,7 +583,7 @@ err:
 
 GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPolygon_t* src) {
 	unsigned int i, dup_v_cnt = 0;
-	float(*dup_v)[3] = NULL;
+	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
 	/* find max vertex index, dup_v_cnt */
@@ -601,7 +601,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		return NULL;
 	}
 	/* deep copy */
-	dup_v = (float(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
+	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {
 		goto err_0;
 	}

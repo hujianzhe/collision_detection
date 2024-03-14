@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-unsigned int mathVerticesDistinctCount(const float(*v)[3], unsigned int v_cnt) {
+unsigned int mathVerticesDistinctCount(const CCTNum_t(*v)[3], unsigned int v_cnt) {
 	unsigned int i, len = v_cnt;
 	for (i = 0; i < v_cnt; ++i) {
 		unsigned int j;
@@ -22,7 +22,7 @@ unsigned int mathVerticesDistinctCount(const float(*v)[3], unsigned int v_cnt) {
 	return len;
 }
 
-unsigned int mathVerticesMerge(const float(*src_v)[3], unsigned int v_cnt, const unsigned int* src_indices, unsigned int indices_cnt, float(*dst_v)[3], unsigned int* dst_indices) {
+unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], unsigned int v_cnt, const unsigned int* src_indices, unsigned int indices_cnt, CCTNum_t(*dst_v)[3], unsigned int* dst_indices) {
 	/* allow src_v == dst_v */
 	/* allow src_indices == dst_indices */
 	unsigned int i, dst_v_cnt = 0;
@@ -46,7 +46,7 @@ unsigned int mathVerticesMerge(const float(*src_v)[3], unsigned int v_cnt, const
 	return dst_v_cnt;
 }
 
-int mathVertexIndicesFindMinMaxXYZ(const float(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, float v_minXYZ[3], float v_maxXYZ[3]) {
+int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
 	unsigned int i;
 	if (v_indices_cnt <= 0) {
 		return 0;
@@ -55,7 +55,7 @@ int mathVertexIndicesFindMinMaxXYZ(const float(*v)[3], const unsigned int* v_ind
 	mathVec3Copy(v_maxXYZ, v[v_indices[0]]);
 	for (i = 1; i < v_indices_cnt; ++i) {
 		unsigned int j;
-		const float* cur_v = v[v_indices[i]];
+		const CCTNum_t* cur_v = v[v_indices[i]];
 		for (j = 0; j < 3; ++j) {
 			if (cur_v[j] < v_minXYZ[j]) {
 				v_minXYZ[j] = cur_v[j];
@@ -68,7 +68,7 @@ int mathVertexIndicesFindMinMaxXYZ(const float(*v)[3], const unsigned int* v_ind
 	return 1;
 }
 
-int mathVerticesFindMinMaxXYZ(const float(*v)[3], unsigned int v_cnt, float v_minXYZ[3], float v_maxXYZ[3]) {
+int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
 	unsigned int i;
 	if (v_cnt <= 0) {
 		return 0;
@@ -77,7 +77,7 @@ int mathVerticesFindMinMaxXYZ(const float(*v)[3], unsigned int v_cnt, float v_mi
 	mathVec3Copy(v_maxXYZ, v[0]);
 	for (i = 1; i < v_cnt; ++i) {
 		unsigned int j;
-		const float* cur_v = v[i];
+		const CCTNum_t* cur_v = v[i];
 		for (j = 0; j < 3; ++j) {
 			if (cur_v[j] < v_minXYZ[j]) {
 				v_minXYZ[j] = cur_v[j];

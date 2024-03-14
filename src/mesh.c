@@ -10,10 +10,10 @@
 #include "../inc/mesh.h"
 #include <stdlib.h>
 
-extern GeometryPolygon_t* PolygonCooking_InternalProc(const float(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
-extern int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const float p[3]);
+extern GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
+extern int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
-static int Mesh_Cooking_Edge_InternalProc(const float (*v)[3], GeometryMesh_t* mesh) {
+static int Mesh_Cooking_Edge_InternalProc(const CCTNum_t (*v)[3], GeometryMesh_t* mesh) {
 	unsigned int i;
 	unsigned int* ret_edge_indices = NULL;
 	unsigned int ret_edge_indices_cnt = 0;
@@ -74,9 +74,9 @@ static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const 
 	return polygon;
 }
 
-static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const float p0[3], const float p1[3], const float p2[3]) {
+static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
 	unsigned int i, n = 0;
-	const float* tri_p[] = { p0, p1, p2 };
+	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
 		unsigned int j;
 		if (!mathPlaneHasPoint(polygon->v[polygon->tri_indices[0]], polygon->normal, tri_p[i])) {
@@ -86,7 +86,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const float p
 			continue;
 		}
 		for (j = 0; j < polygon->tri_indices_cnt; ++j) {
-			const float* pv = polygon->v[polygon->tri_indices[j]];
+			const CCTNum_t* pv = polygon->v[polygon->tri_indices[j]];
 			if (mathVec3Equal(pv, tri_p[i])) {
 				++n;
 				break;
@@ -96,7 +96,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const float p
 	return n >= 2;
 }
 
-static int Mesh_Cooking_Polygen_InternalProc(const float (*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+static int Mesh_Cooking_Polygen_InternalProc(const CCTNum_t (*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
 	unsigned int i;
 	GeometryPolygon_t* tmp_polygons = NULL;
 	unsigned int tmp_polygons_cnt = 0;
@@ -114,7 +114,7 @@ static int Mesh_Cooking_Polygen_InternalProc(const float (*v)[3], const unsigned
 	/* Merge triangles on the same plane */
 	for (i = 0; i < tri_indices_cnt; i += 3) {
 		unsigned int j, tri_idx;
-		float N[3];
+		CCTNum_t N[3];
 		GeometryPolygon_t* tmp_parr, * new_pg;
 
 		tri_idx = i / 3;
@@ -140,7 +140,7 @@ static int Mesh_Cooking_Polygen_InternalProc(const float (*v)[3], const unsigned
 		if (!_insert_tri_indices(new_pg, tri_indices + i)) {
 			goto err;
 		}
-		new_pg->v = (float(*)[3])v;
+		new_pg->v = (CCTNum_t(*)[3])v;
 		mathVec3Normalized(new_pg->normal, N);
 
 		tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
@@ -166,7 +166,7 @@ static int Mesh_Cooking_Polygen_InternalProc(const float (*v)[3], const unsigned
 	/* Cooking all polygen */
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
 		GeometryPolygon_t* polygon = tmp_polygons + i;
-		if (!PolygonCooking_InternalProc((const float(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
+		if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
 			goto err;
 		}
 	}
@@ -185,10 +185,10 @@ err:
 	return 0;
 }
 
-static int ConvexMesh_HasPoint_InternalProc(const GeometryMesh_t* mesh, const float p[3]) {
+static int ConvexMesh_HasPoint_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		float v[3], dot;
+		CCTNum_t v[3], dot;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(v, polygon->normal);
@@ -207,9 +207,9 @@ static int ConvexMesh_HasPoint_InternalProc(const GeometryMesh_t* mesh, const fl
 extern "C" {
 #endif
 
-GeometryMesh_t* mathMeshCooking(const float (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
-	float(*dup_v)[3] = NULL;
-	float min_v[3], max_v[3];
+GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+	CCTNum_t(*dup_v)[3] = NULL;
+	CCTNum_t min_v[3], max_v[3];
 	unsigned int i, dup_v_cnt;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
@@ -221,7 +221,7 @@ GeometryMesh_t* mathMeshCooking(const float (*v)[3], unsigned int v_cnt, const u
 	if (dup_v_cnt < 3) {
 		goto err_0;
 	}
-	dup_v = (float(*)[3])malloc(dup_v_cnt * sizeof(dup_v[0]));
+	dup_v = (CCTNum_t(*)[3])malloc(dup_v_cnt * sizeof(dup_v[0]));
 	if (!dup_v) {
 		goto err_0;
 	}
@@ -235,21 +235,21 @@ GeometryMesh_t* mathMeshCooking(const float (*v)[3], unsigned int v_cnt, const u
 	}
 	mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
 
-	if (!Mesh_Cooking_Polygen_InternalProc((const float(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
+	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
 		goto err_0;
 	}
-	if (!Mesh_Cooking_Edge_InternalProc((const float(*)[3])dup_v, mesh)) {
+	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])dup_v, mesh)) {
 		goto err_1;
 	}
 	free(dup_tri_indices);
 	for (i = 0; i < dup_v_cnt; ++i) {
 		dup_v_indices[i] = i;
 	}
-	mathVerticesFindMinMaxXYZ((const float(*)[3])dup_v, dup_v_cnt, min_v, max_v);
+	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, min_v, max_v);
 	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
-	mathVec3Set(mesh->o, 0.0f, 0.0f, 0.0f);
+	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		mathVec3Set(mesh->polygons[i].o, 0.0f, 0.0f, 0.0f);
+		mathVec3Set(mesh->polygons[i].o, CCTNums_3(0.0, 0.0, 0.0));
 	}
 	mesh->v = dup_v;
 	mesh->v_indices = dup_v_indices;
@@ -271,7 +271,7 @@ err_0:
 
 GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src) {
 	unsigned int i, dup_v_cnt = 0;
-	float(*dup_v)[3] = NULL;
+	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_edge_indices = NULL;
 	GeometryPolygon_t* dup_polygons = NULL;
@@ -304,7 +304,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 		return NULL;
 	}
 	/* deep copy */
-	dup_v = (float(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
+	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {
 		goto err_0;
 	}
@@ -448,9 +448,9 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		unsigned int j, has_test_dot = 0;
-		float test_dot;
+		CCTNum_t test_dot;
 		for (j = 0; j < mesh->v_indices_cnt; ++j) {
-			float vj[3], dot;
+			CCTNum_t vj[3], dot;
 			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
 			dot = mathVec3Dot(polygon->normal, vj);
 			if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
@@ -461,10 +461,10 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 				test_dot = dot;
 				continue;
 			}
-			if (test_dot > 0.0f && dot < 0.0f) {
+			if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
 				return 0;
 			}
-			if (test_dot < 0.0f && dot > 0.0f) {
+			if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
 				return 0;
 			}
 		}
@@ -473,20 +473,20 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 }
 
 void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
-	float p[2][3], po[3];
+	CCTNum_t p[2][3], po[3];
 	unsigned int i;
 	for (i = 0; i < 2; ++i) {
-		float tri[3][3];
+		CCTNum_t tri[3][3];
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Copy(tri[0], polygon->v[polygon->v_indices[0]]);
 		mathVec3Copy(tri[1], polygon->v[polygon->v_indices[1]]);
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
-		mathTriangleGetPoint((const float(*)[3])tri, 0.5f, 0.5f, p[i]);
+		mathTriangleGetPoint((const CCTNum_t(*)[3])tri, CCTNum(0.5), CCTNum(0.5), p[i]);
 	}
 	mathVec3Add(po, p[0], p[1]);
-	mathVec3MultiplyScalar(po, po, 0.5f);
+	mathVec3MultiplyScalar(po, po, CCTNum(0.5));
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		float v[3], dot;
+		CCTNum_t v[3], dot;
 		GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Sub(v, po, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(v, polygon->normal);
@@ -496,7 +496,7 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 	}
 }
 
-int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const float p[3]) {
+int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
@@ -509,7 +509,7 @@ int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 		return 0;
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
-		const float* p = mesh2->v[mesh2->v_indices[i]];
+		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
 		if (!ConvexMesh_HasPoint_InternalProc(mesh1, p)) {
 			return 0;
 		}
@@ -518,18 +518,18 @@ int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 }
 
 /*
-int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const float p[3]) {
-	float dir[3];
+int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+	CCTNum_t dir[3];
 	unsigned int i, again_flag;
 	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
 	again_flag = 0;
-	dir[0] = 1.0f; dir[1] = dir[2] = 0.0f;
+	dir[0] = 1.0f; dir[1] = dir[2] = CCTNum(0.0);
 again:
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		float d, cos_theta, cast_p[3];
+		CCTNum_t d, cos_theta, cast_p[3];
 		mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &d);
 		if (CCT_EPSILON_NEGATE <= d && d <= CCT_EPSILON) {
 			if (Polygon_Convex_HasPoint_InternalProc(polygon, p)) {
@@ -542,7 +542,7 @@ again:
 			continue;
 		}
 		d /= cos_theta;
-		if (d < 0.0f) {
+		if (d < CCTNum(0.0)) {
 			continue;
 		}
 		mathVec3Copy(cast_p, p);
@@ -555,7 +555,7 @@ again:
 		return 0;
 	}
 	if (!again_flag) {
-		dir[0] = -1.0f;
+		dir[0] = CCTNum(-1.0);
 		again_flag = 1;
 		goto again;
 	}

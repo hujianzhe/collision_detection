@@ -5,6 +5,8 @@
 #ifndef	UTIL_C_CRT_GEOMETRY_NUMBER_DEFINE_H
 #define	UTIL_C_CRT_GEOMETRY_NUMBER_DEFINE_H
 
+#include <math.h>
+
 #ifdef CCT_NUM_FLOAT
 	typedef	float					CCTNum_t;
 	#define	CCTNum(n)				n##f

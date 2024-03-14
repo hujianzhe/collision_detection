@@ -11,34 +11,38 @@
 /*********************************************************************/
 
 typedef struct GeometrySegment_t {
-	float v[2][3];
+	CCTNum_t v[2][3];
 } GeometrySegment_t;
 
 typedef struct GeometryPlane_t {
-	float v[3];
-	float normal[3];
+	CCTNum_t v[3];
+	CCTNum_t normal[3];
 } GeometryPlane_t;
 
 typedef struct GeometrySphere_t {
-	float o[3];
-	float radius;
+	CCTNum_t o[3];
+	CCTNum_t radius;
 } GeometrySphere_t;
 
 typedef struct GeometryAABB_t {
-	float o[3];
-	float half[3];
+	CCTNum_t o[3];
+	CCTNum_t half[3];
 } GeometryAABB_t;
 
+#ifndef GEOMETRY_BODY_BOX_MIN_HALF
+	#define	GEOMETRY_BODY_BOX_MIN_HALF	(CCTNum(1e-5) + CCTNum(1e-5))
+#endif
+
 typedef struct GeometryOBB_t {
-	float o[3];
-	float half[3];
-	float axis[3][3];
+	CCTNum_t o[3];
+	CCTNum_t half[3];
+	CCTNum_t axis[3][3];
 } GeometryOBB_t;
 
 typedef struct GeometryPolygon_t {
-	float (*v)[3]; /* vertices vec3 */
-	float o[3]; /* origin position */
-	float normal[3]; /* plane normal */
+	CCTNum_t (*v)[3]; /* vertices vec3 */
+	CCTNum_t o[3]; /* origin position */
+	CCTNum_t normal[3]; /* plane normal */
 	unsigned int v_indices_cnt; /* number of edge vertices index */
 	unsigned int tri_indices_cnt;  /* number of triangle vertices index */
 	const unsigned int* v_indices; /* edge vertices index, must be ordered(clockwise or counterclockwise) */
@@ -46,8 +50,8 @@ typedef struct GeometryPolygon_t {
 } GeometryPolygon_t;
 
 typedef struct GeometryMesh_t {
-	float (*v)[3]; /* vertices vec3 */
-	float o[3]; /* origin position */
+	CCTNum_t (*v)[3]; /* vertices vec3 */
+	CCTNum_t o[3]; /* origin position */
 	GeometryAABB_t bound_box; /* AABB bound box */
 	unsigned int polygons_cnt; /* number of polygen plane */
 	unsigned int edge_indices_cnt; /* number of edge vertices index */
@@ -73,7 +77,7 @@ enum {
 typedef struct GeometryBody_t {
 	union {
 		char data;
-		float point[3];
+		CCTNum_t point[3];
 		GeometrySegment_t segment;
 		GeometryPlane_t plane;
 		GeometrySphere_t sphere;
@@ -88,7 +92,7 @@ typedef struct GeometryBody_t {
 typedef struct GeometryBodyRef_t {
 	union {
 		void* data;
-		float* point; /* float[3] */
+		CCTNum_t* point; /* CCTNum_t[3] */
 		GeometrySegment_t* segment;
 		GeometryPlane_t* plane;
 		GeometrySphere_t* sphere;

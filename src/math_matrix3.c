@@ -4,21 +4,20 @@
 
 #include "../inc/math_vec3.h"
 #include "../inc/math_matrix3.h"
-#include "../inc/number_define.h"
 #include <math.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-void mathMat44TransformSplit(const float m[16], float T[3], float S[3], float R[9]) {
+void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]) {
 	if (T) {
 		T[0] = m[12];
 		T[1] = m[13];
 		T[2] = m[14];
 	}
 	if (R) {
-		float s[3];
+		CCTNum_t s[3];
 		if (!S) {
 			S = s;
 		}
@@ -36,18 +35,18 @@ void mathMat44TransformSplit(const float m[16], float T[3], float S[3], float R[
 	}
 }
 
-float* mathMat44SetPositionPart(float m[16], const float p[3]) {
+CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]) {
 	m[12] = p[0];
 	m[13] = p[1];
 	m[14] = p[2];
 	return m;
 }
 
-float* mathMat44Element(const float m[16], unsigned int column, unsigned int row) {
-	return (float*)&m[(column << 2) + row];
+CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column, unsigned int row) {
+	return (CCTNum_t*)&m[(column << 2) + row];
 }
 
-float* mathMat44ToMat33(const float m44[16], float m33[9]) {
+CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]) {
 	m33[0] = m44[0];
 	m33[1] = m44[1];
 	m33[2] = m44[2];
@@ -62,7 +61,7 @@ float* mathMat44ToMat33(const float m44[16], float m33[9]) {
 	return m33;
 }
 
-float* mathMat44Copy(float r[16], const float m[16]) {
+CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]) {
 	if (r == m) {
 		return r;
 	}
@@ -73,31 +72,31 @@ float* mathMat44Copy(float r[16], const float m[16]) {
 	return r;
 }
 
-float* mathMat44Identity(float m[16]) {
-	m[0] = 1.0f;
-	m[1] = 0.0f;
-	m[2] = 0.0f;
-	m[3] = 0.0f;
+CCTNum_t* mathMat44Identity(CCTNum_t m[16]) {
+	m[0] = CCTNum(1.0);
+	m[1] = CCTNum(0.0);
+	m[2] = CCTNum(0.0);
+	m[3] = CCTNum(0.0);
 
-	m[4] = 0.0f;
-	m[5] = 1.0f;
-	m[6] = 0.0f;
-	m[7] = 0.0f;
+	m[4] = CCTNum(0.0);
+	m[5] = CCTNum(1.0);
+	m[6] = CCTNum(0.0);
+	m[7] = CCTNum(0.0);
 
-	m[8] = 0.0f;
-	m[9] = 0.0f;
-	m[10] = 1.0f;
-	m[11] = 0.0f;
+	m[8] = CCTNum(0.0);
+	m[9] = CCTNum(0.0);
+	m[10] = CCTNum(1.0);
+	m[11] = CCTNum(0.0);
 
-	m[12] = 0.0f;
-	m[13] = 0.0f;
-	m[14] = 0.0f;
-	m[15] = 1.0f;
+	m[12] = CCTNum(0.0);
+	m[13] = CCTNum(0.0);
+	m[14] = CCTNum(0.0);
+	m[15] = CCTNum(1.0);
 
 	return m;
 }
 
-float* mathMat44Add(float r[16], const float m1[16], const float m2[16]) {
+CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) {
 	int i;
 	for (i = 0; i < 16; ++i) {
 		r[i] = m1[i] + m2[i];
@@ -105,7 +104,7 @@ float* mathMat44Add(float r[16], const float m1[16], const float m2[16]) {
 	return r;
 }
 
-float* mathMat44MultiplyScalar(float r[16], const float m[16], float n) {
+CCTNum_t* mathMat44MultiplyScalar(CCTNum_t r[16], const CCTNum_t m[16], CCTNum_t n) {
 	int i;
 	for (i = 0; i < 16; ++i) {
 		r[i] = m[i] * n;
@@ -114,7 +113,7 @@ float* mathMat44MultiplyScalar(float r[16], const float m[16], float n) {
 }
 
 /* r = m1*m2  */
-float* mathMat44MulMat44(float r[16], const float m1[16], const float m2[16]) {
+CCTNum_t* mathMat44MulMat44(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) {
 	int i, j;
 	for (i = 0; i < 4; ++i) {
 		for (j = 0; j < 16; j += 4) {
@@ -124,8 +123,8 @@ float* mathMat44MulMat44(float r[16], const float m1[16], const float m2[16]) {
 	return r;
 }
 
-float* mathMat44Transpose(float r[16], const float m[16]) {
-	float t;
+CCTNum_t* mathMat44Transpose(CCTNum_t r[16], const CCTNum_t m[16]) {
+	CCTNum_t t;
 
 	t = m[1];
 	r[1] = m[4];
@@ -161,8 +160,8 @@ float* mathMat44Transpose(float r[16], const float m[16]) {
 	return r;
 }
 
-float* mathMat44Inverse(float r[16], const float m[16]) {
-	float t;
+CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]) {
+	CCTNum_t t;
 
 	r[3] = -m[0]*m[12] - m[1]*m[13] - m[2]*m[14];
 	r[7] = -m[4]*m[12] - m[5]*m[13] - m[6]*m[14];
@@ -195,75 +194,75 @@ float* mathMat44Inverse(float r[16], const float m[16]) {
 	return r;
 }
 
-float* mathMat44TransformVec3(float r[3], const float m[16], const float v[3]) {
-	float x = v[0], y = v[1], z = v[2];
+CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) {
+	CCTNum_t x = v[0], y = v[1], z = v[2];
 	r[0] = m[0]*x + m[4]*y + m[8]*z + m[12];
 	r[1] = m[1]*x + m[5]*y + m[9]*z + m[13];
 	r[2] = m[2]*x + m[6]*y + m[10]*z + m[14];
 	return r;
 }
 
-float* mathMat44RotateVec3(float r[3], const float m[16], const float v[3]) {
-	float x = v[0], y = v[1], z = v[2];
+CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) {
+	CCTNum_t x = v[0], y = v[1], z = v[2];
 	r[0] = m[0]*x + m[4]*y + m[8]*z;
 	r[1] = m[1]*x + m[5]*y + m[9]*z;
 	r[2] = m[2]*x + m[6]*y + m[10]*z;
 	return r;
 }
 
-float* mathMat44FromQuat(float m[16], const float q[4]) {
-	float x = q[0];
-	float y = q[1];
-	float z = q[2];
-	float w = q[3];
+CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]) {
+	CCTNum_t x = q[0];
+	CCTNum_t y = q[1];
+	CCTNum_t z = q[2];
+	CCTNum_t w = q[3];
 
-	float x2 = x + x;
-	float y2 = y + y;
-	float z2 = z + z;
+	CCTNum_t x2 = x + x;
+	CCTNum_t y2 = y + y;
+	CCTNum_t z2 = z + z;
 
-	float xx = x2 * x;
-	float yy = y2 * y;
-	float zz = z2 * z;
+	CCTNum_t xx = x2 * x;
+	CCTNum_t yy = y2 * y;
+	CCTNum_t zz = z2 * z;
 
-	float xy = x2 * y;
-	float xz = x2 * z;
-	float xw = x2 * w;
+	CCTNum_t xy = x2 * y;
+	CCTNum_t xz = x2 * z;
+	CCTNum_t xw = x2 * w;
 
-	float yz = y2 * z;
-	float yw = y2 * w;
-	float zw = z2 * w;
+	CCTNum_t yz = y2 * z;
+	CCTNum_t yw = y2 * w;
+	CCTNum_t zw = z2 * w;
 
 	/* column 0 */
-	m[0] = 1.0f - yy - zz;
+	m[0] = CCTNum(1.0) - yy - zz;
 	m[1] = xy + zw;
 	m[2] = xz - yw;
-	m[3] = 0.0f;
+	m[3] = CCTNum(0.0);
 	/* column 1 */
 	m[4] = xy - zw;
-	m[5] = 1.0f - xx - zz;
+	m[5] = CCTNum(1.0) - xx - zz;
 	m[6] = yz + xw;
-	m[7] = 0.0f;
+	m[7] = CCTNum(0.0);
 	/* column 2 */
 	m[8] = xz + yw;
 	m[9] = yz - xw;
-	m[10] = 1.0f - xx - yy;
-	m[11] = 0.0f;
+	m[10] = CCTNum(1.0) - xx - yy;
+	m[11] = CCTNum(0.0);
 	/* column 3 */
-	m[12] = 0.0f;
-	m[13] = 0.0f;
-	m[14] = 0.0f;
-	m[15] = 1.0f;
+	m[12] = CCTNum(0.0);
+	m[13] = CCTNum(0.0);
+	m[14] = CCTNum(0.0);
+	m[15] = CCTNum(1.0);
 	return m;
 }
 
-float* mathMat44ToQuat(const float m[16], float q[4]) {
-	float m33[9];
+CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]) {
+	CCTNum_t m33[9];
 	return mathMat33ToQuat(mathMat44ToMat33(m, m33), q);
 }
 
-float* mathMat33ToQuat(const float m[9], float q[4]) {
-	float t, s;
-	if (m[8] < 0.0f) {
+CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
+	CCTNum_t t, s;
+	if (m[8] < CCTNum(0.0)) {
 		if (m[0] > m[4]) {
 			t = 1 + m[0] - m[4] - m[8];
 			q[0] = t;
@@ -295,7 +294,7 @@ float* mathMat33ToQuat(const float m[9], float q[4]) {
 			q[4] = t;
 		}
 	}
-	s = 0.5f / sqrtf(t);
+	s = CCTNum(0.5) / CCTNum_sqrt(t);
 	q[0] *= s;
 	q[1] *= s;
 	q[2] *= s;
@@ -303,8 +302,8 @@ float* mathMat33ToQuat(const float m[9], float q[4]) {
 	return q;
 }
 
-float* mathMat33FromQuat(float m[9], const float q[4]) {
-	float m44[16];
+CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]) {
+	CCTNum_t m44[16];
 	return mathMat44ToMat33(mathMat44FromQuat(m44, q), m);
 }
 

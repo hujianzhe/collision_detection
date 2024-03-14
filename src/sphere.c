@@ -9,8 +9,8 @@
 extern "C" {
 #endif
 
-int mathSphereHasPoint(const float o[3], float radius, const float p[3]) {
-	float op[3], op_lensq, radius_sq = radius * radius;
+int mathSphereHasPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
+	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
 	mathVec3Sub(op, p, o);
 	op_lensq = mathVec3LenSq(op);
 	if (op_lensq > radius_sq + CCT_EPSILON) {
@@ -22,9 +22,9 @@ int mathSphereHasPoint(const float o[3], float radius, const float p[3]) {
 	return 1;
 }
 
-int mathSphereIntersectSphere(const float o1[3], float r1, const float o2[3], float r2, float p[3]) {
-	float o1o2[3];
-	float o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
+int mathSphereIntersectSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
+	CCTNum_t o1o2[3];
+	CCTNum_t o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
 	o1o2_lensq = mathVec3LenSq(o1o2);
 	if (o1o2_lensq > radius_sum_sq + CCT_EPSILON) {
@@ -40,8 +40,8 @@ int mathSphereIntersectSphere(const float o1[3], float r1, const float o2[3], fl
 	return 1;
 }
 
-int mathSphereContainSphere(const float o1[3], float r1, const float o2[3], float r2) {
-	float o1o2[3], len_sq;
+int mathSphereContainSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
+	CCTNum_t o1o2[3], len_sq;
 	if (r1 < r2) {
 		return 0;
 	}

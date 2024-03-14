@@ -44,13 +44,13 @@ const unsigned int Box_Triangle_Vertices_Indices[36] = {
 	3, 7, 6,	6, 2, 3,
 	0, 4, 5,	5, 1, 0
 };
-const float AABB_Plane_Normal[6][3] = {
-	{ 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f, -1.0f },
-	{ 1.0f, 0.0f, 0.0f },{ -1.0f, 0.0f, 0.0f },
-	{ 0.0f, 1.0f, 0.0f },{ 0.0f, -1.0f, 0.0f }
+const CCTNum_t AABB_Plane_Normal[6][3] = {
+	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) },
+	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },
+	{ CCTNums_3(0.0, 1.0, 0.0) }, { CCTNums_3(0.0, -1.0, 0.0) }
 };
 
-void mathAABBPlaneVertices(const float o[3], const float half[3], float v[6][3]) {
+void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]) {
 	mathVec3Copy(v[0], o);
 	v[0][2] += half[2];
 	mathVec3Copy(v[1], o);
@@ -67,7 +67,7 @@ void mathAABBPlaneVertices(const float o[3], const float half[3], float v[6][3])
 	v[5][1] -= half[1];
 }
 
-void mathAABBVertices(const float o[3], const float half[3], float v[8][3]) {
+void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]) {
 	v[0][0] = o[0] - half[0]; v[0][1] = o[1] - half[1]; v[0][2] = o[2] - half[2];
 	v[1][0] = o[0] + half[0]; v[1][1] = o[1] - half[1]; v[1][2] = o[2] - half[2];
 	v[2][0] = o[0] + half[0]; v[2][1] = o[1] + half[1]; v[2][2] = o[2] - half[2];
@@ -78,27 +78,27 @@ void mathAABBVertices(const float o[3], const float half[3], float v[8][3]) {
 	v[7][0] = o[0] - half[0]; v[7][1] = o[1] + half[1]; v[7][2] = o[2] + half[2];
 }
 
-void mathAABBMinVertice(const float o[3], const float half[3], float v[3]) {
+void mathAABBMinVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]) {
 	v[0] = o[0] - half[0];
 	v[1] = o[1] - half[1];
 	v[2] = o[2] - half[2];
 }
 
-void mathAABBMaxVertice(const float o[3], const float half[3], float v[3]) {
+void mathAABBMaxVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]) {
 	v[0] = o[0] + half[0];
 	v[1] = o[1] + half[1];
 	v[2] = o[2] + half[2];
 }
 
-void mathAABBFromTwoVertice(const float a[3], const float b[3], float o[3], float half[3]) {
+void mathAABBFromTwoVertice(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t o[3], CCTNum_t half[3]) {
 	unsigned int i;
 	for (i = 0; i < 3; ++i) {
-		o[i] = (a[i] + b[i]) * 0.5f;
+		o[i] = (a[i] + b[i]) * CCTNum(0.5);
 		if (a[i] > b[i]) {
-			half[i] = (a[i] - b[i]) * 0.5f;
+			half[i] = (a[i] - b[i]) * CCTNum(0.5);
 		}
 		else {
-			half[i] = (b[i] - a[i]) * 0.5f;
+			half[i] = (b[i] - a[i]) * CCTNum(0.5);
 		}
 		if (half[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
 			half[i] = GEOMETRY_BODY_BOX_MIN_HALF;
@@ -106,15 +106,15 @@ void mathAABBFromTwoVertice(const float a[3], const float b[3], float o[3], floa
 	}
 }
 
-int mathAABBHasPoint(const float o[3], const float half[3], const float p[3]) {
+int mathAABBHasPoint(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3]) {
 	return p[0] >= o[0] - half[0] - CCT_EPSILON && p[0] <= o[0] + half[0] + CCT_EPSILON &&
 		   p[1] >= o[1] - half[1] - CCT_EPSILON && p[1] <= o[1] + half[1] + CCT_EPSILON &&
 		   p[2] >= o[2] - half[2] - CCT_EPSILON && p[2] <= o[2] + half[2] + CCT_EPSILON;
 }
 
-void mathAABBClosestPointTo(const float o[3], const float half[3], const float p[3], float closest_p[3]) {
+void mathAABBClosestPointTo(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
 	int i;
-	float min_v[3], max_v[3];
+	CCTNum_t min_v[3], max_v[3];
 	mathAABBMinVertice(o, half, min_v);
 	mathAABBMaxVertice(o, half, max_v);
 	for (i = 0; i < 3; ++i) {
@@ -130,11 +130,11 @@ void mathAABBClosestPointTo(const float o[3], const float half[3], const float p
 	}
 }
 
-void mathAABBStretch(float o[3], float half[3], const float delta[3]) {
+void mathAABBStretch(CCTNum_t o[3], CCTNum_t half[3], const CCTNum_t delta[3]) {
 	unsigned int i;
 	for (i = 0; i < 3; ++i) {
-		float d = delta[i] * 0.5f;
-		if (d > 0.0f) {
+		CCTNum_t d = delta[i] * CCTNum(0.5);
+		if (d > CCTNum(0.0)) {
 			half[i] += d;
 		}
 		else {
@@ -144,15 +144,15 @@ void mathAABBStretch(float o[3], float half[3], const float delta[3]) {
 	}
 }
 
-void mathAABBSplit(const float o[3], const float half[3], float new_o[8][3], float new_half[3]) {
-	mathVec3MultiplyScalar(new_half, half, 0.5f);
+void mathAABBSplit(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t new_o[8][3], CCTNum_t new_half[3]) {
+	mathVec3MultiplyScalar(new_half, half, CCTNum(0.5));
 	mathAABBVertices(o, new_half, new_o);
 }
 
-int mathAABBIntersectAABB(const float o1[3], const float half1[3], const float o2[3], const float half2[3]) {
+int mathAABBIntersectAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	int i;
 	for (i = 0; i < 3; ++i) {
-		float half = half1[i] + half2[i] + CCT_EPSILON;
+		CCTNum_t half = half1[i] + half2[i] + CCT_EPSILON;
 		if (o2[i] - o1[i] > half || o1[i] - o2[i] > half) {
 			return 0;
 		}
@@ -160,8 +160,8 @@ int mathAABBIntersectAABB(const float o1[3], const float half1[3], const float o
 	return 1;
 }
 
-int mathAABBContainAABB(const float o1[3], const float half1[3], const float o2[3], const float half2[3]) {
-	float v[3];
+int mathAABBContainAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
+	CCTNum_t v[3];
 	mathAABBMinVertice(o2, half2, v);
 	if (!mathAABBHasPoint(o1, half1, v)) {
 		return 0;

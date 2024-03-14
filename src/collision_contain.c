@@ -14,15 +14,13 @@
 #include "../inc/collision.h"
 #include <stddef.h>
 
-static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const float o[3], float radius) {
+static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCTNum_t radius) {
 	int i;
-	float v[3];
+	CCTNum_t v[3];
 	mathVec3Sub(v, o, obb->o);
 	for (i = 0; i < 3; ++i) {
-		float dot = mathVec3Dot(v, obb->axis[i]);
-		if (dot < 0.0f) {
-			dot = -dot;
-		}
+		CCTNum_t dot = mathVec3Dot(v, obb->axis[i]);
+		dot = CCTNum_abs(dot);
 		if (dot > obb->half[i] - radius) {
 			return 0;
 		}
@@ -30,13 +28,13 @@ static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const float o[3], float 
 	return 1;
 }
 
-static int AABB_Contain_Mesh(const float o[3], const float half[3], const GeometryMesh_t* mesh) {
+static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (mathAABBContainAABB(o, half, mesh->bound_box.o, mesh->bound_box.half)) {
 		return 1;
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const float* p = mesh->v[mesh->v_indices[i]];
+		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 		if (!mathAABBHasPoint(o, half, p)) {
 			return 0;
 		}
@@ -44,8 +42,8 @@ static int AABB_Contain_Mesh(const float o[3], const float half[3], const Geomet
 	return 1;
 }
 
-static int Sphere_Contain_Mesh(const float o[3], float radius, const GeometryMesh_t* mesh) {
-	float v[3];
+static int Sphere_Contain_Mesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
+	CCTNum_t v[3];
 	unsigned int i;
 	mathAABBMinVertice(mesh->bound_box.o, mesh->bound_box.half, v);
 	if (mathSphereHasPoint(o, radius, v)) {
@@ -55,7 +53,7 @@ static int Sphere_Contain_Mesh(const float o[3], float radius, const GeometryMes
 		}
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const float* p = mesh->v[mesh->v_indices[i]];
+		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 		if (!mathSphereHasPoint(o, radius, p)) {
 			return 0;
 		}
@@ -64,7 +62,7 @@ static int Sphere_Contain_Mesh(const float o[3], float radius, const GeometryMes
 }
 
 static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
-	float p[8][3];
+	CCTNum_t p[8][3];
 	unsigned int i;
 	mathAABBVertices(mesh->bound_box.o, mesh->bound_box.half, p);
 	for (i = 0; i < 8; ++i) {
@@ -76,7 +74,7 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 		return 1;
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const float* p = mesh->v[mesh->v_indices[i]];
+		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 		if (!mathOBBHasPoint(obb, p)) {
 			return 0;
 		}
@@ -84,8 +82,8 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	return 1;
 }
 
-static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const float o[3], const float half[3]) {
-	float p[8][3];
+static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t o[3], const CCTNum_t half[3]) {
+	CCTNum_t p[8][3];
 	unsigned int i;
 	if (!mathAABBContainAABB(mesh->bound_box.o, mesh->bound_box.half, o, half)) {
 		return 0;
@@ -100,7 +98,7 @@ static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const float o[3],
 }
 
 static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_t* obb) {
-	float p[8][3];
+	CCTNum_t p[8][3];
 	unsigned int i;
 	mathOBBVertices(obb, p);
 	for (i = 0; i < 8; ++i) {
@@ -111,10 +109,10 @@ static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_
 	return 1;
 }
 
-static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const float o[3], float radius) {
+static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t o[3], CCTNum_t radius) {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		float d;
+		CCTNum_t d;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &d);
 		if (d < radius) {
@@ -213,7 +211,7 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			float v[3];
+			CCTNum_t v[3];
 			mathAABBMinVertice(two->aabb->o, two->aabb->half, v);
 			if (!mathSphereHasPoint(one->sphere->o, one->sphere->radius, v)) {
 				return 0;
@@ -223,7 +221,7 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			float v[3];
+			CCTNum_t v[3];
 			mathOBBMinVertice(two->obb, v);
 			if (!mathSphereHasPoint(one->sphere->o, one->sphere->radius, v)) {
 				return 0;
@@ -313,11 +311,11 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathSegmentHasPoint((const float(*)[3])one->segment->v, two->point);
+			return mathSegmentHasPoint((const CCTNum_t(*)[3])one->segment->v, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return mathSegmentContainSegment((const float(*)[3])one->segment->v, (const float(*)[3])two->segment->v);
+			return mathSegmentContainSegment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
 		}
 		}
 	}

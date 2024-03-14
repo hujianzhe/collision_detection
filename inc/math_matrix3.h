@@ -6,6 +6,7 @@
 #define	UTIL_C_CRT_MATH_MATRIX3_H
 
 #include "compiler_define.h"
+#include "number_define.h"
 
 /* note: Matrix[column][row] */
 
@@ -13,23 +14,23 @@
 extern "C" {
 #endif
 
-__declspec_dll void mathMat44TransformSplit(const float m[16], float T[3], float S[3], float R[9]);
-__declspec_dll float* mathMat44SetPositionPart(float m[16], const float p[3]);
-__declspec_dll float* mathMat44Element(const float m[16], unsigned int column, unsigned int row);
-__declspec_dll float* mathMat44ToMat33(const float m44[16], float m33[9]);
-__declspec_dll float* mathMat44Copy(float r[16], const float m[16]);
-__declspec_dll float* mathMat44Identity(float m[16]);
-__declspec_dll float* mathMat44Add(float r[16], const float m1[16], const float m2[16]);
-__declspec_dll float* mathMat44MultiplyScalar(float r[16], const float m[16], float n);
-__declspec_dll float* mathMat44MulMat44(float r[16], const float m1[16], const float m2[16]);
-__declspec_dll float* mathMat44Transpose(float r[16], const float m[16]);
-__declspec_dll float* mathMat44Inverse(float r[16], const float m[16]);
-__declspec_dll float* mathMat44TransformVec3(float r[3], const float m[16], const float v[3]);
-__declspec_dll float* mathMat44RotateVec3(float r[3], const float m[16], const float v[3]);
-__declspec_dll float* mathMat44FromQuat(float m[16], const float q[4]);
-__declspec_dll float* mathMat44ToQuat(const float m[16], float q[4]);
-__declspec_dll float* mathMat33ToQuat(const float m[9], float q[4]);
-__declspec_dll float* mathMat33FromQuat(float m[9], const float q[4]);
+__declspec_dll void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]);
+__declspec_dll CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]);
+__declspec_dll CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column, unsigned int row);
+__declspec_dll CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]);
+__declspec_dll CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]);
+__declspec_dll CCTNum_t* mathMat44Identity(CCTNum_t m[16]);
+__declspec_dll CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]);
+__declspec_dll CCTNum_t* mathMat44MultiplyScalar(CCTNum_t r[16], const CCTNum_t m[16], CCTNum_t n);
+__declspec_dll CCTNum_t* mathMat44MulMat44(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]);
+__declspec_dll CCTNum_t* mathMat44Transpose(CCTNum_t r[16], const CCTNum_t m[16]);
+__declspec_dll CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]);
+__declspec_dll CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]);
+__declspec_dll CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]);
+__declspec_dll CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]);
+__declspec_dll CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]);
 
 #ifdef	__cplusplus
 }

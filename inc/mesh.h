@@ -11,13 +11,13 @@
 extern "C" {
 #endif
 
-__declspec_dll GeometryMesh_t* mathMeshCooking(const float (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
+__declspec_dll GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
 __declspec_dll GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src);
 __declspec_dll void mathMeshFreeCookingData(GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh);
 __declspec_dll void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh);
-__declspec_dll int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const float p[3]);
+__declspec_dll int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 __declspec_dll int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
 
 #ifdef	__cplusplus

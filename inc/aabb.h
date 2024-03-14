@@ -7,10 +7,6 @@
 
 #include "geometry_def.h"
 
-#ifndef GEOMETRY_BODY_BOX_MIN_HALF
-#define	GEOMETRY_BODY_BOX_MIN_HALF	(1e-5f + 1e-5f)
-#endif
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -18,21 +14,21 @@ extern "C" {
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Adjacent_Indices[8][3];
 extern const unsigned int Box_Triangle_Vertices_Indices[36];
-extern const float AABB_Plane_Normal[6][3];
+extern const CCTNum_t AABB_Plane_Normal[6][3];
 
-__declspec_dll void mathAABBPlaneVertices(const float o[3], const float half[3], float v[6][3]);
+__declspec_dll void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]);
 
-__declspec_dll void mathAABBVertices(const float o[3], const float half[3], float v[8][3]);
-__declspec_dll void mathAABBMinVertice(const float o[3], const float half[3], float v[3]);
-__declspec_dll void mathAABBMaxVertice(const float o[3], const float half[3], float v[3]);
-__declspec_dll void mathAABBFromTwoVertice(const float a[3], const float b[3], float o[3], float half[3]);
+__declspec_dll void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]);
+__declspec_dll void mathAABBMinVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]);
+__declspec_dll void mathAABBMaxVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]);
+__declspec_dll void mathAABBFromTwoVertice(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t o[3], CCTNum_t half[3]);
 
-__declspec_dll int mathAABBHasPoint(const float o[3], const float half[3], const float p[3]);
-__declspec_dll void mathAABBClosestPointTo(const float o[3], const float half[3], const float p[3], float closest_p[3]);
-__declspec_dll void mathAABBStretch(float o[3], float half[3], const float delta[3]);
-__declspec_dll void mathAABBSplit(const float o[3], const float half[3], float new_o[8][3], float new_half[3]);
-__declspec_dll int mathAABBIntersectAABB(const float o1[3], const float half1[3], const float o2[3], const float half2[3]);
-__declspec_dll int mathAABBContainAABB(const float o1[3], const float half1[3], const float o2[3], const float half2[3]);
+__declspec_dll int mathAABBHasPoint(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3]);
+__declspec_dll void mathAABBClosestPointTo(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3], CCTNum_t closest_p[3]);
+__declspec_dll void mathAABBStretch(CCTNum_t o[3], CCTNum_t half[3], const CCTNum_t delta[3]);
+__declspec_dll void mathAABBSplit(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t new_o[8][3], CCTNum_t new_half[3]);
+__declspec_dll int mathAABBIntersectAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]);
+__declspec_dll int mathAABBContainAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]);
 
 #ifdef	__cplusplus
 }

@@ -21,18 +21,18 @@ enum {
 extern "C" {
 #endif
 
-__declspec_dll int mathProjectionRay(const float o[3], const float projection_p[3], const float dir[3], float* dir_d, float projection_v[3]);
-__declspec_dll float mathPointProjectionLine(const float p[3], const float ls_v[3], const float lsdir[3], float np[3]);
-__declspec_dll int mathLineClosestLine(const float lsv1[3], const float lsdir1[3], const float lsv2[3], const float lsdir2[3], float* min_d, float dir_d[2]);
-__declspec_dll int mathLineIntersectLine(const float ls1v[3], const float ls1dir[3], const float ls2v[3], const float ls2dir[3], float distance[2]);
+__declspec_dll int mathProjectionRay(const CCTNum_t o[3], const CCTNum_t projection_p[3], const CCTNum_t dir[3], CCTNum_t* dir_d, CCTNum_t projection_v[3]);
+__declspec_dll CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]);
+__declspec_dll int mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* min_d, CCTNum_t dir_d[2]);
+__declspec_dll int mathLineIntersectLine(const CCTNum_t ls1v[3], const CCTNum_t ls1dir[3], const CCTNum_t ls2v[3], const CCTNum_t ls2dir[3], CCTNum_t distance[2]);
 
-__declspec_dll int mathSegmentHasPoint(const float ls[2][3], const float p[3]);
-__declspec_dll int mathSegmentIsSame(const float ls1[2][3], const float ls2[2][3]);
-__declspec_dll void mathSegmentClosestPointTo(const float ls[2][3], const float p[3], float closest_p[3]);
-__declspec_dll int mathSegmentContainSegment(const float ls1[2][3], const float ls2[2][3]);
-__declspec_dll int mathSegmentIntersectSegment(const float ls1[2][3], const float ls2[2][3], float p[3], int* line_mask);
-__declspec_dll void mathSegmentClosestSegmentVertice(const float ls1[2][3], const float ls2[2][3], float closest_p[2][3]);
-__declspec_dll int mathSegmentClosestSegment(const float ls1[2][3], const float ls2[2][3], float closest_p[2][3]);
+__declspec_dll int mathSegmentHasPoint(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
+__declspec_dll int mathSegmentIsSame(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]);
+__declspec_dll void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCTNum_t closest_p[3]);
+__declspec_dll int mathSegmentContainSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]);
+__declspec_dll int mathSegmentIntersectSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
+__declspec_dll void mathSegmentClosestSegmentVertice(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t closest_p[2][3]);
+__declspec_dll int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t closest_p[2][3]);
 
 #ifdef	__cplusplus
 }
