@@ -154,7 +154,7 @@ float* mathVec3MultiplyScalar(float r[3], const float v[3], float n) {
 
 /* r = v/n */
 float* mathVec3DivisionScalar(float r[3], const float v[3], float n) {
-	if (n > 1e-6f || n < -1e-6f) {
+	if (n != 0.0f) {
 		float inv = 1.0f / n;
 		r[0] = v[0] * inv;
 		r[1] = v[1] * inv;

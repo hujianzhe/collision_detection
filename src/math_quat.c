@@ -192,7 +192,7 @@ float* mathQuatMultiplyScalar(float r[4], const float q[4], float n) {
 
 /* r = q/n */
 float* mathQuatDivisionScalar(float r[4], const float q[4], float n) {
-	if (n > 1e-6f || n < -1e-6f) {
+	if (n != 0.0f) {
 		float inv = 1.0f / n;
 		r[0] = q[0] * inv;
 		r[1] = q[1] * inv;
