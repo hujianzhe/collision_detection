@@ -3,7 +3,7 @@ SOURCE_CPP_FILE += $(shell find . -name "*.cpp")
 
 TARGET_PATH += .
 COMPILE_OPTION := -fPIC -shared -fvisibility=hidden -Wno-deprecated -Wno-parentheses -Wno-unused-result -Wl,-Bsymbolic
-MACRO := -D_REENTRANT -DDECLSPEC_DLL_EXPORT
+MACRO := -D_REENTRANT -DDECLSPEC_DLL_EXPORT -DCCT_NUM_DOUBLE
 
 DEFAULT_LINK := -pthread -lm
 ifeq ($(shell uname), Linux)
