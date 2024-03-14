@@ -490,7 +490,7 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 		GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Sub(v, po, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(v, polygon->normal);
-		if (dot > 0.0f) {
+		if (dot > CCTNum(0.0)) {
 			mathVec3Negate(polygon->normal, polygon->normal);
 		}
 	}
@@ -525,7 +525,7 @@ int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 		return 0;
 	}
 	again_flag = 0;
-	dir[0] = 1.0f; dir[1] = dir[2] = CCTNum(0.0);
+	dir[0] = CCTNum(1.0); dir[1] = dir[2] = CCTNum(0.0);
 again:
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
