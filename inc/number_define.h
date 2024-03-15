@@ -41,6 +41,6 @@
 	#error	"CCT_NUM type isn't defined, should be float or double"
 #endif
 
-#define	CCTNum_tryfix(n, fixvalue)	(n = (CCTNum_abs(n - fixvalue) > CCT_EPSILON ? n : fixvalue))
+#define	CCTNum_try_fix_to(n, to)	((CCTNum_abs(n - to) > CCT_EPSILON ? n : to))
 
 #endif

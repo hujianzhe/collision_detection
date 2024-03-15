@@ -108,11 +108,23 @@ static CCTResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3]
 		mathVec3Sub(lsdir, ls[1], ls[0]);
 		mathVec3Normalized(lsdir, lsdir);
 		mathPointProjectionLine(o, ls[0], lsdir, p);
-		if (!mathProjectionRay(o, p, dir, &d, op)) {
+
+		mathVec3Sub(op, p, o);
+		if (mathVec3IsZero(op)) {
+			set_result(result, CCTNum(0.0), dir);
+			add_result_hit_point(result, o);
+			return result;
+		}
+		dot = mathVec3Dot(op, dir);
+		if (dot <= CCTNum(0.0)) {
 			return NULL;
 		}
+		d = mathVec3Normalized(op, op);
+		dot = mathVec3Dot(op, dir);
+		d /= dot;
 		mathVec3Copy(p, o);
 		mathVec3AddScalar(p, dir, d);
+
 		mathVec3Sub(v0, ls[0], p);
 		mathVec3Sub(v1, ls[1], p);
 		dot = mathVec3Dot(v0, v1);

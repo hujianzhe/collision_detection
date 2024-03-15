@@ -88,7 +88,10 @@ CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
 		r[2] = v[2] * inv_len;
 		return len;
 	}
-	return CCTNum(0.0);
+	else {
+		r[0] = r[1] = r[2] = CCTNum(0.0);
+		return CCTNum(0.0);
+	}
 }
 
 CCTNum_t mathVec3Direction(const CCTNum_t end[3], const CCTNum_t start[3], CCTNum_t dir[3]) {
@@ -98,6 +101,7 @@ CCTNum_t mathVec3Direction(const CCTNum_t end[3], const CCTNum_t start[3], CCTNu
 	}
 	mathVec3Sub(dir, end, start);
 	if (mathVec3IsZero(dir)) {
+		dir[0] = dir[1] = dir[2] = CCTNum(0.0);
 		return CCTNum(0.0);
 	}
 	return mathVec3Normalized(dir, dir);
@@ -180,6 +184,15 @@ CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3
 	r[1] = y;
 	r[2] = z;
 	return r;
+}
+
+CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+	mathVec3Cross(r, v1, v2);
+	if (mathVec3IsZero(r)) {
+		r[0] = r[1] = r[2] = CCTNum(0.0);
+		return CCTNum(0.0);
+	}
+	return mathVec3Normalized(r, r);
 }
 
 CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {

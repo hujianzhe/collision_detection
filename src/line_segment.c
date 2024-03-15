@@ -11,35 +11,6 @@
 extern "C" {
 #endif
 
-int mathProjectionRay(const CCTNum_t o[3], const CCTNum_t projection_p[3], const CCTNum_t dir[3], CCTNum_t* dir_d, CCTNum_t projection_v[3]) {
-	CCTNum_t v[3];
-	mathVec3Sub(v, projection_p, o);
-	if (mathVec3IsZero(v)) {
-		*dir_d = CCTNum(0.0);
-		if (projection_v) {
-			mathVec3Set(projection_v, CCTNums_3(0.0, 0.0, 0.0));
-		}
-		return 1;
-	}
-	if (dir) {
-		CCTNum_t dot = mathVec3Dot(v, dir);
-		if (dot <= CCT_EPSILON) {
-			*dir_d = CCTNum(0.0);
-			return 0;
-		}
-		*dir_d = mathVec3Normalized(v, v);
-		dot = mathVec3Dot(v, dir);
-		*dir_d /= dot;
-	}
-	else {
-		*dir_d = mathVec3Normalized(v, v);
-	}
-	if (projection_v) {
-		mathVec3Copy(projection_v, v);
-	}
-	return 1;
-}
-
 CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);

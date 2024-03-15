@@ -141,7 +141,7 @@ static int Mesh_Cooking_Polygen_InternalProc(const CCTNum_t (*v)[3], const unsig
 			goto err;
 		}
 		new_pg->v = (CCTNum_t(*)[3])v;
-		mathVec3Normalized(new_pg->normal, N);
+		mathVec3Copy(new_pg->normal, N);
 
 		tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
 		for (j = 0; j < tri_indices_cnt; j += 3) {
