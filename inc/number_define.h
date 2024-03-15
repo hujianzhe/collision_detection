@@ -9,6 +9,8 @@
 
 #ifdef CCT_NUM_FLOAT
 	typedef	float					CCTNum_t;
+	#define	CCT_EPSILON				1e-5f
+	#define	CCT_EPSILON_NEGATE		-1e-5f
 	#define	CCTNum(n)				n##f
 	#define	CCTNums_3(x, y, z)		x##f, y##f, z##f
 	#define	CCTNums_4(x, y, z, w)	x##f, y##f, z##f, w##f
@@ -22,6 +24,8 @@
 
 #elif	CCT_NUM_DOUBLE
 	typedef	double					CCTNum_t;
+	#define	CCT_EPSILON				1e-5
+	#define	CCT_EPSILON_NEGATE		-1e-5
 	#define	CCTNum(n)				n
 	#define	CCTNums_3(x, y, z)		x, y, z
 	#define	CCTNums_4(x, y, z, w)	x, y, z, w
@@ -35,11 +39,6 @@
 
 #else
 	#error	"CCT_NUM type isn't defined, should be float or double"
-#endif
-
-#ifndef CCT_EPSILON
-	#define	CCT_EPSILON			CCTNum(1E-5)
-	#define	CCT_EPSILON_NEGATE	CCTNum(-1E-5)
 #endif
 
 #endif
