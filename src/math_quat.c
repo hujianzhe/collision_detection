@@ -27,6 +27,9 @@ CCTNum_t* mathQuatNormalized(CCTNum_t r[4], const CCTNum_t q[4]) {
 		r[2] = q[2] * m;
 		r[3] = q[3] * m;
 	}
+	else {
+		r[0] = r[1] = r[2] = r[3] = CCTNum(0.0);
+	}
 	return r;
 }
 
