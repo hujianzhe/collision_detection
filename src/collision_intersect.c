@@ -405,10 +405,6 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 	if (1 == res) {
 		return mathPolygonHasPoint(polygon, p);
 	}
-	mathPointProjectionPlane(obb->o, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
-	if (mathPolygonHasPoint(polygon, p)) {
-		return 2;
-	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
