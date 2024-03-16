@@ -364,37 +364,9 @@ int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
 	return 0;
 }
 
-static int AABB_Intersect_Polygon(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
-	int res, i;
-	CCTNum_t point[3];
-	if (!p) {
-		p = point;
-	}
-	res = AABB_Intersect_Plane(o, half, polygon->v[polygon->v_indices[0]], polygon->normal, p);
-	if (0 == res) {
-		return 0;
-	}
-	if (1 == res) {
-		return mathPolygonHasPoint(polygon, p);
-	}
-	mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
-	if (mathPolygonHasPoint(polygon, p)) {
-		return 2;
-	}
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (AABB_Intersect_Segment(o, half, (const CCTNum_t(*)[3])edge)) {
-			return 2;
-		}
-	}
-	return 0;
-}
-
 static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
-	CCTNum_t point[3];
+	CCTNum_t point[3], obb_vertices[8][3];
 	if (!p) {
 		p = point;
 	}
@@ -404,6 +376,15 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 	}
 	if (1 == res) {
 		return mathPolygonHasPoint(polygon, p);
+	}
+	mathOBBVertices(obb, obb_vertices);
+	for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], obb_vertices[Box_Edge_Indices[i]]);
+		mathVec3Copy(edge[1], obb_vertices[Box_Edge_Indices[i+1]]);
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon, NULL)) {
+			return 2;
+		}
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
@@ -575,7 +556,9 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return AABB_Intersect_Polygon(one->aabb->o, one->aabb->half, two->polygon, NULL);
+				GeometryOBB_t one_obb;
+				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
+				return OBB_Intersect_Polygon(&one_obb, two->polygon, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -683,7 +666,9 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return AABB_Intersect_Polygon(two->aabb->o, two->aabb->half, one->polygon, NULL);
+				GeometryOBB_t two_obb;
+				mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
+				return OBB_Intersect_Polygon(&two_obb, one->polygon, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
