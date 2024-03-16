@@ -77,11 +77,17 @@ static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPoly
 }
 
 int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
+	unsigned int i;
 	if (mathConvexMeshHasPoint(mesh, ls[0])) {
 		return 1;
 	}
 	if (mathConvexMeshHasPoint(mesh, ls[1])) {
 		return 1;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		if (Segment_Intersect_Polygon(ls, mesh->polygons + i, NULL)) {
+			return 1;
+		}
 	}
 	return 0;
 }
