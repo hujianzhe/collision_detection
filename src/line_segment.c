@@ -319,9 +319,6 @@ int mathSegmentContainSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 	}
 	for (i = 0; i < 2; ++i) {
 		CCTNum_t dot;
-		if (mathVec3Equal(ls1[0], ls2[i]) || mathVec3Equal(ls1[1], ls2[i])) {
-			continue;
-		}
 		mathVec3Sub(v1, ls1[0], ls2[i]);
 		mathVec3Sub(v2, ls1[1], ls2[i]);
 		dot = mathVec3Dot(v1, v2);
