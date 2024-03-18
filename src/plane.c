@@ -17,7 +17,8 @@ void mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], co
 		*distance = d;
 	}
 	if (np) {
-		mathVec3AddScalar(mathVec3Copy(np, p), plane_n, d);
+		mathVec3Copy(np, p);
+		mathVec3AddScalar(np, plane_n, d);
 	}
 }
 

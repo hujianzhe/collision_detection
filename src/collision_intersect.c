@@ -211,28 +211,23 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 }
 
 int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
-	CCTNum_t pp[3], ppd, ppo[3], ppolensq, radius_sq;
-	mathPointProjectionPlane(o, plane_v, plane_normal, pp, &ppd);
-	mathVec3Sub(ppo, o, pp);
-	ppolensq = mathVec3LenSq(ppo);
-	radius_sq = radius * radius;
-	if (new_o) {
-		mathVec3Copy(new_o, pp);
-	}
-	if (ppolensq > radius_sq + CCT_EPSILON) {
+	CCTNum_t d;
+	mathPointProjectionPlane(o, plane_v, plane_normal, new_o, &d);
+	d = CCTNum_abs(d);
+	if (d > radius + CCT_EPSILON) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
 		return 0;
 	}
-	if (ppolensq >= radius_sq - CCT_EPSILON) {
+	if (d >= radius - CCT_EPSILON) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
 		return 1;
 	}
 	if (new_r) {
-		*new_r = CCTNum_sqrt(radius_sq - ppolensq);
+		*new_r = CCTNum_sqrt(radius * radius - d * d);
 	}
 	return 2;
 }
