@@ -17,13 +17,7 @@ int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[
 	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
 	mathVec3Sub(op, p, o);
 	op_lensq = mathVec3LenSq(op);
-	if (op_lensq > radius_sq + CCT_EPSILON) {
-		return 0;
-	}
-	else if (op_lensq < radius_sq - CCT_EPSILON) {
-		return 2;
-	}
-	return 1;
+	return radius_sq >= op_lensq;
 }
 
 static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
