@@ -6,7 +6,6 @@
 #include "../inc/vertex.h"
 #include "../inc/line_segment.h"
 #include "../inc/plane.h"
-#include "../inc/sphere.h"
 #include "../inc/aabb.h"
 #include "../inc/obb.h"
 #include "../inc/polygon.h"

@@ -19,7 +19,6 @@
 #include "octree.h"
 #include "plane.h"
 #include "polygon.h"
-#include "sphere.h"
 #include "vertex.h"
 
 #endif
