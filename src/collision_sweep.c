@@ -263,7 +263,7 @@ static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir
 			p_result = result;
 		}
 	}
-	if (p_result && mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, o)) {
+	if (p_result && AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, o)) {
 		CCTNum_t neg_dir[3];
 		mathVec3Negate(neg_dir, dir);
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -614,7 +614,7 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 						mathVec3Copy(new_ls[0], ls[0]);
 						mathVec3Copy(new_ls[1], ls[1]);
 					}
-					if (mathSegmentHasPoint((const CCTNum_t(*)[3])new_ls, p)) {
+					if (Segment_Contain_Point((const CCTNum_t(*)[3])new_ls, p)) {
 						set_result(result, d, plo);
 						add_result_hit_point(result, p);
 						return result;

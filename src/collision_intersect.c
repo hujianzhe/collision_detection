@@ -16,6 +16,8 @@
 
 extern const unsigned int Box_Edge_Indices[24];
 
+extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
+
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
 	CCTNum_t d[2], lsdir[3], dot;
 	mathVec3Sub(lsdir, ls[1], ls[0]);
@@ -289,6 +291,24 @@ int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB
 	return 1;
 }
 
+static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
+	CCTNum_t o1o2[3];
+	CCTNum_t o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
+	mathVec3Sub(o1o2, o2, o1);
+	o1o2_lensq = mathVec3LenSq(o1o2);
+	if (o1o2_lensq > radius_sum_sq + CCT_EPSILON) {
+		return 0;
+	}
+	else if (o1o2_lensq < radius_sum_sq - CCT_EPSILON) {
+		return 2;
+	}
+	if (p) {
+		mathVec3Normalized(o1o2, o1o2);
+		mathVec3AddScalar(mathVec3Copy(p, o1), o1o2, r1);
+	}
+	return 1;
+}
+
 static int Box_Intersect_Plane(const CCTNum_t vertices[8][3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
 	int i, has_gt0 = 0, has_le0 = 0, idx_0 = 0;
 	for (i = 0; i < 8; ++i) {
@@ -341,7 +361,7 @@ static int AABB_Intersect_Sphere(const CCTNum_t aabb_o[3], const CCTNum_t aabb_h
 static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
 	int i;
 	GeometryPolygon_t polygon;
-	if (mathAABBHasPoint(o, half, ls[0]) || mathAABBHasPoint(o, half, ls[1])) {
+	if (AABB_Contain_Point(o, half, ls[0]) || AABB_Contain_Point(o, half, ls[1])) {
 		return 1;
 	}
 	for (i = 0; i < 6; ++i) {
@@ -478,7 +498,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return mathSegmentHasPoint((const CCTNum_t(*)[3])two->segment->v, one->point);
+				return Segment_Contain_Point((const CCTNum_t(*)[3])two->segment->v, one->point);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -486,7 +506,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return mathAABBHasPoint(two->aabb->o, two->aabb->half, one->point);
+				return AABB_Contain_Point(two->aabb->o, two->aabb->half, one->point);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -511,7 +531,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathSegmentHasPoint(one_segment_v, two->point);
+				return Segment_Contain_Point(one_segment_v, two->point);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -547,7 +567,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathAABBHasPoint(one->aabb->o, one->aabb->half, two->point);
+				return AABB_Contain_Point(one->aabb->o, one->aabb->half, two->point);
 			}
 			case GEOMETRY_BODY_AABB:
 			{

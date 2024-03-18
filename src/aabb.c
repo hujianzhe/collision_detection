@@ -109,7 +109,7 @@ void mathAABBFromTwoVertice(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t o
 	}
 }
 
-int mathAABBHasPoint(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3]) {
+int AABB_Contain_Point(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3]) {
 	return p[0] >= o[0] - half[0] - CCT_EPSILON && p[0] <= o[0] + half[0] + CCT_EPSILON &&
 		   p[1] >= o[1] - half[1] - CCT_EPSILON && p[1] <= o[1] + half[1] + CCT_EPSILON &&
 		   p[2] >= o[2] - half[2] - CCT_EPSILON && p[2] <= o[2] + half[2] + CCT_EPSILON;
@@ -166,11 +166,11 @@ int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCT
 int AABB_Contain_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	CCTNum_t v[3];
 	mathAABBMinVertice(o2, half2, v);
-	if (!mathAABBHasPoint(o1, half1, v)) {
+	if (!AABB_Contain_Point(o1, half1, v)) {
 		return 0;
 	}
 	mathAABBMaxVertice(o2, half2, v);
-	return mathAABBHasPoint(o1, half1, v);
+	return AABB_Contain_Point(o1, half1, v);
 }
 
 #ifdef __cplusplus

@@ -14,6 +14,29 @@
 #include "../inc/collision.h"
 #include <stddef.h>
 
+int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
+	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
+	mathVec3Sub(op, p, o);
+	op_lensq = mathVec3LenSq(op);
+	if (op_lensq > radius_sq + CCT_EPSILON) {
+		return 0;
+	}
+	else if (op_lensq < radius_sq - CCT_EPSILON) {
+		return 2;
+	}
+	return 1;
+}
+
+static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
+	CCTNum_t o1o2[3], len_sq;
+	if (r1 < r2) {
+		return 0;
+	}
+	mathVec3Sub(o1o2, o2, o1);
+	len_sq = mathVec3LenSq(o1o2);
+	return len_sq <= (r1 - r2) * (r1 - r2);
+}
+
 static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCTNum_t radius) {
 	int i;
 	CCTNum_t v[3];
@@ -35,7 +58,7 @@ static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const 
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!mathAABBHasPoint(o, half, p)) {
+		if (!AABB_Contain_Point(o, half, p)) {
 			return 0;
 		}
 	}
@@ -138,12 +161,12 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathAABBHasPoint(one->aabb->o, one->aabb->half, two->point);
+			return AABB_Contain_Point(one->aabb->o, one->aabb->half, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathAABBHasPoint(one->aabb->o, one->aabb->half, two->segment->v[0]) &&
-				mathAABBHasPoint(one->aabb->o, one->aabb->half, two->segment->v[1]);
+			return	AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[0]) &&
+				AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
@@ -311,7 +334,7 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathSegmentHasPoint((const CCTNum_t(*)[3])one->segment->v, two->point);
+			return Segment_Contain_Point((const CCTNum_t(*)[3])one->segment->v, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{

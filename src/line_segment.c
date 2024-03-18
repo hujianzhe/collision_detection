@@ -273,7 +273,7 @@ int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 	return 0;
 }
 
-int mathSegmentHasPoint(const CCTNum_t ls[2][3], const CCTNum_t p[3]) {
+int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]) {
 	CCTNum_t pv1[3], pv2[3], N[3], dot;
 	mathVec3Sub(pv1, ls[0], p);
 	mathVec3Sub(pv2, ls[1], p);

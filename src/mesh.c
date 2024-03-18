@@ -497,7 +497,7 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 }
 
 int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
-	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
+	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
 	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
@@ -521,7 +521,7 @@ int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMes
 int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	CCTNum_t dir[3];
 	unsigned int i, again_flag;
-	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
+	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
 	again_flag = 0;
