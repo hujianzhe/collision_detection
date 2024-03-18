@@ -90,7 +90,7 @@ GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsi
 				continue;
 			}
 			for (k = 0; k < 3; ++k) {
-				if (!mathPlaneHasPoint(v[tri_indices[i]], N, v[tri_indices[j + k]])) {
+				if (!Plane_Contain_Point(v[tri_indices[i]], N, v[tri_indices[j + k]])) {
 					free(tmp_edge_pair_indices);
 					return NULL;
 				}
@@ -485,7 +485,7 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 	return 1;
 }
 
-int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
@@ -531,13 +531,13 @@ int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	return Polygon_Convex_HasPoint_InternalProc(polygon, p);
 }
 
-int mathPolygonContainPolygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
-	int ret = mathPlaneIntersectPlane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
+int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
+	int ret = Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
 	if (2 == ret) {
 		unsigned int i;
 		for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 			const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
-			if (!mathPolygonHasPoint(polygon1, p)) {
+			if (!Polygon_Contain_Point(polygon1, p)) {
 				return 0;
 			}
 		}

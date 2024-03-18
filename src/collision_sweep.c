@@ -166,7 +166,7 @@ static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3]
 		return NULL;
 	}
 	if (result->distance > CCTNum(0.0)) {
-		return mathPolygonHasPoint(polygon, result->hit_point) ? result : NULL;
+		return Polygon_Contain_Point(polygon, result->hit_point) ? result : NULL;
 	}
 	dot = mathVec3Dot(dir, polygon->normal);
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
@@ -190,7 +190,7 @@ static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3]
 }
 
 static CCTResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTResult_t* result) {
-	if (mathOBBHasPoint(obb, o)) {
+	if (OBB_Contain_Point(obb, o)) {
 		set_result(result, CCTNum(0.0), dir);
 		add_result_hit_point(result, o);
 		return result;
@@ -343,7 +343,7 @@ static CCTResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t 
 static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTResult_t* result) {
 	int line_mask;
 	CCTNum_t p[3];
-	int res = mathSegmentIntersectSegment(ls1, ls2, p, &line_mask);
+	int res = Segment_Intersect_Segment(ls1, ls2, p, &line_mask);
 	if (GEOMETRY_SEGMENT_CONTACT == res) {
 		set_result(result, CCTNum(0.0), dir);
 		add_result_hit_point(result, p);
@@ -496,7 +496,7 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 		return NULL;
 	}
 	if (result->hit_point_cnt > 0) {
-		if (mathPolygonHasPoint(polygon, result->hit_point)) {
+		if (Polygon_Contain_Point(polygon, result->hit_point)) {
 			return result;
 		}
 	}
@@ -505,7 +505,7 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 			CCTNum_t test_p[3];
 			mathVec3Copy(test_p, ls[i]);
 			mathVec3AddScalar(test_p, dir, result->distance);
-			if (mathPolygonHasPoint(polygon, test_p)) {
+			if (Polygon_Contain_Point(polygon, test_p)) {
 				return result;
 			}
 		}
@@ -530,11 +530,11 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
 	unsigned int i;
 	CCTResult_t* p_result;
-	if (mathConvexMeshHasPoint(mesh, ls[0])) {
+	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
-	if (mathConvexMeshHasPoint(mesh, ls[1])) {
+	if (ConvexMesh_Contain_Point(mesh, ls[1])) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -688,7 +688,7 @@ static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, con
 	CCTResult_t* p_result;
 	int i, flag;
 	CCTNum_t neg_dir[3];
-	flag = mathPlaneIntersectPlane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
+	flag = Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
 	if (0 == flag) {
 		CCTNum_t d, dot;
 		mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal, NULL, &d);
@@ -839,7 +839,7 @@ static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t 
 }
 
 static CCTResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t dir[3], const CCTNum_t o2[3], const CCTNum_t half2[3], CCTResult_t* result) {
-	if (mathAABBIntersectAABB(o1, half1, o2, half2)) {
+	if (AABB_Intersect_AABB(o1, half1, o2, half2)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -864,7 +864,7 @@ static CCTResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3
 			}
 			mathVec3Copy(new_o1, o1);
 			mathVec3AddScalar(new_o1, dir, result_temp.distance);
-			if (!mathAABBIntersectAABB(new_o1, half1, o2, half2)) {
+			if (!AABB_Intersect_AABB(new_o1, half1, o2, half2)) {
 				continue;
 			}
 			if (!p_result || p_result->distance > result_temp.distance) {
@@ -889,7 +889,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 		return NULL;
 	}
 	if (result->hit_point_cnt > 0) {
-		if (mathPolygonHasPoint(polygon, result->hit_point)) {
+		if (Polygon_Contain_Point(polygon, result->hit_point)) {
 			return result;
 		}
 	}
@@ -898,7 +898,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 			CCTNum_t test_p[3];
 			mathVec3Copy(test_p, v[i]);
 			mathVec3AddScalar(test_p, dir, result->distance);
-			if (mathPolygonHasPoint(polygon, test_p)) {
+			if (Polygon_Contain_Point(polygon, test_p)) {
 				return result;
 			}
 		}
@@ -949,7 +949,7 @@ static CCTResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CCTNum_
 static CCTResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTResult_t* result) {
 	int i;
 	CCTResult_t* p_result;
-	if (mathOBBIntersectOBB(obb1, obb2)) {
+	if (OBB_Intersect_OBB(obb1, obb2)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -1013,13 +1013,13 @@ static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, c
 
 	mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, p, &dn);
 	if (radius * radius > dn * dn + CCT_EPSILON) {
-		if (mathPolygonHasPoint(polygon, p)) {
+		if (Polygon_Contain_Point(polygon, p)) {
 			set_result(result, CCTNum(0.0), dir);
 			return result;
 		}
 	}
 	else if (radius * radius >= dn * dn - CCT_EPSILON) {
-		if (mathPolygonHasPoint(polygon, p)) {
+		if (Polygon_Contain_Point(polygon, p)) {
 			set_result(result, CCTNum(0.0), dir);
 			add_result_hit_point(result, p);
 			return result;
@@ -1040,7 +1040,7 @@ static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, c
 		mathVec3Copy(p, o);
 		mathVec3AddScalar(p, dir, d);
 		mathVec3AddScalar(p, polygon->normal, dn >= CCTNum(0.0) ? radius : -radius);
-		if (mathPolygonHasPoint(polygon, p)) {
+		if (Polygon_Contain_Point(polygon, p)) {
 			set_result(result, d, polygon->normal);
 			add_result_hit_point(result, p);
 			return result;
@@ -1126,7 +1126,7 @@ static CCTResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const
 static CCTResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
 	unsigned int i;
 	CCTResult_t* p_result;
-	if (mathConvexMeshHasPoint(mesh, o)) {
+	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}

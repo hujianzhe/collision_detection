@@ -21,7 +21,7 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	dot = mathVec3Dot(lsdir, plane_normal);
 	if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
-		return mathPlaneHasPoint(plane_v, plane_normal, ls[0]) ? 2 : 0;
+		return Plane_Contain_Point(plane_v, plane_normal, ls[0]) ? 2 : 0;
 	}
 	mathPointProjectionPlane(ls[0], plane_v, plane_normal, NULL, &d[0]);
 	mathPointProjectionPlane(ls[1], plane_v, plane_normal, NULL, &d[1]);
@@ -62,16 +62,16 @@ static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPoly
 		return 0;
 	}
 	if (1 == res) {
-		return mathPolygonHasPoint(polygon, p);
+		return Polygon_Contain_Point(polygon, p);
 	}
-	if (mathPolygonHasPoint(polygon, ls[0]) || mathPolygonHasPoint(polygon, ls[1])) {
+	if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
 		return 2;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (mathSegmentIntersectSegment(ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
+		if (Segment_Intersect_Segment(ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
 			return 2;
 		}
 	}
@@ -80,10 +80,10 @@ static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPoly
 
 static int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
 	unsigned int i;
-	if (mathConvexMeshHasPoint(mesh, ls[0])) {
+	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
 		return 1;
 	}
-	if (mathConvexMeshHasPoint(mesh, ls[1])) {
+	if (ConvexMesh_Contain_Point(mesh, ls[1])) {
 		return 1;
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -96,7 +96,7 @@ static int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryM
 
 static int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
 	int i;
-	if (!mathPlaneIntersectPlane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
+	if (!Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		return 0;
 	}
 	for (i = 0; i < polygon1->v_indices_cnt; ) {
@@ -114,7 +114,7 @@ static int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const 
 	unsigned int i;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon->v[polygon->v_indices[i]];
-		if (mathConvexMeshHasPoint(mesh, p)) {
+		if (ConvexMesh_Contain_Point(mesh, p)) {
 			return 1;
 		}
 	}
@@ -128,7 +128,7 @@ static int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const 
 
 static int Polygon_Intersect_Plane(const GeometryPolygon_t* polygon, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3]) {
 	unsigned int i, has_gt0, has_le0, idx_0;
-	if (!mathPlaneIntersectPlane(polygon->v[polygon->v_indices[0]], polygon->normal, plane_v, plane_n)) {
+	if (!Plane_Intersect_Plane(polygon->v[polygon->v_indices[0]], polygon->normal, plane_v, plane_n)) {
 		return 0;
 	}
 	idx_0 = has_gt0 = has_le0 = 0;
@@ -246,7 +246,7 @@ static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const 
 	if (0 == res) {
 		return 0;
 	}
-	if (mathPolygonHasPoint(polygon, p)) {
+	if (Polygon_Contain_Point(polygon, p)) {
 		return res;
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
@@ -263,7 +263,7 @@ static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const 
 
 static int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh, CCTNum_t p[3]) {
 	unsigned int i;
-	if (mathConvexMeshHasPoint(mesh, o)) {
+	if (ConvexMesh_Contain_Point(mesh, o)) {
 		return 1;
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -358,7 +358,7 @@ static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], c
 
 int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
 	int i;
-	if (mathOBBHasPoint(obb, ls[0]) || mathOBBHasPoint(obb, ls[1])) {
+	if (OBB_Contain_Point(obb, ls[0]) || OBB_Contain_Point(obb, ls[1])) {
 		return 1;
 	}
 	for (i = 0; i < 6; ++i) {
@@ -386,7 +386,7 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 		return 0;
 	}
 	if (1 == res) {
-		return mathPolygonHasPoint(polygon, p);
+		return Polygon_Contain_Point(polygon, p);
 	}
 	mathOBBVertices(obb, obb_vertices);
 	for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
@@ -413,7 +413,7 @@ static int ConvexMesh_HasAny_OBBVertices(const GeometryMesh_t* mesh, const Geome
 	unsigned int i;
 	mathOBBVertices(obb, v);
 	for (i = 0; i < 8; ++i) {
-		if (mathConvexMeshHasPoint(mesh, v[i])) {
+		if (ConvexMesh_Contain_Point(mesh, v[i])) {
 			return 1;
 		}
 	}
@@ -437,13 +437,13 @@ static int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const Ge
 	unsigned int i;
 	for (i = 0; i < mesh1->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh1->v[mesh1->v_indices[i]];
-		if (mathConvexMeshHasPoint(mesh2, p)) {
+		if (ConvexMesh_Contain_Point(mesh2, p)) {
 			return 1;
 		}
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
-		if (mathConvexMeshHasPoint(mesh1, p)) {
+		if (ConvexMesh_Contain_Point(mesh1, p)) {
 			return 1;
 		}
 	}
@@ -482,7 +482,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				return mathPlaneHasPoint(two->plane->v, two->plane->normal, one->point);
+				return Plane_Contain_Point(two->plane->v, two->plane->normal, one->point);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
@@ -490,19 +490,19 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return mathSphereHasPoint(two->sphere->o, two->sphere->radius, one->point);
+				return Sphere_Contain_Point(two->sphere->o, two->sphere->radius, one->point);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				return mathOBBHasPoint(two->obb, one->point);
+				return OBB_Contain_Point(two->obb, one->point);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return mathPolygonHasPoint(two->polygon, one->point);
+				return Polygon_Contain_Point(two->polygon, one->point);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return mathConvexMeshHasPoint(two->mesh, one->point);
+				return ConvexMesh_Contain_Point(two->mesh, one->point);
 			}
 		}
 	}
@@ -515,7 +515,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return mathSegmentIntersectSegment(one_segment_v, (const CCTNum_t(*)[3])two->segment->v, NULL, NULL);
+				return Segment_Intersect_Segment(one_segment_v, (const CCTNum_t(*)[3])two->segment->v, NULL, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -551,7 +551,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return mathAABBIntersectAABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
+				return AABB_Intersect_AABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -575,7 +575,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			{
 				GeometryOBB_t one_obb;
 				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-				return mathOBBIntersectOBB(&one_obb, two->obb);
+				return OBB_Intersect_OBB(&one_obb, two->obb);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
@@ -589,7 +589,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathSphereHasPoint(one->sphere->o, one->sphere->radius, two->point);
+				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->point);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
@@ -601,7 +601,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return mathSphereIntersectSphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius, NULL);
+				return Sphere_Intersect_Sphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -625,7 +625,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathPlaneHasPoint(one->plane->v, one->plane->normal, two->point);
+				return Plane_Contain_Point(one->plane->v, one->plane->normal, two->point);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
@@ -641,7 +641,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				return mathPlaneIntersectPlane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
+				return Plane_Intersect_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -661,7 +661,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathPolygonHasPoint(one->polygon, two->point);
+				return Polygon_Contain_Point(one->polygon, two->point);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -699,7 +699,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathOBBHasPoint(one->obb, two->point);
+				return OBB_Contain_Point(one->obb, two->point);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -711,13 +711,13 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				return mathOBBIntersectOBB(one->obb, two->obb);
+				return OBB_Intersect_OBB(one->obb, two->obb);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
 				GeometryOBB_t two_obb;
 				mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
-				return mathOBBIntersectOBB(one->obb, &two_obb);
+				return OBB_Intersect_OBB(one->obb, &two_obb);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -737,7 +737,7 @@ int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t
 		switch (two->type) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return mathConvexMeshHasPoint(one->mesh, two->point);
+				return ConvexMesh_Contain_Point(one->mesh, two->point);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{

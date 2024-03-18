@@ -32,11 +32,12 @@ __declspec_dll GeometryRect_t* mathAABBPlaneRect(const CCTNum_t o[3], const CCTN
 __declspec_dll GeometryRect_t* mathOBBPlaneRect(const GeometryOBB_t* obb, unsigned int idx, GeometryRect_t* rect);
 
 __declspec_dll int mathPolygonIsConvex(const GeometryPolygon_t* polygon);
-__declspec_dll int mathPolygonHasPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
-__declspec_dll int mathPolygonContainPolygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
 __declspec_dll GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
 __declspec_dll GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPolygon_t* src);
 __declspec_dll void mathPolygonFreeCookingData(GeometryPolygon_t* polygon);
+
+__declspec_dll int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
+__declspec_dll int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
 
 #ifdef	__cplusplus
 }

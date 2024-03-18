@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-int mathSphereHasPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
+int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
 	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
 	mathVec3Sub(op, p, o);
 	op_lensq = mathVec3LenSq(op);
@@ -22,7 +22,7 @@ int mathSphereHasPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]
 	return 1;
 }
 
-int mathSphereIntersectSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
+int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
 	CCTNum_t o1o2[3];
 	CCTNum_t o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
@@ -40,7 +40,7 @@ int mathSphereIntersectSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t 
 	return 1;
 }
 
-int mathSphereContainSphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
+int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
 	CCTNum_t o1o2[3], len_sq;
 	if (r1 < r2) {
 		return 0;

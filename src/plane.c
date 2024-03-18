@@ -29,20 +29,20 @@ CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], 
 	return mathVec3Normalized(normal, normal);
 }
 
-int mathPlaneHasPoint(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) {
+int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) {
 	CCTNum_t v[3], dot;
 	mathVec3Sub(v, plane_v, p);
 	dot = mathVec3Dot(plane_normal, v);
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
 }
 
-int mathPlaneIntersectPlane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
 	CCTNum_t n[3];
 	mathVec3Cross(n, n1, n2);
 	if (!mathVec3IsZero(n)) {
 		return 1;
 	}
-	return mathPlaneHasPoint(v1, n1, v2) ? 2 : 0;
+	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
 #ifdef __cplusplus

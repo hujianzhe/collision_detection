@@ -129,7 +129,7 @@ void mathOBBPlaneVertices(const GeometryOBB_t* obb, CCTNum_t v[6][3]) {
 	mathVec3Sub(v[5], obb->o, extend);
 }
 
-int mathOBBHasPoint(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
+int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
 	CCTNum_t op[3], dot;
 	mathVec3Sub(op, p, obb->o);
 	dot = mathVec3Dot(op, obb->axis[0]);
@@ -147,7 +147,7 @@ int mathOBBHasPoint(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
 	return 1;
 }
 
-int mathOBBIntersectOBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	/* these code is copy from PhysX-3.4 */
 	CCTNum_t v[3], T[3];
 	CCTNum_t R[3][3], FR[3][3], ra, rb, t;
@@ -262,7 +262,7 @@ int mathOBBIntersectOBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	return 1;
 }
 
-int mathOBBContainOBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	CCTNum_t AX[3][3], p[3];
 	if (obb0 == obb1) {
 		return 1;
@@ -275,56 +275,56 @@ int mathOBBContainOBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	mathVec3Sub(p, p, AX[0]);
 	mathVec3Sub(p, p, AX[1]);
 	mathVec3Sub(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Add(p, p, AX[0]);
 	mathVec3Sub(p, p, AX[1]);
 	mathVec3Sub(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Add(p, p, AX[0]);
 	mathVec3Add(p, p, AX[1]);
 	mathVec3Sub(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Sub(p, p, AX[0]);
 	mathVec3Add(p, p, AX[1]);
 	mathVec3Sub(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Sub(p, p, AX[0]);
 	mathVec3Sub(p, p, AX[1]);
 	mathVec3Add(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Add(p, p, AX[0]);
 	mathVec3Sub(p, p, AX[1]);
 	mathVec3Add(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Add(p, p, AX[0]);
 	mathVec3Add(p, p, AX[1]);
 	mathVec3Add(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	mathVec3Copy(p, obb1->o);
 	mathVec3Sub(p, p, AX[0]);
 	mathVec3Add(p, p, AX[1]);
 	mathVec3Add(p, p, AX[2]);
-	if (!mathOBBHasPoint(obb0, p)) {
+	if (!OBB_Contain_Point(obb0, p)) {
 		return 0;
 	}
 	return 1;

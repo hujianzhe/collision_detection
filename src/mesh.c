@@ -79,7 +79,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
 		unsigned int j;
-		if (!mathPlaneHasPoint(polygon->v[polygon->tri_indices[0]], polygon->normal, tri_p[i])) {
+		if (!Plane_Contain_Point(polygon->v[polygon->tri_indices[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
 		if (n >= 2) {
@@ -496,16 +496,16 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 	}
 }
 
-int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
 	return ConvexMesh_HasPoint_InternalProc(mesh, p);
 }
 
-int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
 	unsigned int i;
-	if (!mathAABBIntersectAABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
+	if (!AABB_Intersect_AABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
 		return 0;
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
@@ -518,7 +518,7 @@ int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 }
 
 /*
-int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	CCTNum_t dir[3];
 	unsigned int i, again_flag;
 	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {

@@ -17,8 +17,9 @@ __declspec_dll void mathMeshFreeCookingData(GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh);
 __declspec_dll void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh);
-__declspec_dll int mathConvexMeshHasPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
-__declspec_dll int mathConvexMeshContainConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
+
+__declspec_dll int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+__declspec_dll int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
 
 #ifdef	__cplusplus
 }

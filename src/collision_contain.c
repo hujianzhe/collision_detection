@@ -30,7 +30,7 @@ static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCT
 
 static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
 	unsigned int i;
-	if (mathAABBContainAABB(o, half, mesh->bound_box.o, mesh->bound_box.half)) {
+	if (AABB_Contain_AABB(o, half, mesh->bound_box.o, mesh->bound_box.half)) {
 		return 1;
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
@@ -46,15 +46,15 @@ static int Sphere_Contain_Mesh(const CCTNum_t o[3], CCTNum_t radius, const Geome
 	CCTNum_t v[3];
 	unsigned int i;
 	mathAABBMinVertice(mesh->bound_box.o, mesh->bound_box.half, v);
-	if (mathSphereHasPoint(o, radius, v)) {
+	if (Sphere_Contain_Point(o, radius, v)) {
 		mathAABBMaxVertice(mesh->bound_box.o, mesh->bound_box.half, v);
-		if (mathSphereHasPoint(o, radius, v)) {
+		if (Sphere_Contain_Point(o, radius, v)) {
 			return 1;
 		}
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!mathSphereHasPoint(o, radius, p)) {
+		if (!Sphere_Contain_Point(o, radius, p)) {
 			return 0;
 		}
 	}
@@ -66,7 +66,7 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	unsigned int i;
 	mathAABBVertices(mesh->bound_box.o, mesh->bound_box.half, p);
 	for (i = 0; i < 8; ++i) {
-		if (!mathOBBHasPoint(obb, p[i])) {
+		if (!OBB_Contain_Point(obb, p[i])) {
 			break;
 		}
 	}
@@ -75,7 +75,7 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!mathOBBHasPoint(obb, p)) {
+		if (!OBB_Contain_Point(obb, p)) {
 			return 0;
 		}
 	}
@@ -85,12 +85,12 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t o[3], const CCTNum_t half[3]) {
 	CCTNum_t p[8][3];
 	unsigned int i;
-	if (!mathAABBContainAABB(mesh->bound_box.o, mesh->bound_box.half, o, half)) {
+	if (!AABB_Contain_AABB(mesh->bound_box.o, mesh->bound_box.half, o, half)) {
 		return 0;
 	}
 	mathAABBVertices(o, half, p);
 	for (i = 0; i < 8; ++i) {
-		if (!mathConvexMeshHasPoint(mesh, p[i])) {
+		if (!ConvexMesh_Contain_Point(mesh, p[i])) {
 			return 0;
 		}
 	}
@@ -102,7 +102,7 @@ static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_
 	unsigned int i;
 	mathOBBVertices(obb, p);
 	for (i = 0; i < 8; ++i) {
-		if (!mathConvexMeshHasPoint(mesh, p[i])) {
+		if (!ConvexMesh_Contain_Point(mesh, p[i])) {
 			return 0;
 		}
 	}
@@ -147,13 +147,13 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			return mathAABBContainAABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
+			return AABB_Contain_AABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			GeometryOBB_t one_obb;
 			mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-			return mathOBBContainOBB(&one_obb, two->obb);
+			return OBB_Contain_OBB(&one_obb, two->obb);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -171,22 +171,22 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathOBBHasPoint(one->obb, two->point);
+			return OBB_Contain_Point(one->obb, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathOBBHasPoint(one->obb, two->segment->v[0]) &&
-				mathOBBHasPoint(one->obb, two->segment->v[1]);
+			return	OBB_Contain_Point(one->obb, two->segment->v[0]) &&
+				OBB_Contain_Point(one->obb, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
 			GeometryOBB_t two_obb;
 			mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
-			return mathOBBContainOBB(one->obb, &two_obb);
+			return OBB_Contain_OBB(one->obb, &two_obb);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			return mathOBBContainOBB(one->obb, two->obb);
+			return OBB_Contain_OBB(one->obb, two->obb);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -202,36 +202,36 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathSphereHasPoint(one->sphere->o, one->sphere->radius, two->point);
+			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathSphereHasPoint(one->sphere->o, one->sphere->radius, two->segment->v[0]) &&
-				mathSphereHasPoint(one->sphere->o, one->sphere->radius, two->segment->v[1]);
+			return	Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[0]) &&
+				Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
 			CCTNum_t v[3];
 			mathAABBMinVertice(two->aabb->o, two->aabb->half, v);
-			if (!mathSphereHasPoint(one->sphere->o, one->sphere->radius, v)) {
+			if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
 				return 0;
 			}
 			mathAABBMaxVertice(two->aabb->o, two->aabb->half, v);
-			return mathSphereHasPoint(one->sphere->o, one->sphere->radius, v);
+			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			CCTNum_t v[3];
 			mathOBBMinVertice(two->obb, v);
-			if (!mathSphereHasPoint(one->sphere->o, one->sphere->radius, v)) {
+			if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
 				return 0;
 			}
 			mathOBBMaxVertice(two->obb, v);
-			return mathSphereHasPoint(one->sphere->o, one->sphere->radius, v);
+			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			return mathSphereContainSphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius);
+			return Sphere_Contain_Sphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius);
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
@@ -243,12 +243,12 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathConvexMeshHasPoint(one->mesh, two->point);
+			return ConvexMesh_Contain_Point(one->mesh, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathConvexMeshHasPoint(one->mesh, two->segment->v[0]) &&
-				mathConvexMeshHasPoint(one->mesh, two->segment->v[1]);
+			return	ConvexMesh_Contain_Point(one->mesh, two->segment->v[0]) &&
+				ConvexMesh_Contain_Point(one->mesh, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
@@ -264,7 +264,7 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			return mathConvexMeshContainConvexMesh(one->mesh, two->mesh);
+			return ConvexMesh_Contain_ConvexMesh(one->mesh, two->mesh);
 		}
 		}
 	}
@@ -272,16 +272,16 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathPolygonHasPoint(one->polygon, two->point);
+			return Polygon_Contain_Point(one->polygon, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathPolygonHasPoint(one->polygon, two->segment->v[0]) &&
-				mathPolygonHasPoint(one->polygon, two->segment->v[1]);
+			return	Polygon_Contain_Point(one->polygon, two->segment->v[0]) &&
+				Polygon_Contain_Point(one->polygon, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			return mathPolygonContainPolygon(one->polygon, two->polygon);
+			return Polygon_Contain_Polygon(one->polygon, two->polygon);
 		}
 		}
 	}
@@ -289,21 +289,21 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		switch (two->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathPlaneHasPoint(one->plane->v, one->plane->normal, two->point);
+			return Plane_Contain_Point(one->plane->v, one->plane->normal, two->point);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return	mathPlaneHasPoint(one->plane->v, one->plane->normal, two->segment->v[0]) &&
-				mathPlaneHasPoint(one->plane->v, one->plane->normal, two->segment->v[1]);
+			return	Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[0]) &&
+				Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[1]);
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			return mathPlaneIntersectPlane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal) == 2;
+			return Plane_Intersect_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal) == 2;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
 			const GeometryPolygon_t* polygon = two->polygon;
-			return mathPlaneIntersectPlane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal) == 2;
+			return Plane_Intersect_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal) == 2;
 		}
 		}
 	}
@@ -315,7 +315,7 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return mathSegmentContainSegment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
+			return Segment_Contain_Segment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
 		}
 		}
 	}

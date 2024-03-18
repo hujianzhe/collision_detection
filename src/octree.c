@@ -66,7 +66,7 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 		next = cur->next;
 		for (i = 0; i < 8; ++i) {
 			OctreeNode_t* child = root->childs + i;
-			if (!mathAABBContainAABB(child->pos, child->half, obj->pos, obj->half)) {
+			if (!AABB_Contain_AABB(child->pos, child->half, obj->pos, obj->half)) {
 				continue;
 			}
 			listRemoveNode(&root->obj_list, cur);
@@ -119,7 +119,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 			int i, find = 0;
 			for (i = 0; i < 8; ++i) {
 				OctreeNode_t* child = oct->childs + i;
-				if (!mathAABBContainAABB(child->pos, child->half, obj->pos, obj->half)) {
+				if (!AABB_Contain_AABB(child->pos, child->half, obj->pos, obj->half)) {
 					continue;
 				}
 				if (child->childs) {
@@ -143,7 +143,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 				continue;
 			}
 		}
-		if (mathAABBContainAABB(oct->pos, oct->half, obj->pos, obj->half)) {
+		if (AABB_Contain_AABB(oct->pos, oct->half, obj->pos, obj->half)) {
 			if (oct == obj_oct) {
 				return;
 			}
@@ -189,7 +189,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
 	finder->cnt = 0;
-	if (!mathAABBIntersectAABB(root->pos, root->half, pos, half)) {
+	if (!AABB_Intersect_AABB(root->pos, root->half, pos, half)) {
 		return;
 	}
 	finder->nodes[finder->cnt++] = root;
@@ -202,7 +202,7 @@ void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t h
 		}
 		for (i = 0; i < 8; ++i) {
 			OctreeNode_t* child = oct->childs + i;
-			if (!mathAABBIntersectAABB(child->pos, child->half, pos, half)) {
+			if (!AABB_Intersect_AABB(child->pos, child->half, pos, half)) {
 				continue;
 			}
 			finder->nodes[finder->cnt++] = child;

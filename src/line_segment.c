@@ -308,7 +308,7 @@ void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCT
 	}
 }
 
-int mathSegmentContainSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
 	int i;
 	CCTNum_t v1[3], v2[3], N[3];
 	mathVec3Sub(v1, ls1[1], ls1[0]);
@@ -329,7 +329,7 @@ int mathSegmentContainSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 	return 1;
 }
 
-int mathSegmentIntersectSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask) {
+int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask) {
 	int res;
 	CCTNum_t lsdir1[3], lsdir2[3], d[2], lslen1, lslen2;
 	mathVec3Sub(lsdir1, ls1[1], ls1[0]);

@@ -152,7 +152,7 @@ void mathAABBSplit(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t new_o[8
 	mathAABBVertices(o, new_half, new_o);
 }
 
-int mathAABBIntersectAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
+int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	int i;
 	for (i = 0; i < 3; ++i) {
 		CCTNum_t half = half1[i] + half2[i] + CCT_EPSILON;
@@ -163,7 +163,7 @@ int mathAABBIntersectAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const C
 	return 1;
 }
 
-int mathAABBContainAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
+int AABB_Contain_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	CCTNum_t v[3];
 	mathAABBMinVertice(o2, half2, v);
 	if (!mathAABBHasPoint(o1, half1, v)) {
