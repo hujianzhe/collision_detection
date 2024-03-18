@@ -15,7 +15,22 @@
 
 extern const unsigned int Box_Edge_Indices[24];
 
+extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
+extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+	CCTNum_t n[3];
+	mathVec3Cross(n, n1, n2);
+	if (!mathVec3IsZero(n)) {
+		return 1;
+	}
+	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
+}
 
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
 	CCTNum_t d[2], lsdir[3], dot;

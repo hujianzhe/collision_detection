@@ -273,18 +273,6 @@ int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 	return 0;
 }
 
-int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]) {
-	CCTNum_t pv1[3], pv2[3], N[3], dot;
-	mathVec3Sub(pv1, ls[0], p);
-	mathVec3Sub(pv2, ls[1], p);
-	mathVec3Cross(N, pv1, pv2);
-	if (!mathVec3IsZero(N)) {
-		return 0;
-	}
-	dot = mathVec3Dot(pv1, pv2);
-	return dot <= CCT_EPSILON;
-}
-
 int mathSegmentIsSame(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
 	if (mathVec3Equal(ls1[0], ls2[0])) {
 		return mathVec3Equal(ls1[1], ls2[1]);
@@ -306,27 +294,6 @@ void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCT
 	else if (dot > lslen + CCT_EPSILON) {
 		mathVec3Copy(closest_p, ls[1]);
 	}
-}
-
-int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
-	int i;
-	CCTNum_t v1[3], v2[3], N[3];
-	mathVec3Sub(v1, ls1[1], ls1[0]);
-	mathVec3Sub(v2, ls2[1], ls2[0]);
-	mathVec3Cross(N, v1, v2);
-	if (!mathVec3IsZero(N)) {
-		return 0;
-	}
-	for (i = 0; i < 2; ++i) {
-		CCTNum_t dot;
-		mathVec3Sub(v1, ls1[0], ls2[i]);
-		mathVec3Sub(v2, ls1[1], ls2[i]);
-		dot = mathVec3Dot(v1, v2);
-		if (dot > CCT_EPSILON) {
-			return 0;
-		}
-	}
-	return 1;
 }
 
 int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask) {

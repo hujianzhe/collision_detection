@@ -13,6 +13,52 @@
 #include "../inc/collision.h"
 #include <stddef.h>
 
+extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]) {
+	CCTNum_t pv1[3], pv2[3], N[3], dot;
+	mathVec3Sub(pv1, ls[0], p);
+	mathVec3Sub(pv2, ls[1], p);
+	mathVec3Cross(N, pv1, pv2);
+	if (!mathVec3IsZero(N)) {
+		return 0;
+	}
+	dot = mathVec3Dot(pv1, pv2);
+	return dot <= CCT_EPSILON;
+}
+
+static int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+	int i;
+	CCTNum_t v1[3], v2[3], N[3];
+	mathVec3Sub(v1, ls1[1], ls1[0]);
+	mathVec3Sub(v2, ls2[1], ls2[0]);
+	mathVec3Cross(N, v1, v2);
+	if (!mathVec3IsZero(N)) {
+		return 0;
+	}
+	for (i = 0; i < 2; ++i) {
+		CCTNum_t dot;
+		mathVec3Sub(v1, ls1[0], ls2[i]);
+		mathVec3Sub(v2, ls1[1], ls2[i]);
+		dot = mathVec3Dot(v1, v2);
+		if (dot > CCT_EPSILON) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) {
+	CCTNum_t v[3], dot;
+	mathVec3Sub(v, plane_v, p);
+	dot = mathVec3Dot(plane_normal, v);
+	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
+}
+
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
 	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
 	mathVec3Sub(op, p, o);
