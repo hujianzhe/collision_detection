@@ -213,11 +213,14 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 	mathVec3Sub(ppo, o, pp);
 	ppolensq = mathVec3LenSq(ppo);
 	radius_sq = radius * radius;
-	if (ppolensq > radius_sq + CCT_EPSILON) {
-		return 0;
-	}
 	if (new_o) {
 		mathVec3Copy(new_o, pp);
+	}
+	if (ppolensq > radius_sq + CCT_EPSILON) {
+		if (new_r) {
+			*new_r = CCTNum(0.0);
+		}
+		return 0;
 	}
 	if (ppolensq >= radius_sq - CCT_EPSILON) {
 		if (new_r) {
@@ -256,7 +259,7 @@ static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const 
 	return 0;
 }
 
-int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh, CCTNum_t p[3]) {
+static int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh, CCTNum_t p[3]) {
 	unsigned int i;
 	if (mathConvexMeshHasPoint(mesh, o)) {
 		return 1;
