@@ -16,8 +16,6 @@
 
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]);
 
-extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
-
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
 
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
@@ -529,7 +527,11 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
 	unsigned int i;
 	CCTResult_t* p_result;
-	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
+	if (mathConvexMeshHasPoint(mesh, ls[0])) {
+		set_result(result, CCTNum(0.0), dir);
+		return result;
+	}
+	if (mathConvexMeshHasPoint(mesh, ls[1])) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
