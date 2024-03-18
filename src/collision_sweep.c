@@ -1004,7 +1004,7 @@ static CCTResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, con
 }
 
 static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
-	int i, res;
+	int i;
 	CCTResult_t *p_result = NULL;
 	CCTNum_t neg_dir[3], p[3], dn;
 
