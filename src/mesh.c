@@ -185,7 +185,7 @@ err:
 	return 0;
 }
 
-static int ConvexMesh_HasPoint_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTNum_t v[3], dot;
@@ -500,7 +500,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	if (!mathAABBHasPoint(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
-	return ConvexMesh_HasPoint_InternalProc(mesh, p);
+	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
 }
 
 int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
@@ -510,7 +510,7 @@ int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMes
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
-		if (!ConvexMesh_HasPoint_InternalProc(mesh1, p)) {
+		if (!ConvexMesh_Contain_Point_InternalProc(mesh1, p)) {
 			return 0;
 		}
 	}
