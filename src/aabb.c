@@ -26,6 +26,7 @@ const unsigned int Box_Edge_Indices[24] = {
 	1, 5,	6, 2,
 	3, 7,	4, 0
 };
+/*
 const unsigned int Box_Vertice_Adjacent_Indices[8][3] = {
 	{ 1, 3, 4 },
 	{ 0, 2, 5 },
@@ -36,6 +37,7 @@ const unsigned int Box_Vertice_Adjacent_Indices[8][3] = {
 	{ 2, 5, 7 },
 	{ 3, 4, 6 }
 };
+
 const unsigned int Box_Triangle_Vertices_Indices[36] = {
 	0, 1, 2,	2, 3, 0,
 	7, 6, 5,	5, 4, 7,
@@ -44,6 +46,7 @@ const unsigned int Box_Triangle_Vertices_Indices[36] = {
 	3, 7, 6,	6, 2, 3,
 	0, 4, 5,	5, 1, 0
 };
+*/
 const CCTNum_t AABB_Plane_Normal[6][3] = {
 	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) },
 	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },

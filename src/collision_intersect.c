@@ -14,6 +14,8 @@
 #include <math.h>
 #include <stddef.h>
 
+extern const unsigned int Box_Edge_Indices[24];
+
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
 	CCTNum_t d[2], lsdir[3], dot;
 	mathVec3Sub(lsdir, ls[1], ls[0]);

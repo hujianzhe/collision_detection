@@ -14,6 +14,9 @@
 #include <math.h>
 #include <stddef.h>
 
+extern const CCTNum_t AABB_Plane_Normal[6][3];
+extern const unsigned int Box_Edge_Indices[24];
+
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]);
 
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);

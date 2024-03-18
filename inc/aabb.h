@@ -11,11 +11,6 @@
 extern "C" {
 #endif
 
-extern const unsigned int Box_Edge_Indices[24];
-extern const unsigned int Box_Vertice_Adjacent_Indices[8][3];
-extern const unsigned int Box_Triangle_Vertices_Indices[36];
-extern const CCTNum_t AABB_Plane_Normal[6][3];
-
 __declspec_dll void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]);
 
 __declspec_dll void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]);
