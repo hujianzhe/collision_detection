@@ -68,6 +68,35 @@ int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum
 	return mathVec3IsZero(v);
 }
 
+static int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]) {
+	CCTNum_t op[3], dot;
+	mathVec3Sub(op, p, circle->o);
+	dot = mathVec3Dot(op, circle->normal);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
+	}
+	return mathVec3LenSq(op) <= circle->radius * circle->radius;
+}
+
+static int Circle_Contain_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
+	CCTNum_t v[3], r, v_lensq;
+	if (c1->radius < c2->radius) {
+		return 0;
+	}
+	mathVec3Cross(v, c1->normal, c2->normal);
+	if (!mathVec3IsZero(v)) {
+		return 0;
+	}
+	mathVec3Sub(v, c2->o, c1->o);
+	r = mathVec3Dot(v, c1->normal);
+	if (r < CCT_EPSILON_NEGATE || r > CCT_EPSILON) {
+		return 0;
+	}
+	r = c1->radius - c2->radius;
+	v_lensq = mathVec3LenSq(v);
+	return v_lensq <= r * r;
+}
+
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
 	CCTNum_t op[3], op_lensq, radius_sq = radius * radius;
 	mathVec3Sub(op, p, o);
