@@ -13,8 +13,6 @@
 #include "../inc/collision.h"
 #include <stddef.h>
 
-extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,6 +55,17 @@ int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3
 	mathVec3Sub(v, plane_v, p);
 	dot = mathVec3Dot(plane_normal, v);
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
+}
+
+int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+	CCTNum_t v[3], dot;
+	mathVec3Sub(v, v2, v1);
+	dot = mathVec3Dot(n1, v);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
+	}
+	mathVec3Cross(v, n1, n2);
+	return mathVec3IsZero(v);
 }
 
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
@@ -517,12 +526,12 @@ int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* 
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			return Plane_Intersect_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal) == 2;
+			return Plane_Contain_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
 			const GeometryPolygon_t* polygon = two->polygon;
-			return Plane_Intersect_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal) == 2;
+			return Plane_Contain_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal);
 		}
 		}
 	}

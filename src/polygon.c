@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
+extern int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
 extern int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
 static const unsigned int DEFAULT_TRIANGLE_VERTICE_INDICES[3] = { 0, 1, 2 };
@@ -504,8 +504,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 }
 
 int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
-	int ret = Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
-	if (2 == ret) {
+	if (Plane_Contain_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		unsigned int i;
 		for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 			const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];

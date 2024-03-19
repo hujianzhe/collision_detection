@@ -687,11 +687,10 @@ static CCTResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, const 
 }
 
 static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTResult_t* result) {
-	CCTResult_t* p_result;
-	int i, flag;
+	int i;
 	CCTNum_t neg_dir[3];
-	flag = Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
-	if (0 == flag) {
+	CCTResult_t* p_result;
+	if (!Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		CCTNum_t d, dot;
 		mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal, NULL, &d);
 		dot = mathVec3Dot(dir, polygon2->normal);
