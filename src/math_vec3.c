@@ -230,6 +230,18 @@ void mathVec3ComputeBasis(const CCTNum_t dir[3], CCTNum_t right[3], CCTNum_t up[
 	}
 }
 
+int mathVec3ComputeHorizonAndTilt(const CCTNum_t unit_V[3], const CCTNum_t N[3], CCTNum_t horizon_dir[3], CCTNum_t tilt_dir[3]) {
+	mathVec3Cross(horizon_dir, unit_V, N);
+	if (mathVec3IsZero(horizon_dir)) {
+		mathVec3Set(horizon_dir, CCTNums_3(0.0, 0.0, 0.0));
+		mathVec3Set(tilt_dir, CCTNums_3(0.0, 0.0, 0.0));
+		return 0;
+	}
+	mathVec3Normalized(horizon_dir, horizon_dir);
+	mathVec3Cross(tilt_dir, horizon_dir, unit_V);
+	return 1;
+}
+
 CCTNum_t* mathVec3DelComponent(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t dir[3]) {
 	CCTNum_t va[3];
 	CCTNum_t d = mathVec3Dot(v, dir);
