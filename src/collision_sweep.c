@@ -413,20 +413,21 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 		return p_result;
 	}
 	else if (GEOMETRY_LINE_OVERLAP == line_mask) {
-		CCTNum_t v[3], N[3], closest_p[2][3], dot;
+		CCTNum_t v[3], N[3], dot;
+		unsigned int closest_ls1_indice, closest_ls2_indice;
 		mathVec3Sub(v, ls1[1], ls1[0]);
 		mathVec3Cross(N, v, dir);
 		if (!mathVec3IsZero(N)) {
 			return NULL;
 		}
-		mathSegmentClosestSegmentVertice(ls1, ls2, closest_p);
-		mathVec3Sub(v, closest_p[1], closest_p[0]);
+		mathSegmentSegmentClosestIndices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
+		mathVec3Sub(v, ls2[closest_ls2_indice], ls1[closest_ls1_indice]);
 		dot = mathVec3Dot(v, dir);
 		if (dot < CCTNum(0.0)) {
 			return NULL;
 		}
 		set_result(result, dot, dir);
-		add_result_hit_point(result, closest_p[1]);
+		add_result_hit_point(result, ls2[closest_ls2_indice]);
 		return result;
 	}
 	else {
