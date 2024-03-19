@@ -86,7 +86,7 @@ CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
 		r[0] = v[0] * inv_len;
 		if (CCTNum(1.0) - CCT_EPSILON <= r[0] && r[0] <= CCTNum(1.0) + CCT_EPSILON) {
 			r[0] = CCTNum(1.0);
-			r[1] = r[2] = 0.0;
+			r[1] = r[2] = CCTNum(0.0);
 			return len;
 		}
 		r[1] = v[1] * inv_len;
