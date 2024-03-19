@@ -49,7 +49,7 @@ int mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const 
 	return dot > CCT_EPSILON ? GEOMETRY_LINE_SKEW : GEOMETRY_LINE_CROSS;
 }
 
-int mathLineIntersectLine(const CCTNum_t ls1v[3], const CCTNum_t ls1dir[3], const CCTNum_t ls2v[3], const CCTNum_t ls2dir[3], CCTNum_t distance[2]) {
+static int mathLineIntersectLine(const CCTNum_t ls1v[3], const CCTNum_t ls1dir[3], const CCTNum_t ls2v[3], const CCTNum_t ls2dir[3], CCTNum_t distance[2]) {
 	CCTNum_t N[3], v[3];
 	mathVec3Sub(v, ls1v, ls2v);
 	mathVec3Cross(N, ls1dir, ls2dir);
