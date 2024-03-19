@@ -20,10 +20,6 @@ __declspec_dll void mathOBBMaxVertice(const GeometryOBB_t* obb, CCTNum_t v[3]);
 
 __declspec_dll void mathOBBPlaneVertices(const GeometryOBB_t* obb, CCTNum_t v[6][3]);
 
-int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
-int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
-int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
-
 #ifdef	__cplusplus
 }
 #endif

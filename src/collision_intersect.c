@@ -18,6 +18,10 @@ extern const unsigned int Box_Edge_Indices[24];
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
+extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
+extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+
+extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -435,6 +439,121 @@ static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon
 		}
 	}
 	return 0;
+}
+
+int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+	/* these code is copy from PhysX-3.4 */
+	CCTNum_t v[3], T[3];
+	CCTNum_t R[3][3], FR[3][3], ra, rb, t;
+	const CCTNum_t* e0 = obb0->half, * e1 = obb1->half;
+	int i;
+	mathVec3Sub(v, obb1->o, obb0->o);
+	mathVec3Set(T, mathVec3Dot(v, obb0->axis[0]), mathVec3Dot(v, obb0->axis[1]), mathVec3Dot(v, obb0->axis[2]));
+
+	for (i = 0; i < 3; ++i) {
+		int k;
+		for (k = 0; k < 3; ++k) {
+			R[i][k] = mathVec3Dot(obb0->axis[i], obb1->axis[k]);
+			FR[i][k] = CCTNum(1e-6) + CCTNum_abs(R[i][k]);
+		}
+	}
+
+	for (i = 0; i < 3; ++i) {
+		ra = e0[i];
+		rb = e1[0] * FR[i][0] + e1[1] * FR[i][1] + e1[2] * FR[i][2];
+		t = CCTNum_abs(T[i]);
+		if (t > ra + rb) {
+			return 0;
+		}
+	}
+
+	for (i = 0; i < 3; ++i) {
+		ra = e0[0] * FR[0][i] + e0[1] * FR[1][i] + e0[2] * FR[2][i];
+		rb = e1[i];
+		t = T[0] * R[0][i] + T[1] * R[1][i] + T[2] * R[2][i];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+	}
+
+	if (1) {
+		/* 9 cross products */
+
+		//L = A0 x B0
+		ra = e0[1] * FR[2][0] + e0[2] * FR[1][0];
+		rb = e1[1] * FR[0][2] + e1[2] * FR[0][1];
+		t = T[2] * R[1][0] - T[1] * R[2][0];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A0 x B1
+		ra = e0[1] * FR[2][1] + e0[2] * FR[1][1];
+		rb = e1[0] * FR[0][2] + e1[2] * FR[0][0];
+		t = T[2] * R[1][1] - T[1] * R[2][1];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A0 x B2
+		ra = e0[1] * FR[2][2] + e0[2] * FR[1][2];
+		rb = e1[0] * FR[0][1] + e1[1] * FR[0][0];
+		t = T[2] * R[1][2] - T[1] * R[2][2];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A1 x B0
+		ra = e0[0] * FR[2][0] + e0[2] * FR[0][0];
+		rb = e1[1] * FR[1][2] + e1[2] * FR[1][1];
+		t = T[0] * R[2][0] - T[2] * R[0][0];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A1 x B1
+		ra = e0[0] * FR[2][1] + e0[2] * FR[0][1];
+		rb = e1[0] * FR[1][2] + e1[2] * FR[1][0];
+		t = T[0] * R[2][1] - T[2] * R[0][1];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A1 x B2
+		ra = e0[0] * FR[2][2] + e0[2] * FR[0][2];
+		rb = e1[0] * FR[1][1] + e1[1] * FR[1][0];
+		t = T[0] * R[2][2] - T[2] * R[0][2];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A2 x B0
+		ra = e0[0] * FR[1][0] + e0[1] * FR[0][0];
+		rb = e1[1] * FR[2][2] + e1[2] * FR[2][1];
+		t = T[1] * R[0][0] - T[0] * R[1][0];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A2 x B1
+		ra = e0[0] * FR[1][1] + e0[1] * FR[0][1];
+		rb = e1[0] * FR[2][2] + e1[2] * FR[2][0];
+		t = T[1] * R[0][1] - T[0] * R[1][1];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+		//L = A2 x B2
+		ra = e0[0] * FR[1][2] + e0[1] * FR[0][2];
+		rb = e1[0] * FR[2][1] + e1[1] * FR[2][0];
+		t = T[1] * R[0][2] - T[0] * R[1][2];
+		t = CCTNum_abs(t);
+		if (t > ra + rb) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 static int ConvexMesh_HasAny_OBBVertices(const GeometryMesh_t* mesh, const GeometryOBB_t* obb) {

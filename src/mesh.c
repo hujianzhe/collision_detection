@@ -12,7 +12,6 @@
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
-extern int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
 static int Mesh_Cooking_Edge_InternalProc(const CCTNum_t (*v)[3], GeometryMesh_t* mesh) {
 	unsigned int i;
@@ -184,24 +183,6 @@ err:
 	}
 	free(tri_merge_bits);
 	return 0;
-}
-
-static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
-	unsigned int i;
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTNum_t v[3], dot;
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
-		dot = mathVec3Dot(v, polygon->normal);
-		if (dot < CCT_EPSILON_NEGATE) {
-			continue;
-		}
-		if (dot > CCT_EPSILON) {
-			return 0;
-		}
-		return Polygon_Convex_HasPoint_InternalProc(polygon, p);
-	}
-	return 1;
 }
 
 #ifdef __cplusplus
@@ -496,73 +477,6 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 		}
 	}
 }
-
-int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
-	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
-		return 0;
-	}
-	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
-}
-
-int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
-	unsigned int i;
-	if (!AABB_Intersect_AABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
-		return 0;
-	}
-	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
-		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
-		if (!ConvexMesh_Contain_Point_InternalProc(mesh1, p)) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-/*
-int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
-	CCTNum_t dir[3];
-	unsigned int i, again_flag;
-	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
-		return 0;
-	}
-	again_flag = 0;
-	dir[0] = CCTNum(1.0); dir[1] = dir[2] = CCTNum(0.0);
-again:
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		CCTNum_t d, cos_theta, cast_p[3];
-		mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &d);
-		if (CCT_EPSILON_NEGATE <= d && d <= CCT_EPSILON) {
-			if (Polygon_Convex_HasPoint_InternalProc(polygon, p)) {
-				return 1;
-			}
-			continue;
-		}
-		cos_theta = mathVec3Dot(dir, polygon->normal);
-		if (CCT_EPSILON_NEGATE <= cos_theta && cos_theta <= CCT_EPSILON) {
-			continue;
-		}
-		d /= cos_theta;
-		if (d < CCTNum(0.0)) {
-			continue;
-		}
-		mathVec3Copy(cast_p, p);
-		mathVec3AddScalar(cast_p, dir, d);
-		if (Polygon_Convex_HasPoint_InternalProc(polygon, cast_p)) {
-			break;
-		}
-	}
-	if (i >= mesh->polygons_cnt) {
-		return 0;
-	}
-	if (!again_flag) {
-		dir[0] = CCTNum(-1.0);
-		again_flag = 1;
-		goto again;
-	}
-	return 1;
-}
-*/
 
 #ifdef __cplusplus
 }

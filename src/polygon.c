@@ -10,41 +10,10 @@
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
+extern int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
 static const unsigned int DEFAULT_TRIANGLE_VERTICE_INDICES[3] = { 0, 1, 2 };
 static const unsigned int DEFAULT_RECT_VERTICE_INDICES[4] = { 0, 1, 2, 3 };
-
-int Polygon_Convex_HasPoint_InternalProc(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	unsigned int i;
-	CCTNum_t v[3], dot;
-	CCTNum_t vp[3], eg[3];
-
-	mathVec3Sub(v, polygon->v[polygon->v_indices[0]], p);
-	dot = mathVec3Dot(polygon->normal, v);
-	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
-		return 0;
-	}
-	mathVec3Sub(vp, p, polygon->v[polygon->v_indices[0]]);
-	mathVec3Sub(eg, polygon->v[polygon->v_indices[0]], polygon->v[polygon->v_indices[polygon->v_indices_cnt - 1]]);
-	mathVec3Cross(v, vp, eg);
-	if (mathVec3IsZero(v) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
-		return 1;
-	}
-	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		CCTNum_t vi[3];
-		mathVec3Sub(vp, p, polygon->v[polygon->v_indices[i]]);
-		mathVec3Sub(eg, polygon->v[polygon->v_indices[i]], polygon->v[polygon->v_indices[i - 1]]);
-		mathVec3Cross(vi, vp, eg);
-		if (mathVec3IsZero(vi) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
-			return 1;
-		}
-		dot = mathVec3Dot(v, vi);
-		if (dot <= CCTNum(0.0)) {
-			return 0;
-		}
-	}
-	return 1;
-}
 
 GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	unsigned int i, s, n, p, last_s, first_s;
@@ -531,7 +500,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		}
 		return 0;
 	}
-	return Polygon_Convex_HasPoint_InternalProc(polygon, p);
+	return ConvexPolygon_Contain_Point(polygon, p);
 }
 
 int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {

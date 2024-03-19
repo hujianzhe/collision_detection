@@ -29,8 +29,6 @@ __declspec_dll void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCT
 __declspec_dll CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices);
 __declspec_dll int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t closest_p[2][3]);
 
-int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
-
 #ifdef	__cplusplus
 }
 #endif

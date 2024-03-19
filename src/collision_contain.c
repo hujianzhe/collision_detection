@@ -76,6 +76,92 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	return len_sq <= (r1 - r2) * (r1 - r2);
 }
 
+int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
+	CCTNum_t op[3], dot;
+	mathVec3Sub(op, p, obb->o);
+	dot = mathVec3Dot(op, obb->axis[0]);
+	if (dot > obb->half[0] + CCT_EPSILON || dot < -obb->half[0] - CCT_EPSILON) {
+		return 0;
+	}
+	dot = mathVec3Dot(op, obb->axis[1]);
+	if (dot > obb->half[1] + CCT_EPSILON || dot < -obb->half[1] - CCT_EPSILON) {
+		return 0;
+	}
+	dot = mathVec3Dot(op, obb->axis[2]);
+	if (dot > obb->half[2] + CCT_EPSILON || dot < -obb->half[2] - CCT_EPSILON) {
+		return 0;
+	}
+	return 1;
+}
+
+static int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+	CCTNum_t AX[3][3], p[3];
+	if (obb0 == obb1) {
+		return 1;
+	}
+	mathVec3MultiplyScalar(AX[0], obb1->axis[0], obb1->half[0]);
+	mathVec3MultiplyScalar(AX[1], obb1->axis[1], obb1->half[1]);
+	mathVec3MultiplyScalar(AX[2], obb1->axis[2], obb1->half[2]);
+
+	mathVec3Copy(p, obb1->o);
+	mathVec3Sub(p, p, AX[0]);
+	mathVec3Sub(p, p, AX[1]);
+	mathVec3Sub(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Add(p, p, AX[0]);
+	mathVec3Sub(p, p, AX[1]);
+	mathVec3Sub(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Add(p, p, AX[0]);
+	mathVec3Add(p, p, AX[1]);
+	mathVec3Sub(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Sub(p, p, AX[0]);
+	mathVec3Add(p, p, AX[1]);
+	mathVec3Sub(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Sub(p, p, AX[0]);
+	mathVec3Sub(p, p, AX[1]);
+	mathVec3Add(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Add(p, p, AX[0]);
+	mathVec3Sub(p, p, AX[1]);
+	mathVec3Add(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Add(p, p, AX[0]);
+	mathVec3Add(p, p, AX[1]);
+	mathVec3Add(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	mathVec3Copy(p, obb1->o);
+	mathVec3Sub(p, p, AX[0]);
+	mathVec3Add(p, p, AX[1]);
+	mathVec3Add(p, p, AX[2]);
+	if (!OBB_Contain_Point(obb0, p)) {
+		return 0;
+	}
+	return 1;
+}
+
 static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCTNum_t radius) {
 	int i;
 	CCTNum_t v[3];
@@ -138,6 +224,77 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 		if (!OBB_Contain_Point(obb, p)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+	unsigned int i;
+	CCTNum_t v[3], dot;
+	CCTNum_t vp[3], eg[3];
+
+	mathVec3Sub(v, polygon->v[polygon->v_indices[0]], p);
+	dot = mathVec3Dot(polygon->normal, v);
+	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	mathVec3Sub(vp, p, polygon->v[polygon->v_indices[0]]);
+	mathVec3Sub(eg, polygon->v[polygon->v_indices[0]], polygon->v[polygon->v_indices[polygon->v_indices_cnt - 1]]);
+	mathVec3Cross(v, vp, eg);
+	if (mathVec3IsZero(v) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
+		return 1;
+	}
+	for (i = 1; i < polygon->v_indices_cnt; ++i) {
+		CCTNum_t vi[3];
+		mathVec3Sub(vp, p, polygon->v[polygon->v_indices[i]]);
+		mathVec3Sub(eg, polygon->v[polygon->v_indices[i]], polygon->v[polygon->v_indices[i - 1]]);
+		mathVec3Cross(vi, vp, eg);
+		if (mathVec3IsZero(vi) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
+			return 1;
+		}
+		dot = mathVec3Dot(v, vi);
+		if (dot <= CCTNum(0.0)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+	unsigned int i;
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		CCTNum_t v[3], dot;
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
+		dot = mathVec3Dot(v, polygon->normal);
+		if (dot < CCT_EPSILON_NEGATE) {
+			continue;
+		}
+		if (dot > CCT_EPSILON) {
+			return 0;
+		}
+		return ConvexPolygon_Contain_Point(polygon, p);
+	}
+	return 1;
+}
+
+int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
+		return 0;
+	}
+	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
+}
+
+static int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+	unsigned int i;
+	if (!AABB_Intersect_AABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
+		return 0;
+	}
+	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
+		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
+		if (!ConvexMesh_Contain_Point_InternalProc(mesh1, p)) {
 			return 0;
 		}
 	}
