@@ -13,6 +13,7 @@ extern "C" {
 
 __declspec_dll void mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t np[3], CCTNum_t* distance);
 __declspec_dll CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]);
+__declspec_dll int mathCircleNormalComputeHorizonAndTilt(const CCTNum_t circle_normal[3], const CCTNum_t reference_V[3], CCTNum_t horizon_dir[3], CCTNum_t tilt_dir[3]);
 
 #ifdef	__cplusplus
 }

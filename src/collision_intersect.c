@@ -35,6 +35,25 @@ int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTN
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
+int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+	CCTNum_t horizon_dir[3], tilt_dir[3];
+	if (mathCircleNormalComputeHorizonAndTilt(circle->normal, plane_n, horizon_dir, tilt_dir)) {
+		CCTNum_t d, cos_theta;
+		mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL, &d);
+		cos_theta = mathVec3Dot(tilt_dir, plane_n);
+		d /= cos_theta;
+		d = CCTNum_abs(d);
+		if (d > circle->radius + CCT_EPSILON) {
+			return 0;
+		}
+		if (d >= circle->radius - CCT_EPSILON) {
+			return 1;
+		}
+		return 3;
+	}
+	return Plane_Contain_Point(plane_v, plane_n, circle->o) ? 2 : 0;
+}
+
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
 	CCTNum_t d[2], lsdir[3], dot;
 	mathVec3Sub(lsdir, ls[1], ls[0]);
