@@ -9,11 +9,13 @@
 
 #ifdef CCT_NUM_FLOAT
 	typedef	float					CCTNum_t;
-	#define	CCT_EPSILON				1e-5f
-	#define	CCT_EPSILON_NEGATE		-1e-5f
 	#define	CCTNum(n)				n##f
 	#define	CCTNums_3(x, y, z)		x##f, y##f, z##f
 	#define	CCTNums_4(x, y, z, w)	x##f, y##f, z##f, w##f
+
+	#define	CCT_EPSILON				1e-5f
+	#define	CCT_EPSILON_NEGATE		-1e-5f
+	#define	CCT_GAP_DISTANCE		1e-3f
 
 	#define	CCTNum_abs(n)			fabsf(n)
 	#define	CCTNum_sqrt(n)			sqrtf(n)
@@ -24,11 +26,13 @@
 
 #elif	CCT_NUM_DOUBLE
 	typedef	double					CCTNum_t;
-	#define	CCT_EPSILON				1e-5
-	#define	CCT_EPSILON_NEGATE		-1e-5
 	#define	CCTNum(n)				n
 	#define	CCTNums_3(x, y, z)		x, y, z
 	#define	CCTNums_4(x, y, z, w)	x, y, z, w
+
+	#define	CCT_EPSILON				1e-5
+	#define	CCT_EPSILON_NEGATE		-1e-5
+	#define	CCT_GAP_DISTANCE		1e-3
 
 	#define	CCTNum_abs(n)			fabs(n)
 	#define	CCTNum_sqrt(n)			sqrt(n)
