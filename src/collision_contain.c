@@ -68,7 +68,7 @@ int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum
 	return mathVec3IsZero(v);
 }
 
-static int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]) {
+int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]) {
 	CCTNum_t op[3], dot;
 	mathVec3Sub(op, p, circle->o);
 	dot = mathVec3Dot(op, circle->normal);

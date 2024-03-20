@@ -17,6 +17,7 @@ extern const unsigned int Box_Edge_Indices[24];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
+extern int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
@@ -35,7 +36,7 @@ int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTN
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
-int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+static int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	CCTNum_t horizon_dir[3], tilt_dir[3];
 	if (mathCircleNormalComputeHorizonAndTilt(circle->normal, plane_n, horizon_dir, tilt_dir)) {
 		CCTNum_t d, cos_theta;
@@ -51,7 +52,64 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 		}
 		return 3;
 	}
-	return Plane_Contain_Point(plane_v, plane_n, circle->o) ? 2 : 0;
+	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
+		return 2;
+	}
+	return 0;
+}
+
+static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
+	CCTNum_t horizon_dir[3], tilt_dir[3], len_sq, cos_theta;
+	if (mathCircleNormalComputeHorizonAndTilt(c1->normal, c2->normal, horizon_dir, tilt_dir)) {
+		CCTNum_t p[3], np[3], d, len, c2_radius_sq;
+		mathPointProjectionPlane(c1->o, c2->o, c2->normal, NULL, &d);
+		cos_theta = mathVec3Dot(tilt_dir, c2->normal);
+		d /= cos_theta;
+		len = CCTNum_abs(d);
+		if (len > c1->radius + CCT_EPSILON) {
+			return 0;
+		}
+		mathVec3Copy(p, c1->o);
+		mathVec3AddScalar(p, tilt_dir, d);
+		if (len >= c1->radius - CCT_EPSILON) {
+			return Circle_Contain_Point(c2, p);
+		}
+		mathPointProjectionLine(c2->o, p, horizon_dir, np);
+		len_sq = mathVec3DistanceSq(c2->o, np);
+		c2_radius_sq = c2->radius * c2->radius;
+		if (len_sq > c2_radius_sq) {
+			return 0;
+		}
+		len_sq = c1->radius * c1->radius - d * d;
+		len = CCTNum_sqrt(len_sq);
+		mathSegmentClosestPointTo_v2(p, horizon_dir, len, c2->o, p);
+		len_sq = mathVec3DistanceSq(p, c2->o);
+		if (len_sq > c2_radius_sq) {
+			return 0;
+		}
+		if (len_sq >= c2_radius_sq - CCT_EPSILON) {
+			return 1;
+		}
+		return 2;
+	}
+	else {
+		CCTNum_t v[3], radius_sum, radius_sum_sq;
+		mathVec3Sub(v, c2->o, c1->o);
+		cos_theta = mathVec3Dot(v, c1->normal);
+		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
+			return 0;
+		}
+		radius_sum = c1->radius + c2->radius;
+		radius_sum_sq = radius_sum * radius_sum;
+		len_sq = mathVec3LenSq(v);
+		if (len_sq > radius_sum_sq + CCT_EPSILON) {
+			return 0;
+		}
+		if (len_sq >= radius_sum_sq - CCT_EPSILON) {
+			return 1;
+		}
+		return 2;
+	}
 }
 
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {

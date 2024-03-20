@@ -328,6 +328,24 @@ void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCT
 	}
 }
 
+void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3], d, abs_d;
+	mathVec3Sub(v, p, ls_center_p);
+	d = mathVec3Dot(v, lsdir);
+	abs_d = CCTNum_abs(d);
+	mathVec3Copy(closest_p, ls_center_p);
+	if (abs_d > ls_half_len) {
+		if (d > CCTNum(0.0)) {
+			mathVec3AddScalar(closest_p, lsdir, ls_half_len);
+		}
+		else {
+			mathVec3SubScalar(closest_p, lsdir, ls_half_len);
+		}
+		return;
+	}
+	mathVec3AddScalar(closest_p, lsdir, d);
+}
+
 int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask) {
 	int res;
 	CCTNum_t lsdir1[3], lsdir2[3], dir_d[2], lslen1, lslen2;
