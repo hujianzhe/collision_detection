@@ -316,16 +316,22 @@ int mathSegmentIsSame(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
 }
 
 void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t lsdir[3], lslen, dot;
+	CCTNum_t lsdir[3], v[3], lslen, dot;
+	mathVec3Sub(v, p, ls[0]);
 	mathVec3Sub(lsdir, ls[1], ls[0]);
-	lslen = mathVec3Normalized(lsdir, lsdir);
-	dot = mathPointProjectionLine(p, ls[0], lsdir, closest_p);
-	if (dot < CCT_EPSILON_NEGATE) {
+	dot = mathVec3Dot(v, lsdir);
+	if (dot < CCTNum(0.0)) {
 		mathVec3Copy(closest_p, ls[0]);
+		return;
 	}
-	else if (dot > lslen + CCT_EPSILON) {
+	lslen = mathVec3Normalized(lsdir, lsdir);
+	dot /= lslen;
+	if (dot > lslen) {
 		mathVec3Copy(closest_p, ls[1]);
+		return;
 	}
+	mathVec3Copy(closest_p, ls[0]);
+	mathVec3AddScalar(closest_p, lsdir, dot);
 }
 
 void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
