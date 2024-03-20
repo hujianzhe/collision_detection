@@ -42,7 +42,7 @@
 	#define	CCTNum_atan2(y, x)		atan2(y, x)
 
 #else
-	#error	"CCT_NUM type isn't defined, should be float or double"
+	#error	"CCTNum_t type isn't defined, should be float or double"
 #endif
 
 #define	CCTNum_try_fix_to(n, to)	((CCTNum_abs(n - to) > CCT_EPSILON ? n : to))
