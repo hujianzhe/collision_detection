@@ -367,17 +367,10 @@ static int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, con
 }
 
 int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) {
-	int i;
 	CCTNum_t v[3];
-	mathVec3Sub(v, o, obb->o);
-	for (i = 0; i < 3; ++i) {
-		CCTNum_t dot = mathVec3Dot(v, obb->axis[i]);
-		dot = CCTNum_abs(dot);
-		if (dot > obb->half[i] + radius) {
-			return 0;
-		}
-	}
-	return 1;
+	mathOBBClosestPointTo(obb, o, v);
+	mathVec3Sub(v, o, v);
+	return mathVec3LenSq(v) <= radius * radius;
 }
 
 static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
