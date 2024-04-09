@@ -35,10 +35,6 @@ typedef struct GeometryAABB_t {
 	CCTNum_t half[3];
 } GeometryAABB_t;
 
-#ifndef GEOMETRY_BODY_BOX_MIN_HALF
-	#define	GEOMETRY_BODY_BOX_MIN_HALF	(CCTNum(1e-5) + CCTNum(1e-5))
-#endif
-
 typedef struct GeometryOBB_t {
 	CCTNum_t o[3];
 	CCTNum_t half[3];

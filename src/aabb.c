@@ -10,48 +10,25 @@
 extern "C" {
 #endif
 
-/*
-	     7+------+6			0 = ---
-	     /|     /|			1 = +--
-	    / |    / |			2 = ++-
-	   / 4+---/--+5			3 = -+-
-	 3+------+2 /    y   z	4 = --+
-	  | /    | /     |  /	5 = +-+
-	  |/     |/      |/		6 = +++
-	 0+------+1      *---x	7 = -++
-*/
-const unsigned int Box_Edge_Indices[24] = {
-	0, 1,	1, 2,	2, 3,	3, 0,
-	7, 6,	6, 5,	5, 4,	4, 7,
-	1, 5,	6, 2,
-	3, 7,	4, 0
-};
-/*
-const unsigned int Box_Vertice_Adjacent_Indices[8][3] = {
-	{ 1, 3, 4 },
-	{ 0, 2, 5 },
-	{ 1, 3, 6 },
-	{ 0, 2, 7 },
-	{ 0, 5, 7 },
-	{ 1, 4, 6 },
-	{ 2, 5, 7 },
-	{ 3, 4, 6 }
-};
-
-const unsigned int Box_Triangle_Vertices_Indices[36] = {
-	0, 1, 2,	2, 3, 0,
-	7, 6, 5,	5, 4, 7,
-	1, 5, 6,	6, 2, 1,
-	3, 7, 4,	4, 0, 3,
-	3, 7, 6,	6, 2, 3,
-	0, 4, 5,	5, 1, 0
-};
-*/
 const CCTNum_t AABB_Plane_Normal[6][3] = {
 	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) },
 	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },
 	{ CCTNums_3(0.0, 1.0, 0.0) }, { CCTNums_3(0.0, -1.0, 0.0) }
 };
+
+const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]) {
+	if (face_idx >= 6) {
+		return NULL;
+	}
+	if (normal) {
+		const CCTNum_t* face_n = AABB_Plane_Normal[face_idx];
+		normal[0] = face_n[0];
+		normal[1] = face_n[1];
+		normal[2] = face_n[2];
+		return normal;
+	}
+	return AABB_Plane_Normal[face_idx];
+}
 
 void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]) {
 	mathVec3Copy(v[0], o);

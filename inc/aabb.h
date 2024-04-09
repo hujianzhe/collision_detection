@@ -5,13 +5,14 @@
 #ifndef	UTIL_C_CRT_GEOMETRY_AABB_H
 #define	UTIL_C_CRT_GEOMETRY_AABB_H
 
-#include "geometry_def.h"
+#include "box.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 __declspec_dll void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]);
+__declspec_dll const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]);
 
 __declspec_dll void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]);
 __declspec_dll void mathAABBMinVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]);

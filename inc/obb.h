@@ -5,7 +5,7 @@
 #ifndef	UTIL_C_CRT_GEOMETRY_OBB_H
 #define	UTIL_C_CRT_GEOMETRY_OBB_H
 
-#include "geometry_def.h"
+#include "box.h"
 
 #ifdef	__cplusplus
 extern "C" {
