@@ -78,7 +78,7 @@ enum {
 
 typedef struct GeometryBody_t {
 	union {
-		char data;
+		unsigned char data;
 		CCTNum_t point[3];
 		GeometrySegment_t segment;
 		GeometryPlane_t plane;
@@ -93,7 +93,7 @@ typedef struct GeometryBody_t {
 
 typedef struct GeometryBodyRef_t {
 	union {
-		void* data;
+		unsigned char* data;
 		CCTNum_t* point; /* CCTNum_t[3] */
 		GeometrySegment_t* segment;
 		GeometryPlane_t* plane;
