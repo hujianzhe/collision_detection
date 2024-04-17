@@ -596,31 +596,35 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 				mathVec3Sub(plo, circle_o, p);
 				plo_lensq = mathVec3LenSq(plo);
 				circle_radius_sq = circle_radius * circle_radius;
-				if (plo_lensq >= circle_radius_sq) {
+				if (plo_lensq > circle_radius_sq) {
 					CCTNum_t new_ls[2][3], d;
-					if (plo_lensq > circle_radius_sq + CCT_EPSILON) {
-						CCTNum_t cos_theta = mathVec3Dot(plo, dir);
-						if (cos_theta <= CCT_EPSILON) {
-							return NULL;
-						}
-						d = mathVec3Normalized(plo, plo);
-						cos_theta = mathVec3Dot(plo, dir);
-						d -= circle_radius;
-						mathVec3AddScalar(p, plo, d);
-						d /= cos_theta;
-						mathVec3AddScalar(mathVec3Copy(new_ls[0], ls[0]), dir, d);
-						mathVec3AddScalar(mathVec3Copy(new_ls[1], ls[1]), dir, d);
+					CCTNum_t dot = mathVec3Dot(plo, dir);
+					if (dot <= CCTNum(0.0)) {
+						return NULL;
 					}
-					else {
-						d = CCTNum(0.0);
-						mathVec3Copy(new_ls[0], ls[0]);
-						mathVec3Copy(new_ls[1], ls[1]);
+					d = mathVec3Normalized(plo, plo);
+					dot = mathVec3Dot(plo, dir);
+					d -= circle_radius;
+					mathVec3AddScalar(p, plo, d);
+					d /= dot;
+					if (d <= CCTNum(0.0)) {
+						return NULL;
 					}
+					mathVec3Copy(new_ls[0], ls[0]);
+					mathVec3Copy(new_ls[1], ls[1]);
+					mathVec3AddScalar(new_ls[0], dir, d);
+					mathVec3AddScalar(new_ls[1], dir, d);
 					if (Segment_Contain_Point((const CCTNum_t(*)[3])new_ls, p)) {
 						set_result(result, d, plo);
 						add_result_hit_point(result, p);
 						return result;
 					}
+				}
+				else if (Segment_Contain_Point(ls, p)) {
+					mathVec3Normalized(plo, plo);
+					set_result(result, CCTNum(0.0), plo);
+					add_result_hit_point(result, p);
+					return result;
 				}
 				p_result = NULL;
 				for (i = 0; i < 2; ++i) {
