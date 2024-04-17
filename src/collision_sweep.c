@@ -759,8 +759,8 @@ static CCTResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, c
 }
 
 static CCTResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+	int i;
 	CCTResult_t* p_result = NULL;
-	int i, unhit = 0;
 	for (i = 0; i < 8; ++i) {
 		CCTResult_t result_temp;
 		if (!Ray_Sweep_Plane(v[i], dir, plane_v, plane_n, &result_temp)) {
@@ -768,14 +768,13 @@ static CCTResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3
 				set_result(result, CCTNum(0.0), plane_n);
 				return result;
 			}
-			unhit = 1;
 			continue;
 		}
-		if (unhit) {
-			set_result(result, CCTNum(0.0), plane_n);
-			return result;
-		}
 		if (!p_result) {
+			if (i > 0) {
+				set_result(result, CCTNum(0.0), plane_n);
+				return result;
+			}
 			copy_result(result, &result_temp);
 			p_result = result;
 			continue;
@@ -805,8 +804,8 @@ static CCTResult_t* AABB_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t half[3]
 }
 
 static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+	int i;
 	CCTResult_t* p_result = NULL;
-	int i, unhit = 0;
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		CCTResult_t result_temp;
 		const CCTNum_t* v = mesh->v[mesh->v_indices[i]];
@@ -815,14 +814,13 @@ static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t 
 				set_result(result, CCTNum(0.0), plane_n);
 				return result;
 			}
-			unhit = 1;
 			continue;
 		}
-		if (unhit) {
-			set_result(result, CCTNum(0.0), plane_n);
-			return result;
-		}
 		if (!p_result) {
+			if (i > 0) {
+				set_result(result, CCTNum(0.0), plane_n);
+				return result;
+			}
 			copy_result(result, &result_temp);
 			p_result = result;
 			continue;
