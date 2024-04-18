@@ -9,9 +9,10 @@
 
 typedef struct CCTResult_t {
 	CCTNum_t distance;
-	int hit_point_cnt;
-	CCTNum_t hit_point[3];
 	CCTNum_t hit_normal[3];
+
+	int has_unique_hit_point;
+	CCTNum_t unique_hit_point[3];
 } CCTResult_t;
 
 #ifdef __cplusplus
