@@ -557,13 +557,13 @@ static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTN
 
 static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, CCTResult_t* result) {
 	CCTNum_t p[3];
-	int c = Sphere_Intersect_Segment(center, radius, ls, p);
-	if (1 == c) {
+	int res = Sphere_Intersect_Segment(center, radius, ls, p);
+	if (1 == res) {
 		set_result(result, CCTNum(0.0), dir);
 		add_result_hit_point(result, p);
 		return result;
 	}
-	else if (2 == c) {
+	else if (2 == res) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -583,8 +583,8 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 			return result;
 		}
 		else {
+			int i;
 			CCTResult_t* p_result;
-			int i, res;
 			CCTNum_t circle_o[3], circle_radius;
 			mathVec3Normalized(N, N);
 			res = Sphere_Intersect_Plane(center, radius, ls[0], N, circle_o, &circle_radius);
