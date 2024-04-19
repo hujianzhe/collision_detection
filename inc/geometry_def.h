@@ -84,8 +84,8 @@ typedef struct GeometryBody_t {
 		GeometryPlane_t plane;
 		GeometrySphere_t sphere;
 		GeometryAABB_t aabb;
-		GeometryPolygon_t polygon;
 		GeometryOBB_t obb;
+		GeometryPolygon_t polygon;
 		GeometryMesh_t mesh;
 	};
 	int type;
@@ -99,8 +99,8 @@ typedef struct GeometryBodyRef_t {
 		GeometryPlane_t* plane;
 		GeometrySphere_t* sphere;
 		GeometryAABB_t* aabb;
-		GeometryPolygon_t* polygon;
 		GeometryOBB_t* obb;
+		GeometryPolygon_t* polygon;
 		GeometryMesh_t* mesh;
 	};
 	int type;

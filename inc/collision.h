@@ -19,6 +19,12 @@ typedef struct CCTResult_t {
 extern "C" {
 #endif
 
+__declspec_dll GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* geo_data, int geo_type);
+__declspec_dll void mathGeometryBodyFreeData(GeometryBody_t* b);
+__declspec_dll void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b);
+
+__declspec_dll CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b);
+
 __declspec_dll GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb);
 __declspec_dll int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]);
 __declspec_dll int mathCollisionBodyRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian);

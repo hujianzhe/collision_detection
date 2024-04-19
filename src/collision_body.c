@@ -8,6 +8,7 @@
 #include "../inc/aabb.h"
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
+#include "../inc/mesh.h"
 #include "../inc/collision.h"
 #include <stddef.h>
 
@@ -33,6 +34,122 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 extern "C" {
 #endif
 
+GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* geo_data, int geo_type) {
+	switch (geo_type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			mathVec3Copy(dst->point, (const CCTNum_t*)geo_data);
+			break;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			dst->segment = *(const GeometrySegment_t*)geo_data;
+			break;
+		}
+		case GEOMETRY_BODY_PLANE:
+		{
+			dst->plane = *(const GeometryPlane_t*)geo_data;
+			break;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			dst->sphere = *(const GeometrySphere_t*)geo_data;
+			break;
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			dst->aabb = *(const GeometryAABB_t*)geo_data;
+			break;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			dst->obb = *(const GeometryOBB_t*)geo_data;
+			break;
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			if (!mathPolygonDeepCopy(&dst->polygon, (const GeometryPolygon_t*)geo_data)) {
+				dst->type = 0;
+				return NULL;
+			}
+			break;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			if (!mathMeshDeepCopy(&dst->mesh, (const GeometryMesh_t*)geo_data)) {
+				dst->type = 0;
+				return NULL;
+			}
+			break;
+		}
+		default:
+		{
+			dst->type = 0;
+			return NULL;
+		}
+	}
+	dst->type = geo_type;
+	return dst;
+}
+
+void mathGeometryBodyFreeData(GeometryBody_t* b) {
+	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
+		mathMeshFreeCookingData(&b->mesh);
+	}
+	else if (GEOMETRY_BODY_POLYGON == b->type) {
+		mathPolygonFreeCookingData(&b->polygon);
+	}
+	b->type = 0;
+}
+
+void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b) {
+	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
+		mathMeshFreeCookingData(b->mesh);
+	}
+	else if (GEOMETRY_BODY_POLYGON == b->type) {
+		mathPolygonFreeCookingData(b->polygon);
+	}
+	b->type = 0;
+}
+
+CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
+	switch (b->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			return b->point;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			return b->segment->v[0];
+		}
+		case GEOMETRY_BODY_PLANE:
+		{
+			return b->plane->v;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			return b->sphere->o;
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			return b->aabb->o;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			return b->obb->o;
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			return NULL;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			return b->mesh->bound_box.o;
+		}
+	}
+	return NULL;
+}
+
 GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
 	switch (b->type) {
 		case GEOMETRY_BODY_AABB:
@@ -42,8 +159,9 @@ GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, Geometr
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
+			CCTNum_t r = b->sphere->radius;
 			mathVec3Copy(aabb->o, b->sphere->o);
-			mathVec3Set(aabb->half, b->sphere->radius, b->sphere->radius, b->sphere->radius);
+			mathVec3Set(aabb->half, r, r, r);
 			break;
 		}
 		case GEOMETRY_BODY_OBB:
