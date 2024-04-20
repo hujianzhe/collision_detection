@@ -23,7 +23,8 @@ __declspec_dll GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const 
 __declspec_dll void mathGeometryBodyFreeData(GeometryBody_t* b);
 __declspec_dll void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b);
 
-__declspec_dll CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b);
+__declspec_dll const CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b);
+__declspec_dll void mathGeometryBodySetPosition(const GeometryBodyRef_t* b, const CCTNum_t v[3]);
 
 __declspec_dll GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb);
 __declspec_dll int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]);

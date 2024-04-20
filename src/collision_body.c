@@ -112,7 +112,7 @@ void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
+const CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -148,6 +148,62 @@ CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
 		}
 	}
 	return NULL;
+}
+
+void mathGeometryBodySetPosition(const GeometryBodyRef_t* b, const CCTNum_t v[3]) {
+	switch (b->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			mathVec3Copy(b->point, v);
+			return;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			GeometrySegment_t* segment = b->segment;
+			CCTNum_t delta[3];
+			mathVec3Sub(delta, v, segment->v[0]);
+			mathVec3Copy(segment->v[0], v);
+			mathVec3Add(segment->v[1], segment->v[1], delta);
+			return;
+		}
+		case GEOMETRY_BODY_PLANE:
+		{
+			mathVec3Copy(b->plane->v, v);
+			return;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			mathVec3Copy(b->sphere->o, v);
+			return;
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			mathVec3Copy(b->aabb->o, v);
+			return;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			mathVec3Copy(b->obb->o, v);
+			return;
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			/* TODO */
+			return;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			GeometryMesh_t* mesh = b->mesh;
+			CCTNum_t delta[3];
+			mathVec3Sub(delta, v, mesh->bound_box.o);
+			for (unsigned int i = 0; i < mesh->v_indices_cnt; ++i) {
+				CCTNum_t* p = mesh->v[mesh->v_indices[i]];
+				mathVec3Add(p, p, delta);
+			}
+			mathVec3Copy(mesh->bound_box.o, v);
+			return;
+		}
+	}
 }
 
 GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
