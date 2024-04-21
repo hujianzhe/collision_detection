@@ -34,41 +34,41 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 extern "C" {
 #endif
 
-GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* geo_data, int geo_type) {
-	switch (geo_type) {
+GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* src_geo_data, int src_geo_type) {
+	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			mathVec3Copy(dst->point, (const CCTNum_t*)geo_data);
+			mathVec3Copy(dst->point, (const CCTNum_t*)src_geo_data);
 			break;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			dst->segment = *(const GeometrySegment_t*)geo_data;
+			dst->segment = *(const GeometrySegment_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			dst->plane = *(const GeometryPlane_t*)geo_data;
+			dst->plane = *(const GeometryPlane_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			dst->sphere = *(const GeometrySphere_t*)geo_data;
+			dst->sphere = *(const GeometrySphere_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			dst->aabb = *(const GeometryAABB_t*)geo_data;
+			dst->aabb = *(const GeometryAABB_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			dst->obb = *(const GeometryOBB_t*)geo_data;
+			dst->obb = *(const GeometryOBB_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			if (!mathPolygonDeepCopy(&dst->polygon, (const GeometryPolygon_t*)geo_data)) {
+			if (!mathPolygonDeepCopy(&dst->polygon, (const GeometryPolygon_t*)src_geo_data)) {
 				dst->type = 0;
 				return NULL;
 			}
@@ -76,7 +76,7 @@ GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* 
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			if (!mathMeshDeepCopy(&dst->mesh, (const GeometryMesh_t*)geo_data)) {
+			if (!mathMeshDeepCopy(&dst->mesh, (const GeometryMesh_t*)src_geo_data)) {
 				dst->type = 0;
 				return NULL;
 			}
@@ -88,7 +88,7 @@ GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* 
 			return NULL;
 		}
 	}
-	dst->type = geo_type;
+	dst->type = src_geo_type;
 	return dst;
 }
 
