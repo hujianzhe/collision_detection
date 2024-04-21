@@ -193,10 +193,11 @@ void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
+			unsigned int i;
 			GeometryMesh_t* mesh = b->mesh;
 			CCTNum_t delta[3];
 			mathVec3Sub(delta, v, mesh->bound_box.o);
-			for (unsigned int i = 0; i < mesh->v_indices_cnt; ++i) {
+			for (i = 0; i < mesh->v_indices_cnt; ++i) {
 				CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 				mathVec3Add(p, p, delta);
 			}
