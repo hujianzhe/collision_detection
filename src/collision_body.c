@@ -224,6 +224,19 @@ void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 
 GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
 	switch (b->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			mathVec3Copy(aabb->o, b->point);
+			aabb->half[0] = GEOMETRY_BODY_BOX_MIN_HALF;
+			aabb->half[1] = GEOMETRY_BODY_BOX_MIN_HALF;
+			aabb->half[2] = GEOMETRY_BODY_BOX_MIN_HALF;
+			break;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			mathAABBFromTwoVertice(b->segment->v[0], b->segment->v[1], aabb->o, aabb->half);
+			break;
+		}
 		case GEOMETRY_BODY_AABB:
 		{
 			*aabb = *(b->aabb);
