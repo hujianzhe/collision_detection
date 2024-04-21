@@ -6,6 +6,7 @@
 #define	UTIL_C_CRT_COLLISION_H
 
 #include "geometry_def.h"
+#include <stddef.h>
 
 typedef struct CCTResult_t {
 	CCTNum_t distance;
@@ -19,7 +20,8 @@ typedef struct CCTResult_t {
 extern "C" {
 #endif
 
-__declspec_dll GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* src_geo_data, int src_geo_type);
+__declspec_dll size_t mathGeometryBodySize(int geo_type);
+__declspec_dll unsigned char* mathGeometryBodyClone(unsigned char* dst_geo_data, const unsigned char* src_geo_data, int src_geo_type);
 __declspec_dll void mathGeometryBodyFreeData(GeometryBody_t* b);
 __declspec_dll void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b);
 

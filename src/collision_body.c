@@ -34,61 +34,76 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 extern "C" {
 #endif
 
-GeometryBody_t* mathGeometryBodyClone(GeometryBody_t* dst, const unsigned char* src_geo_data, int src_geo_type) {
+size_t mathGeometryBodySize(int geo_type) {
+	static const size_t s_geometry_body_size[9] = {
+		0,
+		sizeof(CCTNum_t[3]),
+		sizeof(GeometrySegment_t),
+		sizeof(GeometryPlane_t),
+		sizeof(GeometrySphere_t),
+		sizeof(GeometryAABB_t),
+		sizeof(GeometryOBB_t),
+		sizeof(GeometryPolygon_t),
+		sizeof(GeometryMesh_t)
+	};
+
+	if (((size_t)geo_type) >= 9) {
+		return 0;
+	}
+	return s_geometry_body_size[(size_t)geo_type];
+}
+
+unsigned char* mathGeometryBodyClone(unsigned char* dst, const unsigned char* src_geo_data, int src_geo_type) {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			mathVec3Copy(dst->point, (const CCTNum_t*)src_geo_data);
+			mathVec3Copy((CCTNum_t*)dst, (const CCTNum_t*)src_geo_data);
 			break;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			dst->segment = *(const GeometrySegment_t*)src_geo_data;
+			*(GeometrySegment_t*)dst = *(const GeometrySegment_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			dst->plane = *(const GeometryPlane_t*)src_geo_data;
+			*(GeometryPlane_t*)dst = *(const GeometryPlane_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			dst->sphere = *(const GeometrySphere_t*)src_geo_data;
+			*(GeometrySphere_t*)dst = *(const GeometrySphere_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			dst->aabb = *(const GeometryAABB_t*)src_geo_data;
+			*(GeometryAABB_t*)dst = *(const GeometryAABB_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			dst->obb = *(const GeometryOBB_t*)src_geo_data;
+			*(GeometryOBB_t*)dst = *(const GeometryOBB_t*)src_geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			if (!mathPolygonDeepCopy(&dst->polygon, (const GeometryPolygon_t*)src_geo_data)) {
-				dst->type = 0;
+			if (!mathPolygonDeepCopy((GeometryPolygon_t*)dst, (const GeometryPolygon_t*)src_geo_data)) {
 				return NULL;
 			}
 			break;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			if (!mathMeshDeepCopy(&dst->mesh, (const GeometryMesh_t*)src_geo_data)) {
-				dst->type = 0;
+			if (!mathMeshDeepCopy((GeometryMesh_t*)dst, (const GeometryMesh_t*)src_geo_data)) {
 				return NULL;
 			}
 			break;
 		}
 		default:
 		{
-			dst->type = 0;
 			return NULL;
 		}
 	}
-	dst->type = src_geo_type;
 	return dst;
 }
 
