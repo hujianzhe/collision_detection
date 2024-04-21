@@ -150,7 +150,7 @@ const CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
 	return NULL;
 }
 
-void mathGeometryBodySetPosition(const GeometryBodyRef_t* b, const CCTNum_t v[3]) {
+void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
