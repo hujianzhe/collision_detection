@@ -127,31 +127,38 @@ void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-const CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
+const CCTNum_t* mathGeometryBodyGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]) {
+	const CCTNum_t* ptr_v;
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return b->point;
+			ptr_v = b->point;
+			break;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			return b->segment->v[0];
+			ptr_v = b->segment->v[0];
+			break;
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			return b->plane->v;
+			ptr_v = b->plane->v;
+			break;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			return b->sphere->o;
+			ptr_v = b->sphere->o;
+			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			return b->aabb->o;
+			ptr_v = b->aabb->o;
+			break;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			return b->obb->o;
+			ptr_v = b->obb->o;
+			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
@@ -159,10 +166,16 @@ const CCTNum_t* mathGeometryBodyPosition(const GeometryBodyRef_t* b) {
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			return b->mesh->bound_box.o;
+			ptr_v = b->mesh->bound_box.o;
+			break;
 		}
+		default:
+			return NULL;
 	}
-	return NULL;
+	if (v) {
+		return mathVec3Copy(v, ptr_v);
+	}
+	return ptr_v;
 }
 
 void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
