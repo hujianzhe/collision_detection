@@ -223,6 +223,12 @@ CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3
 	return mathVec3Sub(r, v, r);
 }
 
+CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
+	CCTNum_t dot = mathVec3Dot(v, n);
+	mathVec3MultiplyScalar(r, n, dot);
+	return mathVec3Sub(r, v, r);
+}
+
 void mathVec3ComputeBasis(const CCTNum_t dir[3], CCTNum_t right[3], CCTNum_t up[3]) {
 	/* these code is copy from PhysX-3.4 */
 	if (dir[1] <= CCTNum(0.9999) && dir[1] >= CCTNum(-0.9999)) {
