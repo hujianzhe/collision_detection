@@ -920,7 +920,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
-			p_result = result;	
+			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
 	}
