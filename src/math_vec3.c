@@ -218,15 +218,17 @@ CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTN
 }
 
 CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
+	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
-	mathVec3MultiplyScalar(r, n, dot * CCTNum(2.0));
-	return mathVec3Sub(r, v, r);
+	mathVec3MultiplyScalar(temp_v, n, dot * CCTNum(2.0));
+	return mathVec3Sub(r, v, temp_v);
 }
 
 CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
+	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
-	mathVec3MultiplyScalar(r, n, dot);
-	return mathVec3Sub(r, v, r);
+	mathVec3MultiplyScalar(temp_v, n, dot);
+	return mathVec3Sub(r, v, temp_v);
 }
 
 void mathVec3ComputeBasis(const CCTNum_t dir[3], CCTNum_t right[3], CCTNum_t up[3]) {
