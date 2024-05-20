@@ -130,11 +130,17 @@ CCTNum_t* mathQuatFromAxisRadian(CCTNum_t q[4], const CCTNum_t axis[3], CCTNum_t
 void mathQuatToAxisRadian(const CCTNum_t q[4], CCTNum_t axis[3], CCTNum_t* radian) {
 	const CCTNum_t qx = q[0], qy = q[1], qz = q[2], qw = q[3];
 	const CCTNum_t s2 = qx*qx + qy*qy + qz*qz;
-	const CCTNum_t s = CCTNum(1.0) / CCTNum_sqrt(s2);
-	axis[0] = qx * s;
-	axis[1] = qy * s;
-	axis[2] = qz * s;
-	*radian = CCTNum_atan2(s2*s, qw) * CCTNum(2.0);
+	if (s2 > CCTNum(0.0)) {
+		const CCTNum_t s = CCTNum(1.0) / CCTNum_sqrt(s2);
+		axis[0] = qx * s;
+		axis[1] = qy * s;
+		axis[2] = qz * s;
+		*radian = CCTNum_atan2(s2 * s, qw) * CCTNum(2.0);
+	}
+	else {
+		axis[0] = axis[1] = axis[2] = CCTNum(0.0);
+		*radian = CCTNum(0.0);
+	}
 }
 
 int mathQuatIsZero(const CCTNum_t q[4]) {
