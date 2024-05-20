@@ -13,9 +13,11 @@ extern "C" {
 #endif
 
 __declspec_dll size_t mathGeometrySize(int geo_type);
+
 __declspec_dll unsigned char* mathGeometryClone(unsigned char* dst_geo_data, const unsigned char* src_geo_data, int src_geo_type);
-__declspec_dll void mathGeometryFreeData(GeometryBody_t* b);
-__declspec_dll void mathGeometryRefFreeData(GeometryBodyRef_t* b);
+__declspec_dll void mathGeometryFree(void* geo_data, int geo_type);
+__declspec_dll void mathGeometryFreeBody(GeometryBody_t* b);
+__declspec_dll void mathGeometryFreeRef(GeometryBodyRef_t* b);
 
 __declspec_dll const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]);
 __declspec_dll void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]);

@@ -107,23 +107,23 @@ unsigned char* mathGeometryClone(unsigned char* dst, const unsigned char* src_ge
 	return dst;
 }
 
-void mathGeometryFreeData(GeometryBody_t* b) {
-	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
-		mathMeshFreeCookingData(&b->mesh);
+void mathGeometryFree(void* geo_data, int geo_type) {
+	if (GEOMETRY_BODY_CONVEX_MESH == geo_type) {
+		mathMeshFreeCookingData((GeometryMesh_t*)geo_data);
 	}
-	else if (GEOMETRY_BODY_POLYGON == b->type) {
-		mathPolygonFreeCookingData(&b->polygon);
+	else if (GEOMETRY_BODY_POLYGON == geo_type) {
+		mathPolygonFreeCookingData((GeometryPolygon_t*)geo_data);
 	}
+}
+
+void mathGeometryFreeBody(GeometryBody_t* b) {
+	mathGeometryFree(&b->data, b->type);
 	b->type = 0;
 }
 
-void mathGeometryRefFreeData(GeometryBodyRef_t* b) {
-	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
-		mathMeshFreeCookingData(b->mesh);
-	}
-	else if (GEOMETRY_BODY_POLYGON == b->type) {
-		mathPolygonFreeCookingData(b->polygon);
-	}
+void mathGeometryFreeRef(GeometryBodyRef_t* b) {
+	mathGeometryFree(b->data, b->type);
+	b->data = NULL;
 	b->type = 0;
 }
 
