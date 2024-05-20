@@ -117,11 +117,17 @@ void mathGeometryFree(void* geo_data, int geo_type) {
 }
 
 void mathGeometryFreeBody(GeometryBody_t* b) {
+	if (!b) {
+		return;
+	}
 	mathGeometryFree(&b->data, b->type);
 	b->type = 0;
 }
 
 void mathGeometryFreeRef(GeometryBodyRef_t* b) {
+	if (!b) {
+		return;
+	}
 	mathGeometryFree(b->data, b->type);
 	b->data = NULL;
 	b->type = 0;
