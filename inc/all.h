@@ -7,7 +7,7 @@
 
 #include "aabb.h"
 #include "collision.h"
-#include "geometry_def.h"
+#include "geometry_interface.h"
 #include "line_segment.h"
 #include "list.h"
 #include "math_matrix3.h"

@@ -20,18 +20,6 @@ typedef struct CCTResult_t {
 extern "C" {
 #endif
 
-__declspec_dll size_t mathGeometryBodySize(int geo_type);
-__declspec_dll unsigned char* mathGeometryBodyClone(unsigned char* dst_geo_data, const unsigned char* src_geo_data, int src_geo_type);
-__declspec_dll void mathGeometryBodyFreeData(GeometryBody_t* b);
-__declspec_dll void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b);
-
-__declspec_dll const CCTNum_t* mathGeometryBodyGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]);
-__declspec_dll void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]);
-
-__declspec_dll GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb);
-__declspec_dll int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]);
-__declspec_dll int mathCollisionBodyRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian);
-
 __declspec_dll int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two);
 __declspec_dll int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two);
 __declspec_dll CCTResult_t* mathCollisionSweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTResult_t* result);

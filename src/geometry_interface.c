@@ -9,7 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/collision.h"
+#include "../inc/geometry_interface.h"
 #include <stddef.h>
 
 static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
@@ -34,8 +34,8 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 extern "C" {
 #endif
 
-size_t mathGeometryBodySize(int geo_type) {
-	static const size_t s_geometry_body_size[9] = {
+size_t mathGeometrySize(int geo_type) {
+	static const size_t s_geometry_size[9] = {
 		0,
 		sizeof(CCTNum_t[3]),
 		sizeof(GeometrySegment_t),
@@ -50,10 +50,10 @@ size_t mathGeometryBodySize(int geo_type) {
 	if (((size_t)geo_type) >= 9) {
 		return 0;
 	}
-	return s_geometry_body_size[(size_t)geo_type];
+	return s_geometry_size[(size_t)geo_type];
 }
 
-unsigned char* mathGeometryBodyClone(unsigned char* dst, const unsigned char* src_geo_data, int src_geo_type) {
+unsigned char* mathGeometryClone(unsigned char* dst, const unsigned char* src_geo_data, int src_geo_type) {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -107,7 +107,7 @@ unsigned char* mathGeometryBodyClone(unsigned char* dst, const unsigned char* sr
 	return dst;
 }
 
-void mathGeometryBodyFreeData(GeometryBody_t* b) {
+void mathGeometryFreeData(GeometryBody_t* b) {
 	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
 		mathMeshFreeCookingData(&b->mesh);
 	}
@@ -117,7 +117,7 @@ void mathGeometryBodyFreeData(GeometryBody_t* b) {
 	b->type = 0;
 }
 
-void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b) {
+void mathGeometryRefFreeData(GeometryBodyRef_t* b) {
 	if (GEOMETRY_BODY_CONVEX_MESH == b->type) {
 		mathMeshFreeCookingData(b->mesh);
 	}
@@ -127,7 +127,7 @@ void mathGeometryBodyRefFreeData(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-const CCTNum_t* mathGeometryBodyGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]) {
+const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]) {
 	const CCTNum_t* ptr_v;
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
@@ -178,7 +178,7 @@ const CCTNum_t* mathGeometryBodyGetPosition(const GeometryBodyRef_t* b, CCTNum_t
 	return ptr_v;
 }
 
-void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
+void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -235,7 +235,7 @@ void mathGeometryBodySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 	}
 }
 
-GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
+GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
 	switch (b->type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -290,7 +290,7 @@ GeometryAABB_t* mathCollisionBodyBoundingBox(const GeometryBodyRef_t* b, Geometr
 	return aabb;
 }
 
-int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
+int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 	switch (b->type) {
 		case GEOMETRY_BODY_SEGMENT:
 		{
@@ -410,10 +410,13 @@ int mathCollisionBodyRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 	return 1;
 }
 
-int mathCollisionBodyRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian) {
 	CCTNum_t q[4];
+	if (GEOMETRY_BODY_SPHERE == b->type) {
+		return 1;
+	}
 	mathQuatFromAxisRadian(q, axis, radian);
-	return mathCollisionBodyRotate(b, q);
+	return mathGeometryRotate(b, q);
 }
 
 #ifdef __cplusplus
