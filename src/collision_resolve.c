@@ -31,9 +31,8 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 		else {
 			dot = CCTNum_abs(dot);
 		}
-		dot *= min_cor;
 		if (total_mass > CCT_EPSILON) {
-			CCTNum_t impulse = CCTNum(2.0) * dot / total_mass;
+			CCTNum_t impulse = CCTNum(2.0) * dot * min_cor / total_mass;
 			CCTNum_t target_impluse = impulse;
 			if (src_rd->mass > CCT_EPSILON) {
 				target_impluse *= src_rd->mass;
@@ -41,9 +40,9 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 			mathVec3MultiplyScalar(target_v, target_v, target_impluse);
 		}
 		else {
-			mathVec3MultiplyScalar(target_v, target_v, dot);
+			mathVec3MultiplyScalar(target_v, target_v, CCTNum(2.0) * dot * min_cor);
 		}
-		mathVec3MultiplyScalar(src_v, src_v, dot);
+		mathVec3MultiplyScalar(src_v, src_v, min_cor);
 	}
 	else {
 		CCTNum_t delta_v[3];
