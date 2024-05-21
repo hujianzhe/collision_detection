@@ -3,7 +3,9 @@
 //
 
 #include "../inc/math_vec3.h"
+#include "../inc/math_matrix3.h"
 #include "../inc/collision.h"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,6 +70,58 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 			mathVec3Add(target_v, target_rd->velocity, delta_v);
 		}
 	}
+}
+
+CCTNum_t* physCollisionTensor(CCTNum_t mass, const unsigned char* geo_data, int geo_type, CCTNum_t mat44[16]) {
+	memset(mat44, 0, sizeof(CCTNum_t[16]));
+	if (mass < CCT_EPSILON) {
+		return mat44;
+	}
+	switch (geo_type) {
+		case GEOMETRY_BODY_AABB:
+		{
+			int i;
+			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
+			CCTNum_t size_sq[3], fraction = mass / CCTNum(12.0);
+			for (i = 0; i < 3; ++i) {
+				size_sq[i] = aabb->half[i] + aabb->half[i];
+				size_sq[i] *= size_sq[i];
+			}
+			*mathMat44Element(mat44, 0, 0) = (size_sq[1] + size_sq[2]) * fraction;
+			*mathMat44Element(mat44, 1, 1) = (size_sq[0] + size_sq[2]) * fraction;
+			*mathMat44Element(mat44, 2, 2) = (size_sq[0] + size_sq[1]) * fraction;
+			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
+			break;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			int i;
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			CCTNum_t size_sq[3], fraction = mass / CCTNum(12.0);
+			for (i = 0; i < 3; ++i) {
+				size_sq[i] = obb->half[i] + obb->half[i];
+				size_sq[i] *= size_sq[i];
+			}
+			*mathMat44Element(mat44, 0, 0) = (size_sq[1] + size_sq[2]) * fraction;
+			*mathMat44Element(mat44, 1, 1) = (size_sq[0] + size_sq[2]) * fraction;
+			*mathMat44Element(mat44, 2, 2) = (size_sq[0] + size_sq[1]) * fraction;
+			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
+			break;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			CCTNum_t e = sphere->radius * sphere->radius * mass * CCTNum(0.4);
+			*mathMat44Element(mat44, 0, 0) = e;
+			*mathMat44Element(mat44, 1, 1) = e;
+			*mathMat44Element(mat44, 2, 2) = e;
+			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
+			break;
+		}
+		default:
+			return NULL;
+	}
+	return mathMat44Inverse(mat44, mat44);
 }
 
 #ifdef	__cplusplus

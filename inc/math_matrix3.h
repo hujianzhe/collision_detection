@@ -23,7 +23,7 @@ extern "C" {
 
 __declspec_dll void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]);
 __declspec_dll CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]);
-__declspec_dll CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column, unsigned int row);
+__declspec_dll CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column_idx, unsigned int row_idx);
 __declspec_dll CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]);
 __declspec_dll CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]);
 __declspec_dll CCTNum_t* mathMat44Identity(CCTNum_t m[16]);

@@ -42,8 +42,8 @@ CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]) {
 	return m;
 }
 
-CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column, unsigned int row) {
-	return (CCTNum_t*)&m[(column << 2) + row];
+CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column_idx, unsigned int row_idx) {
+	return (CCTNum_t*)&m[(column_idx << 2) + row_idx];
 }
 
 CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]) {
