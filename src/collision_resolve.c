@@ -121,7 +121,7 @@ CCTNum_t* physCollisionTensor(CCTNum_t mass, const unsigned char* geo_data, int 
 		default:
 			return NULL;
 	}
-	return mathMat44Inverse(mat44, mat44);
+	return mat44;
 }
 
 #ifdef	__cplusplus
