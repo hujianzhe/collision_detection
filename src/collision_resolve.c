@@ -71,7 +71,7 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 	}
 }
 
-CCTNum_t* physCollisionTensor(CCTNum_t mass, const unsigned char* geo_data, int geo_type, CCTNum_t mat44[16]) {
+CCTNum_t* physCollisionInertiaTensor(CCTNum_t mass, const unsigned char* geo_data, int geo_type, CCTNum_t mat44[16]) {
 	memset(mat44, 0, sizeof(CCTNum_t[16]));
 	if (mass < CCT_EPSILON) {
 		return mat44;
