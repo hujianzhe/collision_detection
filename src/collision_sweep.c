@@ -48,12 +48,7 @@ static CCTResult_t* copy_result(CCTResult_t* dst, CCTResult_t* src) {
 static CCTResult_t* set_result(CCTResult_t* result, CCTNum_t distance, const CCTNum_t hit_normal[3]) {
 	result->distance = distance;
 	result->has_unique_hit_point = 0;
-	if (hit_normal) {
-		mathVec3Copy(result->hit_normal, hit_normal);
-	}
-	else {
-		mathVec3Set(result->hit_normal, CCTNums_3(0.0, 0.0, 0.0));
-	}
+	mathVec3Copy(result->hit_normal, hit_normal);
 	return result;
 }
 
@@ -223,7 +218,7 @@ static CCTResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], co
 
 static CCTResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTResult_t* result) {
 	CCTNum_t dr2, oc2, dir_d;
-	CCTNum_t oc[3];
+	CCTNum_t oc[3], hit_point[3], hit_normal[3];
 	CCTNum_t radius2 = sp_radius * sp_radius;
 	mathVec3Sub(oc, sp_o, o);
 	oc2 = mathVec3LenSq(oc);
@@ -241,11 +236,12 @@ static CCTResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3],
 		return NULL;
 	}
 	dir_d -= CCTNum_sqrt(radius2 - dr2);
-	set_result(result, dir_d, NULL);
-	add_result_hit_point(result, o);
-	mathVec3AddScalar(result->unique_hit_point, dir, dir_d);
-	mathVec3Sub(result->hit_normal, result->unique_hit_point, sp_o);
-	mathVec3MultiplyScalar(result->hit_normal, result->hit_normal, CCTNum(1.0) / sp_radius);
+	mathVec3Copy(hit_point, o);
+	mathVec3AddScalar(hit_point, dir, dir_d);
+	mathVec3Sub(hit_normal, hit_point, sp_o);
+	mathVec3MultiplyScalar(hit_normal, hit_normal, CCTNum(1.0) / sp_radius);
+	set_result(result, dir_d, hit_normal);
+	add_result_hit_point(result, hit_point);
 	return result;
 }
 
