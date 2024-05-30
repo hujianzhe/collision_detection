@@ -454,8 +454,8 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 	}
 }
 
-static CCTResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTResult_t* result) {
-	if (OBB_Intersect_Segment(obb, ls)) {
+static CCTResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryOBB_t* obb, int check_intersect, CCTResult_t* result) {
+	if (check_intersect && OBB_Intersect_Segment(obb, ls)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -898,7 +898,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_OBB((const CCTNum_t(*)[3])edge, neg_dir, obb, &result_temp)) {
+		if (!Segment_Sweep_OBB((const CCTNum_t(*)[3])edge, neg_dir, obb, 0, &result_temp)) {
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
@@ -1207,14 +1207,14 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				result = Segment_Sweep_OBB(one_segment_v, dir, two->obb, result);
+				result = Segment_Sweep_OBB(one_segment_v, dir, two->obb, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_AABB:
 			{
 				GeometryOBB_t obb2;
 				mathOBBFromAABB(&obb2, two->aabb->o, two->aabb->half);
-				result = Segment_Sweep_OBB(one_segment_v, dir, &obb2, result);
+				result = Segment_Sweep_OBB(one_segment_v, dir, &obb2, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
@@ -1272,7 +1272,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
 				mathOBBFromAABB(&obb1, one->aabb->o, one->aabb->half);
-				result = Segment_Sweep_OBB((const CCTNum_t(*)[3])two->segment->v, neg_dir, &obb1, result);
+				result = Segment_Sweep_OBB((const CCTNum_t(*)[3])two->segment->v, neg_dir, &obb1, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_POLYGON:
@@ -1298,7 +1298,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 				CCTNum_t neg_dir[3];
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = Segment_Sweep_OBB((const CCTNum_t(*)[3])two->segment->v, neg_dir, one->obb, result);
+				result = Segment_Sweep_OBB((const CCTNum_t(*)[3])two->segment->v, neg_dir, one->obb, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_PLANE:
