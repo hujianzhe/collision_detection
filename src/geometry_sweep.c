@@ -783,28 +783,15 @@ static CCTResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3
 			p_result = result;
 			continue;
 		}
-		if (p_result->distance < result_temp.distance - CCT_EPSILON) {
-			continue;
-		}
-		if (p_result->distance <= result_temp.distance + CCT_EPSILON) {
-			p_result->has_unique_hit_point = 0;
+		if (p_result->distance < result_temp.distance) {
 			continue;
 		}
 		copy_result(result, &result_temp);
+		if (p_result->distance <= result_temp.distance + CCT_EPSILON) {
+			p_result->has_unique_hit_point = 0;
+		}
 	}
 	return p_result;
-}
-
-static CCTResult_t* OBB_Sweep_Plane(const GeometryOBB_t* obb, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
-	CCTNum_t v[8][3];
-	mathOBBVertices(obb, v);
-	return Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, plane_v, plane_n, result);
-}
-
-static CCTResult_t* AABB_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
-	CCTNum_t v[8][3];
-	mathAABBVertices(o, half, v);
-	return Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, plane_v, plane_n, result);
 }
 
 static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
@@ -896,12 +883,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 	if (!Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (result->has_unique_hit_point) {
-		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
-			return result;
-		}
-	}
-	else if (result->distance != CCTNum(0.0)) {
+	if (result->distance != CCTNum(0.0)) {
 		for (i = 0; i < 8; ++i) {
 			CCTNum_t test_p[3];
 			mathVec3Copy(test_p, v[i]);
@@ -1280,7 +1262,9 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				result = AABB_Sweep_Plane(one->aabb->o, one->aabb->half, dir, two->plane->v, two->plane->normal, result);
+				CCTNum_t v[8][3];
+				mathAABBVertices(one->aabb->o, one->aabb->half, v);
+				result = Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SEGMENT:
@@ -1321,7 +1305,9 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				result = OBB_Sweep_Plane(one->obb, dir, two->plane->v, two->plane->normal, result);
+				CCTNum_t v[8][3];
+				mathOBBVertices(one->obb, v);
+				result = Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
