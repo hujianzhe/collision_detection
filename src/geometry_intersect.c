@@ -484,7 +484,7 @@ int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* pol
 		p = point;
 	}
 	mathOBBVertices(obb, obb_vertices);
-	res = Box_Intersect_Plane(obb_vertices, polygon->v[polygon->v_indices[0]], polygon->normal, p);
+	res = Box_Intersect_Plane((const CCTNum_t(*)[3])obb_vertices, polygon->v[polygon->v_indices[0]], polygon->normal, p);
 	if (0 == res) {
 		return 0;
 	}
