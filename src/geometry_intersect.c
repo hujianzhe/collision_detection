@@ -9,7 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/collision.h"
+#include "../inc/geometry_api.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -683,7 +683,7 @@ static int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const Ge
 extern "C" {
 #endif
 
-int mathCollisionIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two) {
+int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two) {
 	if (one->data == two->data) {
 		return 1;
 	}

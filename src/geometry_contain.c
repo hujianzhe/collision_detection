@@ -10,7 +10,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/collision.h"
+#include "../inc/geometry_api.h"
 #include <stddef.h>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -387,7 +387,7 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 extern "C" {
 #endif
 
-int mathCollisionContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two) {
+int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two) {
 	if (one->data == two->data) {
 		return 1;
 	}

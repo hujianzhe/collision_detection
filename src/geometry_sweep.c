@@ -9,7 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/collision.h"
+#include "../inc/geometry_api.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -1159,7 +1159,7 @@ static CCTResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius
 extern "C" {
 #endif
 
-CCTResult_t* mathCollisionSweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTResult_t* result) {
+CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTResult_t* result) {
 	int flag_neg_dir;
 	if (one->data == two->data || mathVec3IsZero(dir)) {
 		return NULL;

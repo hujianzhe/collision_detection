@@ -9,7 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/geometry_interface.h"
+#include "../inc/geometry_api.h"
 #include <stddef.h>
 
 static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
