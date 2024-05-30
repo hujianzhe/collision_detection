@@ -477,13 +477,14 @@ int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
 	return 0;
 }
 
-static int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
+int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
 	CCTNum_t point[3], obb_vertices[8][3];
 	if (!p) {
 		p = point;
 	}
-	res = OBB_Intersect_Plane(obb, polygon->v[polygon->v_indices[0]], polygon->normal, p);
+	mathOBBVertices(obb, obb_vertices);
+	res = Box_Intersect_Plane(obb_vertices, polygon->v[polygon->v_indices[0]], polygon->normal, p);
 	if (0 == res) {
 		return 0;
 	}

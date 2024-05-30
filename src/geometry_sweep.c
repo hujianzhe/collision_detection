@@ -23,6 +23,7 @@ extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const 
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]);
+extern int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]);
 extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
 extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
 extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
@@ -881,10 +882,15 @@ static CCTResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3
 	}
 }
 
-static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
+static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, int check_intersect, CCTResult_t* result) {
 	int i;
 	CCTNum_t v[8][3], neg_dir[3];
 	CCTResult_t *p_result;
+
+	if (check_intersect && OBB_Intersect_Polygon(obb, polygon, NULL)) {
+		set_result(result, CCTNum(0.0), polygon->normal);
+		return result;
+	}
 
 	mathOBBVertices(obb, v);
 	if (!Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
@@ -963,7 +969,7 @@ static CCTResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[
 		GeometryPolygon_t polygon2;
 		mathOBBPlaneRect(obb2, i, &rect2);
 		mathRectToPolygon(&rect2, &polygon2, p);
-		if (!OBB_Sweep_Polygon(obb1, dir, &polygon2, &result_temp)) {
+		if (!OBB_Sweep_Polygon(obb1, dir, &polygon2, 0, &result_temp)) {
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
@@ -1291,7 +1297,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 			{
 				GeometryOBB_t obb1;
 				mathOBBFromAABB(&obb1, one->aabb->o, one->aabb->half);
-				result = OBB_Sweep_Polygon(&obb1, dir, two->polygon, result);
+				result = OBB_Sweep_Polygon(&obb1, dir, two->polygon, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
@@ -1340,7 +1346,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				result = OBB_Sweep_Polygon(one->obb, dir, two->polygon, result);
+				result = OBB_Sweep_Polygon(one->obb, dir, two->polygon, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
@@ -1422,7 +1428,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 				CCTNum_t neg_dir[3];
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = OBB_Sweep_Polygon(two->obb, neg_dir, one->polygon, result);
+				result = OBB_Sweep_Polygon(two->obb, neg_dir, one->polygon, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_AABB:
@@ -1432,7 +1438,7 @@ CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
 				mathOBBFromAABB(&obb2, two->aabb->o, two->aabb->half);
-				result = OBB_Sweep_Polygon(&obb2, neg_dir, one->polygon, result);
+				result = OBB_Sweep_Polygon(&obb2, neg_dir, one->polygon, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_POLYGON:
