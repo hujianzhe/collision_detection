@@ -883,14 +883,12 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 	if (!Box_Sweep_Plane((const CCTNum_t(*)[3])v, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (result->distance != CCTNum(0.0)) {
-		for (i = 0; i < 8; ++i) {
-			CCTNum_t test_p[3];
-			mathVec3Copy(test_p, v[i]);
-			mathVec3AddScalar(test_p, dir, result->distance);
-			if (Polygon_Contain_Point(polygon, test_p)) {
-				return result;
-			}
+	for (i = 0; i < 8; ++i) {
+		CCTNum_t test_p[3];
+		mathVec3Copy(test_p, v[i]);
+		mathVec3AddScalar(test_p, dir, result->distance);
+		if (Polygon_Contain_Point(polygon, test_p)) {
+			return result;
 		}
 	}
 	p_result = NULL;
