@@ -155,18 +155,6 @@ static CCTResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], 
 	return result;
 }
 
-static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
-	if (Ray_Sweep_Plane(o, dir, circle->o, circle->normal, result)) {
-		CCTNum_t v[3], v_lensq;
-		mathVec3Sub(v, result->unique_hit_point, circle->o);
-		v_lensq = mathVec3LenSq(v);
-		if (v_lensq <= circle->radius * circle->radius) {
-			return result;
-		}
-	}
-	return NULL;
-}
-
 static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
 	CCTResult_t* p_result;
 	int i;
@@ -174,10 +162,10 @@ static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3]
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
+	if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
+		return result;
+	}
 	if (result->distance > CCTNum(0.0)) {
-		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
-			return result;
-		}
 		return NULL;
 	}
 	dot = mathVec3Dot(dir, polygon->normal);
@@ -256,6 +244,22 @@ static CCTResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3],
 	set_result(result, dir_d, hit_normal);
 	add_result_hit_point(result, hit_point);
 	return result;
+}
+
+static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+	if (!Ray_Sweep_Plane(o, dir, circle->o, circle->normal, result)) {
+		return NULL;
+	}
+	if (result->distance > CCTNum(0.0)) {
+		CCTNum_t v[3], v_lensq;
+		mathVec3Sub(v, result->unique_hit_point, circle->o);
+		v_lensq = mathVec3LenSq(v);
+		if (v_lensq <= circle->radius * circle->radius) {
+			return result;
+		}
+		return NULL;
+	}
+	return Ray_Sweep_Sphere(o, dir, circle->o, circle->radius, result);
 }
 
 static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
