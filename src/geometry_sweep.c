@@ -155,6 +155,18 @@ static CCTResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], 
 	return result;
 }
 
+static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+	if (Ray_Sweep_Plane(o, dir, circle->o, circle->normal, result)) {
+		CCTNum_t v[3], v_lensq;
+		mathVec3Sub(v, result->unique_hit_point, circle->o);
+		v_lensq = mathVec3LenSq(v);
+		if (v_lensq <= circle->radius * circle->radius) {
+			return result;
+		}
+	}
+	return NULL;
+}
+
 static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
 	CCTResult_t* p_result;
 	int i;
