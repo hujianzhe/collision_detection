@@ -147,6 +147,31 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	return 1;
 }
 
+static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircle_t* circle, CCTNum_t p[3]) {
+	int res;
+	CCTNum_t v[3];
+	if (!p) {
+		p = v;
+	}
+	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p);
+	if (1 == res) {
+		CCTNum_t op[3], op_lensq;
+		mathVec3Sub(op, p, circle->o);
+		op_lensq = mathVec3LenSq(op);
+		return op_lensq <= circle->radius * circle->radius;
+	}
+	if (2 == res) {
+		CCTNum_t op[3], op_lensq;
+		mathSegmentClosestPointTo(ls, circle->o, p);
+		mathVec3Sub(op, p, circle->o);
+		op_lensq = mathVec3LenSq(op);
+		if (op_lensq <= circle->radius * circle->radius) {
+			return 2;
+		}
+	}
+	return 0;
+}
+
 static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
 	int res, i;
 	CCTNum_t point[3];
