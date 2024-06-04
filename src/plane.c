@@ -30,18 +30,6 @@ CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], 
 	return mathVec3Normalized(normal, normal);
 }
 
-int mathCircleNormalComputeHorizonAndTilt(const CCTNum_t circle_normal[3], const CCTNum_t reference_V[3], CCTNum_t horizon_dir[3], CCTNum_t tilt_dir[3]) {
-	mathVec3Cross(horizon_dir, circle_normal, reference_V);
-	if (mathVec3IsZero(horizon_dir)) {
-		mathVec3Set(horizon_dir, CCTNums_3(0.0, 0.0, 0.0));
-		mathVec3Set(tilt_dir, CCTNums_3(0.0, 0.0, 0.0));
-		return 0;
-	}
-	mathVec3Normalized(horizon_dir, horizon_dir);
-	mathVec3Cross(tilt_dir, horizon_dir, circle_normal);
-	return 1;
-}
-
 #ifdef __cplusplus
 }
 #endif
