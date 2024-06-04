@@ -757,6 +757,9 @@ static CCTResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, c
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
