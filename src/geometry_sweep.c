@@ -502,19 +502,31 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 		return NULL;
 	}
 	if (result->has_unique_hit_point) {
+		CCTNum_t lsdir[3], N[3];
 		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
 			return result;
 		}
-	}
-	else {
-		for (i = 0; i < 2; ++i) {
-			CCTNum_t test_p[3];
-			mathVec3Copy(test_p, ls[i]);
-			mathVec3AddScalar(test_p, dir, result->distance);
-			if (Polygon_Contain_Point(polygon, test_p)) {
-				return result;
-			}
+		mathVec3Sub(lsdir, ls[1], ls[0]);
+		mathVec3Cross(N, lsdir, dir);
+		if (mathVec3IsZero(N)) {
+			return NULL;
 		}
+	}
+	else if (result->distance > CCTNum(0.0)) {
+		CCTNum_t test_p[3];
+		mathVec3Copy(test_p, ls[0]);
+		mathVec3AddScalar(test_p, dir, result->distance);
+		if (Polygon_Contain_Point(polygon, test_p)) {
+			return result;
+		}
+		mathVec3Copy(test_p, ls[1]);
+		mathVec3AddScalar(test_p, dir, result->distance);
+		if (Polygon_Contain_Point(polygon, test_p)) {
+			return result;
+		}
+	}
+	else if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
+		return result;
 	}
 	p_result = NULL;
 	for (i = 0; i < polygon->v_indices_cnt; ) {
