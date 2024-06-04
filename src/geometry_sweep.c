@@ -252,10 +252,8 @@ static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3],
 		return NULL;
 	}
 	if (result->distance > CCTNum(0.0)) {
-		CCTNum_t v[3], v_lensq;
-		mathVec3Sub(v, result->unique_hit_point, circle->o);
-		v_lensq = mathVec3LenSq(v);
-		if (v_lensq <= circle->radius * circle->radius) {
+		CCTNum_t lensq = mathVec3DistanceSq(circle->o, result->unique_hit_point);
+		if (lensq <= circle->radius * circle->radius) {
 			return result;
 		}
 		return NULL;
@@ -602,6 +600,22 @@ static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], co
 		return result;
 	}
 	return Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, result);
+}
+
+static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+	int res;
+	CCTNum_t p[3];
+	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p);
+	if (1 == res) {
+		return Ray_Sweep_Sphere(p, dir, circle->o, circle->radius, result);
+	}
+	else if (2 == res) {
+		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle, result);
+	}
+	else {
+		// TODO
+		return NULL;
+	}
 }
 
 static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTResult_t* result) {
