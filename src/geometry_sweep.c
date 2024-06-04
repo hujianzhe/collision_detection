@@ -29,6 +29,7 @@ extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const Geom
 extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh);
+extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -621,7 +622,74 @@ static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], co
 }
 
 static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
-	return NULL;
+	if (!Segment_Sweep_Plane(ls, dir, circle->o, circle->normal, result)) {
+		return NULL;
+	}
+	if (result->has_unique_hit_point) {
+		int res;
+		CCTNum_t lensq, N[3], lsdir[3], p[3];
+		lensq = mathVec3DistanceSq(result->unique_hit_point, circle->o);
+		if (lensq <= circle->radius * circle->radius) {
+			return result;
+		}
+		mathVec3Sub(lsdir, ls[1], ls[0]);
+		mathVec3Cross(N, dir, lsdir);
+		if (mathVec3IsZero(N)) {
+			return NULL;
+		}
+		res = Circle_Intersect_Plane(circle, ls[0], N, p, lsdir);
+		if (0 == res) {
+			return NULL;
+		}
+		if (1 == res) {
+			CCTNum_t neg_dir[3];
+			mathVec3Negate(neg_dir, dir);
+			if (!Ray_Sweep_Segment(p, neg_dir, ls, result)) {
+				return NULL;
+			}
+			if (result->has_unique_hit_point) {
+				mathVec3Copy(result->unique_hit_point, p);
+			}
+			return result;
+		}
+		if (3 == res) {
+			CCTNum_t new_ls[2][3], half;
+			lensq = mathVec3DistanceSq(circle->o, p);
+			half = CCTNum_sqrt(circle->radius * circle->radius - lensq);
+			mathVec3Copy(new_ls[0], p);
+			mathVec3AddScalar(new_ls[0], lsdir, half);
+			mathVec3Copy(new_ls[1], p);
+			mathVec3SubScalar(new_ls[1], lsdir, half);
+			return Segment_Sweep_Segment(ls, dir, new_ls, result);
+		}
+		return NULL;
+	}
+	else if (result->distance > CCTNum(0.0)) {
+		CCTNum_t new_ls[2][3], closest_p[3], lensq;
+		mathVec3Copy(new_ls[0], ls[0]);
+		mathVec3AddScalar(new_ls[0], dir, result->distance);
+		mathVec3Copy(new_ls[1], ls[1]);
+		mathVec3AddScalar(new_ls[1], dir, result->distance);
+		mathSegmentClosestPointTo(new_ls, circle->o, closest_p);
+		lensq = mathVec3DistanceSq(circle->o, closest_p);
+		if (lensq > circle->radius * circle->radius) {
+			return NULL;
+		}
+		return result;
+	}
+	else {
+		CCTNum_t closest_p[3], lensq, dot;
+		mathSegmentClosestPointTo(ls, circle->o, closest_p);
+		lensq = mathVec3DistanceSq(circle->o, closest_p);
+		if (lensq <= circle->radius * circle->radius) {
+			return result;
+		}
+		dot = mathVec3Dot(circle->normal, dir);
+		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+			return NULL;
+		}
+		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle, result);
+	}
 }
 
 static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTResult_t* result) {

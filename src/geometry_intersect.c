@@ -36,7 +36,7 @@ int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTN
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
-static int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]) {
+int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]) {
 	CCTNum_t dir[3];
 	if (!line) {
 		line = dir;
