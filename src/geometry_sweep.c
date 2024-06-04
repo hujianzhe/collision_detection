@@ -526,6 +526,9 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			p_result = result;
 			copy_result(result, &result_temp);
 		}
@@ -552,6 +555,9 @@ static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTN
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			copy_result(result, &result_temp);
 			p_result = result;
 		}
