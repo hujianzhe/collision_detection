@@ -603,19 +603,7 @@ static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], co
 }
 
 static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
-	int res;
-	CCTNum_t p[3];
-	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p);
-	if (1 == res) {
-		return Ray_Sweep_Sphere(p, dir, circle->o, circle->radius, result);
-	}
-	else if (2 == res) {
-		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle, result);
-	}
-	else {
-		// TODO
-		return NULL;
-	}
+	return NULL;
 }
 
 static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTResult_t* result) {
