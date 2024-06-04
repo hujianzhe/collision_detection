@@ -28,6 +28,7 @@ extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb
 extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
 extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+extern int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,32 +265,21 @@ static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3],
 
 static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result = NULL;
+	CCTResult_t* p_result;
+	if (ConvexMesh_Contain_Point(mesh, o)) {
+		set_result(result, CCTNum(0.0), dir);
+		add_result_hit_point(result, o);
+		return result;
+	}
+	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTResult_t result_temp;
 		if (!Ray_Sweep_Polygon(o, dir, mesh->polygons + i, &result_temp)) {
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
-			if (CCT_EPSILON_NEGATE <= result_temp.distance && result_temp.distance <= CCT_EPSILON) {
-				set_result(result, CCTNum(0.0), dir);
-				add_result_hit_point(result, o);
-				return result;
-			}
 			copy_result(result, &result_temp);
 			p_result = result;
-		}
-	}
-	if (p_result && AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, o)) {
-		CCTNum_t neg_dir[3];
-		mathVec3Negate(neg_dir, dir);
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
-			CCTResult_t result_temp;
-			if (Ray_Sweep_Polygon(o, neg_dir, mesh->polygons + i, &result_temp)) {
-				set_result(result, CCTNum(0.0), dir);
-				add_result_hit_point(result, o);
-				return result;
-			}
 		}
 	}
 	return p_result;
@@ -755,7 +745,12 @@ static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, con
 
 static CCTResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result = NULL;
+	CCTResult_t* p_result;
+	if (Polygon_Intersect_ConvexMesh(polygon, mesh)) {
+		set_result(result, CCTNum(0.0), dir);
+		return result;
+	}
+	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTResult_t result_temp;
 		if (!Polygon_Sweep_Polygon(polygon, dir, mesh->polygons + i, &result_temp)) {
@@ -934,6 +929,9 @@ static CCTResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CCTNum_
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
@@ -1057,6 +1055,9 @@ static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, c
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			p_result = result;
 			copy_result(result, &result_temp);
 		}
@@ -1093,7 +1094,7 @@ static CCTResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const
 			if (!Sphere_Sweep_Plane(o, radius, dir, rect.o, rect.normal, &result_temp)) {
 				continue;
 			}
-			if (result_temp.distance <= CCT_EPSILON && result_temp.distance >= CCT_EPSILON_NEGATE) {
+			if (result_temp.distance <= CCTNum(0.0)) {
 				continue;
 			}
 			if (!mathRectHasPoint(&rect, result_temp.unique_hit_point)) {
@@ -1137,6 +1138,9 @@ static CCTResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius
 			continue;
 		}
 		if (!p_result || p_result->distance > result_temp.distance) {
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return set_result(result, CCTNum(0.0), dir);
+			}
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}

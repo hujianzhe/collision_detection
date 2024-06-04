@@ -231,7 +231,7 @@ static int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const Ge
 	return 0;
 }
 
-static int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh) {
+int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh) {
 	unsigned int i;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon->v[polygon->v_indices[i]];
