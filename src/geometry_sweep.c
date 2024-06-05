@@ -35,7 +35,7 @@ extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTResult_t* copy_result(CCTResult_t* dst, CCTResult_t* src) {
+static CCTSweepResult_t* copy_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 	if (dst == src) {
 		return dst;
 	}
@@ -48,14 +48,14 @@ static CCTResult_t* copy_result(CCTResult_t* dst, CCTResult_t* src) {
 	return dst;
 }
 
-static CCTResult_t* set_result(CCTResult_t* result, CCTNum_t distance, const CCTNum_t hit_normal[3]) {
+static CCTSweepResult_t* set_result(CCTSweepResult_t* result, CCTNum_t distance, const CCTNum_t hit_normal[3]) {
 	result->distance = distance;
 	result->has_unique_hit_point = 0;
 	mathVec3Copy(result->hit_normal, hit_normal);
 	return result;
 }
 
-static CCTResult_t* add_result_hit_point(CCTResult_t* result, const CCTNum_t p[3]) {
+static CCTSweepResult_t* add_result_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
 	mathVec3Copy(result->unique_hit_point, p);
 	result->has_unique_hit_point = 1;
 	return result;
@@ -65,7 +65,7 @@ static CCTResult_t* add_result_hit_point(CCTResult_t* result, const CCTNum_t p[3
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t ls[2][3], CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t ls[2][3], CCTSweepResult_t* result) {
 	CCTNum_t v0[3], v1[3], N[3], dot, d;
 	mathVec3Sub(v0, ls[0], o);
 	mathVec3Sub(v1, ls[1], o);
@@ -135,7 +135,7 @@ static CCTResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3]
 	}
 }
 
-static CCTResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t d, cos_theta;
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &d);
 	if (d <= CCT_EPSILON && d >= CCT_EPSILON_NEGATE) {
@@ -157,8 +157,8 @@ static CCTResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], 
 	return result;
 }
 
-static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
-	CCTResult_t* p_result;
+static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	CCTSweepResult_t* p_result;
 	int i;
 	CCTNum_t dot;
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
@@ -176,7 +176,7 @@ static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3]
 	}
 	p_result = NULL;
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
@@ -191,17 +191,17 @@ static CCTResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3]
 	return p_result;
 }
 
-static CCTResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTSweepResult_t* result) {
 	if (OBB_Contain_Point(obb, o)) {
 		set_result(result, CCTNum(0.0), dir);
 		add_result_hit_point(result, o);
 		return result;
 	}
 	else {
-		CCTResult_t *p_result = NULL;
+		CCTSweepResult_t *p_result = NULL;
 		int i;
 		for (i = 0; i < 6; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			GeometryRect_t rect;
 			mathOBBPlaneRect(obb, i, &rect);
 			if (!Ray_Sweep_Plane(o, dir, rect.o, rect.normal, &result_temp)) {
@@ -219,7 +219,7 @@ static CCTResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], co
 	}
 }
 
-static CCTResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) {
 	CCTNum_t dr2, oc2, dir_d;
 	CCTNum_t oc[3], hit_point[3], hit_normal[3];
 	CCTNum_t radius2 = sp_radius * sp_radius;
@@ -248,7 +248,7 @@ static CCTResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3],
 	return result;
 }
 
-static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
 	if (!Ray_Sweep_Plane(o, dir, circle->o, circle->normal, result)) {
 		return NULL;
 	}
@@ -262,9 +262,9 @@ static CCTResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3],
 	return Ray_Sweep_Sphere(o, dir, circle->o, circle->radius, result);
 }
 
-static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_result(result, CCTNum(0.0), dir);
 		add_result_hit_point(result, o);
@@ -272,7 +272,7 @@ static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Ray_Sweep_Polygon(o, dir, mesh->polygons + i, &result_temp)) {
 			continue;
 		}
@@ -284,7 +284,7 @@ static CCTResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir
 	return p_result;
 }
 
-static CCTResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t vertice[3], const CCTNum_t normal[3], CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t vertice[3], const CCTNum_t normal[3], CCTSweepResult_t* result) {
 	CCTNum_t p[3];
 	int res = Segment_Intersect_Plane(ls, vertice, normal, p);
 	if (2 == res) {
@@ -346,7 +346,7 @@ static CCTResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t 
 	}
 }
 
-static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
 	int line_mask;
 	CCTNum_t p[3];
 	int res = Segment_Intersect_Segment(ls1, ls2, p, &line_mask);
@@ -360,11 +360,11 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 		return result;
 	}
 	else if (GEOMETRY_LINE_PARALLEL == line_mask) {
-		CCTResult_t* p_result = NULL;
+		CCTSweepResult_t* p_result = NULL;
 		CCTNum_t neg_dir[3];
 		int i;
 		for (i = 0; i < 2; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_Segment(ls1[i], dir, ls2, &result_temp)) {
 				continue;
 			}
@@ -379,7 +379,7 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 		}
 		mathVec3Negate(neg_dir, dir);
 		for (i = 0; i < 2; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_Segment(ls2[i], neg_dir, ls1, &result_temp)) {
 				continue;
 			}
@@ -394,11 +394,11 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 		return p_result;
 	}
 	else if (GEOMETRY_LINE_CROSS == line_mask) {
-		CCTResult_t* p_result = NULL;
+		CCTSweepResult_t* p_result = NULL;
 		CCTNum_t neg_dir[3];
 		int i;
 		for (i = 0; i < 2; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_Segment(ls1[i], dir, ls2, &result_temp)) {
 				continue;
 			}
@@ -409,7 +409,7 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 		}
 		mathVec3Negate(neg_dir, dir);
 		for (i = 0; i < 2; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_Segment(ls2[i], neg_dir, ls1, &result_temp)) {
 				continue;
 			}
@@ -459,19 +459,19 @@ static CCTResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum
 	}
 }
 
-static CCTResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryOBB_t* obb, int check_intersect, CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryOBB_t* obb, int check_intersect, CCTSweepResult_t* result) {
 	if (check_intersect && OBB_Intersect_Segment(obb, ls)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	else {
-		CCTResult_t* p_result = NULL;
+		CCTSweepResult_t* p_result = NULL;
 		int i;
 		CCTNum_t v[8][3];
 		mathOBBVertices(obb, v);
 		for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
 			CCTNum_t edge[2][3];
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			mathVec3Copy(edge[0], v[Box_Edge_Indices[i]]);
 			mathVec3Copy(edge[1], v[Box_Edge_Indices[i+1]]);
 			if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
@@ -483,7 +483,7 @@ static CCTResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t di
 			}
 		}
 		for (i = 0; i < 2; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_OBB(ls[i], dir, obb, &result_temp)) {
 				continue;
 			}
@@ -496,8 +496,8 @@ static CCTResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum_t di
 	}
 }
 
-static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
-	CCTResult_t *p_result;
+static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	CCTSweepResult_t *p_result;
 	int i;
 	if (!Segment_Sweep_Plane(ls, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
@@ -531,7 +531,7 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 	}
 	p_result = NULL;
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
@@ -549,9 +549,9 @@ static CCTResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_
 	return p_result;
 }
 
-static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
@@ -562,7 +562,7 @@ static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTN
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		if (!Segment_Sweep_Polygon(ls, dir, polygon, &result_temp)) {
 			continue;
@@ -578,7 +578,7 @@ static CCTResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTN
 	return p_result;
 }
 
-static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], p[3], pco[3];
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Normalized(lsdir, lsdir);
@@ -609,7 +609,7 @@ static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], co
 		}
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, circle->o, circle->radius, result)) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, &result_temp)) {
 			return result;
 		}
@@ -621,7 +621,7 @@ static CCTResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], co
 	return Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, result);
 }
 
-static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
 	if (!Segment_Sweep_Plane(ls, dir, circle->o, circle->normal, result)) {
 		return NULL;
 	}
@@ -692,7 +692,7 @@ static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t
 	}
 }
 
-static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], N[3];
 	if (check_intersect) {
 		CCTNum_t p[3];
@@ -718,7 +718,7 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 		return Segment_Sweep_Circle_InSamePlane(ls, dir, &circle, result);
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, center, radius, result)) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Ray_Sweep_Sphere(ls[1], dir, center, radius, &result_temp)) {
 			return NULL;
 		}
@@ -730,7 +730,7 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 	return NULL;
 }
 
-static CCTResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t p[3];
 	int res = Circle_Intersect_Plane(circle, plane_v, plane_n, p, NULL);
 	if (res) {
@@ -750,7 +750,7 @@ static CCTResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCT
 	}
 }
 
-static CCTResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	int i, has_gt0 = 0, has_le0 = 0, idx_min = -1;
 	CCTNum_t min_d, dot;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
@@ -795,10 +795,10 @@ static CCTResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, const 
 	return result;
 }
 
-static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTResult_t* result) {
+static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
 	int i;
 	CCTNum_t neg_dir[3];
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (!Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		CCTNum_t d, dot;
 		mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal, NULL, &d);
@@ -813,7 +813,7 @@ static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, con
 	}
 	p_result = NULL;
 	for (i = 0; i < polygon1->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon1->v[polygon1->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon1->v[polygon1->v_indices[i >= polygon1->v_indices_cnt ? 0 : i]]);
@@ -830,7 +830,7 @@ static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, con
 	}
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < polygon2->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon2->v[polygon2->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon2->v[polygon2->v_indices[i >= polygon2->v_indices_cnt ? 0 : i]]);
@@ -851,16 +851,16 @@ static CCTResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, con
 	return p_result;
 }
 
-static CCTResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
+static CCTSweepResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (Polygon_Intersect_ConvexMesh(polygon, mesh)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Polygon_Sweep_Polygon(polygon, dir, mesh->polygons + i, &result_temp)) {
 			continue;
 		}
@@ -875,11 +875,11 @@ static CCTResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polygon, c
 	return p_result;
 }
 
-static CCTResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	int i;
-	CCTResult_t* p_result = NULL;
+	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < 8; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Ray_Sweep_Plane(v[i], dir, plane_v, plane_n, &result_temp)) {
 			if (p_result) {
 				set_result(result, CCTNum(0.0), plane_n);
@@ -907,11 +907,11 @@ static CCTResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t dir[3
 	return p_result;
 }
 
-static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	int i;
-	CCTResult_t* p_result = NULL;
+	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		const CCTNum_t* v = mesh->v[mesh->v_indices[i]];
 		if (!Ray_Sweep_Plane(v, dir, plane_v, plane_n, &result_temp)) {
 			if (p_result) {
@@ -941,20 +941,20 @@ static CCTResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t 
 	return p_result;
 }
 
-static CCTResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t dir[3], const CCTNum_t o2[3], const CCTNum_t half2[3], CCTResult_t* result) {
+static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t dir[3], const CCTNum_t o2[3], const CCTNum_t half2[3], CCTSweepResult_t* result) {
 	if (AABB_Intersect_AABB(o1, half1, o2, half2)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	else {
-		CCTResult_t *p_result = NULL;
+		CCTSweepResult_t *p_result = NULL;
 		int i;
 		CCTNum_t v1[6][3], v2[6][3];
 		mathAABBPlaneVertices(o1, half1, v1);
 		mathAABBPlaneVertices(o2, half2, v2);
 		for (i = 0; i < 6; ++i) {
 			CCTNum_t new_o1[3];
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			if (i & 1) {
 				if (!Ray_Sweep_Plane(v1[i], dir, v2[i-1], AABB_Plane_Normal[i], &result_temp)) {
 					continue;
@@ -982,10 +982,10 @@ static CCTResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3
 	}
 }
 
-static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, int check_intersect, CCTResult_t* result) {
+static CCTSweepResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, int check_intersect, CCTSweepResult_t* result) {
 	int i;
 	CCTNum_t v[8][3], neg_dir[3];
-	CCTResult_t *p_result;
+	CCTSweepResult_t *p_result;
 
 	if (check_intersect && OBB_Intersect_Polygon(obb, polygon, NULL)) {
 		set_result(result, CCTNum(0.0), polygon->normal);
@@ -1007,7 +1007,7 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 	p_result = NULL;
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
@@ -1025,13 +1025,13 @@ static CCTResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t d
 	return p_result;
 }
 
-static CCTResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
+static CCTSweepResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result = NULL;
+	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < 6; ++i) {
 		GeometryRect_t rect;
 		GeometryPolygon_t polygon;
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t p[4][3];
 
 		mathOBBPlaneRect(obb, i, &rect);
@@ -1050,9 +1050,9 @@ static CCTResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CCTNum_
 	return p_result;
 }
 
-static CCTResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTResult_t* result) {
+static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTSweepResult_t* result) {
 	int i;
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (OBB_Intersect_OBB(obb1, obb2)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
@@ -1060,7 +1060,7 @@ static CCTResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[
 	p_result = NULL;
 	for (i = 0; i < 6; ++i)	{
 		CCTNum_t p[4][3];
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		GeometryRect_t rect2;
 		GeometryPolygon_t polygon2;
 		mathOBBPlaneRect(obb2, i, &rect2);
@@ -1076,7 +1076,7 @@ static CCTResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[
 	return p_result;
 }
 
-static CCTResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t dn, dn_sq, radius_sq;
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &dn);
 	dn_sq = dn * dn;
@@ -1115,9 +1115,9 @@ static CCTResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, con
 	}
 }
 
-static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	int i;
-	CCTResult_t *p_result = NULL;
+	CCTSweepResult_t *p_result = NULL;
 	CCTNum_t neg_dir[3], p[3], dn;
 
 	mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, p, &dn);
@@ -1158,7 +1158,7 @@ static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, c
 	p_result = NULL;
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
@@ -1179,7 +1179,7 @@ static CCTResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, c
 	return p_result;
 }
 
-static CCTResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTSweepResult_t* result) {
 	if (!Ray_Sweep_Sphere(o1, dir, o2, r1 + r2, result)) {
 		return NULL;
 	}
@@ -1189,17 +1189,17 @@ static CCTResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const
 	return result;
 }
 
-static CCTResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTSweepResult_t* result) {
 	if (Sphere_Intersect_OBB(o, radius, obb)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	else {
-		CCTResult_t* p_result = NULL;
+		CCTSweepResult_t* p_result = NULL;
 		CCTNum_t v[8][3], neg_dir[3];
 		int i;
 		for (i = 0; i < 6; ++i) {
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			GeometryRect_t rect;
 			mathOBBPlaneRect(obb, i, &rect);
 			if (!Sphere_Sweep_Plane(o, radius, dir, rect.o, rect.normal, &result_temp)) {
@@ -1220,7 +1220,7 @@ static CCTResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const
 		mathVec3Negate(neg_dir, dir);
 		for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
 			CCTNum_t edge[2][3];
-			CCTResult_t result_temp;
+			CCTSweepResult_t result_temp;
 			mathVec3Copy(edge[0], v[Box_Edge_Indices[i]]);
 			mathVec3Copy(edge[1], v[Box_Edge_Indices[i+1]]);
 			if (!Segment_Sweep_Sphere((const CCTNum_t(*)[3])edge, neg_dir, o, radius, 0, &result_temp)) {
@@ -1235,16 +1235,16 @@ static CCTResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const
 	}
 }
 
-static CCTResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
-	CCTResult_t* p_result;
+	CCTSweepResult_t* p_result;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTResult_t result_temp;
+		CCTSweepResult_t result_temp;
 		if (!Sphere_Sweep_Polygon(o, radius, dir, mesh->polygons + i, &result_temp)) {
 			continue;
 		}
@@ -1267,7 +1267,7 @@ static CCTResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius
 extern "C" {
 #endif
 
-CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTResult_t* result) {
+CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTSweepResult_t* result) {
 	int flag_neg_dir;
 	if (one->data == two->data || mathVec3IsZero(dir)) {
 		return NULL;

@@ -8,13 +8,13 @@
 #include "geometry_def.h"
 #include <stddef.h>
 
-typedef struct CCTResult_t {
+typedef struct CCTSweepResult_t {
 	CCTNum_t distance;
 	CCTNum_t hit_normal[3];
 
 	int has_unique_hit_point;
 	CCTNum_t unique_hit_point[3];
-} CCTResult_t;
+} CCTSweepResult_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +36,7 @@ __declspec_dll int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTN
 
 __declspec_dll int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two);
 __declspec_dll int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two);
-__declspec_dll CCTResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTResult_t* result);
+__declspec_dll CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTSweepResult_t* result);
 
 #ifdef	__cplusplus
 }
