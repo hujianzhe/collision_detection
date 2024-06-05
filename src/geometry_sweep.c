@@ -730,6 +730,26 @@ static CCTResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t
 	return NULL;
 }
 
+static CCTResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
+	CCTNum_t p[3];
+	int res = Circle_Intersect_Plane(circle, plane_v, plane_n, p, NULL);
+	if (res) {
+		set_result(result, CCTNum(0.0), dir);
+		if (1 == res) {
+			add_result_hit_point(result, p);
+		}
+		return result;
+	}
+	else {
+		CCTNum_t v[3], dot;
+		mathVec3Sub(v, p, circle->o);
+		mathVec3Normalized(v, v);
+		mathVec3Copy(p, circle->o);
+		mathVec3AddScalar(p, v, circle->radius);
+		return Ray_Sweep_Plane(p, dir, plane_v, plane_n, result);
+	}
+}
+
 static CCTResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTResult_t* result) {
 	int i, has_gt0 = 0, has_le0 = 0, idx_min = -1;
 	CCTNum_t min_d, dot;
