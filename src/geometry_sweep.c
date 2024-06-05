@@ -37,10 +37,35 @@ extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t
 
 static CCTSweepResult_t* copy_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 	dst->distance = src->distance;
+	mathVec3Copy(dst->hit_normal, src->hit_normal);
 	dst->has_unique_hit_point = src->has_unique_hit_point;
 	if (src->has_unique_hit_point) {
 		mathVec3Copy(dst->unique_hit_point, src->unique_hit_point);
 	}
+	return dst;
+}
+
+static CCTSweepResult_t* merge_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
+	if (dst->distance < src->distance) {
+		return dst;
+	}
+	if (dst->distance > src->distance + CCT_EPSILON) {
+		/* TODO copy src hit point */
+		if (src->has_unique_hit_point) {
+			mathVec3Copy(dst->unique_hit_point, src->unique_hit_point);
+		}
+		dst->has_unique_hit_point = src->has_unique_hit_point;
+	}
+	else {
+		/* TODO merge hit point */
+		if (!src->has_unique_hit_point ||
+			!dst->has_unique_hit_point ||
+			!mathVec3Equal(src->unique_hit_point, dst->unique_hit_point))
+		{
+			dst->has_unique_hit_point = 0;
+		}
+	}
+	dst->distance = src->distance;
 	mathVec3Copy(dst->hit_normal, src->hit_normal);
 	return dst;
 }
@@ -184,8 +209,8 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -214,8 +239,8 @@ static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		return p_result;
@@ -283,8 +308,8 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -378,8 +403,8 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		if (p_result) {
@@ -396,8 +421,8 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		if (p_result) {
@@ -418,8 +443,8 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		mathVec3Negate(neg_dir, dir);
@@ -433,8 +458,8 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		return p_result;
@@ -499,8 +524,8 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		for (i = 0; i < 2; ++i) {
@@ -512,8 +537,8 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		return p_result;
@@ -569,8 +594,8 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -601,8 +626,8 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -643,9 +668,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		if (!Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, &result_temp)) {
 			return result;
 		}
-		if (result->distance > result_temp.distance) {
-			copy_result(result, &result_temp);
-		}
+		merge_result(result, &result_temp);
 		return result;
 	}
 	return Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, result);
@@ -752,9 +775,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		if (!Ray_Sweep_Sphere(ls[1], dir, center, radius, &result_temp)) {
 			return NULL;
 		}
-		if (result->distance > result_temp.distance) {
-			copy_result(result, &result_temp);
-		}
+		merge_result(result, &result_temp);
 		return result;
 	}
 	return NULL;
@@ -857,8 +878,8 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	mathVec3Negate(neg_dir, dir);
@@ -877,8 +898,8 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	if (p_result) {
@@ -907,8 +928,8 @@ static CCTSweepResult_t* Polygon_Sweep_ConvexMesh(const GeometryPolygon_t* polyg
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -935,13 +956,7 @@ static CCTSweepResult_t* Box_Sweep_Plane(const CCTNum_t v[8][3], const CCTNum_t 
 			copy_result(p_result, &result_temp);
 			continue;
 		}
-		if (p_result->distance < result_temp.distance) {
-			continue;
-		}
-		copy_result(p_result, &result_temp);
-		if (p_result->distance <= result_temp.distance + CCT_EPSILON) {
-			p_result->has_unique_hit_point = 0;
-		}
+		merge_result(p_result, &result_temp);
 	}
 	return p_result;
 }
@@ -968,13 +983,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 			copy_result(p_result, &result_temp);
 			continue;
 		}
-		if (p_result->distance < result_temp.distance) {
-			continue;
-		}
-		copy_result(p_result, &result_temp);
-		if (p_result->distance <= result_temp.distance + CCT_EPSILON) {
-			p_result->has_unique_hit_point = 0;
-		}
+		merge_result(p_result, &result_temp);
 	}
 	return p_result;
 }
@@ -1012,8 +1021,8 @@ static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t ha
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		if (p_result) {
@@ -1059,8 +1068,8 @@ static CCTSweepResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNu
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	if (p_result && p_result->has_unique_hit_point) {
@@ -1090,8 +1099,8 @@ static CCTSweepResult_t* OBB_Sweep_ConvexMesh(const GeometryOBB_t* obb, const CC
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -1119,8 +1128,8 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
@@ -1222,8 +1231,8 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	if (p_result) {
@@ -1268,8 +1277,8 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		mathOBBVertices(obb, v);
@@ -1286,8 +1295,8 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 				p_result = result;
 				copy_result(p_result, &result_temp);
 			}
-			else if (p_result->distance > result_temp.distance) {
-				copy_result(p_result, &result_temp);
+			else {
+				merge_result(p_result, &result_temp);
 			}
 		}
 		return p_result;
@@ -1314,8 +1323,8 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 			p_result = result;
 			copy_result(p_result, &result_temp);
 		}
-		else if (p_result->distance > result_temp.distance) {
-			copy_result(p_result, &result_temp);
+		else {
+			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
