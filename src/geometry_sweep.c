@@ -660,7 +660,7 @@ static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t
 			mathVec3AddScalar(new_ls[0], lsdir, half);
 			mathVec3Copy(new_ls[1], p);
 			mathVec3SubScalar(new_ls[1], lsdir, half);
-			return Segment_Sweep_Segment(ls, dir, new_ls, result);
+			return Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])new_ls, result);
 		}
 		return NULL;
 	}
@@ -670,7 +670,7 @@ static CCTResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t
 		mathVec3AddScalar(new_ls[0], dir, result->distance);
 		mathVec3Copy(new_ls[1], ls[1]);
 		mathVec3AddScalar(new_ls[1], dir, result->distance);
-		mathSegmentClosestPointTo(new_ls, circle->o, closest_p);
+		mathSegmentClosestPointTo((const CCTNum_t(*)[3])new_ls, circle->o, closest_p);
 		lensq = mathVec3DistanceSq(circle->o, closest_p);
 		if (lensq > circle->radius * circle->radius) {
 			return NULL;
