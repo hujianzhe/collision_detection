@@ -741,7 +741,7 @@ static CCTResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCT
 		return result;
 	}
 	else {
-		CCTNum_t v[3], dot;
+		CCTNum_t v[3];
 		mathVec3Sub(v, p, circle->o);
 		mathVec3Normalized(v, v);
 		mathVec3Copy(p, circle->o);
