@@ -36,9 +36,6 @@ extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t
 ///////////////////////////////////////////////////////////////////////////////
 
 static CCTSweepResult_t* copy_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
-	if (dst == src) {
-		return dst;
-	}
 	dst->distance = src->distance;
 	dst->has_unique_hit_point = src->has_unique_hit_point;
 	if (src->has_unique_hit_point) {
