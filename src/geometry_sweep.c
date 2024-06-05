@@ -52,7 +52,7 @@ static CCTSweepResult_t* set_result(CCTSweepResult_t* result, CCTNum_t distance,
 	return result;
 }
 
-static CCTSweepResult_t* add_result_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
+static CCTSweepResult_t* set_unique_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
 	mathVec3Copy(result->unique_hit_point, p);
 	result->has_unique_hit_point = 1;
 	return result;
@@ -71,7 +71,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		dot = mathVec3Dot(v0, v1);
 		if (dot <= CCTNum(0.0)) {
 			set_result(result, CCTNum(0.0), dir);
-			add_result_hit_point(result, o);
+			set_unique_hit_point(result, o);
 			return result;
 		}
 		mathVec3Cross(N, dir, v0);
@@ -85,12 +85,12 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		if (mathVec3LenSq(v0) < mathVec3LenSq(v1)) {
 			d = mathVec3Dot(v0, dir);
 			set_result(result, d, dir);
-			add_result_hit_point(result, v0);
+			set_unique_hit_point(result, v0);
 		}
 		else {
 			d = mathVec3Dot(v1, dir);
 			set_result(result, d, dir);
-			add_result_hit_point(result, v1);
+			set_unique_hit_point(result, v1);
 		}
 		return result;
 	}
@@ -107,7 +107,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		mathVec3Sub(op, p, o);
 		if (mathVec3IsZero(op)) {
 			set_result(result, CCTNum(0.0), dir);
-			add_result_hit_point(result, o);
+			set_unique_hit_point(result, o);
 			return result;
 		}
 		dot = mathVec3Dot(op, dir);
@@ -127,7 +127,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 			return NULL;
 		}
 		set_result(result, d, op);
-		add_result_hit_point(result, p);
+		set_unique_hit_point(result, p);
 		return result;
 	}
 }
@@ -137,7 +137,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &d);
 	if (d <= CCT_EPSILON && d >= CCT_EPSILON_NEGATE) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		return result;
 	}
 	cos_theta = mathVec3Dot(dir, plane_n);
@@ -149,7 +149,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 		return NULL;
 	}
 	set_result(result, d, plane_n);
-	add_result_hit_point(result, o);
+	set_unique_hit_point(result, o);
 	mathVec3AddScalar(result->unique_hit_point, dir, d);
 	return result;
 }
@@ -194,7 +194,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTSweepResult_t* result) {
 	if (OBB_Contain_Point(obb, o)) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		return result;
 	}
 	else {
@@ -230,7 +230,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	oc2 = mathVec3LenSq(oc);
 	if (oc2 <= radius2) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		return result;
 	}
 	dir_d = mathVec3Dot(dir, oc);
@@ -247,7 +247,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	mathVec3Sub(hit_normal, hit_point, sp_o);
 	mathVec3MultiplyScalar(hit_normal, hit_normal, CCTNum(1.0) / sp_radius);
 	set_result(result, dir_d, hit_normal);
-	add_result_hit_point(result, hit_point);
+	set_unique_hit_point(result, hit_point);
 	return result;
 }
 
@@ -270,7 +270,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	CCTSweepResult_t* p_result;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		return result;
 	}
 	p_result = NULL;
@@ -299,7 +299,7 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 	}
 	else if (1 == res) {
 		set_result(result, CCTNum(0.0), normal);
-		add_result_hit_point(result, p);
+		set_unique_hit_point(result, p);
 		return result;
 	}
 	else {
@@ -345,7 +345,7 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 				return NULL;
 			}
 			set_result(result, min_d, normal);
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 			mathVec3AddScalar(result->unique_hit_point, dir, min_d);
 		}
 		return result;
@@ -358,7 +358,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	int res = Segment_Intersect_Segment(ls1, ls2, p, &line_mask);
 	if (GEOMETRY_SEGMENT_CONTACT == res) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, p);
+		set_unique_hit_point(result, p);
 		return result;
 	}
 	else if (GEOMETRY_SEGMENT_OVERLAP == res) {
@@ -454,7 +454,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			return NULL;
 		}
 		set_result(result, dot, dir);
-		add_result_hit_point(result, ls2[closest_ls2_indice]);
+		set_unique_hit_point(result, ls2[closest_ls2_indice]);
 		return result;
 	}
 	else {
@@ -472,7 +472,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 		if (!Ray_Sweep_Segment(v, neg_dir, ls1, result)) {
 			return NULL;
 		}
-		mathVec3Copy(result->unique_hit_point, v);
+		set_unique_hit_point(result, v);
 		return result;
 	}
 }
@@ -634,7 +634,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		mathVec3AddScalar(new_ls[1], dir, d);
 		if (Segment_Contain_Point((const CCTNum_t(*)[3])new_ls, p)) {
 			set_result(result, d, pco);
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 			return result;
 		}
 	}
@@ -729,7 +729,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		int res = Sphere_Intersect_Segment(center, radius, ls, p);
 		if (1 == res) {
 			set_result(result, CCTNum(0.0), dir);
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 			return result;
 		}
 		if (2 == res) {
@@ -766,7 +766,7 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 	if (res) {
 		set_result(result, CCTNum(0.0), dir);
 		if (1 == res) {
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 		}
 		return result;
 	}
@@ -819,7 +819,7 @@ static CCTSweepResult_t* Polygon_Sweep_Plane(const GeometryPolygon_t* polygon, c
 	}
 	set_result(result, min_d, plane_n);
 	if (idx_min >= 0) {
-		add_result_hit_point(result, polygon->v[polygon->v_indices[idx_min]]);
+		set_unique_hit_point(result, polygon->v[polygon->v_indices[idx_min]]);
 		mathVec3AddScalar(result->unique_hit_point, dir, min_d);
 	}
 	return result;
@@ -1137,7 +1137,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	}
 	else if (dn_sq <= radius_sq + CCT_EPSILON) {
 		set_result(result, CCTNum(0.0), dir);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		mathVec3AddScalar(result->unique_hit_point, plane_n, dn);
 		return result;
 	}
@@ -1153,7 +1153,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 		dn_abs = CCTNum_abs(dn);
 		d -= radius / dn_abs * d;
 		set_result(result, d, plane_n);
-		add_result_hit_point(result, o);
+		set_unique_hit_point(result, o);
 		mathVec3AddScalar(result->unique_hit_point, dir, d);
 		if (dn >= CCTNum(0.0)) {
 			mathVec3AddScalar(result->unique_hit_point, plane_n, radius);
@@ -1180,7 +1180,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 	else if (radius * radius >= dn * dn - CCT_EPSILON) {
 		if (Polygon_Contain_Point(polygon, p)) {
 			set_result(result, CCTNum(0.0), dir);
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 			return result;
 		}
 	}
@@ -1201,7 +1201,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		mathVec3AddScalar(p, polygon->normal, dn >= CCTNum(0.0) ? radius : -radius);
 		if (Polygon_Contain_Point(polygon, p)) {
 			set_result(result, d, polygon->normal);
-			add_result_hit_point(result, p);
+			set_unique_hit_point(result, p);
 			return result;
 		}
 	}
