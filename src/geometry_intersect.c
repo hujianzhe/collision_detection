@@ -65,6 +65,8 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
 		return 2;
 	}
+	mathVec3Copy(p, circle->o);
+	mathVec3Set(line, CCTNums_3(0.0, 0.0, 0.0));
 	return 0;
 }
 
@@ -312,24 +314,27 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 	return 0;
 }
 
-int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
-	CCTNum_t d;
-	mathPointProjectionPlane(o, plane_v, plane_normal, new_o, &d);
-	d = CCTNum_abs(d);
-	if (d > radius + CCT_EPSILON) {
+int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r, CCTNum_t* d) {
+	CCTNum_t abs_d, temp_d;
+	if (!d) {
+		d = &temp_d;
+	}
+	mathPointProjectionPlane(o, plane_v, plane_normal, new_o, d);
+	abs_d = CCTNum_abs(*d);
+	if (abs_d > radius) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
 		return 0;
 	}
-	if (d >= radius - CCT_EPSILON) {
+	if (abs_d >= radius - CCT_EPSILON) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
 		return 1;
 	}
 	if (new_r) {
-		*new_r = CCTNum_sqrt(radius * radius - d * d);
+		*new_r = CCTNum_sqrt(radius * radius - abs_d * abs_d);
 	}
 	return 2;
 }
@@ -340,7 +345,7 @@ static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const 
 	if (!p) {
 		p = point;
 	}
-	res = Sphere_Intersect_Plane(o, radius, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
+	res = Sphere_Intersect_Plane(o, radius, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL, NULL);
 	if (0 == res) {
 		return 0;
 	}
@@ -830,7 +835,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				return Sphere_Intersect_Plane(one->sphere->o, one->sphere->radius, two->plane->v, two->plane->normal, NULL, NULL);
+				return Sphere_Intersect_Plane(one->sphere->o, one->sphere->radius, two->plane->v, two->plane->normal, NULL, NULL, NULL);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -862,7 +867,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return Sphere_Intersect_Plane(two->sphere->o, two->sphere->radius, one->plane->v, one->plane->normal, NULL, NULL);
+				return Sphere_Intersect_Plane(two->sphere->o, two->sphere->radius, one->plane->v, one->plane->normal, NULL, NULL, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
