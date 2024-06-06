@@ -1530,7 +1530,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			case GEOMETRY_BODY_PLANE:
 			{
 				const GeometryPolygon_t* polygon = one->polygon;
-				result = Vertices_Sweep_Plane(polygon->v, polygon->v_indices, polygon->v_indices_cnt, dir, two->plane->v, two->plane->normal, result);
+				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
