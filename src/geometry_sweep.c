@@ -800,11 +800,13 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
 	int i;
-	CCTNum_t neg_dir[3];
+	CCTNum_t neg_dir[3], *p1p, *p2p;
 	CCTSweepResult_t* p_result;
-	if (!Plane_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
+	p1p = polygon1->v[polygon1->v_indices[0]];
+	p2p = polygon2->v[polygon2->v_indices[0]];
+	if (!Plane_Intersect_Plane(p1p, polygon1->normal, p2p, polygon2->normal)) {
 		CCTNum_t d, dot;
-		mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal, NULL, &d);
+		mathPointProjectionPlane(p1p, p2p, polygon2->normal, NULL, &d);
 		dot = mathVec3Dot(dir, polygon2->normal);
 		if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
 			return NULL;
