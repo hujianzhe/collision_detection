@@ -36,6 +36,7 @@
 extern "C" {
 #endif
 
+__declspec_dll const unsigned int* mathBoxVertexIndicesDefault();
 __declspec_dll const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]);
 __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]);
 __declspec_dll const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]);

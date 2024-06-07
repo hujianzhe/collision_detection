@@ -15,6 +15,7 @@
 
 extern const CCTNum_t AABB_Plane_Normal[6][3];
 extern const unsigned int Box_Edge_Indices[24];
+extern const unsigned int Box_Vertice_Indices_Default[8];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
@@ -30,12 +31,11 @@ extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], con
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh);
 extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]);
+extern int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_indices_idx);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-static const unsigned int box_v_indices[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
 static CCTSweepResult_t* copy_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 	dst->distance = src->distance;
@@ -721,8 +721,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], N[3];
 	if (check_intersect) {
-		CCTNum_t p[3];
-		int res = Sphere_Intersect_Segment(center, radius, ls, p);
+		int res = Sphere_Intersect_Segment(center, radius, ls, NULL);
 		if (res) {
 			set_result(result, CCTNum(0.0), dir);
 			return result;
@@ -773,59 +772,27 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 }
 
 static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	int i, has_gt0 = 0, has_le0 = 0, has_eq0 = 0, idx_min = -1;
-	CCTNum_t min_d;
-	for (i = 0; i < v_indices_cnt; ++i) {
-		CCTNum_t d, abs_d, abs_min_d;
-		mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n, NULL, &d);
-		if (d > CCTNum(0.0)) {
-			if (has_le0) {
-				set_result(result, CCTNum(0.0), dir);
-				return result;
-			}
-			has_gt0 = 1;
-			abs_d = CCTNum_abs(d);
+	CCTNum_t min_d, dot;
+	unsigned int v_indices_idx;
+	int res = Vertices_Intersect_Plane(v, v_indices, v_indices_cnt, plane_v, plane_n, &min_d, &v_indices_idx);
+	if (res) {
+		set_result(result, CCTNum(0.0), dir);
+		if (1 == res && v_indices_idx != -1) {
+			set_unique_hit_point(result, v[v_indices[v_indices_idx]]);
 		}
-		else if (d < CCTNum(0.0)) {
-			if (has_gt0) {
-				set_result(result, CCTNum(0.0), dir);
-				return result;
-			}
-			has_le0 = 1;
-			abs_d = CCTNum_abs(d);
-		}
-		else {
-			d = abs_d = CCTNum(0.0);
-			has_eq0 = 1;
-		}
-
-		if (0 == i) {
-			min_d = d;
-			abs_min_d = abs_d;
-			idx_min = 0;
-		}
-		else if (abs_min_d > abs_d) {
-			min_d = d;
-			abs_min_d = abs_d;
-			idx_min = i;
-		}
-		else if (abs_min_d == abs_d) {
-			idx_min = -1;
-		}
+		return result;
 	}
-	if (!has_eq0) {
-		CCTNum_t dot = mathVec3Dot(dir, plane_n);
-		if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
-			return NULL;
-		}
-		min_d /= dot;
-		if (min_d < CCTNum(0.0)) {
-			return NULL;
-		}
+	dot = mathVec3Dot(dir, plane_n);
+	if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
+		return NULL;
+	}
+	min_d /= dot;
+	if (min_d < CCTNum(0.0)) {
+		return NULL;
 	}
 	set_result(result, min_d, plane_n);
-	if (idx_min >= 0) {
-		set_unique_hit_point(result, v[v_indices[idx_min]]);
+	if (v_indices_idx != -1) {
+		set_unique_hit_point(result, v[v_indices[v_indices_idx]]);
 		mathVec3AddScalar(result->unique_hit_point, dir, min_d);
 	}
 	return result;
@@ -969,7 +936,7 @@ static CCTSweepResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNu
 	}
 
 	mathOBBVertices(obb, v);
-	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, box_v_indices, 8, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
 	if (1 == result->hit_point_cnt) {
@@ -1365,7 +1332,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				CCTNum_t v[8][3];
 				mathAABBVertices(one->aabb->o, one->aabb->half, v);
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, box_v_indices, 8, dir, two->plane->v, two->plane->normal, result);
+				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SEGMENT:
@@ -1408,7 +1375,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				CCTNum_t v[8][3];
 				mathOBBVertices(one->obb, v);
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, box_v_indices, 8, dir, two->plane->v, two->plane->normal, result);
+				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:

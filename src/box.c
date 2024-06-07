@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+const unsigned int Box_Vertice_Indices_Default[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+
 const unsigned int Box_Edge_Indices[24] = {
 	0, 1,	1, 2,	2, 3,	3, 0,
 	7, 6,	6, 5,	5, 4,	4, 7,
@@ -46,6 +48,8 @@ const unsigned int Box_Triangle_Vertices_Indices[36] = {
 	0, 4, 5,	5, 1, 0
 };
 */
+
+const unsigned int* mathBoxVertexIndicesDefault() { return Box_Vertice_Indices_Default; }
 
 const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]) {
 	unsigned int idx;
