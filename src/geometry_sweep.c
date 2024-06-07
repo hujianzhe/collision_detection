@@ -21,7 +21,7 @@ extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]);
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
-extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r, CCTNum_t* d);
+extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]);
 extern int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]);
@@ -732,7 +732,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	if (!mathVec3IsZero(N)) {
 		GeometryCircle_t circle;
 		mathVec3Normalized(circle.normal, N);
-		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], circle.normal, circle.o, &circle.radius, NULL)) {
+		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], circle.normal, circle.o, &circle.radius)) {
 			return NULL;
 		}
 		return Segment_Sweep_Circle_InSamePlane(ls, dir, &circle, result);
@@ -1033,14 +1033,14 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	CCTNum_t dn, dn_abs, cos_theta, d;
+	CCTNum_t dn, dn_abs, cos_theta, hit_point[3];
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &dn);
 	dn_abs = CCTNum_abs(dn);
-	if (dn_abs < radius) {
+	if (dn_abs < radius - CCT_EPSILON) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
-	if (dn_abs <= radius + CCT_EPSILON) {
+	if (dn_abs <= radius) {
 		set_result(result, CCTNum(0.0), dir);
 		set_unique_hit_point(result, o);
 		mathVec3AddScalar(result->unique_hit_point, plane_n, dn);
@@ -1050,20 +1050,22 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	if (cos_theta <= CCT_EPSILON && cos_theta >= CCT_EPSILON_NEGATE) {
 		return NULL;
 	}
-	d = dn / cos_theta;
-	if (d < CCTNum(0.0)) {
-		return NULL;
-	}
-	d -= radius / dn_abs * d;
-	set_result(result, d, plane_n);
-	set_unique_hit_point(result, o);
-	mathVec3AddScalar(result->unique_hit_point, dir, d);
+	mathVec3Copy(hit_point, o);
 	if (dn >= CCTNum(0.0)) {
-		mathVec3AddScalar(result->unique_hit_point, plane_n, radius);
+		dn -= radius;
+		mathVec3AddScalar(hit_point, plane_n, radius);
 	}
 	else {
-		mathVec3SubScalar(result->unique_hit_point, plane_n, radius);
+		dn += radius;
+		mathVec3SubScalar(hit_point, plane_n, radius);
 	}
+	dn /= cos_theta;
+	if (dn < CCTNum(0.0)) {
+		return NULL;
+	}
+	mathVec3AddScalar(hit_point, dir, dn);
+	set_result(result, dn, plane_n);
+	set_unique_hit_point(result, hit_point);
 	return result;
 }
 
