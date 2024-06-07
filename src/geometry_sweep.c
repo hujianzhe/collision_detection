@@ -584,8 +584,7 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	CCTSweepResult_t *p_result;
-	int i;
+	GeometrySegmentIndices_t si;
 	if (!Segment_Sweep_Plane(ls, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
@@ -616,27 +615,11 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	else if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
 		return result;
 	}
-	p_result = NULL;
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
-			continue;
-		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			return set_result(result, CCTNum(0.0), dir);
-		}
-		if (!p_result) {
-			p_result = result;
-			copy_result(p_result, &result_temp);
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
-	}
-	return p_result;
+	si.v = polygon->v;
+	si.indices = polygon->v_indices;
+	si.indices_cnt = polygon->v_indices_cnt;
+	si.stride = 1;
+	return Segment_Sweep_SegmentIndices(ls, dir, &si, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
