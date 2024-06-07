@@ -485,6 +485,33 @@ typedef struct GeometrySegmentIndices_t {
 	unsigned int stride;
 } GeometrySegmentIndices_t;
 
+static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
+	int i;
+	CCTSweepResult_t* p_result = NULL;
+	for (i = 0; i < si->indices_cnt; ) {
+		CCTSweepResult_t result_temp;
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], si->v[si->indices[i++]]);
+		if (2 == si->stride) {
+			mathVec3Copy(edge[1], si->v[si->indices[i++]]);
+		}
+		else {
+			mathVec3Copy(edge[1], si->v[si->indices[i >= si->indices_cnt ? 0 : i]]);
+		}
+		if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
+			continue;
+		}
+		if (!p_result) {
+			p_result = result;
+			copy_result(p_result, &result_temp);
+		}
+		else {
+			merge_result(p_result, &result_temp);
+		}
+	}
+	return p_result;
+}
+
 static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegmentIndices_t* s1, const CCTNum_t dir[3], const GeometrySegmentIndices_t* s2, CCTSweepResult_t* result) {
 	int i;
 	CCTSweepResult_t* p_result = NULL;
@@ -496,7 +523,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			mathVec3Copy(edge1[1], s1->v[s1->indices[i++]]);
 		}
 		else {
-			mathVec3Copy(edge1[0], s1->v[s1->indices[i >= s1->indices_cnt ? 0 : i]]);
+			mathVec3Copy(edge1[1], s1->v[s1->indices[i >= s1->indices_cnt ? 0 : i]]);
 		}
 		for (j = 0; j < s2->indices_cnt; ) {
 			CCTSweepResult_t result_temp;
@@ -529,26 +556,16 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 		return result;
 	}
 	else {
-		CCTSweepResult_t* p_result = NULL;
 		int i;
+		CCTSweepResult_t* p_result;
+		GeometrySegmentIndices_t si;
 		CCTNum_t v[8][3];
 		mathOBBVertices(obb, v);
-		for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
-			CCTNum_t edge[2][3];
-			CCTSweepResult_t result_temp;
-			mathVec3Copy(edge[0], v[Box_Edge_Indices[i]]);
-			mathVec3Copy(edge[1], v[Box_Edge_Indices[i+1]]);
-			if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
-				continue;
-			}
-			if (!p_result) {
-				p_result = result;
-				copy_result(p_result, &result_temp);
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
+		si.v = v;
+		si.indices = Box_Edge_Indices;
+		si.indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
+		si.stride = 2;
+		p_result = Segment_Sweep_SegmentIndices(ls, dir, &si, result);
 		for (i = 0; i < 2; ++i) {
 			CCTSweepResult_t result_temp;
 			if (!Ray_Sweep_OBB(ls[i], dir, obb, 0, &result_temp)) {
