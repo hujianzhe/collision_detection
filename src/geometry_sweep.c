@@ -27,8 +27,8 @@ extern int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][
 extern int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]);
 extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
 extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
-extern int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
 extern int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh);
 extern int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]);
 extern int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_indices_idx);
@@ -845,53 +845,47 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
 	int i;
-	CCTNum_t neg_dir[3], *p1p, *p2p;
+	GeometrySegmentIndices_t s1, s2;
+	CCTNum_t neg_dir[3], *p2p;
 	CCTSweepResult_t* p_result;
-	p1p = polygon1->v[polygon1->v_indices[0]];
+
 	p2p = polygon2->v[polygon2->v_indices[0]];
-	if (!Plane_Intersect_Plane(p1p, polygon1->normal, p2p, polygon2->normal)) {
-		CCTNum_t d, dot;
-		mathPointProjectionPlane(p1p, p2p, polygon2->normal, NULL, &d);
-		dot = mathVec3Dot(dir, polygon2->normal);
-		if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
-			return NULL;
-		}
-		d /= dot;
-		if (d < CCTNum(0.0)) {
-			return NULL;
+	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])polygon1->v, polygon1->v_indices, polygon1->v_indices_cnt, dir, p2p, polygon2->normal, result)) {
+		return NULL;
+	}
+	if (1 == result->hit_point_cnt) {
+		if (Polygon_Contain_Point(polygon2, result->unique_hit_point)) {
+			return result;
 		}
 	}
-	p_result = NULL;
-	for (i = 0; i < polygon1->v_indices_cnt; ) {
-		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon1->v[polygon1->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon1->v[polygon1->v_indices[i >= polygon1->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_Polygon((const CCTNum_t(*)[3])edge, dir, polygon2, &result_temp)) {
-			continue;
-		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			return set_result(result, CCTNum(0.0), dir);
-		}
-		if (!p_result) {
-			p_result = result;
-			copy_result(p_result, &result_temp);
-		}
-		else {
-			merge_result(p_result, &result_temp);
+	else if (result->distance > CCTNum(0.0)) {
+		for (i = 0; i < polygon1->v_indices_cnt; ++i) {
+			CCTNum_t test_p[3];
+			mathVec3Copy(test_p, polygon1->v[polygon1->v_indices[i]]);
+			mathVec3AddScalar(test_p, dir, result->distance);
+			if (Polygon_Contain_Point(polygon2, test_p)) {
+				return result;
+			}
 		}
 	}
+	else if (Polygon_Intersect_Polygon(polygon1, polygon2)) {
+		return result;
+	}
+	s1.v = polygon1->v;
+	s1.indices = polygon1->v_indices;
+	s1.indices_cnt = polygon1->v_indices_cnt;
+	s1.stride = 1;
+	s2.v = polygon2->v;
+	s2.indices = polygon2->v_indices;
+	s2.indices_cnt = polygon2->v_indices_cnt;
+	s2.stride = 1;
+	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
 	mathVec3Negate(neg_dir, dir);
-	for (i = 0; i < polygon2->v_indices_cnt; ) {
+	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon2->v[polygon2->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon2->v[polygon2->v_indices[i >= polygon2->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_Polygon((const CCTNum_t(*)[3])edge, neg_dir, polygon1, &result_temp)) {
+		p2p = polygon2->v[polygon2->v_indices[i]];
+		if (!Ray_Sweep_Polygon(p2p, neg_dir, polygon1, &result_temp)) {
 			continue;
-		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			return set_result(result, CCTNum(0.0), dir);
 		}
 		if (!p_result) {
 			p_result = result;
