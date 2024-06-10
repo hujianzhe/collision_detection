@@ -20,6 +20,7 @@ extern const unsigned int Box_Vertice_Indices_Default[8];
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]);
+extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
@@ -625,30 +626,30 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
-	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
+	GeometrySegmentIndices_t si;
+	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
-	if (ConvexMesh_Contain_Point(mesh, ls[1])) {
-		set_result(result, CCTNum(0.0), dir);
-		return result;
-	}
-	p_result = NULL;
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
+	si.v = mesh->v;
+	si.indices = mesh->edge_indices;
+	si.indices_cnt = mesh->edge_indices_cnt;
+	si.stride = 2;
+	p_result = Segment_Sweep_SegmentIndices(ls, dir, &si, result);
+	for (i = 0; i < 2; ++i) {
 		CCTSweepResult_t result_temp;
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		if (!Segment_Sweep_Polygon(ls, dir, polygon, &result_temp)) {
-			continue;
-		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			return set_result(result, CCTNum(0.0), dir);
-		}
-		if (!p_result) {
-			p_result = result;
-			copy_result(p_result, &result_temp);
-		}
-		else {
-			merge_result(p_result, &result_temp);
+		unsigned int j;
+		for (j = 0; j < mesh->polygons_cnt; ++j) {
+			if (!Ray_Sweep_Polygon(ls[i], dir, mesh->polygons + j, &result_temp)) {
+				continue;
+			}
+			if (!p_result) {
+				p_result = result;
+				copy_result(p_result, &result_temp);
+			}
+			else {
+				merge_result(p_result, &result_temp);
+			}
 		}
 	}
 	return p_result;

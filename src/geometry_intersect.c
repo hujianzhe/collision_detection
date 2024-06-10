@@ -232,7 +232,7 @@ static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPoly
 	return 0;
 }
 
-static int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
+int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
 		return 1;
