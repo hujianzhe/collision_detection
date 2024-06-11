@@ -26,7 +26,6 @@ extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const 
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]);
-extern int OBB_Intersect_Polygon(const GeometryOBB_t* obb, const GeometryPolygon_t* polygon, CCTNum_t p[3]);
 extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
 extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
@@ -944,62 +943,6 @@ static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t ha
 	}
 }
 
-static CCTSweepResult_t* OBB_Sweep_Polygon(const GeometryOBB_t* obb, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	int i;
-	CCTNum_t v[8][3], neg_dir[3], *pp;
-	GeometrySegmentIndices_t s1, s2;
-	CCTSweepResult_t *p_result;
-
-	mathOBBVertices(obb, v);
-	pp = polygon->v[polygon->v_indices[0]];
-	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, pp, polygon->normal, result)) {
-		return NULL;
-	}
-	if (1 == result->hit_point_cnt) {
-		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
-			return result;
-		}
-	}
-	else if (result->distance > CCTNum(0.0)) {
-		for (i = 0; i < 8; ++i) {
-			CCTNum_t test_p[3];
-			mathVec3Copy(test_p, v[i]);
-			mathVec3AddScalar(test_p, dir, result->distance);
-			if (Polygon_Contain_Point(polygon, test_p)) {
-				return result;
-			}
-		}
-	}
-	else if (OBB_Intersect_Polygon(obb, polygon, NULL)) {
-		return result;
-	}
-	s1.v = v;
-	s1.indices = Box_Edge_Indices;
-	s1.indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
-	s1.stride = 2;
-	s2.v = polygon->v;
-	s2.indices = polygon->v_indices;
-	s2.indices_cnt = polygon->v_indices_cnt;
-	s2.stride = 1;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
-	mathVec3Negate(neg_dir, dir);
-	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		CCTSweepResult_t result_temp;
-		pp = polygon->v[polygon->v_indices[i]];
-		if (!Ray_Sweep_OBB(pp, neg_dir, obb, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			copy_result(p_result, &result_temp);
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
-	}
-	return p_result;
-}
-
 static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	int i;
 	CCTNum_t* pp, neg_dir[3];
@@ -1473,9 +1416,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, one->aabb->o, one->aabb->half);
-				result = OBB_Sweep_Polygon(&obb1, dir, two->polygon, result);
+				GeometryBoxMesh_t one_mesh;
+				CCTNum_t v[8][3];
+				mathAABBVertices(one->aabb->o, one->aabb->half, v);
+				mathBoxMesh((const CCTNum_t(*)[3])v, AABB_Axis, &one_mesh);
+				result = ConvexMesh_Sweep_Polygon(&one_mesh.mesh, dir, two->polygon, result);
 				break;
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
@@ -1528,7 +1473,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				result = OBB_Sweep_Polygon(one->obb, dir, two->polygon, result);
+				GeometryBoxMesh_t one_mesh;
+				CCTNum_t v[8][3];
+				mathOBBVertices(one->obb, v);
+				mathBoxMesh((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])one->obb->axis, &one_mesh);
+				result = ConvexMesh_Sweep_Polygon(&one_mesh.mesh, dir, two->polygon, result);
 				break;
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
@@ -1613,20 +1562,24 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				CCTNum_t neg_dir[3];
+				GeometryBoxMesh_t two_mesh;
+				CCTNum_t v[8][3], neg_dir[3];
+				mathOBBVertices(two->obb, v);
+				mathBoxMesh((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])two->obb->axis, &two_mesh);
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = OBB_Sweep_Polygon(two->obb, neg_dir, one->polygon, result);
+				result = ConvexMesh_Sweep_Polygon(&two_mesh.mesh, neg_dir, one->polygon, result);
 				break;
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				GeometryOBB_t obb2;
-				CCTNum_t neg_dir[3];
+				GeometryBoxMesh_t two_mesh;
+				CCTNum_t v[8][3], neg_dir[3];
+				mathAABBVertices(two->aabb->o, two->aabb->half, v);
+				mathBoxMesh((const CCTNum_t(*)[3])v, AABB_Axis, &two_mesh);
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				mathOBBFromAABB(&obb2, two->aabb->o, two->aabb->half);
-				result = OBB_Sweep_Polygon(&obb2, neg_dir, one->polygon, result);
+				result = ConvexMesh_Sweep_Polygon(&two_mesh.mesh, neg_dir, one->polygon, result);
 				break;
 			}
 			case GEOMETRY_BODY_POLYGON:
