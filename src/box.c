@@ -3,6 +3,7 @@
 //
 
 #include "../inc/box.h"
+#include "../inc/math_vec3.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -92,6 +93,32 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 		return indices;
 	}
 	return pi;
+}
+
+CCTNum_t* mathBoxFaceNormal(const CCTNum_t box_axis[3][3], unsigned int face_idx, CCTNum_t normal[3]) {
+	if (face_idx < 2) {
+		if (0 == face_idx) {
+			return mathVec3Copy(normal, box_axis[2]);
+		}
+		else {
+			return mathVec3Negate(normal, box_axis[2]);
+		}
+	}
+	else if (face_idx < 4) {
+		if (2 == face_idx) {
+			return mathVec3Copy(normal, box_axis[0]);
+		}
+		else {
+			return mathVec3Negate(normal, box_axis[0]);
+		}
+	}
+	else if (4 == face_idx) {
+		return mathVec3Copy(normal, box_axis[1]);
+	}
+	else if (5 == face_idx) {
+		return mathVec3Negate(normal, box_axis[1]);
+	}
+	return NULL;
 }
 
 #ifdef __cplusplus

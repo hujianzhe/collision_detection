@@ -45,6 +45,7 @@ extern "C" {
 __declspec_dll const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]);
 __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]);
 __declspec_dll const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]);
+__declspec_dll CCTNum_t* mathBoxFaceNormal(const CCTNum_t obb_axis[3][3], unsigned int face_idx, CCTNum_t normal[3]);
 
 #ifdef __cplusplus
 }
