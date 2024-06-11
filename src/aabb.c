@@ -10,6 +10,12 @@
 extern "C" {
 #endif
 
+const CCTNum_t AABB_Axis[3][3] = {
+	{ CCTNums_3(1.0, 0.0, 0.0) },
+	{ CCTNums_3(0.0, 1.0, 0.0) },
+	{ CCTNums_3(0.0, 0.0, 1.0) }
+};
+
 const CCTNum_t AABB_Plane_Normal[6][3] = {
 	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) },
 	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },
