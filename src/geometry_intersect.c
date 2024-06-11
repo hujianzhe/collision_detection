@@ -409,7 +409,7 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 	return 1;
 }
 
-static int AABB_Intersect_Sphere(const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius) {
+static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3]) {
 	if (!AABB_Contain_Point(aabb_o, aabb_half, sp_o)) {
 		CCTNum_t closest_v[3];
 		mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
@@ -681,7 +681,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return AABB_Intersect_Sphere(one->aabb->o, one->aabb->half, two->sphere->o, two->sphere->radius);
+				return Sphere_Intersect_AABB(two->sphere->o, two->sphere->radius, one->aabb->o, one->aabb->half);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -726,7 +726,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return AABB_Intersect_Sphere(two->aabb->o, two->aabb->half, one->sphere->o, one->sphere->radius);
+				return Sphere_Intersect_AABB(one->sphere->o, one->sphere->radius, two->aabb->o, two->aabb->half);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
