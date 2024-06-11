@@ -20,6 +20,7 @@ __declspec_dll void mathOBBMaxVertice(const GeometryOBB_t* obb, CCTNum_t v[3]);
 __declspec_dll void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 
 __declspec_dll void mathOBBPlaneVertices(const GeometryOBB_t* obb, CCTNum_t v[6][3]);
+__declspec_dll GeometryBoxMesh_t* mathOBBMesh(GeometryBoxMesh_t* bm, const GeometryOBB_t* obb);
 
 #ifdef	__cplusplus
 }

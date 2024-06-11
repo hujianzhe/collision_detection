@@ -32,6 +32,12 @@
 #define	GEOMETRY_BODY_BOX_MIN_VERTICE_INDICE	0
 #define	GEOMETRY_BODY_BOX_MAX_VERTICE_INDICE	6
 
+typedef struct GeometryBoxMesh_t {
+	GeometryMesh_t mesh;
+	CCTNum_t v[8][3];
+	GeometryPolygon_t faces[6];
+} GeometryBoxMesh_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
