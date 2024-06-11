@@ -594,7 +594,7 @@ static int ConvexMesh_HasAny_OBBVertices(const GeometryMesh_t* mesh, const Geome
 	return 0;
 }
 
-static int OBB_Intersect_ConvexMesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
+int OBB_Intersect_ConvexMesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (ConvexMesh_HasAny_OBBVertices(mesh, obb)) {
 		return 1;
@@ -607,7 +607,7 @@ static int OBB_Intersect_ConvexMesh(const GeometryOBB_t* obb, const GeometryMesh
 	return 0;
 }
 
-static int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
 	unsigned int i;
 	for (i = 0; i < mesh1->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh1->v[mesh1->v_indices[i]];
