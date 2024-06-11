@@ -274,16 +274,29 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 }
 
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
-	unsigned int i;
-	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		const CCTNum_t* p = polygon->v[polygon->v_indices[i]];
-		if (ConvexMesh_Contain_Point(mesh, p)) {
-			return 1;
+	int res;
+	unsigned int i, v_indices_idx = -1;
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &v_indices_idx);
+	if (0 == res) {
+		return 0;
+	}
+	if (1 == res && v_indices_idx != -1) {
+		return Polygon_Contain_Point(polygon, mesh->v[mesh->v_indices[v_indices_idx]]);
+	}
+	for (i = 0; i < mesh->edge_indices_cnt; ) {
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[i++]]);
+		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[i++]]);
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon, NULL)) {
+			return 2;
 		}
 	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		if (Polygon_Intersect_Polygon(polygon, mesh->polygons + i)) {
-			return 1;
+	for (i = 0; i < polygon->v_indices_cnt; ) {
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
+		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+		if (Segment_Intersect_ConvexMesh((const CCTNum_t(*)[3])edge, mesh)) {
+			return 2;
 		}
 	}
 	return 0;
