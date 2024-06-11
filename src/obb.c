@@ -132,6 +132,31 @@ void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum
 	}
 }
 
+void mathOBBFaceNormal(const GeometryOBB_t* obb, unsigned int face_idx, CCTNum_t normal[3]) {
+	if (face_idx < 2) {
+		if (0 == face_idx) {
+			mathVec3Copy(normal, obb->axis[2]);
+		}
+		else {
+			mathVec3Negate(normal, obb->axis[2]);
+		}
+	}
+	else if (face_idx < 4) {
+		if (2 == face_idx) {
+			mathVec3Copy(normal, obb->axis[0]);
+		}
+		else {
+			mathVec3Negate(normal, obb->axis[0]);
+		}
+	}
+	else if (4 == face_idx) {
+		mathVec3Copy(normal, obb->axis[1]);
+	}
+	else {
+		mathVec3Negate(normal, obb->axis[1]);
+	}
+}
+
 extern const unsigned int Box_Vertice_Indices_Default[8];
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Face_Indices[6][4];
@@ -162,30 +187,7 @@ GeometryBoxMesh_t* mathOBBMesh(GeometryBoxMesh_t* bm, const GeometryOBB_t* obb) 
 		polygon->tri_indices = NULL;
 		polygon->tri_indices_cnt = 0;
 		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
-		if (i < 2) {
-			if (0 == i) {
-				mathVec3Copy(polygon->normal, obb->axis[2]);
-			}
-			else {
-				mathVec3Negate(polygon->normal, obb->axis[2]);
-			}
-		}
-		else if (i < 4) {
-			if (2 == i) {
-				mathVec3Copy(polygon->normal, obb->axis[0]);
-			}
-			else {
-				mathVec3Negate(polygon->normal, obb->axis[0]);
-			}
-		}
-		else {
-			if (4 == i) {
-				mathVec3Copy(polygon->normal, obb->axis[1]);
-			}
-			else {
-				mathVec3Negate(polygon->normal, obb->axis[2]);
-			}
-		}
+		mathOBBFaceNormal(obb, i, polygon->normal);
 	}
 	return bm;
 }

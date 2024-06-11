@@ -38,6 +38,11 @@ typedef struct GeometryBoxMesh_t {
 	GeometryPolygon_t faces[6];
 } GeometryBoxMesh_t;
 
+typedef struct GeometryBoxFace_t {
+	GeometryPolygon_t polygon;
+	CCTNum_t v[8][3];
+} GeometryBoxFace_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

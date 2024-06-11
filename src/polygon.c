@@ -15,6 +15,8 @@ extern int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 static const unsigned int DEFAULT_TRIANGLE_VERTICE_INDICES[3] = { 0, 1, 2 };
 static const unsigned int DEFAULT_RECT_VERTICE_INDICES[4] = { 0, 1, 2, 3 };
 
+extern const unsigned int Box_Face_Indices[6][4];
+
 GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	unsigned int i, s, n, p, last_s, first_s;
 	unsigned int* tmp_edge_pair_indices = NULL;
@@ -468,7 +470,9 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
 		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
 	}
-	if (polygon->v_indices == DEFAULT_RECT_VERTICE_INDICES) {
+	if (polygon->v_indices == DEFAULT_RECT_VERTICE_INDICES ||
+		(polygon->v_indices >= Box_Face_Indices[0] && polygon->v_indices < Box_Face_Indices[6]))
+	{
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(polygon->normal, v);
