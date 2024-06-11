@@ -13,7 +13,6 @@ extern int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const
 extern int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
 static const unsigned int DEFAULT_TRIANGLE_VERTICE_INDICES[3] = { 0, 1, 2 };
-static const unsigned int DEFAULT_RECT_VERTICE_INDICES[4] = { 0, 1, 2, 3 };
 
 extern const unsigned int Box_Face_Indices[6][4];
 
@@ -270,160 +269,6 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
 }
 
-int mathRectHasPoint(const GeometryRect_t* rect, const CCTNum_t p[3]) {
-	CCTNum_t v[3], dot;
-	mathVec3Sub(v, p, rect->o);
-	dot = mathVec3Dot(rect->normal, v);
-	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
-		return 0;
-	}
-	dot = mathVec3Dot(rect->h_axis, v);
-	if (dot > rect->half_h + CCT_EPSILON || dot < -rect->half_h - CCT_EPSILON) {
-		return 0;
-	}
-	return mathVec3LenSq(v) - dot * dot <= rect->half_w * rect->half_w + CCT_EPSILON;
-}
-
-void mathRectVertices(const GeometryRect_t* rect, CCTNum_t p[4][3]) {
-	mathVec3Copy(p[0], rect->o);
-	mathVec3AddScalar(p[0], rect->h_axis, rect->half_h);
-	mathVec3AddScalar(p[0], rect->w_axis, rect->half_w);
-	mathVec3Copy(p[1], rect->o);
-	mathVec3AddScalar(p[1], rect->h_axis, rect->half_h);
-	mathVec3AddScalar(p[1], rect->w_axis, -rect->half_w);
-	mathVec3Copy(p[2], rect->o);
-	mathVec3AddScalar(p[2], rect->h_axis, -rect->half_h);
-	mathVec3AddScalar(p[2], rect->w_axis, -rect->half_w);
-	mathVec3Copy(p[3], rect->o);
-	mathVec3AddScalar(p[3], rect->h_axis, -rect->half_h);
-	mathVec3AddScalar(p[3], rect->w_axis, rect->half_w);
-}
-
-void mathRectToPolygon(const GeometryRect_t* rect, GeometryPolygon_t* polygon, CCTNum_t buf_points[4][3]) {
-	mathRectVertices(rect, buf_points);
-	polygon->v_indices = DEFAULT_RECT_VERTICE_INDICES;
-	polygon->v_indices_cnt = 4;
-	polygon->v = buf_points;
-	mathVec3Copy(polygon->normal, rect->normal);
-}
-
-GeometryRect_t* mathAABBPlaneRect(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int idx, GeometryRect_t* rect) {
-	if (idx < 2) {
-		mathVec3Copy(rect->o, o);
-		if (0 == idx) {
-			rect->o[2] += half[2];
-			mathVec3Set(rect->normal, CCTNums_3(0.0, 0.0, 1.0));
-		}
-		else {
-			rect->o[2] -= half[2];
-			mathVec3Set(rect->normal, CCTNums_3(0.0, 0.0, -1.0));
-		}
-		rect->half_w = half[0];
-		rect->half_h = half[1];
-		mathVec3Set(rect->w_axis, CCTNums_3(1.0, 0.0, 0.0));
-		mathVec3Set(rect->h_axis, CCTNums_3(0.0, 1.0, 0.0));
-		return rect;
-	}
-	else if (idx < 4) {
-		mathVec3Copy(rect->o, o);
-		if (2 == idx) {
-			rect->o[0] += half[0];
-			mathVec3Set(rect->normal, CCTNums_3(1.0, 0.0, 0.0));
-		}
-		else {
-			rect->o[0] -= half[0];
-			mathVec3Set(rect->normal, CCTNums_3(-1.0, 0.0, 0.0));
-		}
-		rect->half_w = half[2];
-		rect->half_h = half[1];
-		mathVec3Set(rect->w_axis, CCTNums_3(0.0, 0.0, 1.0));
-		mathVec3Set(rect->h_axis, CCTNums_3(0.0, 1.0, 0.0));
-		return rect;
-	}
-	else if (idx < 6) {
-		mathVec3Copy(rect->o, o);
-		if (4 == idx) {
-			rect->o[1] += half[1];
-			mathVec3Set(rect->normal, CCTNums_3(0.0, 1.0, 0.0));
-		}
-		else {
-			rect->o[1] -= half[1];
-			mathVec3Set(rect->normal, CCTNums_3(0.0, -1.0, 0.0));
-		}
-		rect->half_w = half[2];
-		rect->half_h = half[0];
-		mathVec3Set(rect->w_axis, CCTNums_3(0.0, 0.0, 1.0));
-		mathVec3Set(rect->h_axis, CCTNums_3(1.0, 0.0, 0.0));
-		return rect;
-	}
-	return NULL;
-}
-
-GeometryRect_t* mathOBBPlaneRect(const GeometryOBB_t* obb, unsigned int idx, GeometryRect_t* rect) {
-	CCTNum_t extend[3];
-	if (idx < 2) {
-		mathVec3MultiplyScalar(extend, obb->axis[2], obb->half[2]);
-		if (0 == idx) {
-			mathVec3Add(rect->o, obb->o, extend);
-			rect->normal[0] = obb->axis[2][0];
-			rect->normal[1] = obb->axis[2][1];
-			rect->normal[2] = obb->axis[2][2];
-		}
-		else {
-			mathVec3Sub(rect->o, obb->o, extend);
-			rect->normal[0] = -obb->axis[2][0];
-			rect->normal[1] = -obb->axis[2][1];
-			rect->normal[2] = -obb->axis[2][2];
-		}
-		rect->half_w = obb->half[0];
-		rect->half_h = obb->half[1];
-		mathVec3Copy(rect->w_axis, obb->axis[0]);
-		mathVec3Copy(rect->h_axis, obb->axis[1]);
-		return rect;
-	}
-	else if (idx < 4) {
-		mathVec3MultiplyScalar(extend, obb->axis[0], obb->half[0]);
-		if (2 == idx) {
-			mathVec3Add(rect->o, obb->o, extend);
-			rect->normal[0] = obb->axis[0][0];
-			rect->normal[1] = obb->axis[0][1];
-			rect->normal[2] = obb->axis[0][2];
-		}
-		else {
-			mathVec3Sub(rect->o, obb->o, extend);
-			rect->normal[0] = -obb->axis[0][0];
-			rect->normal[1] = -obb->axis[0][1];
-			rect->normal[2] = -obb->axis[0][2];
-		}
-		rect->half_w = obb->half[2];
-		rect->half_h = obb->half[1];
-		mathVec3Copy(rect->w_axis, obb->axis[2]);
-		mathVec3Copy(rect->h_axis, obb->axis[1]);
-		return rect;
-	}
-	else if (idx < 6) {
-		mathVec3MultiplyScalar(extend, obb->axis[1], obb->half[1]);
-		if (4 == idx) {
-			mathVec3Add(rect->o, obb->o, extend);
-			rect->normal[0] = obb->axis[1][0];
-			rect->normal[1] = obb->axis[1][1];
-			rect->normal[2] = obb->axis[1][2];
-		}
-		else {
-			mathVec3Sub(rect->o, obb->o, extend);
-			rect->normal[0] = -obb->axis[1][0];
-			rect->normal[1] = -obb->axis[1][1];
-			rect->normal[2] = -obb->axis[1][2];
-		}
-		rect->half_w = obb->half[2];
-		rect->half_h = obb->half[0];
-		mathVec3Copy(rect->w_axis, obb->axis[2]);
-		mathVec3Copy(rect->h_axis, obb->axis[0]);
-		return rect;
-	}
-	return NULL;
-}
-
 int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 	CCTNum_t e1[3], e2[3], test_n[3];
 	unsigned int i, has_test_n;
@@ -470,9 +315,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
 		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
 	}
-	if (polygon->v_indices == DEFAULT_RECT_VERTICE_INDICES ||
-		(polygon->v_indices >= Box_Face_Indices[0] && polygon->v_indices < Box_Face_Indices[6]))
-	{
+	if (polygon->v_indices >= Box_Face_Indices[0] && polygon->v_indices < Box_Face_Indices[6]) {
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(polygon->normal, v);

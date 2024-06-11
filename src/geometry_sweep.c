@@ -203,19 +203,21 @@ static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3
 		return result;
 	}
 	else {
-		CCTSweepResult_t *p_result = NULL;
 		int i;
+		CCTNum_t v[8][3];
+		CCTSweepResult_t *p_result = NULL;
+		mathOBBVertices(obb, v);
 		for (i = 0; i < 6; ++i) {
 			CCTNum_t hit_point[3];
+			GeometryPolygon_t polygon;
 			CCTSweepResult_t result_temp;
-			GeometryRect_t rect;
-			mathOBBPlaneRect(obb, i, &rect);
-			if (!Ray_Sweep_Plane(o, dir, rect.o, rect.normal, &result_temp)) {
+			mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, i, &polygon);
+			if (!Ray_Sweep_Plane(o, dir, polygon.v[polygon.v_indices[0]], polygon.normal, &result_temp)) {
 				continue;
 			}
 			mathVec3Copy(hit_point, o);
 			mathVec3AddScalar(hit_point, dir, result_temp.distance);
-			if (!mathRectHasPoint(&rect, hit_point)) {
+			if (!Polygon_Contain_Point(&polygon, hit_point)) {
 				continue;
 			}
 			if (!p_result) {
@@ -1307,20 +1309,22 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 		return result;
 	}
 	else {
+		int i;
 		CCTSweepResult_t* p_result = NULL;
 		CCTNum_t v[8][3], neg_dir[3];
-		int i;
+
+		mathOBBVertices(obb, v);
 		for (i = 0; i < 6; ++i) {
 			CCTSweepResult_t result_temp;
-			GeometryRect_t rect;
-			mathOBBPlaneRect(obb, i, &rect);
-			if (!Sphere_Sweep_Plane(o, radius, dir, rect.o, rect.normal, &result_temp)) {
+			GeometryPolygon_t polygon;
+			mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, i, &polygon);
+			if (!Sphere_Sweep_Plane(o, radius, dir, polygon.v[polygon.v_indices[0]], polygon.normal, &result_temp)) {
 				continue;
 			}
 			if (result_temp.distance <= CCTNum(0.0)) {
 				continue;
 			}
-			if (!mathRectHasPoint(&rect, result_temp.unique_hit_point)) {
+			if (!Polygon_Contain_Point(&polygon, result_temp.unique_hit_point)) {
 				continue;
 			}
 			if (!p_result) {
@@ -1331,7 +1335,6 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 				merge_result(p_result, &result_temp);
 			}
 		}
-		mathOBBVertices(obb, v);
 		mathVec3Negate(neg_dir, dir);
 		for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
 			CCTNum_t edge[2][3];

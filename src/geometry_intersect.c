@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stddef.h>
 
+extern const CCTNum_t AABB_Axis[3][3];
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Indices_Default[8];
 
@@ -401,15 +402,14 @@ static int AABB_Intersect_Sphere(const CCTNum_t aabb_o[3], const CCTNum_t aabb_h
 
 static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
 	int i;
-	GeometryPolygon_t polygon;
+	CCTNum_t v[8][3];
 	if (AABB_Contain_Point(o, half, ls[0]) || AABB_Contain_Point(o, half, ls[1])) {
 		return 1;
 	}
+	mathAABBVertices(o, half, v);
 	for (i = 0; i < 6; ++i) {
-		GeometryRect_t rect;
-		CCTNum_t p[4][3];
-		mathAABBPlaneRect(o, half, i, &rect);
-		mathRectToPolygon(&rect, &polygon, p);
+		GeometryPolygon_t polygon;
+		mathBoxFace((const CCTNum_t(*)[3])v, AABB_Axis, i, &polygon);
 		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
 			return 1;
 		}
@@ -419,16 +419,14 @@ static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], c
 
 int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
 	int i;
+	CCTNum_t v[8][3];
 	if (OBB_Contain_Point(obb, ls[0]) || OBB_Contain_Point(obb, ls[1])) {
 		return 1;
 	}
+	mathOBBVertices(obb, v);
 	for (i = 0; i < 6; ++i) {
 		GeometryPolygon_t polygon;
-		GeometryRect_t rect;
-		CCTNum_t p[4][3];
-
-		mathOBBPlaneRect(obb, i, &rect);
-		mathRectToPolygon(&rect, &polygon, p);
+		mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, i, &polygon);
 		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
 			return 1;
 		}
