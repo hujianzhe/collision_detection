@@ -13,6 +13,8 @@
 #include "../inc/geometry_api.h"
 #include <stddef.h>
 
+extern const unsigned int Box_Vertice_Indices_Default[8];
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,6 +114,28 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	mathVec3Sub(o1o2, o2, o1);
 	len_sq = mathVec3LenSq(o1o2);
 	return len_sq <= (r1 - r2) * (r1 - r2);
+}
+
+static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
+	CCTNum_t vp[3], edge_v[3], dot;
+	mathVec3Sub(vp, p, v[0]);
+
+	mathVec3Sub(edge_v, v[1], v[0]);
+	dot = mathVec3Dot(edge_v, vp);
+	if (dot < CCTNum(0.0) || dot > mathVec3LenSq(edge_v)) {
+		return 0;
+	}
+	mathVec3Sub(edge_v, v[4], v[0]);
+	dot = mathVec3Dot(edge_v, vp);
+	if (dot < CCTNum(0.0) || dot > mathVec3LenSq(edge_v)) {
+		return 0;
+	}
+	mathVec3Sub(edge_v, v[3], v[0]);
+	dot = mathVec3Dot(edge_v, vp);
+	if (dot < CCTNum(0.0) || dot > mathVec3LenSq(edge_v)) {
+		return 0;
+	}
+	return 1;
 }
 
 int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
@@ -319,6 +343,9 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 }
 
 int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+	if (Box_Vertice_Indices_Default == mesh->v_indices) {
+		return Box_Contain_Point((const CCTNum_t(*)[3])mesh->v, p);
+	}
 	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
 		return 0;
 	}
