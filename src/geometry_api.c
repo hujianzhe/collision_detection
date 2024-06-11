@@ -235,6 +235,7 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 				CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 				mathVec3Add(p, p, delta);
 			}
+			mathVec3Add(mesh->o, mesh->o, delta);
 			mathVec3Copy(mesh->bound_box.o, v);
 			return;
 		}

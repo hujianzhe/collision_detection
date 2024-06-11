@@ -4,6 +4,7 @@
 
 #include "../inc/box.h"
 #include "../inc/math_vec3.h"
+#include "../inc/vertex.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -95,30 +96,71 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 	return pi;
 }
 
-CCTNum_t* mathBoxFaceNormal(const CCTNum_t box_axis[3][3], unsigned int face_idx, CCTNum_t normal[3]) {
+CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CCTNum_t normal[3]) {
 	if (face_idx < 2) {
 		if (0 == face_idx) {
-			return mathVec3Copy(normal, box_axis[2]);
+			return mathVec3Copy(normal, axis[2]);
 		}
 		else {
-			return mathVec3Negate(normal, box_axis[2]);
+			return mathVec3Negate(normal, axis[2]);
 		}
 	}
 	else if (face_idx < 4) {
 		if (2 == face_idx) {
-			return mathVec3Copy(normal, box_axis[0]);
+			return mathVec3Copy(normal, axis[0]);
 		}
 		else {
-			return mathVec3Negate(normal, box_axis[0]);
+			return mathVec3Negate(normal, axis[0]);
 		}
 	}
 	else if (4 == face_idx) {
-		return mathVec3Copy(normal, box_axis[1]);
+		return mathVec3Copy(normal, axis[1]);
 	}
 	else if (5 == face_idx) {
-		return mathVec3Negate(normal, box_axis[1]);
+		return mathVec3Negate(normal, axis[1]);
 	}
 	return NULL;
+}
+
+GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_idx, GeometryPolygon_t* polygon) {
+	if (!mathBoxFaceNormal(axis, face_idx, polygon->normal)) {
+		return NULL;
+	}
+	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
+	polygon->v = (CCTNum_t(*)[3])v;
+	polygon->v_indices = Box_Face_Indices[face_idx];
+	polygon->v_indices_cnt = sizeof(Box_Face_Indices[0]) / sizeof(Box_Face_Indices[0][0]);
+	polygon->tri_indices = NULL;
+	polygon->tri_indices_cnt = 0;
+	return polygon;
+}
+
+void mathBoxMesh(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], GeometryBoxMesh_t* bm) {
+	unsigned int i;
+	CCTNum_t min_v[3], max_v[3];
+	GeometryMesh_t* mesh = &bm->mesh;
+
+	mesh->v = (CCTNum_t(*)[3])v;
+	mesh->v_indices = Box_Vertice_Indices_Default;
+	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
+	mesh->edge_indices = Box_Edge_Indices;
+	mesh->edge_indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
+	mesh->polygons = bm->faces;
+	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryPolygon_t* polygon = mesh->polygons + i;
+		mathBoxFace(v, axis, i, polygon);
+	}
+	mathVerticesFindMinMaxXYZ(v, 8, min_v, max_v);
+	for (i = 0; i < 3; ++i) {
+		mesh->bound_box.half[i] = CCTNum(0.5) * (max_v[i] - min_v[i]);
+	}
+	mathVec3Add(mesh->bound_box.o, v[0], v[6]);
+	mathVec3MultiplyScalar(mesh->bound_box.o, mesh->bound_box.o, CCTNum(0.5));
+	mathVec3Copy(mesh->o, mesh->bound_box.o);
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		mathBoxFace(v, axis, i, mesh->polygons + i);
+	}
 }
 
 #ifdef __cplusplus

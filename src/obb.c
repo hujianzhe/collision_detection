@@ -4,7 +4,6 @@
 
 #include "../inc/math_vec3.h"
 #include "../inc/obb.h"
-#include "../inc/vertex.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -130,41 +129,6 @@ void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum
 		}
 		mathVec3AddScalar(closest_p, obb->axis[i], d);
 	}
-}
-
-extern const unsigned int Box_Vertice_Indices_Default[8];
-extern const unsigned int Box_Edge_Indices[24];
-extern const unsigned int Box_Face_Indices[6][4];
-
-GeometryBoxMesh_t* mathOBBMesh(GeometryBoxMesh_t* bm, const GeometryOBB_t* obb) {
-	unsigned int i;
-	GeometryMesh_t* mesh = &bm->mesh;
-	CCTNum_t min_v[3], max_v[3];
-	mathOBBVertices(obb, bm->v);
-	mesh->v = bm->v;
-	mesh->v_indices = Box_Vertice_Indices_Default;
-	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
-	mesh->edge_indices = Box_Edge_Indices;
-	mesh->edge_indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
-	mesh->polygons = bm->faces;
-	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
-	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
-	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])bm->v, 8, min_v, max_v);
-	mathVec3Copy(mesh->bound_box.o, obb->o);
-	for (i = 0; i < 3; ++i) {
-		mesh->bound_box.half[i] = CCTNum(0.5) * (max_v[i] - min_v[i]);
-	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = mesh->polygons + i;
-		polygon->v = bm->v;
-		polygon->v_indices = Box_Face_Indices[i];
-		polygon->v_indices_cnt = sizeof(Box_Face_Indices[i]) / sizeof(Box_Face_Indices[i][0]);
-		polygon->tri_indices = NULL;
-		polygon->tri_indices_cnt = 0;
-		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
-		mathBoxFaceNormal((const CCTNum_t(*)[3])obb->axis, i, polygon->normal);
-	}
-	return bm;
 }
 
 #ifdef __cplusplus
