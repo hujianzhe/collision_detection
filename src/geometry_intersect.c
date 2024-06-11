@@ -430,7 +430,7 @@ static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], c
 	return 0;
 }
 
-int OBB_Intersect_Segment(const GeometryOBB_t* obb, const CCTNum_t ls[2][3]) {
+int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) {
 	int i;
 	CCTNum_t v[8][3];
 	if (OBB_Contain_Point(obb, ls[0]) || OBB_Contain_Point(obb, ls[1])) {
@@ -647,7 +647,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				return OBB_Intersect_Segment(two->obb, one_segment_v);
+				return Segment_Intersect_OBB(one_segment_v, two->obb);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -848,7 +848,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return OBB_Intersect_Segment(one->obb, (const CCTNum_t(*)[3])two->segment->v);
+				return Segment_Intersect_OBB((const CCTNum_t(*)[3])two->segment->v, one->obb);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
