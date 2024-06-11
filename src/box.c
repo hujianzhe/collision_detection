@@ -160,6 +160,7 @@ void mathBoxMesh(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], GeometryBoxM
 	mathVec3Copy(mesh->o, mesh->bound_box.o);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mathBoxFace(v, axis, i, mesh->polygons + i);
+		mathVec3Copy(mesh->polygons[i].o, mesh->o);
 	}
 }
 
