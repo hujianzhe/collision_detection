@@ -132,22 +132,6 @@ void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum
 	}
 }
 
-void mathOBBPlaneVertices(const GeometryOBB_t* obb, CCTNum_t v[6][3]) {
-	CCTNum_t extend[3];
-
-	mathVec3MultiplyScalar(extend, obb->axis[2], obb->half[2]);
-	mathVec3Add(v[0], obb->o, extend);
-	mathVec3Sub(v[1], obb->o, extend);
-
-	mathVec3MultiplyScalar(extend, obb->axis[0], obb->half[0]);
-	mathVec3Add(v[2], obb->o, extend);
-	mathVec3Sub(v[3], obb->o, extend);
-
-	mathVec3MultiplyScalar(extend, obb->axis[1], obb->half[1]);
-	mathVec3Add(v[4], obb->o, extend);
-	mathVec3Sub(v[5], obb->o, extend);
-}
-
 extern const unsigned int Box_Vertice_Indices_Default[8];
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Face_Indices[6][4];
