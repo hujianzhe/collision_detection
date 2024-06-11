@@ -272,7 +272,7 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	return 0;
 }
 
-int Polygon_Intersect_ConvexMesh(const GeometryPolygon_t* polygon, const GeometryMesh_t* mesh) {
+int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	unsigned int i;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon->v[polygon->v_indices[i]];
@@ -615,18 +615,9 @@ int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 			return 1;
 		}
 	}
-	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
-		const CCTNum_t* p = mesh2->v[mesh2->v_indices[i]];
-		if (ConvexMesh_Contain_Point(mesh1, p)) {
+	for (i = 0; i < mesh2->polygons_cnt; ++i) {
+		if (ConvexMesh_Intersect_Polygon(mesh1, mesh2->polygons + i)) {
 			return 1;
-		}
-	}
-	for (i = 0; i < mesh1->polygons_cnt; ++i) {
-		unsigned int j;
-		for (j = 0; j < mesh2->polygons_cnt; ++j) {
-			if (Polygon_Intersect_Polygon(mesh1->polygons + i, mesh2->polygons + j)) {
-				return 1;
-			}
 		}
 	}
 	return 0;
@@ -880,7 +871,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return Polygon_Intersect_ConvexMesh(one->polygon, two->mesh);
+				return ConvexMesh_Intersect_Polygon(two->mesh, one->polygon);
 			}
 		}
 	}
@@ -957,7 +948,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return Polygon_Intersect_ConvexMesh(two->polygon, one->mesh);
+				return ConvexMesh_Intersect_Polygon(one->mesh, two->polygon);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
