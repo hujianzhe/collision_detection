@@ -49,8 +49,6 @@ const unsigned int Box_Triangle_Vertices_Indices[36] = {
 };
 */
 
-const unsigned int* mathBoxVertexIndicesDefault() { return Box_Vertice_Indices_Default; }
-
 const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]) {
 	unsigned int idx;
 	if (edge_idx >= 12) {
