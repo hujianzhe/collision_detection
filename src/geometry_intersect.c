@@ -382,13 +382,10 @@ static int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, con
 }
 
 int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) {
-	if (!OBB_Contain_Point(obb, o)) {
-		CCTNum_t v[3];
-		mathOBBClosestPointTo(obb, o, v);
-		mathVec3Sub(v, o, v);
-		return mathVec3LenSq(v) <= radius * radius;
-	}
-	return 1;
+	CCTNum_t v[3];
+	mathOBBClosestPointTo(obb, o, v);
+	mathVec3Sub(v, o, v);
+	return mathVec3LenSq(v) <= radius * radius;
 }
 
 static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
@@ -410,13 +407,10 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 }
 
 static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3]) {
-	if (!AABB_Contain_Point(aabb_o, aabb_half, sp_o)) {
-		CCTNum_t closest_v[3];
-		mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
-		mathVec3Sub(closest_v, closest_v, sp_o);
-		return mathVec3LenSq(closest_v) <= sp_radius * sp_radius;
-	}
-	return 1;
+	CCTNum_t closest_v[3];
+	mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
+	mathVec3Sub(closest_v, closest_v, sp_o);
+	return mathVec3LenSq(closest_v) <= sp_radius * sp_radius;
 }
 
 static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
