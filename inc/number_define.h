@@ -62,6 +62,4 @@
 	#error	"CCTNum_t type isn't defined, should be float/double/long double ."
 #endif
 
-#define	CCTNum_try_fix_to(n, to)	((CCTNum_abs(n - to) > CCT_EPSILON ? n : to))
-
 #endif
