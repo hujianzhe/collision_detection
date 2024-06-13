@@ -340,7 +340,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(polygon->normal, v);
-		if (dot < CCTNum(0.0) || dot > CCT_EPSILON) {
+		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 			return 0;
 		}
 		mathVec3Sub(ls_vec, polygon->v[polygon->v_indices[1]], polygon->v[polygon->v_indices[0]]);
