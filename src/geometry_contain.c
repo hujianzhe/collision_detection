@@ -464,7 +464,7 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 			return 0;
 		}
 	}
-	return 1;
+	return ConvexMesh_Contain_Point(mesh, o);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
