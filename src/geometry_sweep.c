@@ -243,7 +243,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 		return result;
 	}
 	dir_d = mathVec3Dot(dir, oc);
-	if (dir_d <= CCT_EPSILON) {
+	if (dir_d <= CCTNum(0.0)) {
 		return NULL;
 	}
 	dr2 = oc2 - dir_d * dir_d;
@@ -1096,7 +1096,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	CCTNum_t dn, dn_abs, cos_theta, hit_point[3];
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &dn);
 	dn_abs = CCTNum_abs(dn);
-	if (dn_abs < radius - CCT_EPSILON) {
+	if (dn_abs < radius) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -1107,7 +1107,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 		return result;
 	}
 	cos_theta = mathVec3Dot(plane_n, dir);
-	if (cos_theta <= CCT_EPSILON && cos_theta >= CCT_EPSILON_NEGATE) {
+	if (CCTNum(0.0) == cos_theta) {
 		return NULL;
 	}
 	mathVec3Copy(hit_point, o);
