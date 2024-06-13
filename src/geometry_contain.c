@@ -60,7 +60,7 @@ int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
 }
 
-int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+static int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
 	CCTNum_t v[3], dot;
 	mathVec3Sub(v, v2, v1);
 	dot = mathVec3Dot(n1, v);
