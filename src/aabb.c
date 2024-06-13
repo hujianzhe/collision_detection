@@ -93,9 +93,9 @@ void mathAABBFromTwoVertice(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t o
 }
 
 int AABB_Contain_Point(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3]) {
-	return p[0] >= o[0] - half[0] - CCT_EPSILON && p[0] <= o[0] + half[0] + CCT_EPSILON &&
-		   p[1] >= o[1] - half[1] - CCT_EPSILON && p[1] <= o[1] + half[1] + CCT_EPSILON &&
-		   p[2] >= o[2] - half[2] - CCT_EPSILON && p[2] <= o[2] + half[2] + CCT_EPSILON;
+	return p[0] >= o[0] - half[0] && p[0] <= o[0] + half[0] &&
+		   p[1] >= o[1] - half[1] && p[1] <= o[1] + half[1] &&
+		   p[2] >= o[2] - half[2] && p[2] <= o[2] + half[2];
 }
 
 void mathAABBClosestPointTo(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
@@ -138,7 +138,7 @@ void mathAABBSplit(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t new_o[8
 int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	int i;
 	for (i = 0; i < 3; ++i) {
-		CCTNum_t half = half1[i] + half2[i] + CCT_EPSILON;
+		CCTNum_t half = half1[i] + half2[i];
 		if (o2[i] - o1[i] > half || o1[i] - o2[i] > half) {
 			return 0;
 		}
