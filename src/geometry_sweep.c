@@ -20,7 +20,7 @@ extern const unsigned int Box_Vertice_Indices_Default[8];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
-extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]);
+extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
 extern int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb);
 extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
@@ -301,65 +301,38 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 }
 
 static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t vertice[3], const CCTNum_t normal[3], CCTSweepResult_t* result) {
-	CCTNum_t p[3];
-	int res = Segment_Intersect_Plane(ls, vertice, normal, p);
-	if (2 == res) {
+	CCTNum_t p[3], d[3], dlen, cos_theta;
+	int res = Segment_Intersect_Plane(ls, vertice, normal, p, d);
+	if (res) {
 		set_result(result, CCTNum(0.0), dir);
+		if (1 == res) {
+			set_unique_hit_point(result, p);
+		}
 		return result;
 	}
-	else if (1 == res) {
-		set_result(result, CCTNum(0.0), normal);
-		set_unique_hit_point(result, p);
+	cos_theta = mathVec3Dot(normal, dir);
+	if (CCTNum(0.0) == cos_theta) {
+		return NULL;
+	}
+	dlen = d[2] / cos_theta;
+	if (dlen < CCTNum(0.0)) {
+		return NULL;
+	}
+	set_result(result, dlen, normal);
+	if (d[0] == d[1]) {
 		return result;
+	}
+	if (d[0] == d[2]) {
+		set_unique_hit_point(result, ls[0]);
+	}
+	else if (d[1] == d[2]) {
+		set_unique_hit_point(result, ls[1]);
 	}
 	else {
-		CCTNum_t d[2], min_d;
-		CCTNum_t cos_theta = mathVec3Dot(normal, dir);
-		if (cos_theta <= CCT_EPSILON && cos_theta >= CCT_EPSILON_NEGATE) {
-			return NULL;
-		}
-		mathPointProjectionPlane(ls[0], vertice, normal, NULL, &d[0]);
-		mathPointProjectionPlane(ls[1], vertice, normal, NULL, &d[1]);
-		if (d[0] <= d[1] + CCT_EPSILON && d[0] >= d[1] - CCT_EPSILON) {
-			min_d = d[0];
-			min_d /= cos_theta;
-			if (min_d < CCTNum(0.0)) {
-				return NULL;
-			}
-			set_result(result, min_d, normal);
-		}
-		else {
-			const CCTNum_t *p = NULL;
-			if (d[0] > CCTNum(0.0)) {
-				if (d[0] < d[1]) {
-					min_d = d[0];
-					p = ls[0];
-				}
-				else {
-					min_d = d[1];
-					p = ls[1];
-				}
-			}
-			else {
-				if (d[0] < d[1]) {
-					min_d = d[1];
-					p = ls[1];
-				}
-				else {
-					min_d = d[0];
-					p = ls[0];
-				}
-			}
-			min_d /= cos_theta;
-			if (min_d < CCTNum(0.0)) {
-				return NULL;
-			}
-			set_result(result, min_d, normal);
-			set_unique_hit_point(result, p);
-			mathVec3AddScalar(result->unique_hit_point, dir, min_d);
-		}
 		return result;
 	}
+	mathVec3AddScalar(result->unique_hit_point, dir, dlen);
+	return result;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
@@ -472,7 +445,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			return NULL;
 		}
 		mathVec3Normalized(N, N);
-		if (!Segment_Intersect_Plane(ls2, ls1[0], N, v)) {
+		if (!Segment_Intersect_Plane(ls2, ls1[0], N, v, NULL)) {
 			return NULL;
 		}
 		mathVec3Negate(neg_dir, dir);
@@ -826,7 +799,7 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 		return result;
 	}
 	dot = mathVec3Dot(dir, plane_n);
-	if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
+	if (CCTNum(0.0) == dot) {
 		return NULL;
 	}
 	min_d /= dot;

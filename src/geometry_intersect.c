@@ -147,37 +147,48 @@ int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indice
 	return has_eq0;
 }
 
-int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3]) {
-	CCTNum_t d[2], lsdir[3], dot;
-	mathVec3Sub(lsdir, ls[1], ls[0]);
-	dot = mathVec3Dot(lsdir, plane_normal);
-	if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
-		return Plane_Contain_Point(plane_v, plane_normal, ls[0]) ? 2 : 0;
+int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t intersect_p[3], CCTNum_t d[3]) {
+	CCTNum_t temp_d[3];
+	if (!d) {
+		d = temp_d;
 	}
 	mathPointProjectionPlane(ls[0], plane_v, plane_normal, NULL, &d[0]);
 	mathPointProjectionPlane(ls[1], plane_v, plane_normal, NULL, &d[1]);
-	if (d[0] > CCT_EPSILON && d[1] > CCT_EPSILON) {
+	if (d[0] == d[1]) {
+		d[2] = d[0];
+		if (d[0] != CCTNum(0.0)) {
+			return 0;
+		}
+		return 2;
+	}
+	if (d[0] > CCTNum(0.0) && d[1] > CCTNum(0.0)) {
+		d[2] = (d[0] < d[1] ? d[0] : d[1]);
 		return 0;
 	}
-	if (d[0] < CCT_EPSILON_NEGATE && d[1] < CCT_EPSILON_NEGATE) {
+	if (d[0] < CCTNum(0.0) && d[1] < CCTNum(0.0)) {
+		d[2] = (d[0] < d[1] ? d[1] : d[0]);
 		return 0;
 	}
-	if (d[0] <= CCT_EPSILON && d[0] >= CCT_EPSILON_NEGATE) {
-		if (p) {
-			mathVec3Copy(p, ls[0]);
+	d[2] = CCTNum(0.0);
+	if (CCTNum(0.0) == d[0]) {
+		if (intersect_p) {
+			mathVec3Copy(intersect_p, ls[0]);
 		}
 		return 1;
 	}
-	if (d[1] <= CCT_EPSILON && d[1] >= CCT_EPSILON_NEGATE) {
-		if (p) {
-			mathVec3Copy(p, ls[1]);
+	if (CCTNum(0.0) == d[1]) {
+		if (intersect_p) {
+			mathVec3Copy(intersect_p, ls[1]);
 		}
 		return 1;
 	}
-	if (p) {
+	if (intersect_p) {
+		CCTNum_t lsdir[3], dot;
+		mathVec3Sub(lsdir, ls[1], ls[0]);
 		mathVec3Normalized(lsdir, lsdir);
 		dot = mathVec3Dot(lsdir, plane_normal);
-		mathVec3AddScalar(mathVec3Copy(p, ls[0]), lsdir, d[0] / dot);
+		mathVec3Copy(intersect_p, ls[0]);
+		mathVec3AddScalar(intersect_p, lsdir, d[0] / dot);
 	}
 	return 1;
 }
@@ -188,7 +199,7 @@ static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircl
 	if (!p) {
 		p = v;
 	}
-	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p);
+	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p, NULL);
 	if (1 == res) {
 		CCTNum_t op[3], op_lensq;
 		mathVec3Sub(op, p, circle->o);
@@ -213,7 +224,7 @@ static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPoly
 	if (!p) {
 		p = point;
 	}
-	res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p);
+	res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
 	if (0 == res) {
 		return 0;
 	}
@@ -640,7 +651,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				return Segment_Intersect_Plane(one_segment_v, two->plane->v, two->plane->normal, NULL);
+				return Segment_Intersect_Plane(one_segment_v, two->plane->v, two->plane->normal, NULL, NULL);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
@@ -779,7 +790,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_Plane((const CCTNum_t(*)[3])two->segment->v, one->plane->v, one->plane->normal, NULL);
+				return Segment_Intersect_Plane((const CCTNum_t(*)[3])two->segment->v, one->plane->v, one->plane->normal, NULL, NULL);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
