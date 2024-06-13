@@ -483,13 +483,6 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-typedef struct GeometrySegmentIndices_t {
-	CCTNum_t(*v)[3];
-	const unsigned int* indices;
-	unsigned int indices_cnt;
-	unsigned int stride;
-} GeometrySegmentIndices_t;
-
 static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
 	int i;
 	CCTSweepResult_t* p_result = NULL;

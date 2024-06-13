@@ -17,6 +17,13 @@ enum {
 	GEOMETRY_SEGMENT_OVERLAP = 2,
 };
 
+typedef struct GeometrySegmentIndices_t {
+	CCTNum_t(*v)[3];
+	const unsigned int* indices;
+	unsigned int indices_cnt;
+	unsigned int stride;
+} GeometrySegmentIndices_t;
+
 #ifdef	__cplusplus
 extern "C" {
 #endif

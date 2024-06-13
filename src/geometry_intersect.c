@@ -60,10 +60,10 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 		if (abs_d > circle->radius) {
 			return 0;
 		}
-		if (abs_d >= circle->radius - CCT_EPSILON) {
-			return 1;
+		if (abs_d < circle->radius) {
+			return 3;
 		}
-		return 3;
+		return 1;
 	}
 	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
 		return 2;
@@ -315,10 +315,10 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 	if (closest_v_lensq > radius_sq) {
 		return 0;
 	}
-	if (closest_v_lensq >= radius_sq - CCT_EPSILON) {
-		return 1;
+	if (closest_v_lensq < radius_sq) {
+		return 2;
 	}
-	return 2;
+	return 1;
 }
 
 int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
@@ -331,7 +331,7 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 		}
 		return 0;
 	}
-	if (abs_d >= radius - CCT_EPSILON) {
+	if (abs_d == radius) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
@@ -394,10 +394,10 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 	CCTNum_t o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
 	o1o2_lensq = mathVec3LenSq(o1o2);
-	if (o1o2_lensq > radius_sum_sq + CCT_EPSILON) {
+	if (o1o2_lensq > radius_sum_sq) {
 		return 0;
 	}
-	else if (o1o2_lensq < radius_sum_sq - CCT_EPSILON) {
+	else if (o1o2_lensq < radius_sum_sq) {
 		return 2;
 	}
 	if (p) {
