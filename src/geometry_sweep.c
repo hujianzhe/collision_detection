@@ -142,12 +142,12 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t d, cos_theta;
 	mathPointProjectionPlane(o, plane_v, plane_n, NULL, &d);
-	if (d <= CCT_EPSILON && d >= CCT_EPSILON_NEGATE) {
+	if (CCTNum(0.0) == d) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
 	cos_theta = mathVec3Dot(dir, plane_n);
-	if (cos_theta <= CCT_EPSILON && cos_theta >= CCT_EPSILON_NEGATE) {
+	if (CCTNum(0.0) == cos_theta) {
 		return NULL;
 	}
 	d /= cos_theta;
