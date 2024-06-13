@@ -21,9 +21,6 @@ __declspec_dll GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsi
 __declspec_dll GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPolygon_t* src);
 __declspec_dll void mathPolygonFreeCookingData(GeometryPolygon_t* polygon);
 
-int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
-int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
-
 #ifdef	__cplusplus
 }
 #endif
