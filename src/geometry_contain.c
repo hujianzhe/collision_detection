@@ -392,10 +392,10 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(v, polygon->normal);
-		if (dot < CCT_EPSILON_NEGATE) {
+		if (dot < CCTNum(0.0)) {
 			continue;
 		}
-		if (dot > CCT_EPSILON) {
+		if (dot > CCTNum(1e-6)) {
 			return 0;
 		}
 		return ConvexPolygon_Contain_Point(polygon, p);
