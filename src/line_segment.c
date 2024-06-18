@@ -61,55 +61,6 @@ int mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const 
 	return dot > CCT_EPSILON ? GEOMETRY_LINE_SKEW : GEOMETRY_LINE_CROSS;
 }
 
-/*
-static int mathLineIntersectLine(const CCTNum_t ls1v[3], const CCTNum_t ls1dir[3], const CCTNum_t ls2v[3], const CCTNum_t ls2dir[3], CCTNum_t distance[2]) {
-	CCTNum_t N[3], v[3];
-	mathVec3Sub(v, ls1v, ls2v);
-	mathVec3Cross(N, ls1dir, ls2dir);
-	if (mathVec3IsZero(N)) {
-		CCTNum_t dot = mathVec3Dot(v, ls2dir);
-		CCTNum_t dot_sq = dot * dot;
-		CCTNum_t v_lensq = mathVec3LenSq(v);
-		if (dot_sq > v_lensq + CCT_EPSILON || dot_sq < v_lensq - CCT_EPSILON) {
-			return GEOMETRY_LINE_PARALLEL;
-		}
-		return GEOMETRY_LINE_OVERLAP;
-	}
-	else if (mathVec3IsZero(v)) {
-		distance[0] = distance[1] = CCTNum(0.0);
-		return GEOMETRY_LINE_CROSS;
-	}
-	else {
-		CCTNum_t dot = mathVec3Dot(v, N);
-		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
-			return GEOMETRY_LINE_SKEW;
-		}
-		dot = mathVec3Dot(v, ls2dir);
-		mathVec3AddScalar(mathVec3Copy(v, ls2v), ls2dir, dot);
-		mathVec3Sub(v, v, ls1v);
-		if (mathVec3IsZero(v)) {
-			distance[0] = CCTNum(0.0);
-		}
-		else {
-			distance[0] = mathVec3Normalized(v, v);
-			distance[0] /= mathVec3Dot(v, ls1dir);
-		}
-		mathVec3Sub(v, ls2v, ls1v);
-		dot = mathVec3Dot(v, ls1dir);
-		mathVec3AddScalar(mathVec3Copy(v, ls1v), ls1dir, dot);
-		mathVec3Sub(v, v, ls2v);
-		if (mathVec3IsZero(v)) {
-			distance[1] = CCTNum(0.0);
-		}
-		else {
-			distance[1] = mathVec3Normalized(v, v);
-			distance[1] /= mathVec3Dot(v, ls2dir);
-		}
-		return GEOMETRY_LINE_CROSS;
-	}
-}
-*/
-
 static int mathSegmentIntersectSegmentWhenInSameLine(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3]) {
 	CCTNum_t dot, lsdir1[3], lsdir2[3];
 	mathVec3Sub(lsdir1, ls1[1], ls1[0]);
