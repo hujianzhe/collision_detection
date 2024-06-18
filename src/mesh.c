@@ -115,7 +115,7 @@ static int Mesh_Cooking_Polygen_InternalProc(const CCTNum_t (*v)[3], const unsig
 	for (i = 0; i < tri_indices_cnt; i += 3) {
 		unsigned int j, tri_idx;
 		CCTNum_t N[3];
-		GeometryPolygon_t* tmp_parr, * new_pg;
+		GeometryPolygon_t* tmp_parr, *new_pg;
 
 		tri_idx = i / 3;
 		if (tri_merge_bits[tri_idx / 8] & (1 << (tri_idx % 8))) {

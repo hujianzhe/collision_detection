@@ -220,7 +220,7 @@ CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTN
 CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
 	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
-	mathVec3MultiplyScalar(temp_v, n, dot * CCTNum(2.0));
+	mathVec3MultiplyScalar(temp_v, n, dot + dot);
 	return mathVec3Sub(r, v, temp_v);
 }
 
