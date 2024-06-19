@@ -18,7 +18,7 @@
 	#define	CCT_GAP_DISTANCE		1e-3f
 
 	#define	CCTNum_abs(n)			fabsf(n)
-	#define	CCTNum_sq(n)			(n*n)
+	#define	CCTNum_sq(n)			((n)*(n))
 	#define	CCTNum_sqrt(n)			sqrtf(n)
 	#define	CCTNum_acos(n)			acosf(n)
 	#define	CCTNum_cos(n)			cosf(n)
@@ -36,7 +36,7 @@
 	#define	CCT_GAP_DISTANCE		1e-3
 
 	#define	CCTNum_abs(n)			fabs(n)
-	#define	CCTNum_sq(n)			(n*n)
+	#define	CCTNum_sq(n)			((n)*(n))
 	#define	CCTNum_sqrt(n)			sqrt(n)
 	#define	CCTNum_acos(n)			acos(n)
 	#define	CCTNum_cos(n)			cos(n)
@@ -54,7 +54,7 @@
 	#define	CCT_GAP_DISTANCE		1e-3L
 
 	#define	CCTNum_abs(n)			fabsl(n)
-	#define	CCTNum_sq(n)			(n*n)
+	#define	CCTNum_sq(n)			((n)*(n))
 	#define	CCTNum_sqrt(n)			sqrtl(n)
 	#define	CCTNum_acos(n)			acosl(n)
 	#define	CCTNum_cos(n)			cosl(n)
