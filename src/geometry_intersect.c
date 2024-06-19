@@ -81,20 +81,20 @@ static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCir
 	}
 	if (1 == res) {
 		CCTNum_t lensq = mathVec3DistanceSq(p, c2->o);
-		return lensq <= c2->radius * c2->radius;
+		return lensq <= CCTNum_sq(c2->radius);
 	}
 	if (2 == res) {
 		CCTNum_t lensq = mathVec3DistanceSq(c1->o, c2->o);
 		CCTNum_t rsum = c1->radius + c2->radius;
-		return lensq <= rsum * rsum;
+		return lensq <= CCTNum_sq(rsum);
 	}
 	if (3 == res) {
 		CCTNum_t closest_p[3], lensq, half;
 		lensq = mathVec3DistanceSq(c1->o, p);
-		half = CCTNum_sqrt(c1->radius * c1->radius - lensq);
+		half = CCTNum_sqrt(CCTNum_sq(c1->radius) - lensq);
 		mathSegmentClosestPointTo_v2(p, line, half, c2->o, closest_p);
 		lensq = mathVec3DistanceSq(closest_p, c2->o);
-		return lensq <= c2->radius * c2->radius;
+		return lensq <= CCTNum_sq(c2->radius);
 	}
 	return 0;
 }
@@ -204,14 +204,14 @@ static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircl
 		CCTNum_t op[3], op_lensq;
 		mathVec3Sub(op, p, circle->o);
 		op_lensq = mathVec3LenSq(op);
-		return op_lensq <= circle->radius * circle->radius;
+		return op_lensq <= CCTNum_sq(circle->radius);
 	}
 	if (2 == res) {
 		CCTNum_t op[3], op_lensq;
 		mathSegmentClosestPointTo(ls, circle->o, p);
 		mathVec3Sub(op, p, circle->o);
 		op_lensq = mathVec3LenSq(op);
-		if (op_lensq <= circle->radius * circle->radius) {
+		if (op_lensq <= CCTNum_sq(circle->radius)) {
 			return 2;
 		}
 	}
@@ -322,7 +322,7 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 	}
 	mathSegmentClosestPointTo(ls, o, closest_p);
 	closest_v_lensq = mathVec3DistanceSq(closest_p, o);
-	radius_sq = radius * radius;
+	radius_sq = CCTNum_sq(radius);
 	if (closest_v_lensq > radius_sq) {
 		return 0;
 	}
@@ -349,7 +349,7 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 		return 1;
 	}
 	if (new_r) {
-		*new_r = CCTNum_sqrt(radius * radius - abs_d * abs_d);
+		*new_r = CCTNum_sqrt(CCTNum_sq(radius) - CCTNum_sq(abs_d));
 	}
 	return 2;
 }
@@ -397,12 +397,12 @@ int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB
 	CCTNum_t v[3];
 	mathOBBClosestPointTo(obb, o, v);
 	mathVec3Sub(v, o, v);
-	return mathVec3LenSq(v) <= radius * radius;
+	return mathVec3LenSq(v) <= CCTNum_sq(radius);
 }
 
 static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
 	CCTNum_t o1o2[3];
-	CCTNum_t o1o2_lensq, radius_sum_sq = (r1 + r2) * (r1 + r2);
+	CCTNum_t o1o2_lensq, radius_sum_sq = CCTNum_sq(r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
 	o1o2_lensq = mathVec3LenSq(o1o2);
 	if (o1o2_lensq > radius_sum_sq) {
@@ -422,7 +422,7 @@ static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, con
 	CCTNum_t closest_v[3];
 	mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
 	mathVec3Sub(closest_v, closest_v, sp_o);
-	return mathVec3LenSq(closest_v) <= sp_radius * sp_radius;
+	return mathVec3LenSq(closest_v) <= CCTNum_sq(sp_radius);
 }
 
 static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
@@ -463,7 +463,7 @@ int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	/* these code is copy from PhysX-3.4 */
 	CCTNum_t v[3], T[3];
 	CCTNum_t R[3][3], FR[3][3], ra, rb, t;
-	const CCTNum_t* e0 = obb0->half, * e1 = obb1->half;
+	const CCTNum_t* e0 = obb0->half, *e1 = obb1->half;
 	int i;
 	mathVec3Sub(v, obb1->o, obb0->o);
 	mathVec3Set(T, mathVec3Dot(v, obb0->axis[0]), mathVec3Dot(v, obb0->axis[1]), mathVec3Dot(v, obb0->axis[2]));

@@ -233,12 +233,12 @@ static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3
 }
 
 static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) {
-	CCTNum_t dr2, oc2, dir_d;
+	CCTNum_t d_sq, oc_lensq, dir_d;
 	CCTNum_t oc[3], hit_point[3], hit_normal[3];
-	CCTNum_t radius2 = sp_radius * sp_radius;
+	CCTNum_t radius_sq = CCTNum_sq(sp_radius);
 	mathVec3Sub(oc, sp_o, o);
-	oc2 = mathVec3LenSq(oc);
-	if (oc2 <= radius2) {
+	oc_lensq = mathVec3LenSq(oc);
+	if (oc_lensq <= radius_sq) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
@@ -246,11 +246,11 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	if (dir_d <= CCTNum(0.0)) {
 		return NULL;
 	}
-	dr2 = oc2 - dir_d * dir_d;
-	if (dr2 > radius2) {
+	d_sq = oc_lensq - CCTNum_sq(dir_d);
+	if (d_sq > radius_sq) {
 		return NULL;
 	}
-	dir_d -= CCTNum_sqrt(radius2 - dr2);
+	dir_d -= CCTNum_sqrt(radius_sq - d_sq);
 	mathVec3Copy(hit_point, o);
 	mathVec3AddScalar(hit_point, dir, dir_d);
 	mathVec3Sub(hit_normal, hit_point, sp_o);
@@ -268,7 +268,7 @@ static CCTSweepResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t di
 		mathVec3Copy(hit_point, o);
 		mathVec3AddScalar(hit_point, dir, result->distance);
 		lensq = mathVec3DistanceSq(circle->o, hit_point);
-		if (lensq <= circle->radius * circle->radius) {
+		if (lensq <= CCTNum_sq(circle->radius)) {
 			return result;
 		}
 		return NULL;
@@ -631,7 +631,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 	mathVec3Normalized(lsdir, lsdir);
 	mathPointProjectionLine(circle->o, ls[0], lsdir, p);
 	mathVec3Sub(pco, circle->o, p);
-	if (mathVec3LenSq(pco) > circle->radius * circle->radius) {
+	if (mathVec3LenSq(pco) > CCTNum_sq(circle->radius)) {
 		CCTNum_t new_ls[2][3], d;
 		CCTNum_t dot = mathVec3Dot(pco, dir);
 		if (dot <= CCTNum(0.0)) {
@@ -673,7 +673,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		int res;
 		CCTNum_t lensq, N[3], lsdir[3], p[3];
 		lensq = mathVec3DistanceSq(result->unique_hit_point, circle->o);
-		if (lensq <= circle->radius * circle->radius) {
+		if (lensq <= CCTNum_sq(circle->radius)) {
 			return result;
 		}
 		mathVec3Sub(lsdir, ls[1], ls[0]);
@@ -697,7 +697,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		if (3 == res) {
 			CCTNum_t new_ls[2][3], half;
 			lensq = mathVec3DistanceSq(circle->o, p);
-			half = CCTNum_sqrt(circle->radius * circle->radius - lensq);
+			half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
 			mathVec3Copy(new_ls[0], p);
 			mathVec3AddScalar(new_ls[0], lsdir, half);
 			mathVec3Copy(new_ls[1], p);
@@ -714,7 +714,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		mathVec3AddScalar(new_ls[1], dir, result->distance);
 		mathSegmentClosestPointTo((const CCTNum_t(*)[3])new_ls, circle->o, closest_p);
 		lensq = mathVec3DistanceSq(circle->o, closest_p);
-		if (lensq > circle->radius * circle->radius) {
+		if (lensq > CCTNum_sq(circle->radius)) {
 			return NULL;
 		}
 		return result;
@@ -723,7 +723,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		CCTNum_t closest_p[3], lensq, dot;
 		mathSegmentClosestPointTo(ls, circle->o, closest_p);
 		lensq = mathVec3DistanceSq(circle->o, closest_p);
-		if (lensq <= circle->radius * circle->radius) {
+		if (lensq <= CCTNum_sq(circle->radius)) {
 			return result;
 		}
 		dot = mathVec3Dot(circle->normal, dir);

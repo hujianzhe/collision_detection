@@ -54,7 +54,7 @@ int mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const 
 		*min_d = dot;
 	}
 	if (dir_d) {
-		CCTNum_t cross_v[3], nlensq_inv = CCTNum(1.0) / (nlen * nlen);
+		CCTNum_t cross_v[3], nlensq_inv = CCTNum(1.0) / CCTNum_sq(nlen);
 		dir_d[0] = mathVec3Dot(mathVec3Cross(cross_v, v, lsdir2), n) * nlensq_inv;
 		dir_d[1] = mathVec3Dot(mathVec3Cross(cross_v, v, lsdir1), n) * nlensq_inv;
 	}
@@ -204,7 +204,7 @@ int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 				continue;
 			}
 			if (has_p) {
-				CCTNum_t dq = mathVec3LenSq(v) - dot * dot;
+				CCTNum_t dq = mathVec3LenSq(v) - CCTNum_sq(dot);
 				mathVec3Sub(v, closest_p[1], closest_p[0]);
 				if (dq >= mathVec3LenSq(v)) {
 					continue;
@@ -223,7 +223,7 @@ int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]
 				continue;
 			}
 			if (has_p) {
-				CCTNum_t dq = mathVec3LenSq(v) - dot * dot;
+				CCTNum_t dq = mathVec3LenSq(v) - CCTNum_sq(dot);
 				mathVec3Sub(v, closest_p[1], closest_p[0]);
 				if (dq >= mathVec3LenSq(v)) {
 					continue;

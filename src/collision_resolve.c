@@ -110,7 +110,7 @@ CCTNum_t* physCollisionInertiaTensor(CCTNum_t mass, const unsigned char* geo_dat
 		case GEOMETRY_BODY_SPHERE:
 		{
 			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
-			CCTNum_t e = sphere->radius * sphere->radius * mass * CCTNum(0.4);
+			CCTNum_t e = CCTNum_sq(sphere->radius) * mass * CCTNum(0.4);
 			*mathMat44Element(mat44, 0, 0) = e;
 			*mathMat44Element(mat44, 1, 1) = e;
 			*mathMat44Element(mat44, 2, 2) = e;
