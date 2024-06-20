@@ -549,187 +549,187 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 	}
 	if (GEOMETRY_BODY_AABB == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return AABB_Contain_Point(one->aabb->o, one->aabb->half, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[0]) &&
-				AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_AABB:
-		{
-			return AABB_Contain_AABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
-		}
-		case GEOMETRY_BODY_OBB:
-		{
-			GeometryOBB_t one_obb;
-			mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-			return OBB_Contain_OBB(&one_obb, two->obb);
-		}
-		case GEOMETRY_BODY_SPHERE:
-		{
-			GeometryOBB_t one_obb;
-			mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-			return OBB_Contain_Sphere(&one_obb, two->sphere->o, two->sphere->radius);
-		}
-		case GEOMETRY_BODY_CONVEX_MESH:
-		{
-			return AABB_Contain_Mesh(one->aabb->o, one->aabb->half, two->mesh);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return AABB_Contain_Point(one->aabb->o, one->aabb->half, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[0]) &&
+					AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_AABB:
+			{
+				return AABB_Contain_AABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				GeometryOBB_t one_obb;
+				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
+				return OBB_Contain_OBB(&one_obb, two->obb);
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				GeometryOBB_t one_obb;
+				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
+				return OBB_Contain_Sphere(&one_obb, two->sphere->o, two->sphere->radius);
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return AABB_Contain_Mesh(one->aabb->o, one->aabb->half, two->mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_OBB == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return OBB_Contain_Point(one->obb, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	OBB_Contain_Point(one->obb, two->segment->v[0]) &&
-				OBB_Contain_Point(one->obb, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_AABB:
-		{
-			GeometryOBB_t two_obb;
-			mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
-			return OBB_Contain_OBB(one->obb, &two_obb);
-		}
-		case GEOMETRY_BODY_OBB:
-		{
-			return OBB_Contain_OBB(one->obb, two->obb);
-		}
-		case GEOMETRY_BODY_SPHERE:
-		{
-			return OBB_Contain_Sphere(one->obb, two->sphere->o, two->sphere->radius);
-		}
-		case GEOMETRY_BODY_CONVEX_MESH:
-		{
-			return OBB_Contain_Mesh(one->obb, two->mesh);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return OBB_Contain_Point(one->obb, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	OBB_Contain_Point(one->obb, two->segment->v[0]) &&
+					OBB_Contain_Point(one->obb, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_AABB:
+			{
+				GeometryOBB_t two_obb;
+				mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
+				return OBB_Contain_OBB(one->obb, &two_obb);
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				return OBB_Contain_OBB(one->obb, two->obb);
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				return OBB_Contain_Sphere(one->obb, two->sphere->o, two->sphere->radius);
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return OBB_Contain_Mesh(one->obb, two->mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SPHERE == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[0]) &&
-				Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_AABB:
-		{
-			CCTNum_t v[3];
-			mathAABBMinVertice(two->aabb->o, two->aabb->half, v);
-			if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
-				return 0;
+			case GEOMETRY_BODY_POINT:
+			{
+				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->point);
 			}
-			mathAABBMaxVertice(two->aabb->o, two->aabb->half, v);
-			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
-		}
-		case GEOMETRY_BODY_OBB:
-		{
-			CCTNum_t v[3];
-			mathOBBMinVertice(two->obb, v);
-			if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
-				return 0;
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[0]) &&
+					Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[1]);
 			}
-			mathOBBMaxVertice(two->obb, v);
-			return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
-		}
-		case GEOMETRY_BODY_SPHERE:
-		{
-			return Sphere_Contain_Sphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius);
-		}
-		case GEOMETRY_BODY_CONVEX_MESH:
-		{
-			return Sphere_Contain_Mesh(one->sphere->o, one->sphere->radius, two->mesh);
-		}
+			case GEOMETRY_BODY_AABB:
+			{
+				CCTNum_t v[3];
+				mathAABBMinVertice(two->aabb->o, two->aabb->half, v);
+				if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
+					return 0;
+				}
+				mathAABBMaxVertice(two->aabb->o, two->aabb->half, v);
+				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				CCTNum_t v[3];
+				mathOBBMinVertice(two->obb, v);
+				if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
+					return 0;
+				}
+				mathOBBMaxVertice(two->obb, v);
+				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				return Sphere_Contain_Sphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius);
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return Sphere_Contain_Mesh(one->sphere->o, one->sphere->radius, two->mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_CONVEX_MESH == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return ConvexMesh_Contain_Point(one->mesh, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	ConvexMesh_Contain_Point(one->mesh, two->segment->v[0]) &&
-				ConvexMesh_Contain_Point(one->mesh, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_AABB:
-		{
-			return ConvexMesh_Contain_AABB(one->mesh, two->aabb->o, two->aabb->half);
-		}
-		case GEOMETRY_BODY_OBB:
-		{
-			return ConvexMesh_Contain_OBB(one->mesh, two->obb);
-		}
-		case GEOMETRY_BODY_SPHERE:
-		{
-			return ConvexMesh_Contain_Sphere(one->mesh, two->sphere->o, two->sphere->radius);
-		}
-		case GEOMETRY_BODY_CONVEX_MESH:
-		{
-			return ConvexMesh_Contain_ConvexMesh(one->mesh, two->mesh);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return ConvexMesh_Contain_Point(one->mesh, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	ConvexMesh_Contain_Point(one->mesh, two->segment->v[0]) &&
+					ConvexMesh_Contain_Point(one->mesh, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_AABB:
+			{
+				return ConvexMesh_Contain_AABB(one->mesh, two->aabb->o, two->aabb->half);
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				return ConvexMesh_Contain_OBB(one->mesh, two->obb);
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				return ConvexMesh_Contain_Sphere(one->mesh, two->sphere->o, two->sphere->radius);
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return ConvexMesh_Contain_ConvexMesh(one->mesh, two->mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_POLYGON == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return Polygon_Contain_Point(one->polygon, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	Polygon_Contain_Point(one->polygon, two->segment->v[0]) &&
-				Polygon_Contain_Point(one->polygon, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_POLYGON:
-		{
-			return Polygon_Contain_Polygon(one->polygon, two->polygon);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return Polygon_Contain_Point(one->polygon, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	Polygon_Contain_Point(one->polygon, two->segment->v[0]) &&
+					Polygon_Contain_Point(one->polygon, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_POLYGON:
+			{
+				return Polygon_Contain_Polygon(one->polygon, two->polygon);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_PLANE == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return Plane_Contain_Point(one->plane->v, one->plane->normal, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return	Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[0]) &&
-				Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[1]);
-		}
-		case GEOMETRY_BODY_PLANE:
-		{
-			return Plane_Contain_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
-		}
-		case GEOMETRY_BODY_POLYGON:
-		{
-			const GeometryPolygon_t* polygon = two->polygon;
-			return Plane_Contain_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return Plane_Contain_Point(one->plane->v, one->plane->normal, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return	Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[0]) &&
+					Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_PLANE:
+			{
+				return Plane_Contain_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
+			}
+			case GEOMETRY_BODY_POLYGON:
+			{
+				const GeometryPolygon_t* polygon = two->polygon;
+				return Plane_Contain_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SEGMENT == one->type) {
 		switch (two->type) {
-		case GEOMETRY_BODY_POINT:
-		{
-			return Segment_Contain_Point((const CCTNum_t(*)[3])one->segment->v, two->point);
-		}
-		case GEOMETRY_BODY_SEGMENT:
-		{
-			return Segment_Contain_Segment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
-		}
+			case GEOMETRY_BODY_POINT:
+			{
+				return Segment_Contain_Point((const CCTNum_t(*)[3])one->segment->v, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return Segment_Contain_Segment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_POINT == one->type) {
