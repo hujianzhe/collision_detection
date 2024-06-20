@@ -304,7 +304,7 @@ int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCir
 			CCTNum_t edge[2][3], closest_p[3], lensq;
 			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-			mathSegmentClosestPointTo(edge, circle->o, closest_p);
+			mathSegmentClosestPointTo((const CCTNum_t(*)[3])edge, circle->o, closest_p);
 			lensq = mathVec3DistanceSq(closest_p, circle->o);
 			if (lensq <= radius_sq) {
 				return 1;
@@ -333,7 +333,7 @@ int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCir
 			CCTNum_t edge[2][3];
 			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-			if (Segment_Intersect_Segment(ls, edge, NULL, NULL)) {
+			if (Segment_Intersect_Segment((const CCTNum_t(*)[3])ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
 				return 1;
 			}
 		}
