@@ -140,7 +140,23 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 }
 
 static int Sphere_Contain_Circle(const CCTNum_t o[3], CCTNum_t r, const GeometryCircle_t* circle) {
-	return Sphere_Contain_Sphere(o, r, circle->o, circle->radius);
+	CCTNum_t new_o[3], d, dsq, rsq, new_r;
+	mathPointProjectionPlane(o, circle->o, circle->normal, new_o, &d);
+	rsq = CCTNum_sq(r);
+	dsq = CCTNum_sq(d);
+	if (dsq >= rsq) {
+		return 0;
+	}
+	rsq -= dsq;
+	if (rsq < CCTNum_sq(circle->radius)) {
+		return 0;
+	}
+	dsq = mathVec3DistanceSq(circle->o, new_o);
+	if (dsq >= rsq) {
+		return 0;
+	}
+	new_r = CCTNum_sqrt(rsq);
+	return dsq <= CCTNum_sq(new_r - circle->radius);
 }
 
 static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {

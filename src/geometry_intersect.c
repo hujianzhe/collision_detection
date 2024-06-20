@@ -284,6 +284,63 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	return 0;
 }
 
+int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
+	CCTNum_t p[3], line[3];
+	int res = Circle_Intersect_Plane(circle, polygon->v[polygon->v_indices[0]], polygon->normal, p, line);
+	if (0 == res) {
+		return 0;
+	}
+	if (1 == res) {
+		return Polygon_Contain_Point(polygon, p);
+	}
+	if (2 == res) {
+		unsigned int i;
+		CCTNum_t radius_sq;
+		if (Polygon_Contain_Point(polygon, circle->o)) {
+			return 1;
+		}
+		radius_sq = CCTNum_sq(circle->radius);
+		for (i = 0; i < polygon->v_indices_cnt; ) {
+			CCTNum_t edge[2][3], closest_p[3], lensq;
+			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
+			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+			mathSegmentClosestPointTo(edge, circle->o, closest_p);
+			lensq = mathVec3DistanceSq(closest_p, circle->o);
+			if (lensq <= radius_sq) {
+				return 1;
+			}
+		}
+	}
+	if (3 == res) {
+		unsigned int i;
+		CCTNum_t lensq, half, ls[2][3];
+		if (Polygon_Contain_Point(polygon, p)) {
+			return 1;
+		}
+		lensq = mathVec3DistanceSq(circle->o, p);
+		half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
+		mathVec3Copy(ls[0], p);
+		mathVec3AddScalar(ls[0], line, half);
+		if (Polygon_Contain_Point(polygon, ls[0])) {
+			return 1;
+		}
+		mathVec3Copy(ls[1], p);
+		mathVec3SubScalar(ls[1], line, half);
+		if (Polygon_Contain_Point(polygon, ls[1])) {
+			return 1;
+		}
+		for (i = 0; i < polygon->v_indices_cnt; ) {
+			CCTNum_t edge[2][3];
+			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
+			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+			if (Segment_Intersect_Segment(ls, edge, NULL, NULL)) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	int res;
 	unsigned int i, v_indices_idx = -1;
