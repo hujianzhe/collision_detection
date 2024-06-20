@@ -64,11 +64,13 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 		}
 		return 1;
 	}
+	if (p) {
+		mathVec3Copy(p, circle->o);
+	}
+	mathVec3Set(line, CCTNums_3(0.0, 0.0, 0.0));
 	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
 		return 2;
 	}
-	mathVec3Copy(p, circle->o);
-	mathVec3Set(line, CCTNums_3(0.0, 0.0, 0.0));
 	return 0;
 }
 

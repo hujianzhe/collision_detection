@@ -765,16 +765,19 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 }
 
 static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	CCTNum_t p[3];
-	int res = Circle_Intersect_Plane(circle, plane_v, plane_n, p, NULL);
+	CCTNum_t p[3], line[3];
+	int res = Circle_Intersect_Plane(circle, plane_v, plane_n, p, line);
 	if (res) {
 		set_result(result, CCTNum(0.0), dir);
 		return result;
 	}
-	if (!mathVec3Equal(p, circle->o)) {
-		CCTNum_t v[3];
-		mathVec3Sub(v, p, circle->o);
-		mathVec3Normalized(v, v);
+	if (!mathVec3IsZero(line)) {
+		CCTNum_t v[3], op[3];
+		mathVec3Cross(v, circle->normal, line);
+		mathVec3Sub(op, p, circle->o);
+		if (mathVec3Dot(op, v) < CCTNum(0.0)) { 
+			mathVec3Negate(v, v);
+		}
 		mathVec3Copy(p, circle->o);
 		mathVec3AddScalar(p, v, circle->radius);
 		if (!Ray_Sweep_Plane(p, dir, plane_v, plane_n, result)) {
@@ -784,7 +787,7 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 		mathVec3AddScalar(result->unique_hit_point, dir, result->distance);
 		return result;
 	}
-	return Ray_Sweep_Plane(p, dir, plane_v, plane_n, result);
+	return Ray_Sweep_Plane(circle->o, dir, plane_v, plane_n, result);
 }
 
 static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
