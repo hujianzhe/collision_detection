@@ -343,6 +343,28 @@ int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCir
 	return 0;
 }
 
+int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle_t* circle) {
+	int res;
+	unsigned int i, v_indices_idx = -1;
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, circle->o, circle->normal, NULL, &v_indices_idx);
+	if (0 == res) {
+		return 0;
+	}
+	if (1 == res && v_indices_idx != -1) {
+		CCTNum_t lensq = mathVec3DistanceSq(circle->o, mesh->v[mesh->v_indices[v_indices_idx]]);
+		return lensq <= CCTNum_sq(circle->radius);
+	}
+	if (ConvexMesh_Contain_Point(mesh, circle->o)) {
+		return 1;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		if (Polygon_Intersect_Circle(mesh->polygons + i, circle)) {
+			return 2;
+		}
+	}
+	return 0;
+}
+
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	int res;
 	unsigned int i, v_indices_idx = -1;
