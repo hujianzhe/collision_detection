@@ -100,6 +100,24 @@ static int Circle_Contain_Circle(const GeometryCircle_t* c1, const GeometryCircl
 	return v_lensq <= CCTNum_sq(r);
 }
 
+static int Circle_Contain_Polygon(const GeometryCircle_t* circle, const GeometryPolygon_t* polygon) {
+	unsigned int i;
+	CCTNum_t radius_sq = CCTNum_sq(circle->radius);
+	const CCTNum_t* pp = polygon->v[polygon->v_indices[0]];
+	if (0 == Plane_Contain_Plane(circle->o, circle->normal, pp, polygon->normal)) {
+		return 0;
+	}
+	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		CCTNum_t dsq;
+		pp = polygon->v[polygon->v_indices[i]];
+		dsq = mathVec3DistanceSq(pp, circle->o);
+		if (dsq > radius_sq) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
 	CCTNum_t op[3], op_lensq;
 	mathVec3Sub(op, p, o);
@@ -383,6 +401,32 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
 		if (!Polygon_Contain_Point(polygon1, p)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int Polygon_Contain_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
+	unsigned int i;
+	CCTNum_t N[3], radius_sq;
+	mathVec3Cross(N, polygon->normal, circle->normal);
+	if (!mathVec3IsZero(N)) {
+		return 0;
+	}
+	if (!Polygon_Contain_Point(polygon, circle->o)) {
+		return 0;
+	}
+	radius_sq = CCTNum_sq(circle->radius);
+	for (i = 0; i < polygon->v_indices_cnt; ) {
+		CCTNum_t edge[2][3], edge_dir[3], p[3], op_lensq;
+		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
+		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+		mathVec3Sub(edge_dir, edge[1], edge[0]);
+		mathVec3Normalized(edge_dir, edge_dir);
+		mathPointProjectionLine(circle->o, edge[0], edge_dir, p);
+		op_lensq = mathVec3DistanceSq(circle->o, p);
+		if (op_lensq < radius_sq) {
 			return 0;
 		}
 	}
