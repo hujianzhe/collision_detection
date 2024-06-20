@@ -117,6 +117,10 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	return len_sq <= CCTNum_sq(r1 - r2);
 }
 
+static int Sphere_Contain_Circle(const CCTNum_t o[3], CCTNum_t r, const GeometryCircle_t* circle) {
+	return Sphere_Contain_Sphere(o, r, circle->o, circle->radius);
+}
+
 static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
 	CCTNum_t vp[3], edge_v[3], dot;
 	mathVec3Sub(vp, p, v[0]);

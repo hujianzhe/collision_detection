@@ -19,7 +19,6 @@ extern const unsigned int Box_Vertice_Indices_Default[8];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
-extern int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
@@ -350,6 +349,29 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 	}
 	if (new_r) {
 		*new_r = CCTNum_sqrt(CCTNum_sq(radius) - CCTNum_sq(abs_d));
+	}
+	return 2;
+}
+
+static int Sphere_Intersect_Circle(const CCTNum_t o[3], CCTNum_t radius, const GeometryCircle_t* circle) {
+	CCTNum_t new_o[3], new_r, dsq, rsum_sq;
+	int res = Sphere_Intersect_Plane(o, radius, circle->o, circle->normal, new_o, &new_r);
+	if (0 == res) {
+		return 0;
+	}
+	dsq = mathVec3DistanceSq(new_o, circle->o);
+	if (1 == res) {
+		if (dsq > CCTNum_sq(circle->radius)) {
+			return 0;
+		}
+		return 1;
+	}
+	rsum_sq = CCTNum_sq(circle->radius + new_r);
+	if (dsq > rsum_sq) {
+		return 0;
+	}
+	if (dsq == rsum_sq) {
+		return 1;
 	}
 	return 2;
 }
