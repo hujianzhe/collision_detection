@@ -81,6 +81,10 @@ int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]) {
 	return mathVec3LenSq(op) <= CCTNum_sq(circle->radius);
 }
 
+static int Circle_Contain_Segment(const GeometryCircle_t* circle, const CCTNum_t ls[2][3]) {
+	return Circle_Contain_Point(circle, ls[0]) && Circle_Contain_Point(circle, ls[1]);
+}
+
 static int Circle_Contain_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
 	CCTNum_t v[3], r, v_lensq;
 	if (c1->radius < c2->radius) {
