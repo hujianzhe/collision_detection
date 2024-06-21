@@ -791,6 +791,48 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 	return Ray_Sweep_Plane(circle->o, dir, plane_v, plane_n, result);
 }
 
+static CCTSweepResult_t* Circle_Sweep_Circle(const GeometryCircle_t* c1, const CCTNum_t dir[3], const GeometryCircle_t* c2, CCTSweepResult_t* result) {
+	return NULL;
+}
+
+static CCTSweepResult_t* Circle_Sweep_Polygon(const GeometryCircle_t* circle, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	unsigned int i;
+	CCTSweepResult_t* p_result;
+	CCTNum_t p[3], neg_dir[3];
+	if (!Circle_Sweep_Plane(circle, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+		return NULL;
+	}
+	if (1 == result->hit_point_cnt) {
+		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
+			return result;
+		}
+	}
+	mathVec3Copy(p, circle->o);
+	mathVec3AddScalar(p, dir, result->distance);
+	if (Polygon_Contain_Point(polygon, p)) {
+		return result;
+	}
+	p_result = NULL;
+	mathVec3Negate(neg_dir, dir);
+	for (i = 0; i < polygon->v_indices_cnt; ) {
+		CCTSweepResult_t result_temp;
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
+		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+		if (!Segment_Sweep_Circle((const CCTNum_t(*)[3])edge, neg_dir, circle, &result_temp)) {
+			continue;
+		}
+		if (!p_result) {
+			p_result = result;
+			copy_result(p_result, &result_temp);
+		}
+		else {
+			merge_result(p_result, &result_temp);
+		}
+	}
+	return p_result;
+}
+
 static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t min_d, dot;
 	unsigned int v_indices_idx;
