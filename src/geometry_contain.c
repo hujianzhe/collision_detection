@@ -141,7 +141,7 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 
 static int Sphere_Contain_Circle(const CCTNum_t o[3], CCTNum_t r, const GeometryCircle_t* circle) {
 	CCTNum_t new_o[3], d, dsq, rsq, new_r;
-	mathPointProjectionPlane(o, circle->o, circle->normal, new_o, &d);
+	d = mathPointProjectionPlane(o, circle->o, circle->normal, new_o);
 	rsq = CCTNum_sq(r);
 	dsq = CCTNum_sq(d);
 	if (dsq >= rsq) {
@@ -525,9 +525,8 @@ static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_
 static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t o[3], CCTNum_t radius) {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTNum_t d;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &d);
+		CCTNum_t d = mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, NULL);
 		if (CCTNum_abs(d) < radius) {
 			return 0;
 		}

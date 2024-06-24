@@ -38,22 +38,22 @@ static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], con
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
-int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t p[3], CCTNum_t line[3]) {
+static int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t ls_center[3], CCTNum_t ls_dir[3]) {
 	CCTNum_t dir[3];
-	if (!line) {
-		line = dir;
+	if (!ls_dir) {
+		ls_dir = dir;
 	}
-	mathVec3Cross(line, circle->normal, plane_n);
-	if (!mathVec3IsZero(line)) {
+	mathVec3Cross(ls_dir, circle->normal, plane_n);
+	if (!mathVec3IsZero(ls_dir)) {
 		CCTNum_t v[3], d, dot, abs_d;
-		mathVec3Normalized(line, line);
-		mathVec3Cross(v, line, circle->normal);
+		mathVec3Normalized(ls_dir, ls_dir);
+		mathVec3Cross(v, ls_dir, circle->normal);
 		dot = mathVec3Dot(v, plane_n);
-		mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL, &d);
+		d = mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL);
 		d /= dot;
-		if (p) {
-			mathVec3Copy(p, circle->o);
-			mathVec3AddScalar(p, v, d);
+		if (ls_center) {
+			mathVec3Copy(ls_center, circle->o);
+			mathVec3AddScalar(ls_center, v, d);
 		}
 		abs_d = CCTNum_abs(d);
 		if (abs_d > circle->radius) {
@@ -64,10 +64,10 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 		}
 		return 1;
 	}
-	if (p) {
-		mathVec3Copy(p, circle->o);
+	if (ls_center) {
+		mathVec3Copy(ls_center, circle->o);
 	}
-	mathVec3Set(line, CCTNums_3(0.0, 0.0, 0.0));
+	mathVec3Set(ls_dir, CCTNums_3(0.0, 0.0, 0.0));
 	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
 		return 2;
 	}
@@ -75,13 +75,13 @@ int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_
 }
 
 static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
-	CCTNum_t p[3], line[3];
-	int res = Circle_Intersect_Plane(c1, c2->o, c2->normal, p, line);
+	CCTNum_t ls_center[3], ls_dir[3];
+	int res = Circle_Intersect_Plane(c1, c2->o, c2->normal, ls_center, ls_dir);
 	if (0 == res) {
 		return 0;
 	}
 	if (1 == res) {
-		CCTNum_t lensq = mathVec3DistanceSq(p, c2->o);
+		CCTNum_t lensq = mathVec3DistanceSq(ls_center, c2->o);
 		return lensq <= CCTNum_sq(c2->radius);
 	}
 	if (2 == res) {
@@ -91,9 +91,9 @@ static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCir
 	}
 	if (3 == res) {
 		CCTNum_t closest_p[3], lensq, half;
-		lensq = mathVec3DistanceSq(c1->o, p);
+		lensq = mathVec3DistanceSq(c1->o, ls_center);
 		half = CCTNum_sqrt(CCTNum_sq(c1->radius) - lensq);
-		mathSegmentClosestPointTo_v2(p, line, half, c2->o, closest_p);
+		mathSegmentClosestPointTo_v2(ls_center, ls_dir, half, c2->o, closest_p);
 		lensq = mathVec3DistanceSq(closest_p, c2->o);
 		return lensq <= CCTNum_sq(c2->radius);
 	}
@@ -105,7 +105,7 @@ int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indice
 	CCTNum_t min_d;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		CCTNum_t d, abs_d, abs_min_d;
-		mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n, NULL, &d);
+		d = mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n, NULL);
 		if (d > CCTNum(0.0)) {
 			if (has_le0) {
 				return 2;
@@ -153,8 +153,8 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	if (!d) {
 		d = temp_d;
 	}
-	mathPointProjectionPlane(ls[0], plane_v, plane_normal, NULL, &d[0]);
-	mathPointProjectionPlane(ls[1], plane_v, plane_normal, NULL, &d[1]);
+	d[0] = mathPointProjectionPlane(ls[0], plane_v, plane_normal, NULL);
+	d[1] = mathPointProjectionPlane(ls[1], plane_v, plane_normal, NULL);
 	if (d[0] == d[1]) {
 		d[2] = d[0];
 		if (d[0] != CCTNum(0.0)) {
@@ -414,7 +414,7 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 
 int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
 	CCTNum_t abs_d, d;
-	mathPointProjectionPlane(o, plane_v, plane_normal, new_o, &d);
+	d = mathPointProjectionPlane(o, plane_v, plane_normal, new_o);
 	abs_d = CCTNum_abs(d);
 	if (abs_d > radius) {
 		if (new_r) {
