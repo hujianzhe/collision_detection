@@ -11,7 +11,6 @@
 typedef struct CCTSweepResult_t {
 	CCTNum_t distance;
 	CCTNum_t hit_normal[3];
-
 	int hit_point_cnt;
 	CCTNum_t unique_hit_point[3];
 } CCTSweepResult_t;
