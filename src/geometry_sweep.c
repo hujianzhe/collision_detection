@@ -679,76 +679,22 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 }
 
 static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
-	CCTNum_t p[3], lensq, cos_theta;
-	if (!Segment_Sweep_Plane(ls, dir, circle->o, circle->normal, result)) {
-		return NULL;
-	}
-	if (1 == result->hit_point_cnt) {
-		CCTNum_t plane_n[3], v[3], lsdir[3], d, abs_d;
-		lensq = mathVec3DistanceSq(result->unique_hit_point, circle->o);
+	CCTNum_t p[3], d[3], v[3], plane_n[3], cos_theta;
+	int res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p, d);
+	if (1 == res) {
+		CCTNum_t lensq = mathVec3DistanceSq(circle->o, p);
 		if (lensq <= CCTNum_sq(circle->radius)) {
-			return result;
-		}
-		mathVec3Sub(lsdir, ls[1], ls[0]);
-		mathVec3Cross(plane_n, dir, lsdir);
-		if (mathVec3IsZero(plane_n)) {
-			return NULL;
-		}
-		d = mathPointProjectionPlane(circle->o, ls[0], plane_n, NULL);
-		mathVec3Cross(v, circle->normal, plane_n);
-		mathVec3Cross(v, circle->normal, v);
-		mathVec3Normalized(v, v);
-		cos_theta = mathVec3Dot(v, plane_n);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		d /= cos_theta;
-		abs_d = CCTNum_abs(d);
-		if (abs_d > circle->radius) {
-			return NULL;
-		}
-		else if (abs_d == circle->radius) {
-			CCTNum_t p[3], neg_dir[3];
-			mathVec3Copy(p, circle->o);
-			mathVec3AddScalar(p, v, d);
-			mathVec3Negate(neg_dir, dir);
-			if (!Ray_Sweep_Segment(p, neg_dir, ls, result)) {
-				return NULL;
-			}
+			set_intersect(result);
 			set_unique_hit_point(result, p);
 			return result;
 		}
-		else {
-			CCTNum_t new_ls[2][3], p[3], half;
-			mathVec3Copy(p, circle->o);
-			mathVec3AddScalar(p, v, d);
-			lensq = mathVec3DistanceSq(circle->o, p);
-			half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
-			mathVec3Copy(new_ls[0], p);
-			mathVec3AddScalar(new_ls[0], lsdir, half);
-			mathVec3Copy(new_ls[1], p);
-			mathVec3SubScalar(new_ls[1], lsdir, half);
-			return Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])new_ls, result);
-		}
 	}
-	else if (result->distance > CCTNum(0.0)) {
-		CCTNum_t new_ls[2][3];
-		mathVec3Copy(new_ls[0], ls[0]);
-		mathVec3AddScalar(new_ls[0], dir, result->distance);
-		mathVec3Copy(new_ls[1], ls[1]);
-		mathVec3AddScalar(new_ls[1], dir, result->distance);
-		mathSegmentClosestPointTo((const CCTNum_t(*)[3])new_ls, circle->o, p);
-		lensq = mathVec3DistanceSq(circle->o, p);
-		if (lensq > CCTNum_sq(circle->radius)) {
-			return NULL;
-		}
-		return result;
-	}
-	else {
+	else if (2 == res) {
+		CCTNum_t lensq;
 		mathSegmentClosestPointTo(ls, circle->o, p);
 		lensq = mathVec3DistanceSq(circle->o, p);
 		if (lensq <= CCTNum_sq(circle->radius)) {
-			return result;
+			return set_intersect(result);
 		}
 		cos_theta = mathVec3Dot(circle->normal, dir);
 		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
@@ -756,6 +702,80 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		}
 		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle, result);
 	}
+	else {
+		CCTNum_t dlen, lensq;
+		cos_theta = mathVec3Dot(circle->normal, dir);
+		if (CCTNum(0.0) == cos_theta) {
+			return NULL;
+		}
+		dlen = d[2] / cos_theta;
+		if (dlen < CCTNum(0.0)) {
+			return NULL;
+		}
+		if (d[0] == d[1]) {
+			CCTNum_t new_ls[2][3], lensq;
+			mathVec3Copy(new_ls[0], ls[0]);
+			mathVec3AddScalar(new_ls[0], dir, dlen);
+			mathVec3Copy(new_ls[1], ls[1]);
+			mathVec3AddScalar(new_ls[1], dir, dlen);
+			mathSegmentClosestPointTo((const CCTNum_t(*)[3])new_ls, circle->o, p);
+			lensq = mathVec3DistanceSq(circle->o, p);
+			if (lensq > CCTNum_sq(circle->radius)) {
+				return NULL;
+			}
+			return set_result(result, dlen, circle->normal);
+		}
+		if (d[0] == d[2]) {
+			mathVec3Copy(p, ls[0]);
+		}
+		else {
+			mathVec3Copy(p, ls[1]);
+		}
+		mathVec3AddScalar(p, dir, dlen);
+		lensq = mathVec3DistanceSq(circle->o, p);
+		if (lensq <= CCTNum_sq(circle->radius)) {
+			return set_result(result, dlen, circle->normal);
+		}
+	}
+	mathVec3Sub(v, ls[1], ls[0]);
+	mathVec3Cross(plane_n, v, dir);
+	if (mathVec3IsZero(plane_n)) {
+		return NULL;
+	}
+	/* circle vs sweep_plane */
+	mathVec3Normalized(plane_n, plane_n);
+	mathVec3Cross(v, circle->normal, plane_n);
+	mathVec3Cross(v, circle->normal, v);
+	mathVec3Normalized(v, v);
+	cos_theta = mathVec3Dot(v, plane_n);
+	if (CCTNum(0.0) == cos_theta) {
+		return NULL;
+	}
+	d[0] = mathPointProjectionPlane(circle->o, ls[0], plane_n, NULL);
+	d[0] /= cos_theta;
+	d[1] = CCTNum_abs(d[0]);
+	if (d[1] > circle->radius) {
+		return NULL;
+	}
+	mathVec3Copy(p, circle->o);
+	mathVec3AddScalar(p, v, d[0]);
+	if (d[1] < circle->radius) {
+		CCTNum_t new_ls[2][3];
+		CCTNum_t lensq = mathVec3DistanceSq(circle->o, p);
+		CCTNum_t half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
+		mathVec3Cross(v, circle->normal, v);
+		mathVec3Copy(new_ls[0], p);
+		mathVec3AddScalar(new_ls[0], v, half);
+		mathVec3Copy(new_ls[1], p);
+		mathVec3SubScalar(new_ls[1], v, half);
+		return Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])new_ls, result);
+	}
+	mathVec3Negate(v, dir);
+	if (!Ray_Sweep_Segment(p, v, ls, result)) {
+		return NULL;
+	}
+	set_unique_hit_point(result, p);
+	return result;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
