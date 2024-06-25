@@ -549,10 +549,16 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	CCTNum_t p[3], d[3];
 	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
 	if (1 == res) {
+		CCTNum_t v[3];
 		if (Polygon_Contain_Point(polygon, p)) {
 			set_intersect(result);
 			set_unique_hit_point(result, p);
 			return result;
+		}
+		mathVec3Sub(v, ls[1], ls[0]);
+		mathVec3Cross(v, v, dir);
+		if (mathVec3IsZero(v)) {
+			return NULL;
 		}
 	}
 	else if (2 == res) {
@@ -583,7 +589,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			}
 		}
 		else {
-			CCTNum_t ls_dir[3], N[3];
+			CCTNum_t v[3];
 			if (d[0] == d[2]) {
 				mathVec3Copy(p, ls[0]);
 			}
@@ -594,9 +600,9 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			if (Polygon_Contain_Point(polygon, p)) {
 				return set_result(result, dlen, polygon->normal);
 			}
-			mathVec3Sub(ls_dir, ls[1], ls[0]);
-			mathVec3Cross(N, ls_dir, dir);
-			if (mathVec3IsZero(N)) {
+			mathVec3Sub(v, ls[1], ls[0]);
+			mathVec3Cross(v, v, dir);
+			if (mathVec3IsZero(v)) {
 				return NULL;
 			}
 		}
