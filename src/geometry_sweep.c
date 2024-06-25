@@ -322,11 +322,8 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 	if (d[0] == d[2]) {
 		set_unique_hit_point(result, ls[0]);
 	}
-	else if (d[1] == d[2]) {
-		set_unique_hit_point(result, ls[1]);
-	}
 	else {
-		return result;
+		set_unique_hit_point(result, ls[1]);
 	}
 	mathVec3AddScalar(result->unique_hit_point, dir, dlen);
 	return result;
@@ -549,35 +546,60 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	GeometrySegmentIndices_t si;
-	if (!Segment_Sweep_Plane(ls, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
-		return NULL;
-	}
-	if (1 == result->hit_point_cnt) {
-		CCTNum_t lsdir[3], N[3];
-		if (Polygon_Contain_Point(polygon, result->unique_hit_point)) {
+	CCTNum_t p[3], d[3];
+	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
+	if (1 == res) {
+		if (Polygon_Contain_Point(polygon, p)) {
+			set_intersect(result);
+			set_unique_hit_point(result, p);
 			return result;
 		}
-		mathVec3Sub(lsdir, ls[1], ls[0]);
-		mathVec3Cross(N, lsdir, dir);
-		if (mathVec3IsZero(N)) {
+	}
+	else if (2 == res) {
+		if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
+			return set_intersect(result);
+		}
+	}
+	else {
+		CCTNum_t dlen, cos_theta;
+		cos_theta = mathVec3Dot(polygon->normal, dir);
+		if (CCTNum(0.0) == cos_theta) {
 			return NULL;
 		}
-	}
-	else if (result->distance > CCTNum(0.0)) {
-		CCTNum_t test_p[3];
-		mathVec3Copy(test_p, ls[0]);
-		mathVec3AddScalar(test_p, dir, result->distance);
-		if (Polygon_Contain_Point(polygon, test_p)) {
-			return result;
+		dlen = d[2] / cos_theta;
+		if (dlen < CCTNum(0.0)) {
+			return NULL;
 		}
-		mathVec3Copy(test_p, ls[1]);
-		mathVec3AddScalar(test_p, dir, result->distance);
-		if (Polygon_Contain_Point(polygon, test_p)) {
-			return result;
+		if (d[0] == d[1]) {
+			mathVec3Copy(p, ls[0]);
+			mathVec3AddScalar(p, dir, dlen);
+			if (Polygon_Contain_Point(polygon, p)) {
+				return set_result(result, dlen, polygon->normal);
+			}
+			mathVec3Copy(p, ls[1]);
+			mathVec3AddScalar(p, dir, dlen);
+			if (Polygon_Contain_Point(polygon, p)) {
+				return set_result(result, dlen, polygon->normal);
+			}
 		}
-	}
-	else if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
-		return result;
+		else {
+			CCTNum_t ls_dir[3], N[3];
+			if (d[0] == d[2]) {
+				mathVec3Copy(p, ls[0]);
+			}
+			else {
+				mathVec3Copy(p, ls[1]);
+			}
+			mathVec3AddScalar(p, dir, dlen);
+			if (Polygon_Contain_Point(polygon, p)) {
+				return set_result(result, dlen, polygon->normal);
+			}
+			mathVec3Sub(ls_dir, ls[1], ls[0]);
+			mathVec3Cross(N, ls_dir, dir);
+			if (mathVec3IsZero(N)) {
+				return NULL;
+			}
+		}
 	}
 	si.v = polygon->v;
 	si.indices = polygon->v_indices;
