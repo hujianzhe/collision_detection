@@ -940,7 +940,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		}
 	}
 	else if (Polygon_Intersect_Polygon(polygon1, polygon2)) {
-		return result;
+		return set_intersect(result);
 	}
 	s1.v = polygon1->v;
 	s1.indices = polygon1->v_indices;
