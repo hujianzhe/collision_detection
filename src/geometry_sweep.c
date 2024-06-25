@@ -1193,7 +1193,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		}
 	}
 	if (p_result) {
-		neg_dir_hit_points(p_result, dir);
+		mathVec3AddScalar(p_result->unique_hit_point, dir, result->distance);
 	}
 	return p_result;
 }
