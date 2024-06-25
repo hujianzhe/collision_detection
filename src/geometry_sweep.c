@@ -448,7 +448,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 }
 
 static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
-	int i;
+	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < si->indices_cnt; ) {
 		CCTSweepResult_t result_temp;
@@ -475,10 +475,10 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 }
 
 static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegmentIndices_t* s1, const CCTNum_t dir[3], const GeometrySegmentIndices_t* s2, CCTSweepResult_t* result) {
-	int i;
+	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < s1->indices_cnt; ) {
-		int j;
+		unsigned int j;
 		CCTNum_t edge1[2][3];
 		mathVec3Copy(edge1[0], s1->v[s1->indices[i++]]);
 		if (2 == s1->stride) {
@@ -499,6 +499,9 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			}
 			if (!Segment_Sweep_Segment((const CCTNum_t(*)[3])edge1, dir, (const CCTNum_t(*)[3])edge2, &result_temp)) {
 				continue;
+			}
+			if (result_temp.distance <= CCTNum(0.0)) {
+				return copy_result(result, &result_temp);
 			}
 			if (!p_result) {
 				p_result = result;
