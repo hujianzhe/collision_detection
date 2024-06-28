@@ -648,13 +648,13 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	return p_result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t circle_o[3], CCTNum_t circle_r, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], p[3], pco[3];
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Normalized(lsdir, lsdir);
-	mathPointProjectionLine(circle->o, ls[0], lsdir, p);
-	mathVec3Sub(pco, circle->o, p);
-	if (mathVec3LenSq(pco) > CCTNum_sq(circle->radius)) {
+	mathPointProjectionLine(circle_o, ls[0], lsdir, p);
+	mathVec3Sub(pco, circle_o, p);
+	if (mathVec3LenSq(pco) > CCTNum_sq(circle_r)) {
 		CCTNum_t new_ls[2][3], d;
 		CCTNum_t dot = mathVec3Dot(pco, dir);
 		if (dot <= CCTNum(0.0)) {
@@ -662,7 +662,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		}
 		d = mathVec3Normalized(pco, pco);
 		dot = mathVec3Dot(pco, dir);
-		d -= circle->radius;
+		d -= circle_r;
 		mathVec3AddScalar(p, pco, d);
 		d /= dot;
 		if (d <= CCTNum(0.0)) {
@@ -676,15 +676,15 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 			return set_result(result, d, pco);
 		}
 	}
-	if (Ray_Sweep_Sphere(ls[0], dir, circle->o, circle->radius, result)) {
+	if (Ray_Sweep_Sphere(ls[0], dir, circle_o, circle_r, result)) {
 		CCTSweepResult_t result_temp;
-		if (!Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, &result_temp)) {
+		if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, &result_temp)) {
 			return result;
 		}
 		merge_result(result, &result_temp);
 		return result;
 	}
-	return Ray_Sweep_Sphere(ls[1], dir, circle->o, circle->radius, result);
+	return Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
@@ -709,7 +709,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
 			return NULL;
 		}
-		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle, result);
+		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle->o, circle->radius, result);
 	}
 	else {
 		CCTNum_t dlen, lensq;
@@ -803,7 +803,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], circle.normal, circle.o, &circle.radius)) {
 			return NULL;
 		}
-		return Segment_Sweep_Circle_InSamePlane(ls, dir, &circle, result);
+		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle.o, circle.radius, result);
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, center, radius, result)) {
 		CCTSweepResult_t result_temp;
