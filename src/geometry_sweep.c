@@ -40,16 +40,12 @@ extern int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTSweepResult_t* copy_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
-	*dst = *src;
-	return dst;
-}
-
 static CCTSweepResult_t* merge_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 	if (dst->distance < src->distance) {
 		return dst;
 	}
-	return copy_result(dst, src);
+	*dst = *src;
+	return dst;
 }
 
 static CCTSweepResult_t* set_hit_plane(CCTSweepResult_t* result, const CCTNum_t hit_v[3], const CCTNum_t hit_n[3], int is_unique_point) {
@@ -193,7 +189,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -223,7 +219,7 @@ static CCTSweepResult_t* Ray_Sweep_OBB(const CCTNum_t o[3], const CCTNum_t dir[3
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -288,7 +284,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -351,7 +347,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -369,7 +365,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -391,7 +387,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -406,7 +402,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3AddScalar(result_temp.hit_plane_v, dir, result_temp.distance);
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -470,7 +466,7 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -506,11 +502,12 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 				continue;
 			}
 			if (result_temp.distance <= CCTNum(0.0)) {
-				return copy_result(result, &result_temp);
+				*result = result_temp;
+				return result;
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -542,7 +539,7 @@ static CCTSweepResult_t* Segment_Sweep_OBB(const CCTNum_t ls[2][3], const CCTNum
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -650,7 +647,7 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -903,7 +900,7 @@ static CCTSweepResult_t* Circle_Sweep_Polygon(const GeometryCircle_t* circle, co
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -987,7 +984,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1026,7 +1023,7 @@ static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t ha
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -1082,7 +1079,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1117,7 +1114,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1132,7 +1129,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1167,7 +1164,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1181,7 +1178,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1258,12 +1255,12 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 			continue;
 		}
 		if (result_temp.distance <= CCTNum(0.0)) {
-			copy_result(result, &result_temp);
+			*result = result_temp;
 			return result;
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
@@ -1310,7 +1307,7 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -1327,7 +1324,7 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 			}
 			if (!p_result) {
 				p_result = result;
-				copy_result(p_result, &result_temp);
+				*p_result = result_temp;
 			}
 			else {
 				merge_result(p_result, &result_temp);
@@ -1350,12 +1347,12 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 			continue;
 		}
 		if (result_temp.distance <= CCTNum(0.0)) {
-			copy_result(result, &result_temp);
+			*result = result_temp;
 			return result;
 		}
 		if (!p_result) {
 			p_result = result;
-			copy_result(p_result, &result_temp);
+			*p_result = result_temp;
 		}
 		else {
 			merge_result(p_result, &result_temp);
