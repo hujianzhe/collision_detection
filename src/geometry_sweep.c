@@ -1276,7 +1276,6 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTSweepResult_t* result) {
-	CCTNum_t hit_point[3];
 	if (!Ray_Sweep_Sphere(o1, dir, o2, r1 + r2, result)) {
 		return NULL;
 	}
