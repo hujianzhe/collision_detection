@@ -12,7 +12,7 @@ typedef struct CCTSweepResult_t {
 	CCTNum_t distance;
 	CCTNum_t hit_plane_v[3];
 	CCTNum_t hit_plane_n[3];
-	int hit_point_cnt;
+	int hit_point_unique;
 } CCTSweepResult_t;
 
 #ifdef __cplusplus
