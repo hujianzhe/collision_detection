@@ -40,19 +40,17 @@ extern int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTSweepResult_t* merge_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
+static void merge_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 	if (dst->distance < src->distance) {
-		return dst;
+		return;
 	}
 	*dst = *src;
-	return dst;
 }
 
-static CCTSweepResult_t* set_hit_plane(CCTSweepResult_t* result, const CCTNum_t hit_v[3], const CCTNum_t hit_n[3], int is_unique) {
+static void set_hit_plane(CCTSweepResult_t* result, const CCTNum_t hit_v[3], const CCTNum_t hit_n[3], int is_unique) {
 	mathVec3Copy(result->hit_plane_v, hit_v);
 	mathVec3Copy(result->hit_plane_n, hit_n);
 	result->hit_point_unique = is_unique;
-	return result;
 }
 
 static CCTSweepResult_t* set_intersect(CCTSweepResult_t* result) {
