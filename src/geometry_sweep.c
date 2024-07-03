@@ -419,7 +419,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3Sub(v, ls2[0], p);
 				mathVec3Sub(vp, ls2[1], p);
 				cos_theta = mathVec3Dot(v, vp);
-				if (cos_theta > CCTNum(0.0)) {
+				if (cos_theta > CCT_EPSILON) {
 					continue;
 				}
 				if (intersect_cnt < 2) {
@@ -437,7 +437,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					mathVec3Sub(v, ls1[0], p);
 					mathVec3Sub(vp, ls1[1], p);
 					cos_theta = mathVec3Dot(v, vp);
-					if (cos_theta > CCTNum(0.0)) {
+					if (cos_theta > CCT_EPSILON) {
 						continue;
 					}
 					if (intersect_cnt < 2) {
@@ -483,7 +483,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3Sub(v, ls1[0], p);
 			mathVec3Sub(vp, ls1[1], p);
 			cos_theta = mathVec3Dot(v, vp);
-			if (cos_theta > CCTNum(0.0)) {
+			if (cos_theta > CCT_EPSILON) {
 				return NULL;
 			}
 			set_hit_plane(result, v, N, 1);
@@ -516,7 +516,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3Sub(v, ls2[0], p);
 			mathVec3Sub(vp, ls2[1], p);
 			cos_theta = mathVec3Dot(v, vp);
-			if (cos_theta <= CCTNum(0.0)) {
+			if (cos_theta <= CCT_EPSILON) {
 				/* check cross point locate ls1 */
 				if (d >= CCTNum(0.0) && d <= ls1_len) {
 					set_intersect(result);
@@ -565,7 +565,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3Sub(v, ls2[0], p);
 				mathVec3Sub(vp, ls2[1], p);
 				cos_theta = mathVec3Dot(v, vp);
-				if (cos_theta > CCTNum(0.0)) {
+				if (cos_theta > CCT_EPSILON) {
 					break;
 				}
 				set_hit_plane(result, p, hn, 1);
@@ -589,7 +589,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3Sub(v, ls2[0], p);
 				mathVec3Sub(vp, ls2[1], p);
 				cos_theta = mathVec3Dot(v, vp);
-				if (cos_theta > CCTNum(0.0)) {
+				if (cos_theta > CCT_EPSILON) {
 					break;
 				}
 				set_hit_plane(result, p, hn, 1);
@@ -615,7 +615,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3Sub(v, ls1[0], p);
 				mathVec3Sub(vp, ls1[1], p);
 				cos_theta = mathVec3Dot(v, vp);
-				if (cos_theta > CCTNum(0.0)) {
+				if (cos_theta > CCT_EPSILON) {
 					continue;
 				}
 				set_hit_plane(result, ls2[i], hn, 1);
