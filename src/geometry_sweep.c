@@ -19,7 +19,6 @@ extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Indices_Default[8];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
-extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
 extern int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb);
 extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
@@ -120,6 +119,9 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		}
 		d = mathVec3Normalized(op, op);
 		dot = mathVec3Dot(op, dir);
+		if (dot <= CCTNum(0.0)) {
+			return NULL;
+		}
 		d /= dot;
 		mathVec3Copy(p, o);
 		mathVec3AddScalar(p, dir, d);
@@ -325,124 +327,303 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 }
 
 static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
-	int line_mask;
-	CCTNum_t p[3];
-	int res = Segment_Intersect_Segment(ls1, ls2, p, &line_mask);
-	if (GEOMETRY_SEGMENT_CONTACT == res) {
-		return set_intersect(result);
-	}
-	else if (GEOMETRY_SEGMENT_OVERLAP == res) {
-		return set_intersect(result);
-	}
-	else if (GEOMETRY_LINE_PARALLEL == line_mask) {
-		CCTSweepResult_t* p_result = NULL;
-		CCTNum_t neg_dir[3];
-		int i;
-		for (i = 0; i < 2; ++i) {
-			CCTSweepResult_t result_temp;
-			if (!Ray_Sweep_Segment(ls1[i], dir, ls2, &result_temp)) {
-				continue;
+	int i;
+	CCTSweepResult_t* p_result;
+	CCTNum_t N[3], ls1_dir[3], ls2_dir[3], v[3];
+	CCTNum_t d, cos_theta;
+
+	mathVec3Sub(ls1_dir, ls1[1], ls1[0]);
+	mathVec3Sub(ls2_dir, ls2[1], ls2[0]);
+	mathVec3Sub(v, ls2[0], ls1[0]);
+	/* check Line vs Line parallel or collinear */
+	mathVec3Cross(N, ls1_dir, ls2_dir);
+	if (mathVec3IsZero(N)) {
+		mathVec3Cross(N, v, ls1_dir);
+		if (mathVec3IsZero(N)) {
+			/* collinear */
+			unsigned int closest_ls1_indice, closest_ls2_indice;
+			CCTNum_t d;
+			const CCTNum_t* intersect_p = NULL;
+			if (Segment_Contain_Point(ls1, ls2[0])) {
+				intersect_p = ls2[0];
+			}
+			if (Segment_Contain_Point(ls1, ls2[1])) {
+				if (intersect_p && !mathVec3Equal(intersect_p, ls2[1])) {
+					return set_intersect(result);
+				}
+				intersect_p = ls2[1];
+			}
+			if (Segment_Contain_Point(ls2, ls1[0])) {
+				if (intersect_p && !mathVec3Equal(intersect_p, ls1[0])) {
+					return set_intersect(result);
+				}
+				intersect_p = ls1[0];
+			}
+			if (Segment_Contain_Point(ls2, ls1[1])) {
+				if (intersect_p && !mathVec3Equal(intersect_p, ls1[1])) {
+					return set_intersect(result);
+				}
+				intersect_p = ls1[1];
+			}
+			if (intersect_p) {
+				set_intersect(result);
+				set_unique_hit_point(result, intersect_p);
+				return result;
+			}
+			/* dir and ls1_dir must parallel */
+			mathVec3Cross(N, ls1_dir, dir);
+			if (!mathVec3IsZero(N)) {
+				return NULL;
+			}
+			/* calculate result */
+			mathSegmentSegmentClosestIndices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
+			mathVec3Sub(N, ls2[closest_ls2_indice], ls1[closest_ls1_indice]);
+			d = mathVec3Dot(N, dir);
+			if (d <= CCTNum(0.0)) {
+				return NULL;
+			}
+			set_hit_plane(result, ls2[closest_ls2_indice], dir, 1);
+			result->distance = d;
+			return result;
+		}
+		else {
+			CCTNum_t intersect_points[2][3];
+			unsigned int intersect_cnt;
+			/* parallel, check ls2 on the <ls1,dir> plane */
+			mathVec3Cross(N, ls1_dir, dir);
+			if (mathVec3IsZero(N)) {
+				return NULL;
+			}
+			cos_theta = mathVec3Dot(v, N);
+			if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
+				return NULL;
+			}
+			/* calculate ray sweep distance */
+			mathVec3Normalized(ls1_dir, ls1_dir);
+			mathVec3Normalized(ls2_dir, ls2_dir);
+			mathPointProjectionLine(ls1[0], ls2[0], ls2_dir, v);
+			mathVec3Sub(N, v, ls1[0]);
+			d = mathVec3Normalized(N, N);
+			cos_theta = mathVec3Dot(N, dir);
+			if (cos_theta <= CCTNum(0.0)) {
+				return NULL;
+			}
+			d /= cos_theta;
+			/* check ray point locate */
+			p_result = NULL;
+			intersect_cnt = 0;
+			for (i = 0; i < 2; ++i) {
+				CCTNum_t p[3], vp[3];
+				mathVec3Copy(p, ls1[i]);
+				mathVec3AddScalar(p, dir, d);
+				mathVec3Sub(v, ls2[0], p);
+				mathVec3Sub(vp, ls2[1], p);
+				cos_theta = mathVec3Dot(v, vp);
+				if (cos_theta > CCTNum(0.0)) {
+					continue;
+				}
+				if (intersect_cnt < 2) {
+					if (0 == intersect_cnt || !mathVec3Equal(intersect_points[intersect_cnt], p)) {
+						mathVec3Copy(intersect_points[intersect_cnt++], p);
+					}
+				}
+				p_result = result;
 			}
 			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
-		if (p_result) {
-			p_result->hit_point_unique = 0;
-			return p_result;
-		}
-		mathVec3Negate(neg_dir, dir);
-		for (i = 0; i < 2; ++i) {
-			CCTSweepResult_t result_temp;
-			if (!Ray_Sweep_Segment(ls2[i], neg_dir, ls1, &result_temp)) {
-				continue;
-			}
-			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
-		if (p_result) {
-			p_result->hit_point_unique = 0;
-		}
-		return p_result;
-	}
-	else if (GEOMETRY_LINE_CROSS == line_mask) {
-		CCTSweepResult_t* p_result = NULL;
-		CCTNum_t neg_dir[3];
-		int i;
-		for (i = 0; i < 2; ++i) {
-			CCTSweepResult_t result_temp;
-			if (!Ray_Sweep_Segment(ls1[i], dir, ls2, &result_temp)) {
-				continue;
+				for (i = 0; i < 2; ++i) {
+					CCTNum_t p[3], vp[3];
+					mathVec3Copy(p, ls2[i]);
+					mathVec3SubScalar(p, dir, d);
+					mathVec3Sub(v, ls1[0], p);
+					mathVec3Sub(vp, ls1[1], p);
+					cos_theta = mathVec3Dot(v, vp);
+					if (cos_theta > CCTNum(0.0)) {
+						continue;
+					}
+					if (intersect_cnt < 2) {
+						if (0 == intersect_cnt || !mathVec3Equal(intersect_points[intersect_cnt], ls2[i])) {
+							mathVec3Copy(intersect_points[intersect_cnt++], ls2[i]);
+						}
+					}
+					p_result = result;
+				}
 			}
 			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
+				return NULL;
 			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
+			set_hit_plane(result, intersect_points[0], N, intersect_cnt == 1);
+			result->distance = d;
+			return result;
 		}
-		mathVec3Negate(neg_dir, dir);
-		for (i = 0; i < 2; ++i) {
-			CCTSweepResult_t result_temp;
-			if (!Ray_Sweep_Segment(ls2[i], neg_dir, ls1, &result_temp)) {
-				continue;
-			}
-			mathVec3AddScalar(result_temp.hit_plane_v, dir, result_temp.distance);
-			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
-		return p_result;
-	}
-	else if (GEOMETRY_LINE_OVERLAP == line_mask) {
-		CCTNum_t v[3], N[3], dot;
-		unsigned int closest_ls1_indice, closest_ls2_indice;
-		mathVec3Sub(v, ls1[1], ls1[0]);
-		mathVec3Cross(N, v, dir);
-		if (!mathVec3IsZero(N)) {
-			return NULL;
-		}
-		mathSegmentSegmentClosestIndices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
-		mathVec3Sub(v, ls2[closest_ls2_indice], ls1[closest_ls1_indice]);
-		dot = mathVec3Dot(v, dir);
-		if (dot < CCTNum(0.0)) {
-			return NULL;
-		}
-		set_hit_plane(result, ls2[closest_ls2_indice], dir, 1);
-		result->distance = dot;
-		return result;
 	}
 	else {
-		CCTNum_t N[3], v[3], neg_dir[3];
-		mathVec3Sub(v, ls1[1], ls1[0]);
-		mathVec3Cross(N, v, dir);
-		if (mathVec3IsZero(N)) {
-			return NULL;
+		CCTNum_t p[3], vp[3];
+		d = mathVec3Dot(v, N);
+		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
+			/* opposite */
+			mathVec3Cross(N, ls1_dir, dir);
+			if (mathVec3IsZero(N)) {
+				return NULL;
+			}
+			mathVec3Normalized(N, N);
+			if (Segment_Intersect_Plane(ls2, ls1[0], N, v, NULL) != 1) {
+				return NULL;
+			}
+			mathVec3Normalized(ls1_dir, ls1_dir);
+			mathPointProjectionLine(v, ls1[0], ls1_dir, p);
+			mathVec3Sub(N, v, p);
+			d = mathVec3Normalized(N, N);
+			cos_theta = mathVec3Dot(N, dir);
+			if (cos_theta <= CCTNum(0.0)) {
+				return NULL;
+			}
+			d /= cos_theta;
+			mathVec3Copy(p, v);
+			mathVec3SubScalar(p, dir, d);
+			mathVec3Sub(v, ls1[0], p);
+			mathVec3Sub(vp, ls1[1], p);
+			cos_theta = mathVec3Dot(v, vp);
+			if (cos_theta > CCTNum(0.0)) {
+				return NULL;
+			}
+			set_hit_plane(result, v, N, 1);
+			result->distance = d;
+			return result;
 		}
-		mathVec3Normalized(N, N);
-		if (!Segment_Intersect_Plane(ls2, ls1[0], N, v, NULL)) {
-			return NULL;
+		else {
+			CCTNum_t hn[3], ls1_len, hn_len;
+			/* cross */
+			if (mathVec3IsZero(v)) {
+				set_intersect(result);
+				set_unique_hit_point(result, ls2[0]);
+				return result;
+			}
+			/* calculate Line cross point */
+			ls1_len = mathVec3Normalized(ls1_dir, ls1_dir);
+			mathVec3Normalized(ls2_dir, ls2_dir);
+			mathPointProjectionLine(ls1[0], ls2[0], ls2_dir, p);
+			mathVec3Sub(hn, p, ls1[0]);
+			hn_len = mathVec3Normalized(hn, hn);
+			cos_theta = mathVec3Dot(hn, ls1_dir);
+			if (CCTNum(0.0) == cos_theta) {
+				/* no possible */
+				return NULL;
+			}
+			d = hn_len / cos_theta;
+			mathVec3Copy(p, ls1[0]);
+			mathVec3AddScalar(p, ls1_dir, d);
+			/* check cross point locate ls2 */
+			mathVec3Sub(v, ls2[0], p);
+			mathVec3Sub(vp, ls2[1], p);
+			cos_theta = mathVec3Dot(v, vp);
+			if (cos_theta <= CCTNum(0.0)) {
+				/* check cross point locate ls1 */
+				if (d >= CCTNum(0.0) && d <= ls1_len) {
+					set_intersect(result);
+					set_unique_hit_point(result, p);
+					return result;
+				}
+				mathVec3Cross(v, ls1_dir, dir);
+				if (mathVec3IsZero(v)) {
+					/* dir and ls1_dir parallel */
+					mathVec3Sub(v, p, ls1[0]);
+					cos_theta = mathVec3Dot(v, dir);
+					if (cos_theta < CCTNum(0.0)) {
+						return NULL;
+					}
+					mathVec3Sub(v, p, ls1[1]);
+					d = mathVec3Dot(v, dir);
+					if (d > cos_theta) {
+						d = cos_theta;
+					}
+					set_hit_plane(result, p, hn, 1);
+					result->distance = d;
+					return result;
+				}
+			}
+			else {
+				mathVec3Cross(v, ls1_dir, dir);
+				if (mathVec3IsZero(v)) {
+					return NULL;
+				}
+			}
+			/* check dir on the <ls1,ls2> plane */
+			cos_theta = mathVec3Dot(dir, N);
+			if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
+				return NULL;
+			}
+			p_result = NULL;
+			/* ls1 ray sweep ls2 */
+			do {
+				cos_theta = mathVec3Dot(hn, dir);
+				if (cos_theta <= CCTNum(0.0)) {
+					break;
+				}
+				hn_len /= cos_theta;
+				mathVec3Copy(p, ls1[0]);
+				mathVec3AddScalar(p, dir, hn_len);
+				mathVec3Sub(v, ls2[0], p);
+				mathVec3Sub(vp, ls2[1], p);
+				cos_theta = mathVec3Dot(v, vp);
+				if (cos_theta > CCTNum(0.0)) {
+					break;
+				}
+				set_hit_plane(result, p, hn, 1);
+				result->distance = hn_len;
+				p_result = result;
+			} while (0);
+			do {
+				mathPointProjectionLine(ls1[1], ls2[0], ls2_dir, p);
+				mathVec3Sub(hn, p, ls1[1]);
+				hn_len = mathVec3Normalized(hn, hn);
+				cos_theta = mathVec3Dot(hn, dir);
+				if (cos_theta <= CCTNum(0.0)) {
+					break;
+				}
+				hn_len /= cos_theta;
+				if (p_result && hn_len >= p_result->distance) {
+					break;
+				}
+				mathVec3Copy(p, ls1[1]);
+				mathVec3AddScalar(p, dir, hn_len);
+				mathVec3Sub(v, ls2[0], p);
+				mathVec3Sub(vp, ls2[1], p);
+				cos_theta = mathVec3Dot(v, vp);
+				if (cos_theta > CCTNum(0.0)) {
+					break;
+				}
+				set_hit_plane(result, p, hn, 1);
+				result->distance = hn_len;
+				p_result = result;
+			} while (0);
+			/* ls2 ray sweep ls1 */
+			for (i = 0; i < 2; ++i) {
+				CCTNum_t p[3], vp[3];
+				mathPointProjectionLine(ls2[i], ls1[0], ls1_dir, p);
+				mathVec3Sub(hn, ls2[i], p);
+				hn_len = mathVec3Normalized(hn, hn);
+				cos_theta = mathVec3Dot(hn, dir);
+				if (cos_theta <= CCTNum(0.0)) {
+					continue;
+				}
+				hn_len /= cos_theta;
+				if (p_result && hn_len >= p_result->distance) {
+					continue;
+				}
+				mathVec3Copy(p, ls2[i]);
+				mathVec3SubScalar(p, dir, hn_len);
+				mathVec3Sub(v, ls1[0], p);
+				mathVec3Sub(vp, ls1[1], p);
+				cos_theta = mathVec3Dot(v, vp);
+				if (cos_theta > CCTNum(0.0)) {
+					continue;
+				}
+				set_hit_plane(result, ls2[i], hn, 1);
+				result->distance = hn_len;
+				p_result = result;
+			}
+			return p_result;
 		}
-		mathVec3Negate(neg_dir, dir);
-		if (!Ray_Sweep_Segment(v, neg_dir, ls1, result)) {
-			return NULL;
-		}
-		set_unique_hit_point(result, v);
-		return result;
 	}
 }
 
