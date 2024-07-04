@@ -502,23 +502,31 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			ls1_len = mathVec3Normalized(ls1_dir, ls1_dir);
 			mathVec3Normalized(ls2_dir, ls2_dir);
 			mathPointProjectionLine(ls1[0], ls2[0], ls2_dir, p);
-			mathVec3Sub(hn, p, ls1[0]);
-			hn_len = mathVec3Normalized(hn, hn);
-			cos_theta = mathVec3Dot(hn, ls1_dir);
-			if (CCTNum(0.0) == cos_theta) {
-				/* no possible */
-				return NULL;
+			if (mathVec3Equal(p, ls1[0])) {
+				/* ls1[0] is cross point */
+				hn_len = d = CCTNum(0.0);
+				mathVec3Set(hn, CCTNums_3(0.0, 0.0, 0.0));
+				mathVec3Copy(p, ls1[0]);
 			}
-			d = hn_len / cos_theta;
-			mathVec3Copy(p, ls1[0]);
-			mathVec3AddScalar(p, ls1_dir, d);
+			else {
+				mathVec3Sub(hn, p, ls1[0]);
+				hn_len = mathVec3Normalized(hn, hn);
+				cos_theta = mathVec3Dot(hn, ls1_dir);
+				if (CCTNum(0.0) == cos_theta) {
+					/* no possible */
+					return NULL;
+				}
+				d = hn_len / cos_theta;
+				mathVec3Copy(p, ls1[0]);
+				mathVec3AddScalar(p, ls1_dir, d);
+			}
 			/* check cross point locate ls2 */
 			mathVec3Sub(v, ls2[0], p);
 			mathVec3Sub(vp, ls2[1], p);
 			cos_theta = mathVec3Dot(v, vp);
 			if (cos_theta <= CCT_EPSILON) {
 				/* check cross point locate ls1 */
-				if (d >= CCTNum(0.0) && d <= ls1_len) {
+				if (d >= CCTNum(0.0) && d <= ls1_len + CCT_EPSILON) {
 					set_intersect(result);
 					set_unique_hit_point(result, p);
 					return result;
