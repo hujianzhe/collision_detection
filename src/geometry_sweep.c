@@ -1373,13 +1373,13 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	return p_result;
 }
 
-static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, int check_intersect, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTNum_t neg_dir[3];
 	CCTSweepResult_t* p_result;
 	GeometrySegmentIndices_t s1, s2;
 
-	if (ConvexMesh_Intersect_ConvexMesh(mesh1, mesh2)) {
+	if (check_intersect && ConvexMesh_Intersect_ConvexMesh(mesh1, mesh2)) {
 		return set_intersect(result);
 	}
 	s1.v = mesh1->v;
@@ -1424,52 +1424,16 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 }
 
 static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTSweepResult_t* result) {
-	int i;
-	CCTNum_t v1[8][3], v2[8][3], neg_dir[3];
-	GeometrySegmentIndices_t s1, s2;
-	CCTSweepResult_t* p_result;
+	GeometryBoxMesh_t mesh1, mesh2;
+	CCTNum_t v1[8][3], v2[8][3];
 	if (OBB_Intersect_OBB(obb1, obb2)) {
 		return set_intersect(result);
 	}
 	mathOBBVertices(obb1, v1);
+	mathBoxMesh((const CCTNum_t(*)[3])v1, (const CCTNum_t(*)[3])obb1->axis, &mesh1);
 	mathOBBVertices(obb2, v2);
-	s1.v = v1;
-	s1.indices = Box_Edge_Indices;
-	s1.indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
-	s1.stride = 2;
-	s2.v = v2;
-	s2.indices = Box_Edge_Indices;
-	s2.indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
-	s2.stride = 2;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
-	for (i = 0; i < 8; ++i) {
-		CCTSweepResult_t result_temp;
-		if (!Ray_Sweep_OBB(v1[i], dir, obb2, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
-	}
-	mathVec3Negate(neg_dir, dir);
-	for (i = 0; i < 8; ++i) {
-		CCTSweepResult_t result_temp;
-		if (!Ray_Sweep_OBB(v2[i], neg_dir, obb1, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
-	}
-	return p_result;
+	mathBoxMesh((const CCTNum_t(*)[3])v2, (const CCTNum_t(*)[3])obb2->axis, &mesh2);
+	return ConvexMesh_Sweep_ConvexMesh(&mesh1.mesh, dir, &mesh2.mesh, 0, result);
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
@@ -1799,7 +1763,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				CCTNum_t v[8][3];
 				mathAABBVertices(one->aabb->o, one->aabb->half, v);
 				mathBoxMesh((const CCTNum_t(*)[3])v, AABB_Axis, &one_mesh);
-				result = ConvexMesh_Sweep_ConvexMesh(&one_mesh.mesh, dir, two->mesh, result);
+				result = ConvexMesh_Sweep_ConvexMesh(&one_mesh.mesh, dir, two->mesh, 1, result);
 				break;
 			}
 		}
@@ -1856,7 +1820,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				CCTNum_t v[8][3];
 				mathOBBVertices(one->obb, v);
 				mathBoxMesh((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])one->obb->axis, &one_mesh);
-				result = ConvexMesh_Sweep_ConvexMesh(&one_mesh.mesh, dir, two->mesh, result);
+				result = ConvexMesh_Sweep_ConvexMesh(&one_mesh.mesh, dir, two->mesh, 1, result);
 				break;
 			}
 		}
@@ -1998,7 +1962,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				CCTNum_t v[8][3];
 				mathOBBVertices(two->obb, v);
 				mathBoxMesh((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])two->obb->axis, &two_mesh);
-				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, &two_mesh.mesh, result);
+				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, &two_mesh.mesh, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_AABB:
@@ -2007,7 +1971,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				CCTNum_t v[8][3];
 				mathAABBVertices(two->aabb->o, two->aabb->half, v);
 				mathBoxMesh((const CCTNum_t(*)[3])v, AABB_Axis, &two_mesh);
-				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, &two_mesh.mesh, result);
+				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, &two_mesh.mesh, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_POLYGON:
@@ -2017,7 +1981,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, two->mesh, result);
+				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, two->mesh, 1, result);
 				break;
 			}
 		}
