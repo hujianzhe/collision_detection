@@ -48,13 +48,28 @@ static void merge_result(CCTSweepResult_t* dst, CCTSweepResult_t* src) {
 
 static CCTSweepResult_t* set_intersect(CCTSweepResult_t* result) {
 	result->distance = CCTNum(0.0);
-	result->hit_bits = 0;
 	mathVec3Set(result->hit_plane_n, CCTNums_3(0.0, 0.0, 0.0));
+	result->hit_bits = 0;
+	result->peer[0].hit_bits = 0;
+	result->peer[0].idx = 0;
+	result->peer[1].hit_bits = 0;
+	result->peer[1].idx = 0;
 	return result;
 }
 
+static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
+	int hit_bits = result->peer[0].hit_bits;
+	unsigned int idx = result->peer[0].idx;
+	result->peer[0] = result->peer[1];
+	result->peer[1].hit_bits = hit_bits;
+	result->peer[1].idx = idx;
+	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
+		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
+	}
+}
+
 static void set_unique_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
-	result->hit_bits |= CCT_SWEEP_BIT_UNIQUE_POINT;
+	result->hit_bits |= CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_v, p);
 }
 
@@ -90,7 +105,6 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 			mathVec3Copy(result->hit_plane_v, ls[0]);
 		}
 		mathVec3Copy(result->hit_plane_n, dir);
-		result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
 		result->distance = dot;
 	}
 	else {
@@ -130,9 +144,9 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		}
 		mathVec3Copy(result->hit_plane_v, p);
 		mathVec3Copy(result->hit_plane_n, op);
-		result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
 		result->distance = d;
 	}
+	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	return result;
 }
 
@@ -155,7 +169,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, d);
 	mathVec3Copy(result->hit_plane_n, plane_n);
-	result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	result->distance = d;
 	return result;
 }
@@ -248,7 +262,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	dir_d -= CCTNum_sqrt(radius_sq - d_sq);
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, dir_d);
-	result->hit_bits |= CCT_SWEEP_BIT_UNIQUE_POINT;
+	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Sub(result->hit_plane_n, result->hit_plane_v, sp_o);
 	mathVec3MultiplyScalar(result->hit_plane_n, result->hit_plane_n, CCTNum(1.0) / sp_radius);
 	result->distance = dir_d;
@@ -314,7 +328,7 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	if (d[0] == d[1]) {
 		mathVec3Copy(result->hit_plane_v, plane_v);
-		result->hit_bits = CCT_SWEEP_BIT_SEGMENT_OVERLAP;
+		result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 		return result;
 	}
 	if (d[0] == d[2]) {
@@ -324,7 +338,7 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 		mathVec3Copy(result->hit_plane_v, ls[1]);
 	}
 	mathVec3AddScalar(result->hit_plane_v, dir, dlen);
-	result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	return result;
 }
 
@@ -386,7 +400,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_v, ls2[closest_ls2_indice]);
 			mathVec3Copy(result->hit_plane_n, dir);
-			result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			return result;
 		}
@@ -458,10 +472,10 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3Copy(result->hit_plane_v, intersect_points[0]);
 			mathVec3Copy(result->hit_plane_n, N);
 			if (1 == intersect_cnt) {
-				result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 			}
 			else {
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT_OVERLAP;
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			}
 			result->distance = d;
 			return result;
@@ -499,7 +513,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_v, v);
 			mathVec3Copy(result->hit_plane_n, N);
-			result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			return result;
 		}
@@ -559,7 +573,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					}
 					mathVec3Copy(result->hit_plane_v, p);
 					mathVec3Copy(result->hit_plane_n, hn);
-					result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+					result->hit_bits = CCT_SWEEP_BIT_POINT;
 					result->distance = d;
 					return result;
 				}
@@ -593,7 +607,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				mathVec3Copy(result->hit_plane_v, p);
 				mathVec3Copy(result->hit_plane_n, hn);
-				result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->distance = hn_len;
 				p_result = result;
 			} while (0);
@@ -619,7 +633,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				mathVec3Copy(result->hit_plane_v, p);
 				mathVec3Copy(result->hit_plane_n, hn);
-				result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->distance = hn_len;
 				p_result = result;
 			} while (0);
@@ -647,7 +661,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				mathVec3Copy(result->hit_plane_v, ls2[i]);
 				mathVec3Copy(result->hit_plane_n, hn);
-				result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->distance = hn_len;
 				p_result = result;
 			}
@@ -796,7 +810,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			if (Polygon_Contain_Point(polygon, p)) {
 				mathVec3Copy(result->hit_plane_v, pp);
 				mathVec3Copy(result->hit_plane_n, polygon->normal);
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT_OVERLAP;
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->distance = dlen;
 				return result;
 			}
@@ -805,7 +819,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			if (Polygon_Contain_Point(polygon, p)) {
 				mathVec3Copy(result->hit_plane_v, pp);
 				mathVec3Copy(result->hit_plane_n, polygon->normal);
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT_OVERLAP;
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->distance = dlen;
 				return result;
 			}
@@ -822,7 +836,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			if (Polygon_Contain_Point(polygon, p)) {
 				mathVec3Copy(result->hit_plane_v, p);
 				mathVec3Copy(result->hit_plane_n, polygon->normal);
-				result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->distance = dlen;
 				return result;
 			}
@@ -898,7 +912,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		if (Segment_Contain_Point((const CCTNum_t(*)[3])new_ls, p)) {
 			mathVec3Copy(result->hit_plane_v, p);
 			mathVec3Copy(result->hit_plane_n, pco);
-			result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			return result;
 		}
@@ -961,7 +975,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 			}
 			mathVec3Copy(result->hit_plane_v, p);
 			mathVec3Copy(result->hit_plane_n, circle->normal);
-			result->hit_bits = CCT_SWEEP_BIT_SEGMENT_OVERLAP;
+			result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			result->distance = dlen;
 			return result;
 		}
@@ -976,7 +990,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		if (lensq <= CCTNum_sq(circle->radius)) {
 			mathVec3Copy(result->hit_plane_v, p);
 			mathVec3Copy(result->hit_plane_n, circle->normal);
-			result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = dlen;
 			return result;
 		}
@@ -1029,7 +1043,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		if (res) {
 			set_intersect(result);
 			if (1 == res) {
-				result->hit_bits |= CCT_SWEEP_BIT_UNIQUE_POINT;
+				result->hit_bits = CCT_SWEEP_BIT_POINT;
 			}
 			return result;
 		}
@@ -1064,7 +1078,7 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 		}
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		mathVec3Copy(result->hit_plane_n, plane_n);
-		result->hit_bits = CCT_SWEEP_BIT_FACE_INDEX;
+		result->hit_bits = CCT_SWEEP_BIT_FACE;
 		return result;
 	}
 	d = mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL);
@@ -1100,7 +1114,7 @@ static CCTSweepResult_t* Circle_Sweep_Polygon(const GeometryCircle_t* circle, co
 	if (!Circle_Sweep_Plane(circle, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (result->hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT) {
+	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
 		if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
 			return result;
 		}
@@ -1155,11 +1169,11 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 	if (v_indices_idx != -1) {
 		mathVec3Copy(result->hit_plane_v, v[v_indices[v_indices_idx]]);
 		mathVec3AddScalar(result->hit_plane_v, dir, min_d);
-		result->hit_bits = CCT_SWEEP_BIT_UNIQUE_POINT;
+		result->hit_bits = CCT_SWEEP_BIT_POINT;
 	}
 	else {
 		mathVec3Copy(result->hit_plane_v, plane_v);
-		result->hit_bits = CCT_SWEEP_BIT_FACE_INDEX;
+		result->hit_bits = 0;
 	}
 	return result;
 }
@@ -1173,7 +1187,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])polygon1->v, polygon1->v_indices, polygon1->v_indices_cnt, dir, p2p, polygon2->normal, result)) {
 		return NULL;
 	}
-	if (result->hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT) {
+	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
 		if (Polygon_Contain_Point(polygon2, result->hit_plane_v)) {
 			return result;
 		}
@@ -1268,7 +1282,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, dir, pp, polygon->normal, result)) {
 		return NULL;
 	}
-	if (result->hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT) {
+	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
 		if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
 			return result;
 		}
@@ -1443,7 +1457,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 		return NULL;
 	}
 	mathVec3AddScalar(result->hit_plane_v, dir, dn);
-	result->hit_bits |= CCT_SWEEP_BIT_UNIQUE_POINT;
+	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->distance = dn;
 	return result;
@@ -1457,7 +1471,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 	if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (result->hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT) {
+	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
 		if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
 			return result;
 		}
@@ -1524,7 +1538,7 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 			if (!Sphere_Sweep_Plane(o, radius, dir, polygon.v[polygon.v_indices[0]], polygon.normal, &result_temp)) {
 				continue;
 			}
-			if (!(result_temp.hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT)) {
+			if (!(result_temp.hit_bits & CCT_SWEEP_BIT_POINT)) {
 				continue;
 			}
 			if (!Polygon_Contain_Point(&polygon, result_temp.hit_plane_v)) {
@@ -1966,9 +1980,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 		return NULL;
 	}
 	if (flag_neg_dir) {
-		if (result->hit_bits & CCT_SWEEP_BIT_UNIQUE_POINT) {
-			mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
-		}
+		reverse_result(result, dir);
 	}
 	return result;
 }

@@ -13,12 +13,16 @@ typedef struct CCTSweepResult_t {
 	CCTNum_t hit_plane_v[3];
 	CCTNum_t hit_plane_n[3];
 	int hit_bits;
+	struct {
+		int hit_bits;
+		unsigned int idx;
+	} peer[2];
 } CCTSweepResult_t;
 
 enum {
-	CCT_SWEEP_BIT_UNIQUE_POINT = 1,
-	CCT_SWEEP_BIT_SEGMENT_OVERLAP = 2,
-	CCT_SWEEP_BIT_FACE_INDEX = 4,
+	CCT_SWEEP_BIT_POINT = 1,
+	CCT_SWEEP_BIT_SEGMENT = 2,
+	CCT_SWEEP_BIT_FACE = 4,
 };
 
 #ifdef __cplusplus
