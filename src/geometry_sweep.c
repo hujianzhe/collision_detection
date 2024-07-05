@@ -216,13 +216,16 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 	for (i = 0; i < polygon->v_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+		unsigned int edge_v_indices[2];
+		edge_v_indices[0] = polygon->v_indices[i++];
+		edge_v_indices[1] = polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i];
+		mathVec3Copy(edge[0], polygon->v[edge_v_indices[0]]);
+		mathVec3Copy(edge[1], polygon->v[edge_v_indices[1]]);
 		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
 			continue;
 		}
 		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-		result_temp.peer[1].idx = i;
+		result_temp.peer[1].idx = i - 1;
 		if (!p_result) {
 			p_result = result;
 			*p_result = result_temp;
@@ -328,6 +331,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		if (!Ray_Sweep_Polygon(o, dir, mesh->polygons + i, &result_temp)) {
 			continue;
 		}
+		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
 		result_temp.peer[1].idx = i;
 		if (!p_result) {
 			p_result = result;
@@ -363,16 +367,24 @@ static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTN
 	if (d[0] == d[1]) {
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-		return result;
-	}
-	if (d[0] == d[2]) {
-		mathVec3Copy(result->hit_plane_v, ls[0]);
+		result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+		result->peer[0].idx = 0;
 	}
 	else {
-		mathVec3Copy(result->hit_plane_v, ls[1]);
+		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+		if (d[0] == d[2]) {
+			mathVec3Copy(result->hit_plane_v, ls[0]);
+			result->peer[0].idx = 0;
+		}
+		else {
+			mathVec3Copy(result->hit_plane_v, ls[1]);
+			result->peer[0].idx = 1;
+		}
+		mathVec3AddScalar(result->hit_plane_v, dir, dlen);
+		result->hit_bits = CCT_SWEEP_BIT_POINT;
 	}
-	mathVec3AddScalar(result->hit_plane_v, dir, dlen);
-	result->hit_bits = CCT_SWEEP_BIT_POINT;
+	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+	result->peer[1].idx = 0;
 	return result;
 }
 
