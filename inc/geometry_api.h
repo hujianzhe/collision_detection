@@ -12,8 +12,14 @@ typedef struct CCTSweepResult_t {
 	CCTNum_t distance;
 	CCTNum_t hit_plane_v[3];
 	CCTNum_t hit_plane_n[3];
-	int hit_point_unique;
+	int hit_bits;
 } CCTSweepResult_t;
+
+enum {
+	CCT_SWEEP_BIT_UNIQUE_POINT = 1,
+	CCT_SWEEP_BIT_SEGMENT_OVERLAP = 2,
+	CCT_SWEEP_BIT_FACE_INDEX = 4,
+};
 
 #ifdef __cplusplus
 extern "C" {
