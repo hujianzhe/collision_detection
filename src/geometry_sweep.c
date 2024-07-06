@@ -1500,65 +1500,13 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTSweepResult_t* result) {
-	if (Sphere_Intersect_OBB(o, radius, obb)) {
-		return set_intersect(result);
-	}
-	else {
-		int i;
-		CCTSweepResult_t* p_result = NULL;
-		CCTNum_t v[8][3], neg_dir[3];
-
-		mathOBBVertices(obb, v);
-		for (i = 0; i < 6; ++i) {
-			CCTSweepResult_t result_temp;
-			GeometryPolygon_t polygon;
-			mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, i, &polygon);
-			if (!Sphere_Sweep_Plane(o, radius, dir, polygon.v[polygon.v_indices[0]], polygon.normal, &result_temp)) {
-				continue;
-			}
-			if (!(result_temp.hit_bits & CCT_SWEEP_BIT_POINT)) {
-				continue;
-			}
-			if (!Polygon_Contain_Point(&polygon, result_temp.hit_plane_v)) {
-				continue;
-			}
-			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
-		mathVec3Negate(neg_dir, dir);
-		for (i = 0; i < sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]); i += 2) {
-			CCTNum_t edge[2][3];
-			CCTSweepResult_t result_temp;
-			mathVec3Copy(edge[0], v[Box_Edge_Indices[i]]);
-			mathVec3Copy(edge[1], v[Box_Edge_Indices[i+1]]);
-			if (!Segment_Sweep_Sphere((const CCTNum_t(*)[3])edge, neg_dir, o, radius, 0, &result_temp)) {
-				continue;
-			}
-			if (!p_result) {
-				p_result = result;
-				*p_result = result_temp;
-			}
-			else {
-				merge_result(p_result, &result_temp);
-			}
-		}
-		return p_result;
-	}
-}
-
-static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, int check_intersect, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
 	CCTNum_t neg_dir[3];
 	GeometrySegmentIndices_t si;
 
-	if (Sphere_Intersect_ConvexMesh(o, radius, mesh)) {
+	if (check_intersect && Sphere_Intersect_ConvexMesh(o, radius, mesh)) {
 		set_intersect(result);
 		return result;
 	}
@@ -1592,6 +1540,17 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 		}
 	}
 	return p_result;
+}
+
+static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTSweepResult_t* result) {
+	GeometryBoxMesh_t mesh;
+	CCTNum_t v[8][3];
+	if (Sphere_Intersect_OBB(o, radius, obb)) {
+		return set_intersect(result);
+	}
+	mathOBBVertices(obb, v);
+	mathBoxMesh((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, &mesh);
+	return Sphere_Sweep_ConvexMesh(o, radius, dir, &mesh.mesh, 0, result);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1864,7 +1823,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				result = Sphere_Sweep_ConvexMesh(one->sphere->o, one->sphere->radius, dir, two->mesh, result);
+				result = Sphere_Sweep_ConvexMesh(one->sphere->o, one->sphere->radius, dir, two->mesh, 1, result);
 				break;
 			}
 		}
@@ -1953,7 +1912,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				CCTNum_t neg_dir[3];
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = Sphere_Sweep_ConvexMesh(two->sphere->o, two->sphere->radius, neg_dir, one->mesh, result);
+				result = Sphere_Sweep_ConvexMesh(two->sphere->o, two->sphere->radius, neg_dir, one->mesh, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_OBB:
