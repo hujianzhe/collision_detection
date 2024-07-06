@@ -482,15 +482,30 @@ static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const 
 	return 0;
 }
 
-static int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh, CCTNum_t p[3]) {
+int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
-		return 1;
+		return 2;
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		int ret = Sphere_Intersect_Polygon(o, radius, mesh->polygons + i, p);
-		if (ret) {
-			return ret;
+		CCTNum_t p[3];
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		int res = Sphere_Intersect_Plane(o, radius, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
+		if (0 == res) {
+			continue;
+		}
+		if (Polygon_Contain_Point(polygon, p)) {
+			return res;
+		}
+	}
+	for (i = 0; i < mesh->edge_indices_cnt; ) {
+		int res;
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[i++]]);
+		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[i++]]);
+		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge, NULL);
+		if (res) {
+			return res;
 		}
 	}
 	return 0;
@@ -859,7 +874,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return Sphere_Intersect_ConvexMesh(one->sphere->o, one->sphere->radius, two->mesh, NULL);
+				return Sphere_Intersect_ConvexMesh(one->sphere->o, one->sphere->radius, two->mesh);
 			}
 		}
 	}
@@ -1022,7 +1037,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return Sphere_Intersect_ConvexMesh(two->sphere->o, two->sphere->radius, one->mesh, NULL);
+				return Sphere_Intersect_ConvexMesh(two->sphere->o, two->sphere->radius, one->mesh);
 			}
 			case GEOMETRY_BODY_AABB:
 			{

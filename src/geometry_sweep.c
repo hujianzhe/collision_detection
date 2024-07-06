@@ -25,6 +25,7 @@ extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const 
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
 extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
 extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
+extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
@@ -1054,6 +1055,37 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	return NULL;
 }
 
+static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndices_t* si, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
+	unsigned int i;
+	CCTSweepResult_t* p_result = NULL;
+	for (i = 0; i < si->indices_cnt; ) {
+		CCTSweepResult_t result_temp;
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], si->v[si->indices[i++]]);
+		if (2 == si->stride) {
+			mathVec3Copy(edge[1], si->v[si->indices[i++]]);
+		}
+		else {
+			mathVec3Copy(edge[1], si->v[si->indices[i >= si->indices_cnt ? 0 : i]]);
+		}
+		if (!Segment_Sweep_Sphere((const CCTNum_t(*)[3])edge, dir, center, radius, check_intersect, &result_temp)) {
+			continue;
+		}
+		if (result_temp.distance <= CCTNum(0.0)) {
+			*result = result_temp;
+			return result;
+		}
+		if (!p_result) {
+			p_result = result;
+			*p_result = result_temp;
+		}
+		else {
+			merge_result(p_result, &result_temp);
+		}
+	}
+	return p_result;
+}
+
 static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t v[3], p[3], d, abs_d, cos_theta;
 	mathVec3Cross(v, circle->normal, plane_n);
@@ -1428,8 +1460,8 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 
 static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	int i;
-	CCTSweepResult_t *p_result = NULL;
 	CCTNum_t neg_dir[3];
+	GeometrySegmentIndices_t si;
 
 	if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
@@ -1443,35 +1475,19 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		CCTNum_t p[3];
 		mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, p);
 		if (Polygon_Contain_Point(polygon, p)) {
-			return set_intersect(result);
-		}
-	}
-	p_result = NULL;
-	mathVec3Negate(neg_dir, dir);
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_Sphere((const CCTNum_t(*)[3])edge, neg_dir, o, radius, 1, &result_temp)) {
-			continue;
-		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			*result = result_temp;
 			return result;
 		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
 	}
-	if (p_result) {
-		mathVec3AddScalar(p_result->hit_plane_v, dir, result->distance);
+	si.v = polygon->v;
+	si.indices = polygon->v_indices;
+	si.indices_cnt = polygon->v_indices_cnt;
+	si.stride = 1;
+	mathVec3Negate(neg_dir, dir);
+	if (!SegmentIndices_Sweep_Sphere(&si, neg_dir, o, radius, 1, result)) {
+		return NULL;
 	}
-	return p_result;
+	reverse_result(result, dir);
+	return result;
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTSweepResult_t* result) {
@@ -1539,18 +1555,33 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
-	if (ConvexMesh_Contain_Point(mesh, o)) {
-		return set_intersect(result);
+	CCTNum_t neg_dir[3];
+	GeometrySegmentIndices_t si;
+
+	if (Sphere_Intersect_ConvexMesh(o, radius, mesh)) {
+		set_intersect(result);
+		return result;
 	}
-	p_result = NULL;
+	si.v = mesh->v;
+	si.indices = mesh->edge_indices;
+	si.indices_cnt = mesh->edge_indices_cnt;
+	si.stride = 2;
+	mathVec3Negate(neg_dir, dir);
+	p_result = SegmentIndices_Sweep_Sphere(&si, neg_dir, o, radius, 0, result);
+	if (p_result) {
+		reverse_result(p_result, dir);
+	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTSweepResult_t result_temp;
-		if (!Sphere_Sweep_Polygon(o, radius, dir, mesh->polygons + i, &result_temp)) {
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
-			*result = result_temp;
-			return result;
+		if (!(result_temp.hit_bits & CCT_SWEEP_BIT_POINT)) {
+			continue;
+		}
+		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+			continue;
 		}
 		if (!p_result) {
 			p_result = result;
