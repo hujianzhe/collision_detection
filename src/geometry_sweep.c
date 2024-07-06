@@ -1394,30 +1394,44 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 	for (i = 0; i < mesh1->v_indices_cnt; ++i) {
 		CCTSweepResult_t result_temp;
 		const CCTNum_t* pp = mesh1->v[mesh1->v_indices[i]];
-		if (!Ray_Sweep_ConvexMesh(pp, dir, mesh2, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
+		unsigned int j;
+		for (j = 0; j < mesh2->polygons_cnt; ++j) {
+			const GeometryPolygon_t* polygon = mesh2->polygons + j;
+			if (!Ray_Sweep_Plane(pp, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
+				continue;
+			}
+			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+				continue;
+			}
+			if (!p_result) {
+				p_result = result;
+				*p_result = result_temp;
+			}
+			else {
+				merge_result(p_result, &result_temp);
+			}
 		}
 	}
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
 		CCTSweepResult_t result_temp;
 		const CCTNum_t* pp = mesh2->v[mesh2->v_indices[i]];
-		if (!Ray_Sweep_ConvexMesh(pp, neg_dir, mesh1, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
+		unsigned int j;
+		for (j = 0; j < mesh1->polygons_cnt; ++j) {
+			const GeometryPolygon_t* polygon = mesh1->polygons + j;
+			if (!Ray_Sweep_Plane(pp, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
+				continue;
+			}
+			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+				continue;
+			}
+			if (!p_result) {
+				p_result = result;
+				*p_result = result_temp;
+			}
+			else {
+				merge_result(p_result, &result_temp);
+			}
 		}
 	}
 	return p_result;
