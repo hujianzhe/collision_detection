@@ -181,7 +181,7 @@ static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
 	return 1;
 }
 
-int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
+static int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
 	CCTNum_t op[3], dot;
 	mathVec3Sub(op, p, obb->o);
 	dot = mathVec3Dot(op, obb->axis[0]);

@@ -545,7 +545,7 @@ static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], c
 	return 0;
 }
 
-int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) {
+static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) {
 	int i;
 	CCTNum_t v[8][3];
 	if (OBB_Contain_Point(obb, ls[0]) || OBB_Contain_Point(obb, ls[1])) {
