@@ -166,6 +166,37 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 	return result;
 }
 
+static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
+	unsigned int i;
+	CCTSweepResult_t* p_result = NULL;
+	for (i = 0; i < si->indices_cnt; ) {
+		CCTSweepResult_t result_temp;
+		CCTNum_t edge[2][3];
+		mathVec3Copy(edge[0], si->v[si->indices[i++]]);
+		if (2 == si->stride) {
+			mathVec3Copy(edge[1], si->v[si->indices[i++]]);
+		}
+		else {
+			mathVec3Copy(edge[1], si->v[si->indices[i >= si->indices_cnt ? 0 : i]]);
+		}
+		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
+			continue;
+		}
+		if (result_temp.distance <= CCTNum(0.0)) {
+			*result = result_temp;
+			return result;
+		}
+		if (!p_result) {
+			p_result = result;
+			*p_result = result_temp;
+		}
+		else {
+			merge_result(p_result, &result_temp);
+		}
+	}
+	return p_result;
+}
+
 static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t d, cos_theta;
 	d = mathPointProjectionPlane(o, plane_v, plane_n, NULL);
@@ -195,9 +226,8 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 }
 
 static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	CCTSweepResult_t* p_result;
-	int i;
 	CCTNum_t dot;
+	GeometrySegmentIndices_t si;
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
@@ -211,29 +241,11 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 		return NULL;
 	}
-	p_result = NULL;
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		unsigned int edge_v_indices[2];
-		edge_v_indices[0] = polygon->v_indices[i++];
-		edge_v_indices[1] = polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i];
-		mathVec3Copy(edge[0], polygon->v[edge_v_indices[0]]);
-		mathVec3Copy(edge[1], polygon->v[edge_v_indices[1]]);
-		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
-			continue;
-		}
-		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-		result_temp.peer[1].idx = i - 1;
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
-		}
-	}
-	return p_result;
+	si.v = polygon->v;
+	si.indices = polygon->v_indices;
+	si.indices_cnt = polygon->v_indices_cnt;
+	si.stride = 1;
+	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
 }
 
 static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) {
@@ -288,13 +300,18 @@ static CCTSweepResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t di
 static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, int check_intersect, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
+	GeometrySegmentIndices_t si;
 	if (check_intersect && ConvexMesh_Contain_Point(mesh, o)) {
 		return set_intersect(result);
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTSweepResult_t result_temp;
-		if (!Ray_Sweep_Polygon(o, dir, mesh->polygons + i, &result_temp)) {
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
+			continue;
+		}
+		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
 		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
@@ -307,7 +324,14 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 			merge_result(p_result, &result_temp);
 		}
 	}
-	return p_result;
+	if (p_result) {
+		return p_result;
+	}
+	si.v = mesh->v;
+	si.indices = mesh->edge_indices;
+	si.indices_cnt = mesh->edge_indices_cnt;
+	si.stride = 2;
+	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_Plane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
@@ -1235,7 +1259,10 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		CCTSweepResult_t result_temp;
 		p2p = polygon2->v[polygon2->v_indices[i]];
-		if (!Ray_Sweep_Polygon(p2p, neg_dir, polygon1, &result_temp)) {
+		if (!Ray_Sweep_Plane(p2p, neg_dir, polygon1->v[polygon1->v_indices[0]], polygon1->normal, &result_temp)) {
+			continue;
+		}
+		if (!Polygon_Contain_Point(polygon1, result_temp.hit_plane_v)) {
 			continue;
 		}
 		if (!p_result) {
@@ -1328,17 +1355,25 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		unsigned int j;
 		CCTSweepResult_t result_temp;
 		pp = polygon->v[polygon->v_indices[i]];
-		if (!Ray_Sweep_ConvexMesh(pp, neg_dir, mesh, 0, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
+		for (j = 0; j < mesh->polygons_cnt; ++j) {
+			const GeometryPolygon_t* mesh_polygon = mesh->polygons + j;
+			if (!Ray_Sweep_Plane(pp, neg_dir, mesh_polygon->v[mesh_polygon->v_indices[0]], mesh_polygon->normal, &result_temp)) {
+				continue;
+			}
+			if (!Polygon_Contain_Point(mesh_polygon, result_temp.hit_plane_v)) {
+				continue;
+			}
+			reverse_result(&result_temp, dir);
+			if (!p_result) {
+				p_result = result;
+				*p_result = result_temp;
+			}
+			else {
+				merge_result(p_result, &result_temp);
+			}
 		}
 	}
 	return p_result;
