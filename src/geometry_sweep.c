@@ -172,19 +172,29 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 	for (i = 0; i < si->indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], si->v[si->indices[i++]]);
+		unsigned int v_indices_idx[2];
+		v_indices_idx[0] = i++;
 		if (2 == si->stride) {
-			mathVec3Copy(edge[1], si->v[si->indices[i++]]);
+			v_indices_idx[1] = i++;
 		}
 		else {
-			mathVec3Copy(edge[1], si->v[si->indices[i >= si->indices_cnt ? 0 : i]]);
+			v_indices_idx[1] = (i >= si->indices_cnt ? 0 : i);
 		}
+		mathVec3Copy(edge[0], si->v[si->indices[v_indices_idx[0]]]);
+		mathVec3Copy(edge[1], si->v[si->indices[v_indices_idx[1]]]);
 		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
 			continue;
 		}
 		if (result_temp.distance <= CCTNum(0.0)) {
 			*result = result_temp;
 			return result;
+		}
+		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result_temp.peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
+		}
+		else {
+			result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result_temp.peer[1].idx = (i - 1) / si->stride;
 		}
 		if (!p_result) {
 			p_result = result;
