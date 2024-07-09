@@ -1512,6 +1512,10 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->distance = dn;
+	result->peer[0].hit_bits = 0;
+	result->peer[0].idx = 0;
+	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+	result->peer[1].idx = 0;
 	return result;
 }
 
