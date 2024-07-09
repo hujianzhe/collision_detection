@@ -1592,6 +1592,7 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
+		result_temp.peer[1].idx = i;
 		if (!p_result) {
 			p_result = result;
 			*p_result = result_temp;
