@@ -1134,10 +1134,8 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 			/* no possible */
 			return NULL;
 		}
-		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 		result->peer[0].idx = 0;
-		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
-		result_temp.peer[1].idx = 1;
+		result_temp.peer[0].idx = 1;
 		merge_result(result, &result_temp);
 		return result;
 	}
@@ -1166,6 +1164,13 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 		if (result_temp.distance <= CCTNum(0.0)) {
 			*result = result_temp;
 			return result;
+		}
+		if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result_temp.peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
+		}
+		else {
+			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result_temp.peer[0].idx = (i - 1) / si->stride;
 		}
 		if (!p_result) {
 			p_result = result;
