@@ -921,8 +921,9 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 	mathPointProjectionLine(circle_o, ls[0], lsdir, p);
 	mathVec3Sub(pco, circle_o, p);
 	if (mathVec3LenSq(pco) > CCTNum_sq(circle_r)) {
-		CCTNum_t new_ls[2][3], d;
-		CCTNum_t dot = mathVec3Dot(pco, dir);
+		int hit_ok;
+		CCTNum_t d, dot;
+		dot = mathVec3Dot(pco, dir);
 		if (dot <= CCTNum(0.0)) {
 			return NULL;
 		}
@@ -934,27 +935,67 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		if (d <= CCTNum(0.0)) {
 			return NULL;
 		}
-		mathVec3Copy(new_ls[0], ls[0]);
-		mathVec3Copy(new_ls[1], ls[1]);
-		mathVec3AddScalar(new_ls[0], dir, d);
-		mathVec3AddScalar(new_ls[1], dir, d);
-		if (Segment_Contain_Point((const CCTNum_t(*)[3])new_ls, p)) {
+		do {
+			CCTNum_t v0[3], v1[3];
+			hit_ok = 1;
+			mathVec3Copy(v0, ls[0]);
+			mathVec3AddScalar(v0, dir, d);
+			mathVec3Sub(v0, v0, p);
+			if (mathVec3IsZero(v0)) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[0].idx = 0;
+				break;
+			}
+			mathVec3Copy(v1, ls[1]);
+			mathVec3AddScalar(v1, dir, d);
+			mathVec3Sub(v1, v1, p);
+			if (mathVec3IsZero(v1)) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[0].idx = 1;
+				break;
+			}
+			dot = mathVec3Dot(v0, v1);
+			if (dot <= CCTNum(0.0)) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[0].idx = 0;
+				break;
+			}
+			hit_ok = 0;
+		} while (0);
+		if (hit_ok) {
 			mathVec3Copy(result->hit_plane_v, p);
 			mathVec3Copy(result->hit_plane_n, pco);
 			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
+			result->peer[1].hit_bits = 0;
+			result->peer[1].idx = 0;
 			return result;
 		}
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, circle_o, circle_r, result)) {
 		CCTSweepResult_t result_temp;
+		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+		result->peer[0].idx = 0;
+		result->peer[1].hit_bits = 0;
+		result->peer[1].idx = 0;
 		if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, &result_temp)) {
 			return result;
 		}
+		result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+		result_temp.peer[0].idx = 1;
+		result_temp.peer[1].hit_bits = 0;
+		result_temp.peer[1].idx = 0;
 		merge_result(result, &result_temp);
 		return result;
 	}
-	return Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, result);
+	if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, result)) {
+		return NULL;
+	}
+	result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+	result->peer[0].idx = 1;
+	result->peer[1].hit_bits = 0;
+	result->peer[1].idx = 0;
+	return result;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
@@ -1090,8 +1131,13 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	if (Ray_Sweep_Sphere(ls[0], dir, center, radius, result)) {
 		CCTSweepResult_t result_temp;
 		if (!Ray_Sweep_Sphere(ls[1], dir, center, radius, &result_temp)) {
+			/* no possible */
 			return NULL;
 		}
+		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+		result->peer[0].idx = 0;
+		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+		result_temp.peer[1].idx = 1;
 		merge_result(result, &result_temp);
 		return result;
 	}
