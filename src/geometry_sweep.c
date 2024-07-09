@@ -1557,6 +1557,7 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	mathVec3Copy(result->hit_plane_v, o1);
 	mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	mathVec3SubScalar(result->hit_plane_v, result->hit_plane_n, r1);
+	result->peer[0].hit_bits = 0;
 	return result;
 }
 
