@@ -594,9 +594,10 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->peer[0].idx = 1;
 			}
 			else {
-				mathVec3Sub(v, ls1[0], p);
+				CCTNum_t vr[3];
+				mathVec3Sub(vr, ls1[0], p);
 				mathVec3Sub(vp, ls1[1], p);
-				cos_theta = mathVec3Dot(v, vp);
+				cos_theta = mathVec3Dot(vr, vp);
 				if (cos_theta > CCT_EPSILON) {
 					return NULL;
 				}
