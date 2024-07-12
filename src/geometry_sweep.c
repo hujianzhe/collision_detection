@@ -189,19 +189,22 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 			*result = result_temp;
 			return result;
 		}
+		if (!p_result) {
+			p_result = result;
+			*p_result = result_temp;
+		}
+		else if (result_temp.distance < p_result->distance) {
+			*p_result = result_temp;
+		}
+		else {
+			continue;
+		}
 		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
 			result_temp.peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
 		}
 		else {
 			result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			result_temp.peer[1].idx = (i - 1) / si->stride;
-		}
-		if (!p_result) {
-			p_result = result;
-			*p_result = result_temp;
-		}
-		else {
-			merge_result(p_result, &result_temp);
 		}
 	}
 	return p_result;
