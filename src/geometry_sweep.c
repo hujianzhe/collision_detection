@@ -1083,18 +1083,18 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, circle_o, circle_r, result)) {
 		CCTSweepResult_t result_temp;
+		if (Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, &result_temp) &&
+			result_temp.distance < result->distance)
+		{
+			*result = result_temp;
+			result->peer[0].idx = 1;
+		}
+		else {
+			result->peer[0].idx = 0;
+		}
 		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-		result->peer[0].idx = 0;
 		result->peer[1].hit_bits = 0;
 		result->peer[1].idx = 0;
-		if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, &result_temp)) {
-			return result;
-		}
-		result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-		result_temp.peer[0].idx = 1;
-		result_temp.peer[1].hit_bits = 0;
-		result_temp.peer[1].idx = 0;
-		merge_result(result, &result_temp);
 		return result;
 	}
 	if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, result)) {
@@ -1243,9 +1243,10 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 			/* no possible */
 			return NULL;
 		}
-		result->peer[0].idx = 0;
-		result_temp.peer[0].idx = 1;
-		merge_result(result, &result_temp);
+		if (result_temp.distance < result->distance) {
+			*result = result_temp;
+			result->peer[0].idx = 1;
+		}
 		return result;
 	}
 	return NULL;
