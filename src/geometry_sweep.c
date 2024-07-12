@@ -324,17 +324,20 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
-		result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
-		result_temp.peer[1].idx = i;
 		if (!p_result) {
 			p_result = result;
 			*p_result = result_temp;
 		}
-		else {
-			merge_result(p_result, &result_temp);
+		else if (result_temp.distance < p_result->distance) {
+			*p_result = result_temp;
 		}
+		else {
+			continue;
+		}
+		p_result->peer[1].idx = i;
 	}
 	if (p_result) {
+		p_result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
 		return p_result;
 	}
 	si.v = mesh->v;
