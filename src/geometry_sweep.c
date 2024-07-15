@@ -191,20 +191,20 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 		}
 		if (!p_result) {
 			p_result = result;
-			*p_result = result_temp;
+			*result = result_temp;
 		}
-		else if (result_temp.distance < p_result->distance) {
-			*p_result = result_temp;
+		else if (result_temp.distance < result->distance) {
+			*result = result_temp;
 		}
 		else {
 			continue;
 		}
-		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
-			result_temp.peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
+		if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result->peer[1].idx = v_indices_idx[result->peer[1].idx ? 1 : 0];
 		}
 		else {
-			result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result_temp.peer[1].idx = (i - 1) / si->stride;
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[1].idx = (i - 1) / si->stride;
 		}
 	}
 	return p_result;
@@ -329,19 +329,19 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		}
 		if (!p_result) {
 			p_result = result;
-			*p_result = result_temp;
+			*result = result_temp;
 		}
-		else if (result_temp.distance < p_result->distance) {
-			*p_result = result_temp;
+		else if (result_temp.distance < result->distance) {
+			*result = result_temp;
 		}
 		else {
 			continue;
 		}
-		p_result->peer[1].idx = i;
+		result->peer[1].idx = i;
 	}
 	if (p_result) {
-		p_result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
-		return p_result;
+		result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+		return result;
 	}
 	si.v = mesh->v;
 	si.indices = mesh->edge_indices;
@@ -852,10 +852,19 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 		}
 		if (!p_result) {
 			p_result = result;
-			*p_result = result_temp;
+			*result = result_temp;
+		}
+		else if (result_temp.distance < result->distance) {
+			*result = result_temp;
 		}
 		else {
-			merge_result(p_result, &result_temp);
+			continue;
+		}
+		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_SEGMENT) {
+			result->peer[1].idx = (i - 1) / si->stride;
+		}
+		else {
+			result->peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
 		}
 	}
 	return p_result;
