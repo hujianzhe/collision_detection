@@ -851,11 +851,11 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 		else {
 			continue;
 		}
-		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-			result->peer[1].idx = (i - 1) / si->stride;
+		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result->peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
 		}
 		else {
-			result->peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
+			result->peer[1].idx = (i - 1) / si->stride;
 		}
 	}
 	return p_result;
@@ -906,6 +906,18 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			}
 			else {
 				continue;
+			}
+			if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+				result->peer[0].hit_bits = v_indices_idx1[result_temp.peer[0].idx ? 1 : 0];
+			}
+			else {
+				result->peer[0].idx = (i - 1) / s1->stride;
+			}
+			if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+				result->peer[1].hit_bits = v_indices_idx2[result_temp.peer[1].idx ? 1 : 0];
+			}
+			else {
+				result->peer[1].idx = (j - 1) / s2->stride;
 			}
 		}
 	}
@@ -1297,7 +1309,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 		else {
 			continue;
 		}
-		if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+		if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
 			result->peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
 		}
 		else {
