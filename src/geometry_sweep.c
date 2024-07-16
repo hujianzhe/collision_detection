@@ -940,6 +940,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 		}
 	}
 	else {
+		int idx;
 		CCTNum_t dlen, cos_theta;
 		cos_theta = mathVec3Dot(polygon->normal, dir);
 		if (CCTNum(0.0) == cos_theta) {
@@ -950,40 +951,42 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			return NULL;
 		}
 		if (d[0] == d[1]) {
-			const CCTNum_t* pp = polygon->v[polygon->v_indices[0]];
-			mathVec3Copy(p, ls[0]);
-			mathVec3AddScalar(p, dir, dlen);
-			if (Polygon_Contain_Point(polygon, p)) {
-				mathVec3Copy(result->hit_plane_v, pp);
+			for (idx = 0; idx < 2; ++idx) {
+				mathVec3Copy(p, ls[idx]);
+				mathVec3AddScalar(p, dir, dlen);
+				if (!Polygon_Contain_Point(polygon, p)) {
+					continue;
+				}
+				mathVec3Copy(result->hit_plane_v, polygon->v[polygon->v_indices[0]]);
 				mathVec3Copy(result->hit_plane_n, polygon->normal);
 				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->distance = dlen;
-				return result;
-			}
-			mathVec3Copy(p, ls[1]);
-			mathVec3AddScalar(p, dir, dlen);
-			if (Polygon_Contain_Point(polygon, p)) {
-				mathVec3Copy(result->hit_plane_v, pp);
-				mathVec3Copy(result->hit_plane_n, polygon->normal);
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->distance = dlen;
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[0].idx = 0;
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[1].idx = 0;
 				return result;
 			}
 		}
 		else {
 			CCTNum_t v[3];
 			if (d[0] == d[2]) {
-				mathVec3Copy(p, ls[0]);
+				idx = 0;
 			}
 			else {
-				mathVec3Copy(p, ls[1]);
+				idx = 1;
 			}
+			mathVec3Copy(p, ls[idx]);
 			mathVec3AddScalar(p, dir, dlen);
 			if (Polygon_Contain_Point(polygon, p)) {
 				mathVec3Copy(result->hit_plane_v, p);
 				mathVec3Copy(result->hit_plane_n, polygon->normal);
 				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->distance = dlen;
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[0].idx = idx;
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[1].idx = 0;
 				return result;
 			}
 			mathVec3Sub(v, ls[1], ls[0]);
