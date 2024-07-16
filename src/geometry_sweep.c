@@ -930,8 +930,13 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 		}
 	}
 	else if (2 == res) {
+		CCTNum_t cos_theta;
 		if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
 			return set_intersect(result);
+		}
+		cos_theta = mathVec3Dot(dir, polygon->normal);
+		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
+			return NULL;
 		}
 	}
 	else {
