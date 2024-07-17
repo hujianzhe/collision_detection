@@ -1421,11 +1421,17 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 		mathVec3Copy(result->hit_plane_v, v[v_indices[v_indices_idx]]);
 		mathVec3AddScalar(result->hit_plane_v, dir, min_d);
 		result->hit_bits = CCT_SWEEP_BIT_POINT;
+		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+		result->peer[0].idx = v_indices_idx;
 	}
 	else {
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_bits = 0;
+		result->peer[0].hit_bits = 0;
+		result->peer[0].idx = 0;
 	}
+	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+	result->peer[1].idx = 0;
 	return result;
 }
 
