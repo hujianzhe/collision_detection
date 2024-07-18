@@ -1023,7 +1023,6 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	si.stride = 2;
 	p_result = Segment_Sweep_SegmentIndices(ls, dir, &si, result);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		CCTNum_t p[3], d[3], cos_theta, dlen;
 		cos_theta = mathVec3Dot(dir, polygon->normal);
