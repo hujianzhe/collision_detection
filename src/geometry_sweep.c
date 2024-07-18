@@ -315,19 +315,14 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
+		if (p_result && result_temp.distance >= result->distance) {
+			continue;
+		}
 		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
-		if (!p_result) {
-			p_result = result;
-			*result = result_temp;
-		}
-		else if (result_temp.distance < result->distance) {
-			*result = result_temp;
-		}
-		else {
-			continue;
-		}
+		p_result = result;
+		*result = result_temp;
 		result->peer[1].idx = i;
 	}
 	if (p_result) {
@@ -1520,19 +1515,14 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		if (!Ray_Sweep_Plane(p2p, neg_dir, polygon1->v[polygon1->v_indices[0]], polygon1->normal, &result_temp)) {
 			continue;
 		}
+		if (p_result && result_temp.distance >= result->distance) {
+			continue;
+		}
 		if (!Polygon_Contain_Point(polygon1, result_temp.hit_plane_v)) {
 			continue;
 		}
-		if (!p_result) {
-			p_result = result;
-			*result = result_temp;
-		}
-		else if (result_temp.distance < result->distance) {
-			*result = result_temp;
-		}
-		else {
-			continue;
-		}
+		p_result = result;
+		*result = result_temp;
 		neg_flag = 1;
 		result->peer[0].idx = i;
 	}
@@ -1636,19 +1626,14 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 			if (!Ray_Sweep_Plane(pp, neg_dir, mesh_polygon->v[mesh_polygon->v_indices[0]], mesh_polygon->normal, &result_temp)) {
 				continue;
 			}
+			if (p_result && result_temp.distance >= result->distance) {
+				continue;
+			}
 			if (!Polygon_Contain_Point(mesh_polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
-			if (!p_result) {
-				p_result = result;
-				*result = result_temp;
-			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-			}
-			else {
-				continue;
-			}
+			p_result = result;
+			*result = result_temp;
 			neg_flag = 1;
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[0].idx = i;
@@ -1692,19 +1677,14 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 			if (!Ray_Sweep_Plane(pp, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 				continue;
 			}
+			if (p_result && result_temp.distance >= result->distance) {
+				continue;
+			}
 			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
-			if (!p_result) {
-				p_result = result;
-				*result = result_temp;
-			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-			}
-			else {
-				continue;
-			}
+			p_result = result;
+			*result = result_temp;
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[0].idx = i;
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
@@ -1722,19 +1702,14 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 			if (!Ray_Sweep_Plane(pp, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 				continue;
 			}
+			if (p_result && result_temp.distance >= result->distance) {
+				continue;
+			}
 			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
-			if (!p_result) {
-				p_result = result;
-				*result = result_temp;
-			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-			}
-			else {
-				continue;
-			}
+			p_result = result;
+			*result = result_temp;
 			neg_flag = 1;
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[0].idx = i;
@@ -1875,19 +1850,14 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 		if (!(result_temp.hit_bits & CCT_SWEEP_BIT_POINT)) {
 			continue;
 		}
+		if (p_result && result_temp.distance >= result->distance) {
+			continue;
+		}
 		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
-		if (!p_result) {
-			p_result = result;
-			*result = result_temp;
-		}
-		else if (result_temp.distance < result->distance) {
-			*result = result_temp;
-		}
-		else {
-			continue;
-		}
+		p_result = result;
+		*result = result_temp;
 		result->peer[1].idx = i;
 	}
 	return p_result;
