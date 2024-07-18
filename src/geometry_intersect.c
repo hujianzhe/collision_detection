@@ -286,7 +286,7 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	return 0;
 }
 
-int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
+static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
 	CCTNum_t p[3], line[3];
 	int res = Circle_Intersect_Plane(circle, polygon->v[polygon->v_indices[0]], polygon->normal, p, line);
 	if (0 == res) {
