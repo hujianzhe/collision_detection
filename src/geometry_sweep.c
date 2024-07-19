@@ -1327,10 +1327,26 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 			p_result = result;
 			*result = result_temp;
 		}
-		else if (result_temp.distance < result->distance) {
+		else if (result_temp.distance > result->distance + CCT_EPSILON) {
+			continue;
+		}
+		else if (result_temp.distance < result->distance - CCT_EPSILON) {
 			*result = result_temp;
 		}
 		else {
+			if (result_temp.distance < result->distance) {
+				result->distance = result_temp.distance;
+			}
+			if (result_temp.peer[0].hit_bits == result->peer[0].hit_bits) {
+				if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+					result_temp.peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
+					if (result_temp.peer[0].idx == result->peer[0].idx) {
+						continue;
+					}
+				}
+			}
+			result->peer[0].hit_bits = 0;
+			result->peer[0].idx = 0;
 			continue;
 		}
 		if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
