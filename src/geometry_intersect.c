@@ -100,7 +100,7 @@ static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCir
 	return 0;
 }
 
-int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_indices_idx) {
+int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_idx) {
 	int i, has_gt0 = 0, has_le0 = 0, has_eq0 = 0, idx_min = -1;
 	CCTNum_t min_d;
 	for (i = 0; i < v_indices_cnt; ++i) {
@@ -128,12 +128,12 @@ int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indice
 		if (0 == i) {
 			min_d = d;
 			abs_min_d = abs_d;
-			idx_min = 0;
+			idx_min = v_indices[0];
 		}
 		else if (abs_min_d > abs_d) {
 			min_d = d;
 			abs_min_d = abs_d;
-			idx_min = i;
+			idx_min = v_indices[i];
 		}
 		else if (abs_min_d == abs_d) {
 			idx_min = -1;
@@ -142,8 +142,8 @@ int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indice
 	if (p_min_d) {
 		*p_min_d = min_d;
 	}
-	if (p_v_indices_idx) {
-		*p_v_indices_idx = idx_min;
+	if (p_v_idx) {
+		*p_v_idx = idx_min;
 	}
 	return has_eq0;
 }
@@ -345,13 +345,13 @@ static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const Geom
 
 int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle_t* circle) {
 	int res;
-	unsigned int i, v_indices_idx = -1;
-	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, circle->o, circle->normal, NULL, &v_indices_idx);
+	unsigned int i, v_idx = -1;
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, circle->o, circle->normal, NULL, &v_idx);
 	if (0 == res) {
 		return 0;
 	}
-	if (1 == res && v_indices_idx != -1) {
-		CCTNum_t lensq = mathVec3DistanceSq(circle->o, mesh->v[mesh->v_indices[v_indices_idx]]);
+	if (1 == res && v_idx != -1) {
+		CCTNum_t lensq = mathVec3DistanceSq(circle->o, mesh->v[v_idx]);
 		return lensq <= CCTNum_sq(circle->radius);
 	}
 	if (ConvexMesh_Contain_Point(mesh, circle->o)) {
@@ -367,13 +367,13 @@ int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle
 
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	int res;
-	unsigned int i, v_indices_idx = -1;
-	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &v_indices_idx);
+	unsigned int i, v_idx = -1;
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &v_idx);
 	if (0 == res) {
 		return 0;
 	}
-	if (1 == res && v_indices_idx != -1) {
-		return Polygon_Contain_Point(polygon, mesh->v[mesh->v_indices[v_indices_idx]]);
+	if (1 == res && v_idx != -1) {
+		return Polygon_Contain_Point(polygon, mesh->v[v_idx]);
 	}
 	for (i = 0; i < mesh->edge_indices_cnt; ) {
 		CCTNum_t edge[2][3];
