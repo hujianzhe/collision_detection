@@ -820,6 +820,7 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < si->indices_cnt; ) {
+		int assign;
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_indices_idx[2];
@@ -837,25 +838,41 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 		}
 		if (!p_result) {
 			p_result = result;
-			*result = result_temp;
+			assign = 1;
 		}
-		else if (result_temp.distance < result->distance) {
-			*result = result_temp;
-		}
-		else {
+		else if (result_temp.distance > result->distance + CCT_EPSILON) {
 			continue;
 		}
-		result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-		result->peer[1].idx = (i - 1) / si->stride;
+		else if (result_temp.distance < result->distance - CCT_EPSILON) {
+			assign = 1;
+		}
+		else {
+			if (result_temp.distance < result->distance) {
+				result->distance = result_temp.distance;
+			}
+			if (result_temp.peer[1].hit_bits != result->peer[1].hit_bits) {
+				result->peer[1].hit_bits = 0;
+				result->peer[1].idx = 0;
+				continue;
+			}
+			assign = 0;
+		}
+		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result_temp.peer[1].idx = v_indices_idx[result_temp.peer[1].idx ? 1 : 0];
+		}
+		else {
+			result_temp.peer[1].idx = (i - 1) / si->stride;
+		}
+		if (assign) {
+			*result = result_temp;
+			continue;
+		}
+		if (result_temp.peer[1].idx != result->peer[1].idx) {
+			result->peer[1].hit_bits = 0;
+			result->peer[1].idx = 0;
+		}
 	}
-	if (!p_result) {
-		return NULL;
-	}
-	result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-	result->peer[0].idx = 0;
-	result->peer[1].hit_bits = 0;
-	result->peer[1].idx = 0;
-	return result;
+	return p_result;
 }
 
 static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegmentIndices_t* s1, const CCTNum_t dir[3], const GeometrySegmentIndices_t* s2, CCTSweepResult_t* result) {
@@ -875,6 +892,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 		mathVec3Copy(edge1[0], s1->v[s1->indices[v_indices_idx1[0]]]);
 		mathVec3Copy(edge1[1], s1->v[s1->indices[v_indices_idx1[1]]]);
 		for (j = 0; j < s2->indices_cnt; ) {
+			int assign;
 			CCTSweepResult_t result_temp;
 			CCTNum_t edge2[2][3];
 			unsigned int v_indices_idx2[2];
@@ -896,21 +914,61 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			}
 			if (!p_result) {
 				p_result = result;
-				*result = result_temp;
+				assign = 1;
 			}
-			else if (result_temp.distance < result->distance) {
+			else if (result_temp.distance > result->distance + CCT_EPSILON) {
+				continue;
+			}
+			else if (result_temp.distance < result->distance - CCT_EPSILON) {
+				assign = 1;
+			}
+			else {
+				if (result_temp.distance < result->distance) {
+					result->distance = result_temp.distance;
+				}
+				assign = 0;
+				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
+					result->peer[0].hit_bits = 0;
+					result->peer[0].idx = 0;
+					++assign;
+				}
+				if (result_temp.peer[1].hit_bits != result->peer[1].hit_bits) {
+					result->peer[1].hit_bits = 0;
+					result->peer[1].idx = 0;
+					++assign;
+				}
+				if (assign >= 2) {
+					continue;
+				}
+				assign = 0;
+			}
+			if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+				result_temp.peer[0].idx = v_indices_idx1[result_temp.peer[0].idx ? 1 : 0];
+			}
+			else {
+				result_temp.peer[0].idx = (i - 1) / s1->stride;
+			}
+			if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+				result_temp.peer[1].idx = v_indices_idx2[result_temp.peer[1].idx ? 1 : 0];
+			}
+			else {
+				result_temp.peer[1].idx = (j - 1) / s2->stride;
+			}
+			if (assign) {
 				*result = result_temp;
+				continue;
+			}
+			if (result_temp.peer[0].idx != result->peer[0].idx) {
+				result->peer[0].hit_bits = 0;
+				result->peer[0].idx = 0;
+			}
+			if (result_temp.peer[1].idx != result->peer[1].idx) {
+				result->peer[1].hit_bits = 0;
+				result->peer[1].idx = 0;
 			}
 		}
 	}
-	if (!p_result) {
-		return NULL;
-	}
-	result->peer[0].hit_bits = 0;
-	result->peer[0].idx = 0;
-	result->peer[1].hit_bits = 0;
-	result->peer[1].idx = 0;
-	return result;
+	return p_result;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -1304,6 +1362,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < si->indices_cnt; ) {
+		int assign;
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_indices_idx[2];
@@ -1325,36 +1384,39 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 		}
 		if (!p_result) {
 			p_result = result;
-			*result = result_temp;
+			assign = 1;
 		}
 		else if (result_temp.distance > result->distance + CCT_EPSILON) {
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
-			*result = result_temp;
+			assign = 1;
 		}
 		else {
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-			if (result_temp.peer[0].hit_bits == result->peer[0].hit_bits) {
-				if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
-					result_temp.peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
-					if (result_temp.peer[0].idx == result->peer[0].idx) {
-						continue;
-					}
-				}
+			if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
+				result->peer[0].hit_bits = 0;
+				result->peer[0].idx = 0;
+				continue;
 			}
-			result->peer[0].hit_bits = 0;
-			result->peer[0].idx = 0;
-			continue;
+			assign = 0;
 		}
 		if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
-			result->peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
+			result_temp.peer[0].idx = v_indices_idx[result_temp.peer[0].idx ? 1 : 0];
 		}
 		else {
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[0].idx = (i - 1) / si->stride;
+			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result_temp.peer[0].idx = (i - 1) / si->stride;
+		}
+		if (assign) {
+			*result = result_temp;
+			continue;
+		}
+		if (result_temp.peer[0].idx != result->peer[0].idx) {
+			result->peer[0].hit_bits = 0;
+			result->peer[0].idx = 0;
 		}
 	}
 	return p_result;
