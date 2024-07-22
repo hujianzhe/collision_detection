@@ -850,6 +850,14 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
+			if (result_temp.hit_bits != result->hit_bits) {
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			}
+			else if ((result_temp.hit_bits & CCT_SWEEP_BIT_POINT) &&
+				!mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v))
+			{
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			}
 			if (result_temp.peer[1].hit_bits != result->peer[1].hit_bits) {
 				result->peer[1].hit_bits = 0;
 				result->peer[1].idx = 0;
@@ -925,6 +933,14 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			else {
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
+				}
+				if (result_temp.hit_bits != result->hit_bits) {
+					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				}
+				else if ((result_temp.hit_bits & CCT_SWEEP_BIT_POINT) &&
+					!mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v))
+				{
+					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				}
 				assign = 0;
 				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
@@ -1395,6 +1411,9 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 		else {
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
+			}
+			if (!mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v)) {
+				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			}
 			if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
 				result->peer[0].hit_bits = 0;
