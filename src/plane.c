@@ -9,15 +9,10 @@
 extern "C" {
 #endif
 
-CCTNum_t mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t np[3]) {
-	CCTNum_t pv[3], d;
+CCTNum_t mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+	CCTNum_t pv[3];
 	mathVec3Sub(pv, plane_v, p);
-	d = mathVec3Dot(pv, plane_n);
-	if (np) {
-		mathVec3Copy(np, p);
-		mathVec3AddScalar(np, plane_n, d);
-	}
-	return d;
+	return mathVec3Dot(pv, plane_n);
 }
 
 CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]) {

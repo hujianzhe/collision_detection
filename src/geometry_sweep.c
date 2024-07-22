@@ -203,7 +203,7 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 
 static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t d, cos_theta;
-	d = mathPointProjectionPlane(o, plane_v, plane_n, NULL);
+	d = mathPointProjectionPlane(o, plane_v, plane_n);
 	if (CCTNum(0.0) == d) {
 		set_intersect(result);
 		set_unique_hit_point(result, o);
@@ -1097,8 +1097,8 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 		if (CCTNum(0.0) == cos_theta) {
 			continue;
 		}
-		d[0] = mathPointProjectionPlane(ls[0], polygon->v[polygon->v_indices[0]], polygon->normal, NULL);
-		d[1] = mathPointProjectionPlane(ls[1], polygon->v[polygon->v_indices[0]], polygon->normal, NULL);
+		d[0] = mathPointProjectionPlane(ls[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+		d[1] = mathPointProjectionPlane(ls[1], polygon->v[polygon->v_indices[0]], polygon->normal);
 		if (d[0] > CCTNum(0.0)) {
 			d[2] = (d[0] < d[1] ? d[0] : d[1]);
 		}
@@ -1310,7 +1310,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 	if (CCTNum(0.0) == cos_theta) {
 		return NULL;
 	}
-	d[0] = mathPointProjectionPlane(circle->o, ls[0], plane_n, NULL);
+	d[0] = mathPointProjectionPlane(circle->o, ls[0], plane_n);
 	d[0] /= cos_theta;
 	d[1] = CCTNum_abs(d[0]);
 	if (d[1] > circle->radius) {
@@ -1454,7 +1454,7 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 		result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
 		return result;
 	}
-	d = mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL);
+	d = mathPointProjectionPlane(circle->o, plane_v, plane_n);
 	mathVec3Cross(v, circle->normal, v);
 	mathVec3Normalized(v, v);
 	cos_theta = mathVec3Dot(v, plane_n);
@@ -1832,7 +1832,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 
 static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t dn, dn_abs, cos_theta;
-	dn = mathPointProjectionPlane(o, plane_v, plane_n, NULL);
+	dn = mathPointProjectionPlane(o, plane_v, plane_n);
 	dn_abs = CCTNum_abs(dn);
 	if (dn_abs < radius) {
 		return set_intersect(result);
@@ -1884,8 +1884,10 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		}
 	}
 	else {
-		CCTNum_t p[3];
-		mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal, p);
+		CCTNum_t p[3], d;
+		d = mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal);
+		mathVec3Copy(p, o);
+		mathVec3AddScalar(p, polygon->normal, d);
 		if (Polygon_Contain_Point(polygon, p)) {
 			return result;
 		}

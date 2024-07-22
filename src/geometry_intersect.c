@@ -49,7 +49,7 @@ static int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t
 		mathVec3Normalized(ls_dir, ls_dir);
 		mathVec3Cross(v, ls_dir, circle->normal);
 		dot = mathVec3Dot(v, plane_n);
-		d = mathPointProjectionPlane(circle->o, plane_v, plane_n, NULL);
+		d = mathPointProjectionPlane(circle->o, plane_v, plane_n);
 		d /= dot;
 		if (ls_center) {
 			mathVec3Copy(ls_center, circle->o);
@@ -105,7 +105,7 @@ int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indice
 	CCTNum_t min_d;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		CCTNum_t d, abs_d, abs_min_d;
-		d = mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n, NULL);
+		d = mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n);
 		if (d > CCTNum(0.0)) {
 			if (has_le0) {
 				return 2;
@@ -153,8 +153,8 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	if (!d) {
 		d = temp_d;
 	}
-	d[0] = mathPointProjectionPlane(ls[0], plane_v, plane_normal, NULL);
-	d[1] = mathPointProjectionPlane(ls[1], plane_v, plane_normal, NULL);
+	d[0] = mathPointProjectionPlane(ls[0], plane_v, plane_normal);
+	d[1] = mathPointProjectionPlane(ls[1], plane_v, plane_normal);
 	if (d[0] == d[1]) {
 		d[2] = d[0];
 		if (d[0] != CCTNum(0.0)) {
@@ -414,7 +414,11 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 
 int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
 	CCTNum_t abs_d, d;
-	d = mathPointProjectionPlane(o, plane_v, plane_normal, new_o);
+	d = mathPointProjectionPlane(o, plane_v, plane_normal);
+	if (new_o) {
+		mathVec3Copy(new_o, o);
+		mathVec3AddScalar(new_o, plane_normal, d);
+	}
 	abs_d = CCTNum_abs(d);
 	if (abs_d > radius) {
 		if (new_r) {
