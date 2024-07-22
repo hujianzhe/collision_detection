@@ -1621,7 +1621,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		p_result = result;
 		*result = result_temp;
 		neg_flag = 1;
-		result->peer[0].idx = i;
+		result->peer[0].idx = polygon2->v_indices[i];
 	}
 	if (!p_result) {
 		return NULL;
@@ -1732,9 +1732,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 			p_result = result;
 			*result = result_temp;
 			neg_flag = 1;
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[0].idx = i;
-			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[0].idx = polygon->v_indices[i];
 			result->peer[1].idx = j;
 		}
 	}
@@ -1782,9 +1780,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 			}
 			p_result = result;
 			*result = result_temp;
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[0].idx = i;
-			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[0].idx = mesh1->v_indices[i];
 			result->peer[1].idx = j;
 		}
 	}
@@ -1808,9 +1804,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 			p_result = result;
 			*result = result_temp;
 			neg_flag = 1;
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[0].idx = i;
-			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[0].idx = mesh2->v_indices[i];
 			result->peer[1].idx = j;
 		}
 	}
