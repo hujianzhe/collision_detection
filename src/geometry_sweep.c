@@ -1799,7 +1799,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 					result->hit_bits = 0;
 				}
 				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits || 
-					result_temp.peer[0].idx != result->peer[0].idx)
+					mesh1->v_indices[i] != result->peer[0].idx)
 				{
 					result->peer[0].hit_bits = 0;
 					result->peer[0].idx = 0;
@@ -1843,19 +1843,30 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (!neg_flag) {
-					reverse_result(&result_temp, dir);
-				}
-				if (result_temp.hit_bits != result->hit_bits ||
-					!mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v))
-				{
+				if (result_temp.hit_bits != result->hit_bits || neg_flag) {
 					result->hit_bits = 0;
 				}
-				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits || 
-					result_temp.peer[0].idx != result->peer[0].idx)
-				{
+				else if (!mathVec3Equal(pp, result->hit_plane_v)) {
+					result->hit_bits = 0;
+				}
+				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
 					result->peer[0].hit_bits = 0;
 					result->peer[0].idx = 0;
+				}
+				else if (neg_flag) {
+					if (mesh2->v_indices[i] != result->peer[0].idx) {
+						result->peer[0].hit_bits = 0;
+						result->peer[0].idx = 0;
+					}
+				}
+				else {
+					CCTNum_t p[3];
+					mathVec3Copy(p, pp);
+					mathVec3SubScalar(p, dir, result_temp.distance);
+					if (!mathVec3Equal(p, mesh1->v[result->peer[0].idx])) {
+						result->peer[0].hit_bits = 0;
+						result->peer[0].idx = 0;
+					}
 				}
 				continue;
 			}
