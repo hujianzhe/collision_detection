@@ -1787,6 +1787,9 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 				}
 			}
 			else {
+				if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+					continue;
+				}
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
@@ -1834,6 +1837,9 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 				}
 			}
 			else {
+				if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+					continue;
+				}
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
