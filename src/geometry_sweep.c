@@ -1859,14 +1859,9 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 						result->peer[0].idx = 0;
 					}
 				}
-				else {
-					CCTNum_t p[3];
-					mathVec3Copy(p, pp);
-					mathVec3SubScalar(p, dir, result_temp.distance);
-					if (!mathVec3Equal(p, mesh1->v[result->peer[0].idx])) {
-						result->peer[0].hit_bits = 0;
-						result->peer[0].idx = 0;
-					}
+				else if (!mathVec3Equal(result_temp.hit_plane_v, mesh1->v[result->peer[0].idx])) {
+					result->peer[0].hit_bits = 0;
+					result->peer[0].idx = 0;
 				}
 				continue;
 			}
