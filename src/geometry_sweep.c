@@ -968,6 +968,18 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			if (result_temp.hit_bits == result->hit_bits) {
 				if (result_temp.hit_bits & CCT_SWEEP_BIT_POINT) {
 					if (mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v)) {
+						if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits ||
+							result_temp.peer[0].idx != result->peer[0].idx)
+						{
+							result->peer[0].hit_bits = 0;
+							result->peer[0].idx = 0;
+						}
+						if (result_temp.peer[1].hit_bits != result->peer[1].hit_bits ||
+							result_temp.peer[1].idx != result->peer[1].idx)
+						{
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
 						continue;
 					}
 					result->peer[1].hit_bits = 0;
