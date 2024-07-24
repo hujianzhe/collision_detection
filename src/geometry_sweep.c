@@ -922,7 +922,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 		}
 		mathVec3Copy(edge1[0], s1->v[v_idx1[0]]);
 		mathVec3Copy(edge1[1], s1->v[v_idx1[1]]);
-		if (!Segment_Sweep_SegmentIndices(edge1, dir, s2, p_filter_d, &result_temp)) {
+		if (!Segment_Sweep_SegmentIndices((const CCTNum_t(*)[3])edge1, dir, s2, p_filter_d, &result_temp)) {
 			continue;
 		}
 		if (result_temp.distance <= CCTNum(0.0)) {
