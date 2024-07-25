@@ -1928,18 +1928,24 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 					result->peer[0].idx = 0;
 					continue;
 				}
-				if (result->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
+				if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
+					if (mathVec3Equal(pp, result->hit_plane_v)) {
+						continue;
+					}
+				}
+				else if (result->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 					unsigned int idx = result->peer[1].idx * 2;
 					if (mesh2->v_indices[i] == mesh1->edge_indices[idx] ||
 						mesh2->v_indices[i] == mesh1->edge_indices[idx + 1])
 					{
 						continue;
 					}
-					result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-					result->peer[0].idx = j;
-					result->peer[1].hit_bits = 0;
-					result->peer[1].idx = 0;
 				}
+				result->hit_bits = 0;
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[0].idx = j;
+				result->peer[1].hit_bits = 0;
+				result->peer[1].idx = 0;
 				continue;
 			}
 			*result = result_temp;
