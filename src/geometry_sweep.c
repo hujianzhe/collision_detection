@@ -1858,11 +1858,6 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 					if (mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v)) {
 						continue;
 					}
-					if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
-						if (result->peer[0].idx == mesh1->v_indices[i]) {
-							continue;
-						}
-					}
 					/* TODO peer[0].hit_bits is face or line */
 				}
 				else if (result->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
