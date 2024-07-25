@@ -24,6 +24,19 @@
 	face_3 = [0, 3, 7, 4]	// -x
 	face_4 = [3, 2, 6, 7]	// +y
 	face_5 = [0, 1, 5, 4]	// -y
+
+	edge_0  = [0, 1]
+	edge_1  = [1, 2]
+	edge_2  = [2, 3]
+	edge_3  = [3, 0]
+	edge_4  = [7, 6]
+	edge_5  = [6, 5]
+	edge_6  = [5, 4]
+	edge_7  = [4, 7]
+	edge_8  = [1, 5]
+	edge_9  = [6, 2]
+	edge_10 = [3, 7]
+	edge_11 = [4, 0]
 */
 
 #ifndef GEOMETRY_BODY_BOX_MIN_HALF

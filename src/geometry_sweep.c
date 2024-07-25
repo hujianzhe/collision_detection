@@ -866,8 +866,12 @@ static CCTSweepResult_t* Segment_Sweep_SegmentIndices(const CCTNum_t ls[2][3], c
 						if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
 							continue;
 						}
-						result->peer[1].hit_bits = 0;
-						result->peer[1].idx = 0;
+						if (result_temp.peer[1].hit_bits != result->peer[1].hit_bits ||
+							result_temp.peer[1].idx != result->peer[1].idx)
+						{
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
 						continue;
 					}
 				}
@@ -1847,17 +1851,34 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (result_temp.hit_bits != result->hit_bits ||
-					!mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v))
-				{
-					result->hit_bits = 0;
+				if (!result->hit_bits) {
+					continue;
 				}
-				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits || 
-					mesh1->v_indices[i] != result->peer[0].idx)
-				{
-					result->peer[0].hit_bits = 0;
-					result->peer[0].idx = 0;
+				if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
+					if (mathVec3Equal(result_temp.hit_plane_v, result->hit_plane_v)) {
+						continue;
+					}
+					if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+						if (result->peer[0].idx == mesh1->v_indices[i]) {
+							continue;
+						}
+					}
+					/* TODO peer[0].hit_bits is face or line */
 				}
+				else if (result->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
+					unsigned int idx = result->peer[0].idx * 2;
+					if (mesh1->v_indices[i] == mesh1->edge_indices[idx] ||
+						mesh1->v_indices[i] == mesh1->edge_indices[idx + 1])
+					{
+						continue;
+					}
+					/* TODO peer[0].hit_bits is face or line */
+				}
+				result->hit_bits = 0;
+				result->peer[0].hit_bits = 0;
+				result->peer[0].idx = 0;
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[1].idx = j;
 				continue;
 			}
 			*result = result_temp;
@@ -1897,25 +1918,27 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (result_temp.hit_bits != result->hit_bits || neg_flag) {
-					result->hit_bits = 0;
+				if (!result->hit_bits) {
+					continue;
 				}
-				else if (!mathVec3Equal(pp, result->hit_plane_v)) {
+				if (neg_flag) {
+					/* TODO peer[0].hit_bits is face or line */
 					result->hit_bits = 0;
-				}
-				if (result_temp.peer[0].hit_bits != result->peer[0].hit_bits) {
 					result->peer[0].hit_bits = 0;
 					result->peer[0].idx = 0;
+					continue;
 				}
-				else if (neg_flag) {
-					if (mesh2->v_indices[i] != result->peer[0].idx) {
-						result->peer[0].hit_bits = 0;
-						result->peer[0].idx = 0;
+				if (result->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
+					unsigned int idx = result->peer[1].idx * 2;
+					if (mesh2->v_indices[i] == mesh1->edge_indices[idx] ||
+						mesh2->v_indices[i] == mesh1->edge_indices[idx + 1])
+					{
+						continue;
 					}
-				}
-				else if (!mathVec3Equal(result_temp.hit_plane_v, mesh1->v[result->peer[0].idx])) {
-					result->peer[0].hit_bits = 0;
-					result->peer[0].idx = 0;
+					result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
+					result->peer[0].idx = j;
+					result->peer[1].hit_bits = 0;
+					result->peer[1].idx = 0;
 				}
 				continue;
 			}
