@@ -816,16 +816,17 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, int is_convex, const GeometrySegmentIndices_t peer_si[2]) {
+static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometrySegmentIndices_t peer_si[2]) {
+	int is_convex = (peer_si[0].is_convex && peer_si[1].is_convex);
 	int i, result_hit_bits = result->hit_bits;
 	for (i = 0; i < 2; ++i) {
-		if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
+		if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
 			if (result->peer[i].idx != result_temp->peer[i].idx) {
 				result->peer[i].hit_bits = 0;
 				result->peer[i].idx = 0;
 			}
 		}
-		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
+		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
 			if (result->peer[i].idx == result_temp->peer[i].idx) {}
 			else if ((result_hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
 				result->peer[i].hit_bits = 0;

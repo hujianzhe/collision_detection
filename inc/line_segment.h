@@ -22,6 +22,7 @@ typedef struct GeometrySegmentIndices_t {
 	const unsigned int* indices;
 	unsigned int indices_cnt;
 	unsigned int stride;
+	int is_convex;
 } GeometrySegmentIndices_t;
 
 #ifdef	__cplusplus
