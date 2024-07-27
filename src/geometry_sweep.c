@@ -901,7 +901,7 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 			else if (result_hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				discard = 1;
 			}
-			else {
+			else if (!is_convex) {
 				result->peer[i].hit_bits = 0;
 				result->peer[i].idx = 0;
 			}
