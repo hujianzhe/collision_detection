@@ -29,6 +29,8 @@ typedef struct GeometrySegmentIndices_t {
 extern "C" {
 #endif
 
+__declspec_dll GeometrySegmentIndices_t* mathSegmentToIndices(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]);
+
 __declspec_dll CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]);
 __declspec_dll int mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* min_d, CCTNum_t dir_d[2]);
 

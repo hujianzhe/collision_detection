@@ -11,6 +11,16 @@
 extern "C" {
 #endif
 
+GeometrySegmentIndices_t* mathSegmentToIndices(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]) {
+	static const unsigned int indices[2] = { 0, 1 };
+	si->v = (CCTNum_t(*)[3])ls;
+	si->indices = indices;
+	si->indices_cnt = 2;
+	si->stride = 2;
+	si->is_convex = 1;
+	return si;
+}
+
 CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);
