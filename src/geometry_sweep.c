@@ -816,35 +816,26 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometrySegmentIndices_t* si[2], const unsigned int result_peer_ei[2]) {
+static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometrySegmentIndices_t* si[2], unsigned int ei[2][2]) {
 	int is_convex = (si[0]->is_convex && si[1]->is_convex);
 	int discard = 0;
 	int i, result_hit_bits = result->hit_bits;
 	for (i = 0; i < 2; ++i) {
 		const GeometrySegmentIndices_t* peer_si_i = si[i];
 		if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
-			unsigned int idx, v_idx;
 			if (result->peer[i].idx == result_temp->peer[i].idx) {
 				continue;
 			}
-			idx = result_peer_ei[i] * peer_si_i->stride;
-			v_idx = peer_si_i->indices[idx++];
-			if (v_idx == result_temp->peer[i].idx) {
-				result->hit_bits = (i ? CCT_SWEEP_BIT_SEGMENT : 0);
+			if (ei[0][i] == ei[1][i]) {
 				result->peer[i].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i].idx = result_peer_ei[i];
-				continue;
+				result->peer[i].idx = ei[0][i];
 			}
-			v_idx = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
-			if (v_idx == result_temp->peer[i].idx) {
-				result->hit_bits = (i ? CCT_SWEEP_BIT_SEGMENT : 0);
-				result->peer[i].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i].idx = result_peer_ei[i];
-				continue;
+			else {
+				result->hit_bits = 0;
+				result->peer[i].hit_bits = 0;
+				result->peer[i].idx = 0;
 			}
 			result->hit_bits = 0;
-			result->peer[i].hit_bits = 0;
-			result->peer[i].idx = 0;
 		}
 		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
 			if (result->peer[i].idx == result_temp->peer[i].idx) {
@@ -852,7 +843,7 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 			}
 			if (result_hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+					result->hit_bits = 0;
 					result->peer[i].hit_bits = 0;
 					result->peer[i].idx = 0;
 				}
@@ -860,6 +851,7 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 			else if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->peer[i] = result_temp->peer[i];
+				ei[0][i] = ei[1][i];
 			}
 			else {
 				result->peer[i].hit_bits = 0;
@@ -875,17 +867,13 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 			v_idx = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
 			mathVec3Copy(temp_edge[1], peer_si_i->v[v_idx]);
 			if (!Segment_Contain_Point((const CCTNum_t(*)[3])temp_edge, peer_si_i->v[result->peer[i].idx])) {
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->hit_bits = 0;
 				result->peer[i].hit_bits = 0;
 				result->peer[i].idx = 0;
-			}
-			else if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i] = result_temp->peer[i];
 			}
 			else {
-				result->peer[i].hit_bits = 0;
-				result->peer[i].idx = 0;
+				result->hit_bits = 0;
+				result->peer[i] = result_temp->peer[i];
 			}
 		}
 		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
@@ -894,23 +882,18 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 			mathVec3Copy(edge[0], peer_si_i->v[peer_si_i->indices[idx++]]);
 			mathVec3Copy(edge[1], peer_si_i->v[peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx]]);
 			if (!Segment_Contain_Point((const CCTNum_t(*)[3])edge, peer_si_i->v[result_temp->peer[i].idx])) {
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->peer[i].hit_bits = 0;
 				result->peer[i].idx = 0;
 			}
-			else if (result_hit_bits & CCT_SWEEP_BIT_SEGMENT) {
+			else {
 				discard = 1;
 			}
-			else if (!is_convex) {
-				result->peer[i].hit_bits = 0;
-				result->peer[i].idx = 0;
-			}
+			result->hit_bits = 0;
 		}
 		else if (0 == result->peer[i].hit_bits && is_convex) {
-			if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i] = result_temp->peer[i];
-			}
+			result->hit_bits = result_temp->hit_bits;
+			result->peer[i] = result_temp->peer[i];
+			ei[0][i] = ei[1][i];
 		}
 	}
 	if (discard) {
@@ -931,7 +914,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 	unsigned int i, j;
 	CCTSweepResult_t result_temp;
 	CCTSweepResult_t* p_result = NULL;
-	unsigned int result_peer_ei[2];
+	unsigned int peer_ei[2][2];
 	const GeometrySegmentIndices_t* peer_si[2] = { s1, s2 };
 	for (i = 0; i < s1->indices_cnt; ) {
 		CCTNum_t edge1[2][3];
@@ -990,14 +973,9 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 				else {
 					result_temp.peer[1].idx = (j - 1) / s2->stride;
 				}
-				merge_segment_result(result, &result_temp, peer_si, result_peer_ei);
-				if ((result->peer[0].hit_bits & CCT_SWEEP_BIT_SEGMENT) &&
-					(result->peer[1].hit_bits & CCT_SWEEP_BIT_SEGMENT) &&
-					(result->hit_bits & CCT_SWEEP_BIT_SEGMENT))
-				{
-					result_peer_ei[0] = result->peer[0].idx;
-					result_peer_ei[1] = result->peer[1].idx;
-				}
+				peer_ei[1][0] = (i - 1) / s1->stride;
+				peer_ei[1][1] = (j - 1) / s2->stride;
+				merge_segment_result(result, &result_temp, peer_si, peer_ei);
 				continue;
 			}
 			if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
@@ -1012,8 +990,8 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 			else {
 				result->peer[1].idx = (j - 1) / s2->stride;
 			}
-			result_peer_ei[0] = (i - 1) / s1->stride;
-			result_peer_ei[1] = (j - 1) / s2->stride;
+			peer_ei[0][0] = (i - 1) / s1->stride;
+			peer_ei[0][1] = (j - 1) / s2->stride;
 		}
 	}
 	return p_result;
