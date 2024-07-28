@@ -21,6 +21,54 @@ GeometrySegmentIndices_t* mathSegmentToIndices(GeometrySegmentIndices_t* si, con
 	return si;
 }
 
+unsigned int mathSegmentIndicesFindEdgeIndex(const GeometrySegmentIndices_t* si, unsigned int v_idx0, unsigned int v_idx1) {
+	unsigned int i;
+	if (si->stride != 1) {
+		for (i = 0; i < si->indices_cnt; ++i) {
+			unsigned int idx = si->indices[i++];
+			if (v_idx0 == idx) {
+				if (v_idx1 == si->indices[i]) {
+					return i >> 1;
+				}
+				continue;
+			}
+			if (v_idx1 == idx) {
+				if (v_idx0 == si->indices[i]) {
+					return i >> 1;
+				}
+				continue;
+			}
+		}
+	}
+	else {
+		for (i = 1; i < si->indices_cnt; ++i) {
+			if (v_idx0 == si->indices[i]) {
+				if (v_idx1 == si->indices[i - 1]) {
+					return i - 1;
+				}
+				continue;
+			}
+			if (v_idx1 == si->indices[i]) {
+				if (v_idx0 == si->indices[i - 1]) {
+					return i - 1;
+				}
+				continue;
+			}
+		}
+		if (v_idx0 == si->indices[0]) {
+			if (v_idx1 == si->indices[--i]) {
+				return i;
+			}
+		}
+		if (v_idx1 == si->indices[0]) {
+			if (v_idx0 == si->indices[--i]) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
 CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);

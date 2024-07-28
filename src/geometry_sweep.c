@@ -831,9 +831,16 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 				result->peer[i].idx = ei[0][i];
 			}
 			else {
-				result->hit_bits = 0;
-				result->peer[i].hit_bits = 0;
-				result->peer[i].idx = 0;
+				unsigned int idx = mathSegmentIndicesFindEdgeIndex(peer_si_i, result->peer[i].idx, result_temp->peer[i].idx);
+				if (idx != -1) {
+					result->peer[i].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+					result->peer[i].idx = idx;
+					ei[0][i] = idx;
+				}
+				else {
+					result->peer[i].hit_bits = 0;
+					result->peer[i].idx = 0;
+				}
 			}
 			result->hit_bits = 0;
 		}
@@ -889,11 +896,6 @@ static void merge_segment_result(CCTSweepResult_t* result, const CCTSweepResult_
 				discard = 1;
 			}
 			result->hit_bits = 0;
-		}
-		else if (0 == result->peer[i].hit_bits && is_convex) {
-			result->hit_bits = result_temp->hit_bits;
-			result->peer[i] = result_temp->peer[i];
-			ei[0][i] = ei[1][i];
 		}
 	}
 	if (discard) {
