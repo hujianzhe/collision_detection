@@ -14,14 +14,6 @@ typedef struct GeometrySegment_t {
 	CCTNum_t v[2][3];
 } GeometrySegment_t;
 
-typedef struct GeometrySegmentIndices_t {
-	CCTNum_t(*v)[3];
-	const unsigned int* indices;
-	unsigned int indices_cnt;
-	unsigned short stride;
-	short is_convex;
-} GeometrySegmentIndices_t;
-
 typedef struct GeometryPlane_t {
 	CCTNum_t v[3];
 	CCTNum_t normal[3];
@@ -70,6 +62,16 @@ typedef struct GeometryMesh_t {
 	const unsigned int* edge_indices; /* edge vertices index */
 	const unsigned int* v_indices; /* vertices index */
 } GeometryMesh_t;
+
+typedef struct GeometrySegmentIndices_t {
+	CCTNum_t(*v)[3];
+	const unsigned int* indices;
+	unsigned int indices_cnt;
+	unsigned short stride;
+	short is_convex;
+	const GeometryPolygon_t* faces;
+	unsigned int faces_cnt;
+} GeometrySegmentIndices_t;
 
 /*********************************************************************/
 
