@@ -161,16 +161,16 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < si->indices_cnt; ) {
+	for (i = 0; i < si->edge_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
-		v_idx[0] = si->indices[i++];
-		if (2 == si->stride) {
-			v_idx[1] = si->indices[i++];
+		v_idx[0] = si->edge_indices[i++];
+		if (2 == si->edge_stride) {
+			v_idx[1] = si->edge_indices[i++];
 		}
 		else {
-			v_idx[1] = si->indices[i >= si->indices_cnt ? 0 : i];
+			v_idx[1] = si->edge_indices[i >= si->edge_indices_cnt ? 0 : i];
 		}
 		mathVec3Copy(edge[0], si->v[v_idx[0]]);
 		mathVec3Copy(edge[1], si->v[v_idx[1]]);
@@ -195,7 +195,7 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 			result->peer[1].idx = v_idx[result->peer[1].idx ? 1 : 0];
 		}
 		else {
-			result->peer[1].idx = (i - 1) / si->stride;
+			result->peer[1].idx = (i - 1) / si->edge_stride;
 		}
 	}
 	return p_result;
@@ -246,9 +246,9 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		return NULL;
 	}
 	si.v = polygon->v;
-	si.indices = polygon->v_indices;
-	si.indices_cnt = polygon->v_indices_cnt;
-	si.stride = 1;
+	si.edge_indices = polygon->v_indices;
+	si.edge_indices_cnt = polygon->v_indices_cnt;
+	si.edge_stride = 1;
 	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
 }
 
@@ -329,9 +329,9 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		return result;
 	}
 	si.v = mesh->v;
-	si.indices = mesh->edge_indices;
-	si.indices_cnt = mesh->edge_indices_cnt;
-	si.stride = 2;
+	si.edge_indices = mesh->edge_indices;
+	si.edge_indices_cnt = mesh->edge_indices_cnt;
+	si.edge_stride = 2;
 	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
 }
 
@@ -897,11 +897,11 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 			}
 			if (result_hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-					unsigned int idx = peer_si_i->stride * result->peer[i].idx;
+					unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
 					unsigned int v_idx[3], face_idx;
-					v_idx[0] = peer_si_i->indices[idx++];
-					v_idx[1] = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
-					v_idx[2] = peer_si_i->indices[peer_si_i->stride * result_temp->peer[i].idx];
+					v_idx[0] = peer_si_i->edge_indices[idx++];
+					v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
+					v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
 					face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 					if (face_idx != -1) {
 						result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
@@ -919,11 +919,11 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				result->peer[i] = result_temp->peer[i];
 			}
 			else {
-				unsigned int idx = peer_si_i->stride * result->peer[i].idx;
+				unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->indices[idx++];
-				v_idx[1] = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
-				v_idx[2] = peer_si_i->indices[peer_si_i->stride * result_temp->peer[i].idx];
+				v_idx[0] = peer_si_i->edge_indices[idx++];
+				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
+				v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
 				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
@@ -939,16 +939,16 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
 			CCTNum_t temp_edge[2][3];
 			unsigned int idx, v_idx;
-			idx = result_temp->peer[i].idx * peer_si_i->stride;
-			v_idx = peer_si_i->indices[idx++];
+			idx = result_temp->peer[i].idx * peer_si_i->edge_stride;
+			v_idx = peer_si_i->edge_indices[idx++];
 			mathVec3Copy(temp_edge[0], peer_si_i->v[v_idx]);
-			v_idx = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
+			v_idx = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 			mathVec3Copy(temp_edge[1], peer_si_i->v[v_idx]);
 			if (!Segment_Contain_Point((const CCTNum_t(*)[3])temp_edge, peer_si_i->v[result->peer[i].idx])) {
-				unsigned int idx = peer_si_i->stride * result_temp->peer[i].idx;
+				unsigned int idx = peer_si_i->edge_stride * result_temp->peer[i].idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->indices[idx++];
-				v_idx[1] = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
+				v_idx[0] = peer_si_i->edge_indices[idx++];
+				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result->peer[i].idx;
 				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
@@ -967,14 +967,14 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 		}
 		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
 			CCTNum_t edge[2][3];
-			unsigned int idx = result->peer[i].idx * peer_si_i->stride;
-			mathVec3Copy(edge[0], peer_si_i->v[peer_si_i->indices[idx++]]);
-			mathVec3Copy(edge[1], peer_si_i->v[peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx]]);
+			unsigned int idx = result->peer[i].idx * peer_si_i->edge_stride;
+			mathVec3Copy(edge[0], peer_si_i->v[peer_si_i->edge_indices[idx++]]);
+			mathVec3Copy(edge[1], peer_si_i->v[peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx]]);
 			if (!Segment_Contain_Point((const CCTNum_t(*)[3])edge, peer_si_i->v[result_temp->peer[i].idx])) {
-				unsigned int idx = peer_si_i->stride * result->peer[i].idx;
+				unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->indices[idx++];
-				v_idx[1] = peer_si_i->indices[idx >= peer_si_i->indices_cnt ? 0 : idx];
+				v_idx[0] = peer_si_i->edge_indices[idx++];
+				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result_temp->peer[i].idx;
 				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
@@ -1014,27 +1014,27 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 	CCTSweepResult_t result_temp;
 	CCTSweepResult_t* p_result = NULL;
 	const GeometrySegmentIndices_t* peer_si[2] = { s1, s2 };
-	for (i = 0; i < s1->indices_cnt; ) {
+	for (i = 0; i < s1->edge_indices_cnt; ) {
 		CCTNum_t edge1[2][3];
 		unsigned int v_idx1[2];
-		v_idx1[0] = s1->indices[i++];
-		if (2 == s1->stride) {
-			v_idx1[1] = s1->indices[i++];
+		v_idx1[0] = s1->edge_indices[i++];
+		if (2 == s1->edge_stride) {
+			v_idx1[1] = s1->edge_indices[i++];
 		}
 		else {
-			v_idx1[1] = s1->indices[i >= s1->indices_cnt ? 0 : i];
+			v_idx1[1] = s1->edge_indices[i >= s1->edge_indices_cnt ? 0 : i];
 		}
 		mathVec3Copy(edge1[0], s1->v[v_idx1[0]]);
 		mathVec3Copy(edge1[1], s1->v[v_idx1[1]]);
-		for (j = 0; j < s2->indices_cnt; ) {
+		for (j = 0; j < s2->edge_indices_cnt; ) {
 			CCTNum_t edge2[2][3];
 			unsigned int v_idx2[2];
-			v_idx2[0] = s2->indices[j++];
-			if (2 == s2->stride) {
-				v_idx2[1] = s2->indices[j++];
+			v_idx2[0] = s2->edge_indices[j++];
+			if (2 == s2->edge_stride) {
+				v_idx2[1] = s2->edge_indices[j++];
 			}
 			else {
-				v_idx2[1] = s2->indices[j >= s2->indices_cnt ? 0 : j];
+				v_idx2[1] = s2->edge_indices[j >= s2->edge_indices_cnt ? 0 : j];
 			}
 			mathVec3Copy(edge2[0], s2->v[v_idx2[0]]);
 			mathVec3Copy(edge2[1], s2->v[v_idx2[1]]);
@@ -1063,13 +1063,13 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 					result_temp.peer[0].idx = v_idx1[result_temp.peer[0].idx ? 1 : 0];
 				}
 				else {
-					result_temp.peer[0].idx = (i - 1) / s1->stride;
+					result_temp.peer[0].idx = (i - 1) / s1->edge_stride;
 				}
 				if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
 					result_temp.peer[1].idx = v_idx2[result_temp.peer[1].idx ? 1 : 0];
 				}
 				else {
-					result_temp.peer[1].idx = (j - 1) / s2->stride;
+					result_temp.peer[1].idx = (j - 1) / s2->edge_stride;
 				}
 				merge_result(result, &result_temp, peer_si);
 				continue;
@@ -1078,13 +1078,13 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 				result->peer[0].idx = v_idx1[result_temp.peer[0].idx ? 1 : 0];
 			}
 			else {
-				result->peer[0].idx = (i - 1) / s1->stride;
+				result->peer[0].idx = (i - 1) / s1->edge_stride;
 			}
 			if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
 				result->peer[1].idx = v_idx2[result_temp.peer[1].idx ? 1 : 0];
 			}
 			else {
-				result->peer[1].idx = (j - 1) / s2->stride;
+				result->peer[1].idx = (j - 1) / s2->edge_stride;
 			}
 		}
 	}
@@ -1177,9 +1177,9 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	}
 	mathGeometryIndicesFromSegment(&s1, ls);
 	s2.v = polygon->v;
-	s2.indices = polygon->v_indices;
-	s2.indices_cnt = polygon->v_indices_cnt;
-	s2.stride = 1;
+	s2.edge_indices = polygon->v_indices;
+	s2.edge_indices_cnt = polygon->v_indices_cnt;
+	s2.edge_stride = 1;
 	s2.is_convex = 0;
 	s2.faces = polygon;
 	s2.faces_cnt = 1;
@@ -1195,9 +1195,9 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	}
 	mathGeometryIndicesFromSegment(&s1, ls);
 	s2.v = mesh->v;
-	s2.indices = mesh->edge_indices;
-	s2.indices_cnt = mesh->edge_indices_cnt;
-	s2.stride = 2;
+	s2.edge_indices = mesh->edge_indices;
+	s2.edge_indices_cnt = mesh->edge_indices_cnt;
+	s2.edge_stride = 2;
 	s2.is_convex = 1;
 	s2.faces = mesh->polygons;
 	s2.faces_cnt = mesh->polygons_cnt;
@@ -1489,17 +1489,17 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndices_t* si, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < si->indices_cnt; ) {
+	for (i = 0; i < si->edge_indices_cnt; ) {
 		int assign;
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
-		v_idx[0] = si->indices[i++];
-		if (2 == si->stride) {
-			v_idx[1] = si->indices[i++];
+		v_idx[0] = si->edge_indices[i++];
+		if (2 == si->edge_stride) {
+			v_idx[1] = si->edge_indices[i++];
 		}
 		else {
-			v_idx[1] = si->indices[i >= si->indices_cnt ? 0 : i];
+			v_idx[1] = si->edge_indices[i >= si->edge_indices_cnt ? 0 : i];
 		}
 		mathVec3Copy(edge[0], si->v[v_idx[0]]);
 		mathVec3Copy(edge[1], si->v[v_idx[1]]);
@@ -1539,7 +1539,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_Sphere(const GeometrySegmentIndice
 		}
 		else {
 			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result_temp.peer[0].idx = (i - 1) / si->stride;
+			result_temp.peer[0].idx = (i - 1) / si->edge_stride;
 		}
 		if (assign) {
 			*result = result_temp;
@@ -1708,16 +1708,16 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		return set_intersect(result);
 	}
 	s1.v = polygon1->v;
-	s1.indices = polygon1->v_indices;
-	s1.indices_cnt = polygon1->v_indices_cnt;
-	s1.stride = 1;
+	s1.edge_indices = polygon1->v_indices;
+	s1.edge_indices_cnt = polygon1->v_indices_cnt;
+	s1.edge_stride = 1;
 	s1.is_convex = 0;
 	s1.faces = polygon1;
 	s1.faces_cnt = 1;
 	s2.v = polygon2->v;
-	s2.indices = polygon2->v_indices;
-	s2.indices_cnt = polygon2->v_indices_cnt;
-	s2.stride = 1;
+	s2.edge_indices = polygon2->v_indices;
+	s2.edge_indices_cnt = polygon2->v_indices_cnt;
+	s2.edge_stride = 1;
 	s2.is_convex = 0;
 	s2.faces = polygon2;
 	s2.faces_cnt = 1;
@@ -1822,16 +1822,16 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 		return result;
 	}
 	s1.v = mesh->v;
-	s1.indices = mesh->edge_indices;
-	s1.indices_cnt = mesh->edge_indices_cnt;
-	s1.stride = 2;
+	s1.edge_indices = mesh->edge_indices;
+	s1.edge_indices_cnt = mesh->edge_indices_cnt;
+	s1.edge_stride = 2;
 	s1.is_convex = 1;
 	s1.faces = mesh->polygons;
 	s1.faces_cnt = mesh->polygons_cnt;
 	s2.v = polygon->v;
-	s2.indices = polygon->v_indices;
-	s2.indices_cnt = polygon->v_indices_cnt;
-	s2.stride = 1;
+	s2.edge_indices = polygon->v_indices;
+	s2.edge_indices_cnt = polygon->v_indices_cnt;
+	s2.edge_stride = 1;
 	s2.is_convex = 0;
 	s2.faces = polygon;
 	s2.faces_cnt = 1;
@@ -1880,16 +1880,16 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 		return set_intersect(result);
 	}
 	s1.v = mesh1->v;
-	s1.indices = mesh1->edge_indices;
-	s1.indices_cnt = mesh1->edge_indices_cnt;
-	s1.stride = 2;
+	s1.edge_indices = mesh1->edge_indices;
+	s1.edge_indices_cnt = mesh1->edge_indices_cnt;
+	s1.edge_stride = 2;
 	s1.is_convex = 1;
 	s1.faces = mesh1->polygons;
 	s1.faces_cnt = mesh1->polygons_cnt;
 	s2.v = mesh2->v;
-	s2.indices = mesh2->edge_indices;
-	s2.indices_cnt = mesh2->edge_indices_cnt;
-	s2.stride = 2;
+	s2.edge_indices = mesh2->edge_indices;
+	s2.edge_indices_cnt = mesh2->edge_indices_cnt;
+	s2.edge_stride = 2;
 	s2.is_convex = 1;
 	s2.faces = mesh2->polygons;
 	s2.faces_cnt = mesh2->polygons_cnt;
@@ -2071,9 +2071,9 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		}
 	}
 	si.v = polygon->v;
-	si.indices = polygon->v_indices;
-	si.indices_cnt = polygon->v_indices_cnt;
-	si.stride = 1;
+	si.edge_indices = polygon->v_indices;
+	si.edge_indices_cnt = polygon->v_indices_cnt;
+	si.edge_stride = 1;
 	mathVec3Negate(neg_dir, dir);
 	if (!SegmentIndices_Sweep_Sphere(&si, neg_dir, o, radius, 1, result)) {
 		return NULL;
@@ -2104,9 +2104,9 @@ static CCTSweepResult_t* Sphere_Sweep_ConvexMesh(const CCTNum_t o[3], CCTNum_t r
 		return result;
 	}
 	si.v = mesh->v;
-	si.indices = mesh->edge_indices;
-	si.indices_cnt = mesh->edge_indices_cnt;
-	si.stride = 2;
+	si.edge_indices = mesh->edge_indices;
+	si.edge_indices_cnt = mesh->edge_indices_cnt;
+	si.edge_stride = 2;
 	mathVec3Negate(neg_dir, dir);
 	p_result = SegmentIndices_Sweep_Sphere(&si, neg_dir, o, radius, 0, result);
 	if (p_result) {

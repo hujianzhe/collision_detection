@@ -65,9 +65,9 @@ typedef struct GeometryMesh_t {
 
 typedef struct GeometrySegmentIndices_t {
 	CCTNum_t(*v)[3];
-	const unsigned int* indices;
-	unsigned int indices_cnt;
-	unsigned short stride;
+	const unsigned int* edge_indices;
+	unsigned int edge_indices_cnt;
+	unsigned short edge_stride;
 	short is_convex;
 	const GeometryPolygon_t* faces;
 	unsigned int faces_cnt;
