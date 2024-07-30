@@ -145,6 +145,8 @@ void mathBoxMesh(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], GeometryBoxM
 	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
 	mesh->edge_indices = Box_Edge_Indices;
 	mesh->edge_indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
+	mesh->edge_stride = 2;
+	mesh->is_convex = 1;
 	mesh->polygons = bm->faces;
 	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {

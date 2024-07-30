@@ -55,6 +55,8 @@ typedef struct GeometryMesh_t {
 	CCTNum_t (*v)[3]; /* vertices vec3 */
 	CCTNum_t o[3]; /* origin position */
 	GeometryAABB_t bound_box; /* AABB bound box */
+	unsigned short edge_stride;
+	short is_convex;
 	unsigned int polygons_cnt; /* number of polygen plane */
 	unsigned int edge_indices_cnt; /* number of edge vertices index */
 	unsigned int v_indices_cnt; /* number of vertices index */

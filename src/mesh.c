@@ -57,6 +57,7 @@ static int Mesh_Cooking_Edge_InternalProc(const CCTNum_t (*v)[3], GeometryMesh_t
 
 	mesh->edge_indices = ret_edge_indices;
 	mesh->edge_indices_cnt = ret_edge_indices_cnt;
+	mesh->edge_stride = 2;
 	return 1;
 }
 
@@ -236,6 +237,7 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	mesh->v = dup_v;
 	mesh->v_indices = dup_v_indices;
 	mesh->v_indices_cnt = dup_v_cnt;
+	mesh->is_convex = mathMeshIsConvex(mesh);
 	mathConvexMeshMakeFacesOut(mesh);
 	return mesh;
 err_1:
@@ -350,6 +352,8 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	dst->bound_box = src->bound_box;
 	dst->polygons_cnt = src->polygons_cnt;
 	dst->edge_indices_cnt = src->edge_indices_cnt;
+	dst->edge_stride = src->edge_stride;
+	dst->is_convex = src->is_convex;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->polygons = dup_polygons;
 	dst->edge_indices = dup_edge_indices;
