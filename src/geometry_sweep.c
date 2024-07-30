@@ -835,10 +835,10 @@ static int polygon_edge_contain_point(const GeometryPolygon_t* polygon, const CC
 	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p);
 }
 
-static unsigned int geometry_indices_find_face_index(const GeometrySegmentIndices_t* si, const unsigned int* v_idx, unsigned int v_idx_cnt) {
+static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
 	unsigned int i;
-	for (i = 0; i < si->faces_cnt; ++i) {
-		const GeometryPolygon_t* face = si->faces + i;
+	for (i = 0; i < faces_cnt; ++i) {
+		const GeometryPolygon_t* face = faces + i;
 		unsigned int j;
 		for (j = 0; j < v_idx_cnt; ++j) {
 			unsigned int k;
@@ -879,7 +879,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 					result->peer[i].idx,
 					result_temp->peer[i].idx
 				};
-				unsigned int face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				unsigned int face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -902,7 +902,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 					v_idx[0] = peer_si_i->edge_indices[idx++];
 					v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 					v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-					face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+					face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 					if (face_idx != -1) {
 						result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 						result->peer[i].idx = face_idx;
@@ -924,7 +924,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -950,7 +950,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -976,7 +976,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result_temp->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
