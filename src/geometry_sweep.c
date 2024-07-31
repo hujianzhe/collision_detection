@@ -1197,8 +1197,8 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	s2.v = mesh->v;
 	s2.edge_indices = mesh->edge_indices;
 	s2.edge_indices_cnt = mesh->edge_indices_cnt;
-	s2.edge_stride = 2;
-	s2.is_convex = 1;
+	s2.edge_stride = mesh->edge_stride;
+	s2.is_convex = mesh->is_convex;
 	s2.faces = mesh->polygons;
 	s2.faces_cnt = mesh->polygons_cnt;
 	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
@@ -1824,8 +1824,8 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	s1.v = mesh->v;
 	s1.edge_indices = mesh->edge_indices;
 	s1.edge_indices_cnt = mesh->edge_indices_cnt;
-	s1.edge_stride = 2;
-	s1.is_convex = 1;
+	s1.edge_stride = mesh->edge_stride;
+	s1.is_convex = mesh->is_convex;
 	s1.faces = mesh->polygons;
 	s1.faces_cnt = mesh->polygons_cnt;
 	s2.v = polygon->v;
