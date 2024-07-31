@@ -1664,40 +1664,95 @@ static CCTSweepResult_t* Circle_Sweep_Polygon(const GeometryCircle_t* circle, co
 	return result;
 }
 
-static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	CCTNum_t min_d, dot;
-	unsigned int v_idx;
-	int res = Vertices_Intersect_Plane(v, v_indices, v_indices_cnt, plane_v, plane_n, &min_d, &v_idx);
-	if (res) {
-		set_intersect(result);
-		if (1 == res && v_idx != -1) {
-			set_unique_hit_point(result, v[v_idx]);
+static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
+	int flag_sign = 0, flag_nohit;
+	unsigned int i, same_v_idx[3], same_v_cnt = 0;
+	CCTNum_t cos_theta = mathVec3Dot(dir, plane_n);
+	flag_nohit = (CCTNum(0.0) == cos_theta);
+	for (i = 0; i < mesh->v_indices_cnt; ++i) {
+		CCTNum_t d = mathPointProjectionPlane(mesh->v[mesh->v_indices[i]], plane_v, plane_n);
+		if (d > CCTNum(0.0)) {
+			if (flag_sign < 0) {
+				set_intersect(result);
+				return result;
+			}
+			flag_sign = 1;
 		}
-		return result;
-	}
-	dot = mathVec3Dot(dir, plane_n);
-	if (CCTNum(0.0) == dot) {
-		return NULL;
-	}
-	min_d /= dot;
-	if (min_d < CCTNum(0.0)) {
-		return NULL;
-	}
-	result->distance = min_d;
-	mathVec3Copy(result->hit_plane_n, plane_n);
-	if (v_idx != -1) {
-		mathVec3Copy(result->hit_plane_v, v[v_idx]);
-		mathVec3AddScalar(result->hit_plane_v, dir, min_d);
+		else if (d < CCTNum(0.0)) {
+			if (flag_sign > 0) {
+				set_intersect(result);
+				return result;
+			}
+			flag_sign = -1;
+		}
+		else {
+			set_intersect(result);
+			return result;
+		}
+		if (flag_nohit) {
+			continue;
+		}
+		d /= cos_theta;
+		if (d < CCTNum(0.0)) {
+			flag_nohit = 1;
+			continue;
+		}
+		if (0 == i) {
+			result->distance = d;
+		}
+		else if (d > result->distance + CCT_EPSILON) {
+			continue;
+		}
+		else if (d < result->distance - CCT_EPSILON) {
+			result->distance = d;
+		}
+		else {
+			unsigned int idx;
+			if (d < result->distance) {
+				result->distance = d;
+			}
+			if (same_v_cnt >= 3) {
+				continue;
+			}
+			same_v_idx[same_v_cnt++] = mesh->v_indices[i];
+			if (2 == same_v_cnt) {
+				idx = mathFindEdgeIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, same_v_idx[0], same_v_idx[1]);
+				if (idx != -1) {
+					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+					result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+					result->peer[0].idx = idx;
+					continue;
+				}
+			}
+			idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
+			if (idx != -1) {
+				result->hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[0].idx = idx;
+				continue;
+			}
+			result->hit_bits = 0;
+			result->peer[0].hit_bits = 0;
+			result->peer[0].idx = 0;
+			continue;
+		}
 		result->hit_bits = CCT_SWEEP_BIT_POINT;
 		result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-		result->peer[0].idx = v_idx;
+		result->peer[0].idx = mesh->v_indices[i];
+		same_v_idx[0] = mesh->v_indices[i];
+		same_v_cnt = 1;
+	}
+	if (flag_nohit) {
+		return NULL;
+	}
+	if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
+		mathVec3Copy(result->hit_plane_v, mesh->v[result->peer[0].idx]);
+		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	}
 	else {
 		mathVec3Copy(result->hit_plane_v, plane_v);
-		result->hit_bits = 0;
-		result->peer[0].hit_bits = 0;
-		result->peer[0].idx = 0;
 	}
+	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
 	result->peer[1].idx = 0;
 	return result;
@@ -1705,11 +1760,12 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
 	unsigned int i, neg_flag;
-	GeometryMesh_t s1, s2;
+	GeometryMesh_t m1, m2;
 	CCTNum_t neg_dir[3];
 	CCTSweepResult_t* p_result;
 	const CCTNum_t* p2p = polygon2->v[polygon2->v_indices[0]];
-	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])polygon1->v, polygon1->v_indices, polygon1->v_indices_cnt, dir, p2p, polygon2->normal, result)) {
+	sweep_mesh_convert_from_polygon(&m1, polygon1);
+	if (!Mesh_Sweep_Plane(&m1, dir, p2p, polygon2->normal, result)) {
 		return NULL;
 	}
 	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
@@ -1730,9 +1786,8 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	else if (Polygon_Intersect_Polygon(polygon1, polygon2)) {
 		return set_intersect(result);
 	}
-	sweep_mesh_convert_from_polygon(&s1, polygon1);
-	sweep_mesh_convert_from_polygon(&s2, polygon2);
-	p_result = MeshSegment_Sweep_MeshSegment(&s1, dir, &s2, result);
+	sweep_mesh_convert_from_polygon(&m2, polygon2);
+	p_result = MeshSegment_Sweep_MeshSegment(&m1, dir, &m2, result);
 	mathVec3Negate(neg_dir, dir);
 	neg_flag = 0;
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
@@ -1808,10 +1863,10 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	int i, neg_flag;
 	CCTNum_t* pp, neg_dir[3];
 	CCTSweepResult_t* p_result;
-	GeometryMesh_t s2;
+	GeometryMesh_t m2;
 
 	pp = polygon->v[polygon->v_indices[0]];
-	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, dir, pp, polygon->normal, result)) {
+	if (!Mesh_Sweep_Plane(mesh, dir, pp, polygon->normal, result)) {
 		return NULL;
 	}
 	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
@@ -1832,8 +1887,8 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	else if (ConvexMesh_Intersect_Polygon(mesh, polygon)) {
 		return result;
 	}
-	sweep_mesh_convert_from_polygon(&s2, polygon);
-	p_result = MeshSegment_Sweep_MeshSegment(mesh, dir, &s2, result);
+	sweep_mesh_convert_from_polygon(&m2, polygon);
+	p_result = MeshSegment_Sweep_MeshSegment(mesh, dir, &m2, result);
 	mathVec3Negate(neg_dir, dir);
 	neg_flag = 0;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
@@ -2263,9 +2318,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
+				GeometryBoxMesh_t one_mesh;
 				CCTNum_t v[8][3];
 				mathAABBVertices(one->aabb->o, one->aabb->half, v);
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, two->plane->v, two->plane->normal, result);
+				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, AABB_Axis);
+				result = Mesh_Sweep_Plane(&one_mesh.mesh, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SEGMENT:
@@ -2314,9 +2371,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
+				GeometryBoxMesh_t one_mesh;
 				CCTNum_t v[8][3];
 				mathOBBVertices(one->obb, v);
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, dir, two->plane->v, two->plane->normal, result);
+				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])one->obb->axis);
+				result = Mesh_Sweep_Plane(&one_mesh.mesh, dir, two->plane->v, two->plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
@@ -2415,9 +2474,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
+				GeometryMesh_t one_mesh;
 				const GeometryPolygon_t* polygon = one->polygon;
 				const GeometryPlane_t* plane = two->plane;
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, dir, plane->v, plane->normal, result);
+				sweep_mesh_convert_from_polygon(&one_mesh, polygon);
+				result = Mesh_Sweep_Plane(&one_mesh, dir, plane->v, plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
@@ -2479,7 +2540,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				const GeometryMesh_t* mesh = one->mesh;
 				const GeometryPlane_t* plane = two->plane;
-				result = Vertices_Sweep_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, dir, plane->v, plane->normal, result);
+				result = Mesh_Sweep_Plane(mesh, dir, plane->v, plane->normal, result);
 				break;
 			}
 			case GEOMETRY_BODY_SPHERE:
