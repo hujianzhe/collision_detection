@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+const unsigned int Segment_Indices_Default[2] = { 0, 1 };
+
 CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);
