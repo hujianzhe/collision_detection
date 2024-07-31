@@ -102,9 +102,9 @@ static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCir
 
 int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_idx) {
 	int i, has_gt0 = 0, has_le0 = 0, has_eq0 = 0, idx_min = -1;
-	CCTNum_t min_d;
+	CCTNum_t min_d, abs_min_d;
 	for (i = 0; i < v_indices_cnt; ++i) {
-		CCTNum_t d, abs_d, abs_min_d;
+		CCTNum_t d, abs_d;
 		d = mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n);
 		if (d > CCTNum(0.0)) {
 			if (has_le0) {
