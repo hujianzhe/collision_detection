@@ -135,7 +135,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	return polygon;
 }
 
-void mathBoxMesh(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], GeometryBoxMesh_t* bm) {
+void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t v[8][3], const CCTNum_t axis[3][3]) {
 	unsigned int i;
 	CCTNum_t min_v[3], max_v[3];
 	GeometryMesh_t* mesh = &bm->mesh;

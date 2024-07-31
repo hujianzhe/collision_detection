@@ -11,8 +11,9 @@
 extern "C" {
 #endif
 
-GeometrySegmentIndices_t* mathSegmentToIndices(const CCTNum_t ls[2][3], GeometrySegmentIndices_t* si) {
-	static const unsigned int Segment_Indices_Default[2] = { 0, 1 };
+const unsigned int Segment_Indices_Default[2] = { 0, 1 };
+
+GeometrySegmentIndices_t* mathSegmentIndices(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]) {
 	si->v = (CCTNum_t(*)[3])ls;
 	si->edge_indices = Segment_Indices_Default;
 	si->edge_indices_cnt = 2;

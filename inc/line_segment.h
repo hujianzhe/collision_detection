@@ -30,7 +30,7 @@ __declspec_dll void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], 
 __declspec_dll CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices);
 __declspec_dll int mathSegmentClosestSegment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t closest_p[2][3]);
 
-__declspec_dll GeometrySegmentIndices_t* mathSegmentToIndices(const CCTNum_t ls[2][3], GeometrySegmentIndices_t* si);
+__declspec_dll GeometrySegmentIndices_t* mathSegmentIndices(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]);
 
 #ifdef	__cplusplus
 }

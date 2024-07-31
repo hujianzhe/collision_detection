@@ -60,7 +60,7 @@ __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int ind
 __declspec_dll const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]);
 __declspec_dll CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CCTNum_t normal[3]);
 __declspec_dll GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_idx, GeometryPolygon_t* polygon);
-__declspec_dll void mathBoxMesh(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], GeometryBoxMesh_t* bm);
+__declspec_dll void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t v[8][3], const CCTNum_t axis[3][3]);
 
 #ifdef __cplusplus
 }
