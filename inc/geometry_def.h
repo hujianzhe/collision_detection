@@ -71,8 +71,6 @@ typedef struct GeometrySegmentIndices_t {
 	unsigned int edge_indices_cnt;
 	unsigned short edge_stride;
 	short is_convex;
-	const GeometryPolygon_t* faces;
-	unsigned int faces_cnt;
 } GeometrySegmentIndices_t;
 
 /*********************************************************************/

@@ -19,8 +19,6 @@ GeometrySegmentIndices_t* mathSegmentIndices(GeometrySegmentIndices_t* si, const
 	si->edge_indices_cnt = 2;
 	si->edge_stride = 2;
 	si->is_convex = 1;
-	si->faces = NULL;
-	si->faces_cnt = 0;
 	return si;
 }
 

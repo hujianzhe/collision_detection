@@ -18,6 +18,7 @@ extern const CCTNum_t AABB_Axis[3][3];
 extern const CCTNum_t AABB_Plane_Normal[6][3];
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Indices_Default[8];
+extern const unsigned int Segment_Indices_Default[2];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
@@ -63,6 +64,59 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 static void set_unique_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
 	result->hit_bits |= CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_v, p);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) {
+	mesh->v = (CCTNum_t(*)[3])ls;
+	mesh->edge_indices = Segment_Indices_Default;
+	mesh->edge_indices_cnt = 2;
+	mesh->edge_stride = 2;
+	mesh->is_convex = 1;
+	mesh->polygons = NULL;
+	mesh->polygons_cnt = 0;
+}
+
+static void sweep_mesh_convert_from_segentindices(GeometryMesh_t* mesh, const GeometrySegmentIndices_t* si) {
+	mesh->v = si->v;
+	mesh->edge_indices = si->edge_indices;
+	mesh->edge_indices_cnt = si->edge_indices_cnt;
+	mesh->edge_stride = si->edge_stride;
+	mesh->is_convex = si->is_convex;
+	mesh->polygons = NULL;
+	mesh->polygons_cnt = 0;
+}
+
+static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
+	mesh->v = polygon->v;
+	mesh->edge_indices = polygon->v_indices;
+	mesh->edge_indices_cnt = polygon->v_indices_cnt;
+	mesh->edge_stride = 1;
+	mesh->is_convex = 0;
+	mesh->polygons = (GeometryPolygon_t*)polygon;
+	mesh->polygons_cnt = 1;
+}
+
+static int polygon_edge_contain_point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+	CCTNum_t edge[2][3];
+	unsigned int i, v_idx[2];
+	for (i = 1; i < polygon->v_indices_cnt; ) {
+		v_idx[0] = polygon->v_indices[i - 1];
+		v_idx[1] = polygon->v_indices[i++];
+		mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
+		mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
+		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, p)) {
+			return 1;
+		}
+	}
+	v_idx[0] = polygon->v_indices[i - 1];
+	v_idx[1] = polygon->v_indices[0];
+	mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
+	mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
+	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -817,25 +871,6 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-static int polygon_edge_contain_point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	CCTNum_t edge[2][3];
-	unsigned int i, v_idx[2];
-	for (i = 1; i < polygon->v_indices_cnt; ) {
-		v_idx[0] = polygon->v_indices[i - 1];
-		v_idx[1] = polygon->v_indices[i++];
-		mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
-		mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
-		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, p)) {
-			return 1;
-		}
-	}
-	v_idx[0] = polygon->v_indices[i - 1];
-	v_idx[1] = polygon->v_indices[0];
-	mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
-	mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
-	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p);
-}
-
 static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
 	unsigned int i;
 	for (i = 0; i < faces_cnt; ++i) {
@@ -859,12 +894,12 @@ static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* fa
 	return -1;
 }
 
-static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometrySegmentIndices_t* si[2]) {
+static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometryMesh_t* si[2]) {
 	int is_convex = (si[0]->is_convex && si[1]->is_convex);
 	int discard = 0;
 	int i, result_hit_bits = result->hit_bits;
 	for (i = 0; i < 2; ++i) {
-		const GeometrySegmentIndices_t* peer_si_i = si[i];
+		const GeometryMesh_t* peer_si_i = si[i];
 		if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
 			unsigned int idx;
 			if (result->peer[i].idx == result_temp->peer[i].idx) {
@@ -880,7 +915,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 					result->peer[i].idx,
 					result_temp->peer[i].idx
 				};
-				unsigned int face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				unsigned int face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -903,7 +938,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 					v_idx[0] = peer_si_i->edge_indices[idx++];
 					v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 					v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-					face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+					face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 					if (face_idx != -1) {
 						result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 						result->peer[i].idx = face_idx;
@@ -925,7 +960,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -951,7 +986,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -977,7 +1012,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 				v_idx[0] = peer_si_i->edge_indices[idx++];
 				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
 				v_idx[2] = result_temp->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i->faces, peer_si_i->faces_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
 					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
 					result->peer[i].idx = face_idx;
@@ -1010,11 +1045,11 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 	}
 }
 
-static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegmentIndices_t* s1, const CCTNum_t dir[3], const GeometrySegmentIndices_t* s2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1, const CCTNum_t dir[3], const GeometryMesh_t* s2, CCTSweepResult_t* result) {
 	unsigned int i, j;
 	CCTSweepResult_t result_temp;
 	CCTSweepResult_t* p_result = NULL;
-	const GeometrySegmentIndices_t* peer_si[2] = { s1, s2 };
+	const GeometryMesh_t* peer_si[2] = { s1, s2 };
 	for (i = 0; i < s1->edge_indices_cnt; ) {
 		CCTNum_t edge1[2][3];
 		unsigned int v_idx1[2];
@@ -1093,7 +1128,7 @@ static CCTSweepResult_t* SegmentIndices_Sweep_SegmentIndices(const GeometrySegme
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	GeometrySegmentIndices_t s1, s2;
+	GeometryMesh_t s1, s2;
 	CCTNum_t p[3], d[3];
 	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
 	if (1 == res) {
@@ -1176,33 +1211,20 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			}
 		}
 	}
-	mathSegmentIndices(&s1, ls);
-	s2.v = polygon->v;
-	s2.edge_indices = polygon->v_indices;
-	s2.edge_indices_cnt = polygon->v_indices_cnt;
-	s2.edge_stride = 1;
-	s2.is_convex = 0;
-	s2.faces = polygon;
-	s2.faces_cnt = 1;
-	return SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
+	sweep_mesh_convert_from_segment(&s1, ls);
+	sweep_mesh_convert_from_polygon(&s2, polygon);
+	return MeshSegment_Sweep_MeshSegment(&s1, dir, &s2, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
-	GeometrySegmentIndices_t s1, s2;
+	GeometryMesh_t s1;
 	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
 		return set_intersect(result);
 	}
-	mathSegmentIndices(&s1, ls);
-	s2.v = mesh->v;
-	s2.edge_indices = mesh->edge_indices;
-	s2.edge_indices_cnt = mesh->edge_indices_cnt;
-	s2.edge_stride = mesh->edge_stride;
-	s2.is_convex = mesh->is_convex;
-	s2.faces = mesh->polygons;
-	s2.faces_cnt = mesh->polygons_cnt;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
+	sweep_mesh_convert_from_segment(&s1, ls);
+	p_result = MeshSegment_Sweep_MeshSegment(&s1, dir, mesh, result);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		CCTNum_t p[3], d[3], cos_theta, dlen;
@@ -1683,7 +1705,7 @@ static CCTSweepResult_t* Vertices_Sweep_Plane(const CCTNum_t(*v)[3], const unsig
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
 	unsigned int i, neg_flag;
-	GeometrySegmentIndices_t s1, s2;
+	GeometryMesh_t s1, s2;
 	CCTNum_t neg_dir[3];
 	CCTSweepResult_t* p_result;
 	const CCTNum_t* p2p = polygon2->v[polygon2->v_indices[0]];
@@ -1708,21 +1730,9 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	else if (Polygon_Intersect_Polygon(polygon1, polygon2)) {
 		return set_intersect(result);
 	}
-	s1.v = polygon1->v;
-	s1.edge_indices = polygon1->v_indices;
-	s1.edge_indices_cnt = polygon1->v_indices_cnt;
-	s1.edge_stride = 1;
-	s1.is_convex = 0;
-	s1.faces = polygon1;
-	s1.faces_cnt = 1;
-	s2.v = polygon2->v;
-	s2.edge_indices = polygon2->v_indices;
-	s2.edge_indices_cnt = polygon2->v_indices_cnt;
-	s2.edge_stride = 1;
-	s2.is_convex = 0;
-	s2.faces = polygon2;
-	s2.faces_cnt = 1;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
+	sweep_mesh_convert_from_polygon(&s1, polygon1);
+	sweep_mesh_convert_from_polygon(&s2, polygon2);
+	p_result = MeshSegment_Sweep_MeshSegment(&s1, dir, &s2, result);
 	mathVec3Negate(neg_dir, dir);
 	neg_flag = 0;
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
@@ -1798,7 +1808,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	int i, neg_flag;
 	CCTNum_t* pp, neg_dir[3];
 	CCTSweepResult_t* p_result;
-	GeometrySegmentIndices_t s1, s2;
+	GeometryMesh_t s2;
 
 	pp = polygon->v[polygon->v_indices[0]];
 	if (!Vertices_Sweep_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, dir, pp, polygon->normal, result)) {
@@ -1822,21 +1832,8 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	else if (ConvexMesh_Intersect_Polygon(mesh, polygon)) {
 		return result;
 	}
-	s1.v = mesh->v;
-	s1.edge_indices = mesh->edge_indices;
-	s1.edge_indices_cnt = mesh->edge_indices_cnt;
-	s1.edge_stride = mesh->edge_stride;
-	s1.is_convex = mesh->is_convex;
-	s1.faces = mesh->polygons;
-	s1.faces_cnt = mesh->polygons_cnt;
-	s2.v = polygon->v;
-	s2.edge_indices = polygon->v_indices;
-	s2.edge_indices_cnt = polygon->v_indices_cnt;
-	s2.edge_stride = 1;
-	s2.is_convex = 0;
-	s2.faces = polygon;
-	s2.faces_cnt = 1;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
+	sweep_mesh_convert_from_polygon(&s2, polygon);
+	p_result = MeshSegment_Sweep_MeshSegment(mesh, dir, &s2, result);
 	mathVec3Negate(neg_dir, dir);
 	neg_flag = 0;
 	for (i = 0; i < polygon->v_indices_cnt; ++i) {
@@ -1874,27 +1871,12 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 	unsigned int i;
 	CCTNum_t neg_dir[3];
 	CCTSweepResult_t* p_result;
-	GeometrySegmentIndices_t s1, s2;
-	const GeometrySegmentIndices_t* peer_si[2] = { &s1, &s2 };
+	const GeometryMesh_t* peer_si[2] = { mesh1, mesh2 };
 
 	if (check_intersect && ConvexMesh_Intersect_ConvexMesh(mesh1, mesh2)) {
 		return set_intersect(result);
 	}
-	s1.v = mesh1->v;
-	s1.edge_indices = mesh1->edge_indices;
-	s1.edge_indices_cnt = mesh1->edge_indices_cnt;
-	s1.edge_stride = mesh1->edge_stride;
-	s1.is_convex = mesh1->is_convex;
-	s1.faces = mesh1->polygons;
-	s1.faces_cnt = mesh1->polygons_cnt;
-	s2.v = mesh2->v;
-	s2.edge_indices = mesh2->edge_indices;
-	s2.edge_indices_cnt = mesh2->edge_indices_cnt;
-	s2.edge_stride = mesh2->edge_stride;
-	s2.is_convex = mesh2->is_convex;
-	s2.faces = mesh2->polygons;
-	s2.faces_cnt = mesh2->polygons_cnt;
-	p_result = SegmentIndices_Sweep_SegmentIndices(&s1, dir, &s2, result);
+	p_result = MeshSegment_Sweep_MeshSegment(mesh1, dir, mesh2, result);
 	for (i = 0; i < mesh2->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon2 = mesh2->polygons + i;
 		const CCTNum_t* polygon2_p = polygon2->v[polygon2->v_indices[0]];
@@ -2542,7 +2524,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 		switch (two->type) {
 			case GEOMETRY_BODY_SEGMENT_INDICES:
 			{
-				result = SegmentIndices_Sweep_SegmentIndices(one->segment_indices, dir, two->segment_indices, result);
+				GeometryMesh_t one_mesh, two_mesh;
+				sweep_mesh_convert_from_segentindices(&one_mesh, one->segment_indices);
+				sweep_mesh_convert_from_segentindices(&two_mesh, two->segment_indices);
+				result = MeshSegment_Sweep_MeshSegment(&one_mesh, dir, &two_mesh, result);
 				break;
 			}
 		}
