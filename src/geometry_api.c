@@ -134,66 +134,6 @@ void mathGeometryFreeRef(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-GeometrySegmentIndices_t* mathGeometryIndicesFromSegment(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]) {
-	static const unsigned int indices[2] = { 0, 1 };
-	si->v = (CCTNum_t(*)[3])ls;
-	si->edge_indices = indices;
-	si->edge_indices_cnt = 2;
-	si->edge_stride = 2;
-	si->is_convex = 1;
-	si->faces = NULL;
-	si->faces_cnt = 0;
-	return si;
-}
-
-unsigned int mathGeometryIndicesFindEdgeIndex(const GeometrySegmentIndices_t* si, unsigned int v_idx0, unsigned int v_idx1) {
-	unsigned int i;
-	if (si->edge_stride != 1) {
-		for (i = 0; i < si->edge_indices_cnt; ++i) {
-			unsigned int idx = si->edge_indices[i++];
-			if (v_idx0 == idx) {
-				if (v_idx1 == si->edge_indices[i]) {
-					return i >> 1;
-				}
-				continue;
-			}
-			if (v_idx1 == idx) {
-				if (v_idx0 == si->edge_indices[i]) {
-					return i >> 1;
-				}
-				continue;
-			}
-		}
-	}
-	else {
-		for (i = 1; i < si->edge_indices_cnt; ++i) {
-			if (v_idx0 == si->edge_indices[i]) {
-				if (v_idx1 == si->edge_indices[i - 1]) {
-					return i - 1;
-				}
-				continue;
-			}
-			if (v_idx1 == si->edge_indices[i]) {
-				if (v_idx0 == si->edge_indices[i - 1]) {
-					return i - 1;
-				}
-				continue;
-			}
-		}
-		if (v_idx0 == si->edge_indices[0]) {
-			if (v_idx1 == si->edge_indices[--i]) {
-				return i;
-			}
-		}
-		if (v_idx1 == si->edge_indices[0]) {
-			if (v_idx0 == si->edge_indices[--i]) {
-				return i;
-			}
-		}
-	}
-	return -1;
-}
-
 const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]) {
 	const CCTNum_t* ptr_v;
 	switch (b->type) {

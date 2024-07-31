@@ -17,6 +17,8 @@ __declspec_dll unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], unsigne
 __declspec_dll int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]);
 __declspec_dll int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]);
 
+__declspec_dll unsigned int mathFindEdgeIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned short edge_stride, unsigned int v_idx0, unsigned int v_idx1);
+
 #ifdef	__cplusplus
 }
 #endif

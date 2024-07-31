@@ -36,9 +36,6 @@ __declspec_dll void mathGeometryFree(void* geo_data, int geo_type);
 __declspec_dll void mathGeometryFreeBody(GeometryBody_t* b);
 __declspec_dll void mathGeometryFreeRef(GeometryBodyRef_t* b);
 
-__declspec_dll GeometrySegmentIndices_t* mathGeometryIndicesFromSegment(GeometrySegmentIndices_t* si, const CCTNum_t ls[2][3]);
-__declspec_dll unsigned int mathGeometryIndicesFindEdgeIndex(const GeometrySegmentIndices_t* si, unsigned int v_idx0, unsigned int v_idx1);
-
 __declspec_dll const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]);
 __declspec_dll void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]);
 

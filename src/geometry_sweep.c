@@ -3,6 +3,7 @@
 //
 
 #include "../inc/math_vec3.h"
+#include "../inc/vertex.h"
 #include "../inc/line_segment.h"
 #include "../inc/plane.h"
 #include "../inc/aabb.h"
@@ -869,7 +870,7 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 			if (result->peer[i].idx == result_temp->peer[i].idx) {
 				continue;
 			}
-			idx = mathGeometryIndicesFindEdgeIndex(peer_si_i, result->peer[i].idx, result_temp->peer[i].idx);
+			idx = mathFindEdgeIndex(peer_si_i->edge_indices, peer_si_i->edge_indices_cnt, peer_si_i->edge_stride, result->peer[i].idx, result_temp->peer[i].idx);
 			if (idx != -1) {
 				result->peer[i].hit_bits = CCT_SWEEP_BIT_SEGMENT;
 				result->peer[i].idx = idx;
@@ -1175,7 +1176,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 			}
 		}
 	}
-	mathGeometryIndicesFromSegment(&s1, ls);
+	mathSegmentToIndices(ls, &s1);
 	s2.v = polygon->v;
 	s2.edge_indices = polygon->v_indices;
 	s2.edge_indices_cnt = polygon->v_indices_cnt;
@@ -1193,7 +1194,7 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
 		return set_intersect(result);
 	}
-	mathGeometryIndicesFromSegment(&s1, ls);
+	mathSegmentToIndices(ls, &s1);
 	s2.v = mesh->v;
 	s2.edge_indices = mesh->edge_indices;
 	s2.edge_indices_cnt = mesh->edge_indices_cnt;

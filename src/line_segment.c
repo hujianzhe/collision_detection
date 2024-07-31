@@ -11,7 +11,17 @@
 extern "C" {
 #endif
 
-const unsigned int Segment_Indices_Default[2] = { 0, 1 };
+GeometrySegmentIndices_t* mathSegmentToIndices(const CCTNum_t ls[2][3], GeometrySegmentIndices_t* si) {
+	static const unsigned int Segment_Indices_Default[2] = { 0, 1 };
+	si->v = (CCTNum_t(*)[3])ls;
+	si->edge_indices = Segment_Indices_Default;
+	si->edge_indices_cnt = 2;
+	si->edge_stride = 2;
+	si->is_convex = 1;
+	si->faces = NULL;
+	si->faces_cnt = 0;
+	return si;
+}
 
 CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
 	CCTNum_t vp[3], dot;
