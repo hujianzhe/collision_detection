@@ -71,6 +71,8 @@ static void set_unique_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) 
 
 static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) {
 	mesh->v = (CCTNum_t(*)[3])ls;
+	mesh->v_indices = Segment_Indices_Default;
+	mesh->v_indices_cnt = 2;
 	mesh->edge_indices = Segment_Indices_Default;
 	mesh->edge_indices_cnt = 2;
 	mesh->edge_stride = 2;
@@ -91,6 +93,8 @@ static void sweep_mesh_convert_from_segentindices(GeometryMesh_t* mesh, const Ge
 
 static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	mesh->v = polygon->v;
+	mesh->v_indices = polygon->v_indices;
+	mesh->v_indices_cnt = polygon->v_indices_cnt;
 	mesh->edge_indices = polygon->v_indices;
 	mesh->edge_indices_cnt = polygon->v_indices_cnt;
 	mesh->edge_stride = 1;
