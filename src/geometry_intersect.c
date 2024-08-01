@@ -195,7 +195,7 @@ static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircl
 	return 0;
 }
 
-static int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon) {
+int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon) {
 	int res, i;
 	CCTNum_t p[3];
 	res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
