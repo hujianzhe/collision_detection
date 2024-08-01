@@ -100,47 +100,53 @@ static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCir
 	return 0;
 }
 
-int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t* p_min_d, unsigned int* p_v_idx) {
-	int i, has_gt0 = 0, has_le0 = 0, has_eq0 = 0, idx_min = -1;
-	CCTNum_t min_d, abs_min_d;
-	for (i = 0; i < v_indices_cnt; ++i) {
-		CCTNum_t d, abs_d;
+static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], unsigned int* p_v_idx) {
+	int flag_sign, has_eq0 = 0;
+	unsigned int i, idx_min = -1;
+	CCTNum_t d, abs_min_d;
+	d = mathPointProjectionPlane(v[v_indices[0]], plane_v, plane_n);
+	if (d > CCTNum(0.0)) {
+		flag_sign = 1;
+		abs_min_d = d;
+	}
+	else if (d < CCTNum(0.0)) {
+		flag_sign = -1;
+		abs_min_d = -d;
+	}
+	else {
+		flag_sign = 0;
+		abs_min_d = CCTNum(0.0);
+		has_eq0 = 1;
+	}
+	idx_min = v_indices[0];
+	for (i = 1; i < v_indices_cnt; ++i) {
+		CCTNum_t abs_d;
 		d = mathPointProjectionPlane(v[v_indices[i]], plane_v, plane_n);
 		if (d > CCTNum(0.0)) {
-			if (has_le0) {
+			if (flag_sign < 0) {
 				return 2;
 			}
-			has_gt0 = 1;
-			abs_d = CCTNum_abs(d);
+			flag_sign = 1;
+			abs_d = d;
 		}
 		else if (d < CCTNum(0.0)) {
-			if (has_gt0) {
+			if (flag_sign > 0) {
 				return 2;
 			}
-			has_le0 = 1;
-			abs_d = CCTNum_abs(d);
+			flag_sign = -1;
+			abs_d = -d;
 		}
 		else {
-			d = abs_d = CCTNum(0.0);
+			abs_d = CCTNum(0.0);
 			has_eq0 = 1;
 		}
-
-		if (0 == i) {
-			min_d = d;
-			abs_min_d = abs_d;
-			idx_min = v_indices[0];
-		}
-		else if (abs_min_d > abs_d) {
-			min_d = d;
+		if (abs_min_d > abs_d) {
 			abs_min_d = abs_d;
 			idx_min = v_indices[i];
 		}
 		else if (abs_min_d == abs_d) {
 			idx_min = -1;
 		}
-	}
-	if (p_min_d) {
-		*p_min_d = min_d;
 	}
 	if (p_v_idx) {
 		*p_v_idx = idx_min;
@@ -346,7 +352,7 @@ static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const Geom
 int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle_t* circle) {
 	int res;
 	unsigned int i, v_idx = -1;
-	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, circle->o, circle->normal, NULL, &v_idx);
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, circle->o, circle->normal, &v_idx);
 	if (0 == res) {
 		return 0;
 	}
@@ -368,7 +374,7 @@ int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	int res;
 	unsigned int i, v_idx = -1;
-	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, &v_idx);
+	res = Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, polygon->v[polygon->v_indices[0]], polygon->normal, &v_idx);
 	if (0 == res) {
 		return 0;
 	}
@@ -816,7 +822,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				const GeometryPlane_t* plane = two->plane;
 				CCTNum_t v[8][3];
 				mathAABBVertices(one->aabb->o, one->aabb->half, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -893,14 +899,14 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				const GeometryPlane_t* plane = one->plane;
 				CCTNum_t v[8][3];
 				mathAABBVertices(two->aabb->o, two->aabb->half, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				const GeometryPlane_t* plane = one->plane;
 				CCTNum_t v[8][3];
 				mathOBBVertices(two->obb, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -918,13 +924,13 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			{
 				const GeometryPlane_t* plane = one->plane;
 				const GeometryPolygon_t* polygon = two->polygon;
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				const GeometryPlane_t* plane = one->plane;
 				const GeometryMesh_t* mesh = two->mesh;
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane->v, plane->normal, NULL);
 			}
 		}
 	}
@@ -942,7 +948,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			{
 				const GeometryPlane_t* plane = two->plane;
 				const GeometryPolygon_t* polygon = one->polygon;
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -989,7 +995,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				const GeometryPlane_t* plane = two->plane;
 				CCTNum_t v[8][3];
 				mathOBBVertices(one->obb, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -1037,7 +1043,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			{
 				const GeometryPlane_t* plane = two->plane;
 				const GeometryMesh_t* mesh = one->mesh;
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane->v, plane->normal, NULL, NULL);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane->v, plane->normal, NULL);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
