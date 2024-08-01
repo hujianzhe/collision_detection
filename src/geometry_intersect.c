@@ -317,19 +317,21 @@ static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const Geom
 }
 
 int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle_t* circle) {
-	int flag_sign = 0;
+	int flag_sign = 0, all_one_side = 1;
 	unsigned int i;
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* mesh_p = mesh->v[mesh->v_indices[i]];
 		CCTNum_t d = mathPointProjectionPlane(mesh_p, circle->o, circle->normal);
 		if (d > CCTNum(0.0)) {
 			if (flag_sign < 0) {
+				all_one_side = 0;
 				break;
 			}
 			flag_sign = 1;
 		}
 		else if (d < CCTNum(0.0)) {
 			if (flag_sign > 0) {
+				all_one_side = 0;
 				break;
 			}
 			flag_sign = -1;
@@ -339,9 +341,10 @@ int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle
 			if (lensq <= CCTNum_sq(circle->radius)) {
 				return 1;
 			}
+			all_one_side = 0;
 		}
 	}
-	if (i >= mesh->v_indices_cnt) {
+	if (all_one_side) {
 		return 0;
 	}
 	if (ConvexMesh_Contain_Point(mesh, circle->o)) {
@@ -356,28 +359,33 @@ int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle
 }
 
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
-	int flag_sign = 0;
+	int flag_sign = 0, all_one_side = 1;
 	unsigned int i;
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* mesh_p = mesh->v[mesh->v_indices[i]];
 		CCTNum_t d = mathPointProjectionPlane(mesh_p, polygon->v[polygon->v_indices[0]], polygon->normal);
 		if (d > CCTNum(0.0)) {
 			if (flag_sign < 0) {
+				all_one_side = 0;
 				break;
 			}
 			flag_sign = 1;
 		}
 		else if (d < CCTNum(0.0)) {
 			if (flag_sign > 0) {
+				all_one_side = 0;
 				break;
 			}
 			flag_sign = -1;
 		}
-		else if (Polygon_Contain_Point(polygon, mesh_p)) {
-			return 1;
+		else {
+			if (Polygon_Contain_Point(polygon, mesh_p)) {
+				return 1;
+			}
+			all_one_side = 0;
 		}
 	}
-	if (i >= mesh->v_indices_cnt) {
+	if (all_one_side) {
 		return 0;
 	}
 	for (i = 0; i < mesh->edge_indices_cnt; ) {
