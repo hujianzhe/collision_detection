@@ -490,15 +490,19 @@ static int Sphere_Intersect_Circle(const CCTNum_t o[3], CCTNum_t radius, const G
 	return 2;
 }
 
-static int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, CCTNum_t p[3]) {
+int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	int res, i;
-	CCTNum_t point[3];
-	if (!p) {
-		p = point;
-	}
+	CCTNum_t p[3];
 	res = Sphere_Intersect_Plane(o, radius, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
 	if (0 == res) {
+		if (ret_plane_side) {
+			CCTNum_t d = mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal);
+			*ret_plane_side = (d > CCTNum(0.0) ? 1 : -1);
+		}
 		return 0;
+	}
+	if (ret_plane_side) {
+		*ret_plane_side = 0;
 	}
 	if (Polygon_Contain_Point(polygon, p)) {
 		return res;
