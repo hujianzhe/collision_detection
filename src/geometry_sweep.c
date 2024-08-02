@@ -39,15 +39,14 @@ extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const Geomet
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTSweepResult_t* set_intersect(CCTSweepResult_t* result) {
-	result->distance = CCTNum(0.0);
+static void set_intersect(CCTSweepResult_t* result) {
 	mathVec3Set(result->hit_plane_n, CCTNums_3(0.0, 0.0, 0.0));
+	result->distance = CCTNum(0.0);
 	result->hit_bits = 0;
 	result->peer[0].hit_bits = 0;
 	result->peer[0].idx = 0;
 	result->peer[1].hit_bits = 0;
 	result->peer[1].idx = 0;
-	return result;
 }
 
 static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
@@ -136,7 +135,6 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		dot = mathVec3Dot(v0, v1);
 		if (dot <= CCTNum(0.0)) {
 			set_intersect(result);
-			set_unique_hit_point(result, o);
 			return result;
 		}
 		mathVec3Cross(N, dir, v0);
@@ -173,7 +171,6 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		mathVec3Sub(op, p, o);
 		if (mathVec3IsZero(op)) {
 			set_intersect(result);
-			set_unique_hit_point(result, o);
 			return result;
 		}
 		dot = mathVec3Dot(op, dir);
@@ -318,7 +315,8 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	mathVec3Sub(oc, sp_o, o);
 	oc_lensq = mathVec3LenSq(oc);
 	if (oc_lensq <= radius_sq) {
-		return set_intersect(result);
+		set_intersect(result);
+		return result;
 	}
 	dir_d = mathVec3Dot(dir, oc);
 	if (dir_d <= CCTNum(0.0)) {
@@ -365,7 +363,8 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	CCTSweepResult_t* p_result;
 	GeometrySegmentIndices_t si;
 	if (check_intersect && ConvexMesh_Contain_Point(mesh, o)) {
-		return set_intersect(result);
+		set_intersect(result);
+		return result;
 	}
 	p_result = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -417,19 +416,22 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			if (Segment_Contain_Point(ls1, ls2[1])) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls2[1])) {
-					return set_intersect(result);
+					set_intersect(result);
+					return result;
 				}
 				intersect_p = ls2[1];
 			}
 			if (Segment_Contain_Point(ls2, ls1[0])) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls1[0])) {
-					return set_intersect(result);
+					set_intersect(result);
+					return result;
 				}
 				intersect_p = ls1[0];
 			}
 			if (Segment_Contain_Point(ls2, ls1[1])) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls1[1])) {
-					return set_intersect(result);
+					set_intersect(result);
+					return result;
 				}
 				intersect_p = ls1[1];
 			}
@@ -1298,7 +1300,8 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 		mathSegmentClosestPointTo(ls, circle->o, p);
 		lensq = mathVec3DistanceSq(circle->o, p);
 		if (lensq <= CCTNum_sq(circle->radius)) {
-			return set_intersect(result);
+			set_intersect(result);
+			return result;
 		}
 		cos_theta = mathVec3Dot(circle->normal, dir);
 		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
@@ -1507,7 +1510,8 @@ static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, cons
 	d /= cos_theta;
 	abs_d = CCTNum_abs(d);
 	if (abs_d <= circle->radius) {
-		return set_intersect(result);
+		set_intersect(result);
+		return result;
 	}
 	mathVec3Copy(p, circle->o);
 	if (d > CCTNum(0.0)) {
@@ -1668,7 +1672,8 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 
 static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t dir[3], const CCTNum_t o2[3], const CCTNum_t half2[3], CCTSweepResult_t* result) {
 	if (AABB_Intersect_AABB(o1, half1, o2, half2)) {
-		return set_intersect(result);
+		set_intersect(result);
+		return result;
 	}
 	else {
 		CCTSweepResult_t* p_result = NULL;
@@ -1950,7 +1955,8 @@ static CCTSweepResult_t* Sphere_Sweep_OBB(const CCTNum_t o[3], CCTNum_t radius, 
 	GeometryBoxMesh_t mesh;
 	CCTNum_t v[8][3];
 	if (Sphere_Intersect_OBB(o, radius, obb)) {
-		return set_intersect(result);
+		set_intersect(result);
+		return result;
 	}
 	mathOBBVertices(obb, v);
 	mathBoxMesh(&mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis);
