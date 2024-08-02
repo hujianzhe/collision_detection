@@ -1395,15 +1395,9 @@ static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCT
 
 static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], N[3];
-	if (check_intersect) {
-		int res = Sphere_Intersect_Segment(center, radius, ls, result->hit_plane_v);
-		if (res) {
-			set_intersect(result);
-			if (1 == res) {
-				result->hit_bits = CCT_SWEEP_BIT_POINT;
-			}
-			return result;
-		}
+	if (check_intersect && Sphere_Intersect_Segment(center, radius, ls, result->hit_plane_v)) {
+		set_intersect(result);
+		return result;
 	}
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Cross(N, lsdir, dir);
