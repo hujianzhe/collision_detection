@@ -1707,6 +1707,16 @@ static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t ha
 	}
 }
 
+static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
+	GeometryMesh_t m1;
+	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
+		set_intersect(result);
+		return result;
+	}
+	sweep_mesh_convert_from_segment(&m1, ls);
+	return Mesh_Sweep_InternalHandler(&m1, dir, mesh, result);
+}
+
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	int all_one_side;
 	GeometryMesh_t m1, m2;
@@ -1728,16 +1738,6 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	sweep_mesh_convert_from_segment(&m1, ls);
 	sweep_mesh_convert_from_polygon(&m2, polygon);
 	return Mesh_Sweep_InternalHandler(&m1, dir, &m2, result);
-}
-
-static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
-	GeometryMesh_t m1;
-	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
-		set_intersect(result);
-		return result;
-	}
-	sweep_mesh_convert_from_segment(&m1, ls);
-	return Mesh_Sweep_InternalHandler(&m1, dir, mesh, result);
 }
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
