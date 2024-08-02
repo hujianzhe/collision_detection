@@ -33,7 +33,7 @@ extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
-extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_all_one_side);
+extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1742,20 +1742,9 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	GeometryMesh_t m2;
 	int all_one_side;
-	if (ConvexMesh_Intersect_Polygon(mesh, polygon, &all_one_side)) {
+	if (ConvexMesh_Intersect_Polygon(mesh, polygon)) {
 		set_intersect(result);
 		return result;
-	}
-	if (all_one_side) {
-		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		d = mathPointProjectionPlane(mesh->v[mesh->v_indices[0]], polygon->v[polygon->v_indices[0]], polygon->normal);
-		d /= cos_theta;
-		if (d < CCTNum(0.0)) {
-			return NULL;
-		}
 	}
 	sweep_mesh_convert_from_polygon(&m2, polygon);
 	return Mesh_Sweep_InternalHandler(mesh, dir, &m2, result);
