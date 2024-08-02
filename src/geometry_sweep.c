@@ -987,8 +987,20 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 			}
 			result->hit_bits = 0;
 		}
-		else if (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_FACE) {
-			result->peer[i] = result_temp->peer[i];
+		else if (result->peer[i].hit_bits != 0 && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_FACE)) {
+			if (result->peer[i].hit_bits < result_temp->peer[i].hit_bits) {
+				result->peer[i] = result_temp->peer[i];
+			}
+			else if (result->peer[i].hit_bits > result_temp->peer[i].hit_bits) {
+				result->peer[i].hit_bits = 0;
+				result->peer[i].idx = 0;
+				result->hit_bits = 0;
+			}
+			else if (result->peer[i].idx != result_temp->peer[i].idx) {
+				result->peer[i].hit_bits = 0;
+				result->peer[i].idx = 0;
+				result->hit_bits = 0;
+			}
 		}
 	}
 	if (discard) {
