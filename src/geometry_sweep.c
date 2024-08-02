@@ -937,14 +937,11 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 			}
 		}
 		else if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
-			CCTNum_t temp_edge[2][3];
-			unsigned int idx, v_idx;
-			idx = src_info->idx * mesh->edge_stride;
-			v_idx = mesh->edge_indices[idx++];
-			mathVec3Copy(temp_edge[0], mesh->v[v_idx]);
-			v_idx = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
-			mathVec3Copy(temp_edge[1], mesh->v[v_idx]);
-			if (!Segment_Contain_Point((const CCTNum_t(*)[3])temp_edge, mesh->v[dst_info->idx])) {
+			CCTNum_t edge[2][3];
+			unsigned int idx = src_info->idx * mesh->edge_stride;
+			mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[idx++]]);
+			mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx]]);
+			if (!Segment_Contain_Point((const CCTNum_t(*)[3])edge, mesh->v[dst_info->idx])) {
 				unsigned int idx = mesh->edge_stride * src_info->idx;
 				unsigned int v_idx[3], face_idx;
 				v_idx[0] = mesh->edge_indices[idx++];
