@@ -1741,7 +1741,6 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 
 static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	GeometryMesh_t m2;
-	int all_one_side;
 	if (ConvexMesh_Intersect_Polygon(mesh, polygon)) {
 		set_intersect(result);
 		return result;
