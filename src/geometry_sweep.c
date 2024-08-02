@@ -22,7 +22,7 @@ extern const unsigned int Segment_Indices_Default[2];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
-extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* all_one_side);
+extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
@@ -32,8 +32,8 @@ extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, con
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
-extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2);
-extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon);
+extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
+extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1718,13 +1718,13 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	int all_one_side;
+	int plane_side;
 	GeometryMesh_t m1, m2;
-	if (Segment_Intersect_Polygon(ls, polygon, &all_one_side)) {
+	if (Segment_Intersect_Polygon(ls, polygon, &plane_side)) {
 		set_intersect(result);
 		return result;
 	}
-	if (all_one_side) {
+	if (plane_side) {
 		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
 		if (CCTNum(0.0) == cos_theta) {
 			return NULL;
@@ -1741,10 +1741,22 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 }
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
+	int plane_side;
 	GeometryMesh_t m1, m2;
-	if (Polygon_Intersect_Polygon(polygon1, polygon2)) {
+	if (Polygon_Intersect_Polygon(polygon1, polygon2, &plane_side)) {
 		set_intersect(result);
 		return result;
+	}
+	if (plane_side) {
+		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon2->normal);
+		if (CCTNum(0.0) == cos_theta) {
+			return NULL;
+		}
+		d = mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal);
+		d /= cos_theta;
+		if (d < CCTNum(0.0)) {
+			return NULL;
+		}
 	}
 	sweep_mesh_convert_from_polygon(&m1, polygon1);
 	sweep_mesh_convert_from_polygon(&m2, polygon2);
@@ -1752,10 +1764,22 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 }
 
 static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	int plane_side;
 	GeometryMesh_t m2;
-	if (ConvexMesh_Intersect_Polygon(mesh, polygon)) {
+	if (ConvexMesh_Intersect_Polygon(mesh, polygon, &plane_side)) {
 		set_intersect(result);
 		return result;
+	}
+	if (plane_side) {
+		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
+		if (CCTNum(0.0) == cos_theta) {
+			return NULL;
+		}
+		d = mathPointProjectionPlane(mesh->v[mesh->v_indices[0]], polygon->v[polygon->v_indices[0]], polygon->normal);
+		d /= cos_theta;
+		if (d < CCTNum(0.0)) {
+			return NULL;
+		}
 	}
 	sweep_mesh_convert_from_polygon(&m2, polygon);
 	return Mesh_Sweep_InternalHandler(mesh, dir, &m2, result);
