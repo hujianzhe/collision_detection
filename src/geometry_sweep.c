@@ -857,131 +857,133 @@ static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* fa
 	return -1;
 }
 
-static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometryMesh_t* si[2]) {
+static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometryMesh_t* meshes[2]) {
 	int discard = 0;
 	int i, result_hit_bits = result->hit_bits;
 	for (i = 0; i < 2; ++i) {
-		const GeometryMesh_t* peer_si_i = si[i];
-		if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
+		CCTSweepHitInfo_t* dst_info = result->peer + i;
+		const CCTSweepHitInfo_t* src_info = result_temp->peer + i;
+		const GeometryMesh_t* mesh = meshes[i];
+		if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_POINT)) {
 			unsigned int idx;
-			if (result->peer[i].idx == result_temp->peer[i].idx) {
+			if (dst_info->idx == src_info->idx) {
 				continue;
 			}
-			idx = mathFindEdgeIndex(peer_si_i->edge_indices, peer_si_i->edge_indices_cnt, peer_si_i->edge_stride, result->peer[i].idx, result_temp->peer[i].idx);
+			idx = mathFindEdgeIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, dst_info->idx, src_info->idx);
 			if (idx != -1) {
-				result->peer[i].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i].idx = idx;
+				dst_info->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				dst_info->idx = idx;
 			}
 			else {
 				const unsigned int v_idx[2] = {
-					result->peer[i].idx,
-					result_temp->peer[i].idx
+					dst_info->idx,
+					src_info->idx
 				};
-				unsigned int face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				unsigned int face_idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
-					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
-					result->peer[i].idx = face_idx;
+					dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
+					dst_info->idx = face_idx;
 				}
 				else {
-					result->peer[i].hit_bits = 0;
-					result->peer[i].idx = 0;
+					dst_info->hit_bits = 0;
+					dst_info->idx = 0;
 				}
 			}
 			result->hit_bits = 0;
 		}
-		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
-			if (result->peer[i].idx == result_temp->peer[i].idx) {
+		else if ((dst_info->hit_bits & CCT_SWEEP_BIT_SEGMENT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
+			if (dst_info->idx == src_info->idx) {
 				continue;
 			}
 			if (result_hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
-					unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
+					unsigned int idx = mesh->edge_stride * dst_info->idx;
 					unsigned int v_idx[3], face_idx;
-					v_idx[0] = peer_si_i->edge_indices[idx++];
-					v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
-					v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-					face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+					v_idx[0] = mesh->edge_indices[idx++];
+					v_idx[1] = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
+					v_idx[2] = mesh->edge_indices[mesh->edge_stride * src_info->idx];
+					face_idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 					if (face_idx != -1) {
-						result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
-						result->peer[i].idx = face_idx;
+						dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
+						dst_info->idx = face_idx;
 					}
 					else {
-						result->peer[i].hit_bits = 0;
-						result->peer[i].idx = 0;
+						dst_info->hit_bits = 0;
+						dst_info->idx = 0;
 					}
 					result->hit_bits = 0;
 				}
 			}
 			else if (result_temp->hit_bits & CCT_SWEEP_BIT_SEGMENT) {
 				result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[i] = result_temp->peer[i];
+				*dst_info = *src_info;
 			}
 			else {
-				unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
+				unsigned int idx = mesh->edge_stride * dst_info->idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->edge_indices[idx++];
-				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
-				v_idx[2] = peer_si_i->edge_indices[peer_si_i->edge_stride * result_temp->peer[i].idx];
-				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				v_idx[0] = mesh->edge_indices[idx++];
+				v_idx[1] = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
+				v_idx[2] = mesh->edge_indices[mesh->edge_stride * src_info->idx];
+				face_idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
-					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
-					result->peer[i].idx = face_idx;
+					dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
+					dst_info->idx = face_idx;
 				}
 				else {
-					result->peer[i].hit_bits = 0;
-					result->peer[i].idx = 0;
+					dst_info->hit_bits = 0;
+					dst_info->idx = 0;
 				}
 				result->hit_bits = 0;
 			}
 		}
-		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_POINT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
+		else if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
 			CCTNum_t temp_edge[2][3];
 			unsigned int idx, v_idx;
-			idx = result_temp->peer[i].idx * peer_si_i->edge_stride;
-			v_idx = peer_si_i->edge_indices[idx++];
-			mathVec3Copy(temp_edge[0], peer_si_i->v[v_idx]);
-			v_idx = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
-			mathVec3Copy(temp_edge[1], peer_si_i->v[v_idx]);
-			if (!Segment_Contain_Point((const CCTNum_t(*)[3])temp_edge, peer_si_i->v[result->peer[i].idx])) {
-				unsigned int idx = peer_si_i->edge_stride * result_temp->peer[i].idx;
+			idx = src_info->idx * mesh->edge_stride;
+			v_idx = mesh->edge_indices[idx++];
+			mathVec3Copy(temp_edge[0], mesh->v[v_idx]);
+			v_idx = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
+			mathVec3Copy(temp_edge[1], mesh->v[v_idx]);
+			if (!Segment_Contain_Point((const CCTNum_t(*)[3])temp_edge, mesh->v[dst_info->idx])) {
+				unsigned int idx = mesh->edge_stride * src_info->idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->edge_indices[idx++];
-				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
-				v_idx[2] = result->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				v_idx[0] = mesh->edge_indices[idx++];
+				v_idx[1] = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
+				v_idx[2] = dst_info->idx;
+				face_idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
-					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
-					result->peer[i].idx = face_idx;
+					dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
+					dst_info->idx = face_idx;
 				}
 				else {
-					result->peer[i].hit_bits = 0;
-					result->peer[i].idx = 0;
+					dst_info->hit_bits = 0;
+					dst_info->idx = 0;
 				}
 			}
 			else {
-				result->peer[i] = result_temp->peer[i];
+				*dst_info = *src_info;
 			}
 			result->hit_bits = 0;
 		}
-		else if ((result->peer[i].hit_bits & CCT_SWEEP_BIT_SEGMENT) && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_POINT)) {
+		else if ((dst_info->hit_bits & CCT_SWEEP_BIT_SEGMENT) && (src_info->hit_bits & CCT_SWEEP_BIT_POINT)) {
 			CCTNum_t edge[2][3];
-			unsigned int idx = result->peer[i].idx * peer_si_i->edge_stride;
-			mathVec3Copy(edge[0], peer_si_i->v[peer_si_i->edge_indices[idx++]]);
-			mathVec3Copy(edge[1], peer_si_i->v[peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx]]);
-			if (!Segment_Contain_Point((const CCTNum_t(*)[3])edge, peer_si_i->v[result_temp->peer[i].idx])) {
-				unsigned int idx = peer_si_i->edge_stride * result->peer[i].idx;
+			unsigned int idx = dst_info->idx * mesh->edge_stride;
+			mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[idx++]]);
+			mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx]]);
+			if (!Segment_Contain_Point((const CCTNum_t(*)[3])edge, mesh->v[src_info->idx])) {
+				unsigned int idx = mesh->edge_stride * dst_info->idx;
 				unsigned int v_idx[3], face_idx;
-				v_idx[0] = peer_si_i->edge_indices[idx++];
-				v_idx[1] = peer_si_i->edge_indices[idx >= peer_si_i->edge_indices_cnt ? 0 : idx];
-				v_idx[2] = result_temp->peer[i].idx;
-				face_idx = geometry_indices_find_face_index(peer_si_i->polygons, peer_si_i->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
+				v_idx[0] = mesh->edge_indices[idx++];
+				v_idx[1] = mesh->edge_indices[idx >= mesh->edge_indices_cnt ? 0 : idx];
+				v_idx[2] = src_info->idx;
+				face_idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, sizeof(v_idx) / sizeof(v_idx[0]));
 				if (face_idx != -1) {
-					result->peer[i].hit_bits = CCT_SWEEP_BIT_FACE;
-					result->peer[i].idx = face_idx;
+					dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
+					dst_info->idx = face_idx;
 				}
 				else {
-					result->peer[i].hit_bits = 0;
-					result->peer[i].idx = 0;
+					dst_info->hit_bits = 0;
+					dst_info->idx = 0;
 				}
 			}
 			else {
@@ -989,18 +991,18 @@ static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* resul
 			}
 			result->hit_bits = 0;
 		}
-		else if (result->peer[i].hit_bits != 0 && (result_temp->peer[i].hit_bits & CCT_SWEEP_BIT_FACE)) {
-			if (result->peer[i].hit_bits < result_temp->peer[i].hit_bits) {
-				result->peer[i] = result_temp->peer[i];
+		else if (dst_info->hit_bits != 0 && (src_info->hit_bits & CCT_SWEEP_BIT_FACE)) {
+			if (dst_info->hit_bits < src_info->hit_bits) {
+				*dst_info = *src_info;
 			}
-			else if (result->peer[i].hit_bits > result_temp->peer[i].hit_bits) {
-				result->peer[i].hit_bits = 0;
-				result->peer[i].idx = 0;
+			else if (dst_info->hit_bits > src_info->hit_bits) {
+				dst_info->hit_bits = 0;
+				dst_info->idx = 0;
 				result->hit_bits = 0;
 			}
-			else if (result->peer[i].idx != result_temp->peer[i].idx) {
-				result->peer[i].hit_bits = 0;
-				result->peer[i].idx = 0;
+			else if (dst_info->idx != src_info->idx) {
+				dst_info->hit_bits = 0;
+				dst_info->idx = 0;
 				result->hit_bits = 0;
 			}
 		}

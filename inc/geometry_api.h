@@ -8,15 +8,17 @@
 #include "geometry_def.h"
 #include <stddef.h>
 
+typedef struct CCTSweepHitInfo_t {
+	int hit_bits;
+	unsigned int idx;
+} CCTSweepHitInfo_t;
+
 typedef struct CCTSweepResult_t {
 	CCTNum_t distance;
 	CCTNum_t hit_plane_v[3];
 	CCTNum_t hit_plane_n[3];
 	int hit_bits;
-	struct {
-		int hit_bits;
-		unsigned int idx;
-	} peer[2];
+	CCTSweepHitInfo_t peer[2];
 } CCTSweepResult_t;
 
 enum {
