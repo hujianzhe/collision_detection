@@ -390,7 +390,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	si.v = mesh->v;
 	si.edge_indices = mesh->edge_indices;
 	si.edge_indices_cnt = mesh->edge_indices_cnt;
-	si.edge_stride = 2;
+	si.edge_stride = mesh->edge_stride;
 	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
 }
 
