@@ -22,7 +22,7 @@ extern const unsigned int Segment_Indices_Default[2];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
-extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon);
+extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* all_one_side);
 extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
 extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t p[3]);
 extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
@@ -1708,10 +1708,22 @@ static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t ha
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	int all_one_side;
 	GeometryMesh_t m1, m2;
-	if (Segment_Intersect_Polygon(ls, polygon)) {
+	if (Segment_Intersect_Polygon(ls, polygon, &all_one_side)) {
 		set_intersect(result);
 		return result;
+	}
+	if (all_one_side) {
+		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
+		if (CCTNum(0.0) == cos_theta) {
+			return NULL;
+		}
+		d = mathPointProjectionPlane(ls[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+		d /= cos_theta;
+		if (d < CCTNum(0.0)) {
+			return NULL;
+		}
 	}
 	sweep_mesh_convert_from_segment(&m1, ls);
 	sweep_mesh_convert_from_polygon(&m2, polygon);

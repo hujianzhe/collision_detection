@@ -195,12 +195,18 @@ static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircl
 	return 0;
 }
 
-int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon) {
+int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* all_one_side) {
 	unsigned int i;
 	CCTNum_t p[3];
 	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
 	if (0 == res) {
+		if (all_one_side) {
+			*all_one_side = 1;
+		}
 		return 0;
+	}
+	if (all_one_side) {
+		*all_one_side = 0;
 	}
 	if (1 == res) {
 		return Polygon_Contain_Point(polygon, p);
@@ -228,7 +234,7 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 		return 1;
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		if (Segment_Intersect_Polygon(ls, mesh->polygons + i)) {
+		if (Segment_Intersect_Polygon(ls, mesh->polygons + i, NULL)) {
 			return 1;
 		}
 	}
@@ -340,7 +346,7 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon1->v[polygon1->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon1->v[polygon1->v_indices[i >= polygon1->v_indices_cnt ? 0 : i]]);
-		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon2)) {
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon2, NULL)) {
 			return 1;
 		}
 	}
@@ -348,7 +354,7 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon2->v[polygon2->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon2->v[polygon2->v_indices[i >= polygon2->v_indices_cnt ? 0 : i]]);
-		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon1)) {
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon1, NULL)) {
 			return 1;
 		}
 	}
@@ -369,7 +375,7 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 		}
 		mathVec3Copy(edge[0], mesh->v[v_idx[0]]);
 		mathVec3Copy(edge[1], mesh->v[v_idx[1]]);
-		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon)) {
+		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon, NULL)) {
 			return 1;
 		}
 	}
@@ -547,7 +553,7 @@ static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], c
 	for (i = 0; i < 6; ++i) {
 		GeometryPolygon_t polygon;
 		mathBoxFace((const CCTNum_t(*)[3])v, AABB_Axis, i, &polygon);
-		if (Segment_Intersect_Polygon(ls, &polygon)) {
+		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
 			return 1;
 		}
 	}
@@ -564,7 +570,7 @@ static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* o
 	for (i = 0; i < 6; ++i) {
 		GeometryPolygon_t polygon;
 		mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis, i, &polygon);
-		if (Segment_Intersect_Polygon(ls, &polygon)) {
+		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
 			return 1;
 		}
 	}
@@ -779,7 +785,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return Segment_Intersect_Polygon(one_segment_v, two->polygon);
+				return Segment_Intersect_Polygon(one_segment_v, two->polygon, NULL);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
@@ -926,7 +932,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_Polygon((const CCTNum_t(*)[3])two->segment->v, one->polygon);
+				return Segment_Intersect_Polygon((const CCTNum_t(*)[3])two->segment->v, one->polygon, NULL);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
