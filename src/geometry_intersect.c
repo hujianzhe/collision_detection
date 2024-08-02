@@ -196,9 +196,9 @@ static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircl
 }
 
 int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon) {
-	int res, i;
+	unsigned int i;
 	CCTNum_t p[3];
-	res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
+	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
 	if (0 == res) {
 		return 0;
 	}
