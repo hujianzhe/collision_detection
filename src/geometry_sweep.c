@@ -858,7 +858,6 @@ static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* fa
 }
 
 static void merge_result(CCTSweepResult_t* result, const CCTSweepResult_t* result_temp, const GeometryMesh_t* si[2]) {
-	int is_convex = (si[0]->is_convex && si[1]->is_convex);
 	int discard = 0;
 	int i, result_hit_bits = result->hit_bits;
 	for (i = 0; i < 2; ++i) {
