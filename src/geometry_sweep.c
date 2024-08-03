@@ -1068,7 +1068,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 	return p_result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalHandler(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTNum_t neg_dir[3];
 	CCTSweepResult_t* p_result;
@@ -1691,7 +1691,7 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 		return result;
 	}
 	sweep_mesh_convert_from_segment(&m1, ls);
-	return Mesh_Sweep_Mesh_InternalHandler(&m1, dir, mesh, result);
+	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, mesh, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -1714,7 +1714,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	}
 	sweep_mesh_convert_from_segment(&m1, ls);
 	sweep_mesh_convert_from_polygon(&m2, polygon);
-	return Mesh_Sweep_Mesh_InternalHandler(&m1, dir, &m2, result);
+	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, &m2, result);
 }
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
@@ -1737,7 +1737,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	}
 	sweep_mesh_convert_from_polygon(&m1, polygon1);
 	sweep_mesh_convert_from_polygon(&m2, polygon2);
-	return Mesh_Sweep_Mesh_InternalHandler(&m1, dir, &m2, result);
+	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, &m2, result);
 }
 
 static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -1759,7 +1759,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 		}
 	}
 	sweep_mesh_convert_from_polygon(&m2, polygon);
-	return Mesh_Sweep_Mesh_InternalHandler(mesh, dir, &m2, result);
+	return Mesh_Sweep_Mesh_InternalProc(mesh, dir, &m2, result);
 }
 
 static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
@@ -1767,7 +1767,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 		set_intersect(result);
 		return result;
 	}
-	return Mesh_Sweep_Mesh_InternalHandler(mesh1, dir, mesh2, result);
+	return Mesh_Sweep_Mesh_InternalProc(mesh1, dir, mesh2, result);
 }
 
 static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTSweepResult_t* result) {
@@ -1781,7 +1781,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 	mathBoxMesh(&mesh1, (const CCTNum_t(*)[3])v1, (const CCTNum_t(*)[3])obb1->axis);
 	mathOBBVertices(obb2, v2);
 	mathBoxMesh(&mesh2, (const CCTNum_t(*)[3])v2, (const CCTNum_t(*)[3])obb2->axis);
-	return Mesh_Sweep_Mesh_InternalHandler(&mesh1.mesh, dir, &mesh2.mesh, result);
+	return Mesh_Sweep_Mesh_InternalProc(&mesh1.mesh, dir, &mesh2.mesh, result);
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
@@ -1826,7 +1826,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	return result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalHandle(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
 	CCTNum_t neg_dir[3];
@@ -1864,6 +1864,9 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalHandle(const GeometryMesh_t* 
 			}
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
+			}
+			if (polygon_edge_contain_point(polygon, result_temp.hit_plane_v)) {
+				continue;
 			}
 			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
 			result_temp.peer[0].idx = i;
@@ -1924,7 +1927,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Sphere(const GeometryMesh_t* mesh, con
 		set_intersect(result);
 		return result;
 	}
-	return Mesh_Sweep_Sphere_InternalHandle(mesh, dir, o, radius, result);
+	return Mesh_Sweep_Sphere_InternalProc(mesh, dir, o, radius, result);
 }
 
 static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
@@ -1936,7 +1939,7 @@ static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum
 	}
 	mathOBBVertices(obb, v);
 	mathBoxMesh(&mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis);
-	return Mesh_Sweep_Sphere_InternalHandle(&mesh.mesh, dir, o, radius, result);
+	return Mesh_Sweep_Sphere_InternalProc(&mesh.mesh, dir, o, radius, result);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
