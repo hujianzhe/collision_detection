@@ -132,6 +132,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->v_indices_cnt = sizeof(Box_Face_Indices[0]) / sizeof(Box_Face_Indices[0][0]);
 	polygon->tri_indices = NULL;
 	polygon->tri_indices_cnt = 0;
+	polygon->is_convex = 1;
 	return polygon;
 }
 

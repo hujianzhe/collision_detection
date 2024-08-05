@@ -95,7 +95,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->edge_indices = polygon->v_indices;
 	mesh->edge_indices_cnt = polygon->v_indices_cnt;
 	mesh->edge_stride = 1;
-	mesh->is_convex = 0;
+	mesh->is_convex = polygon->is_convex;
 	mesh->polygons = (GeometryPolygon_t*)polygon;
 	mesh->polygons_cnt = 1;
 }

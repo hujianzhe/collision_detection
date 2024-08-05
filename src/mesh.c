@@ -231,13 +231,20 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, min_v, max_v);
 	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
 	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		mathVec3Set(mesh->polygons[i].o, CCTNums_3(0.0, 0.0, 0.0));
-	}
 	mesh->v = dup_v;
 	mesh->v_indices = dup_v_indices;
 	mesh->v_indices_cnt = dup_v_cnt;
 	mesh->is_convex = mathMeshIsConvex(mesh);
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryPolygon_t* polygon = mesh->polygons + i;
+		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
+		if (mesh->is_convex) {
+			polygon->is_convex = 1;
+		}
+		else {
+			polygon->is_convex = mathPolygonIsConvex(polygon);
+		}
+	}
 	mathConvexMeshMakeFacesOut(mesh);
 	return mesh;
 err_1:
@@ -329,6 +336,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 		dup_polygons[i].tri_indices_cnt = src_polygon->tri_indices_cnt;
 		dup_polygons[i].v_indices = dup_v_indices;
 		dup_polygons[i].tri_indices = dup_tri_indices;
+		dup_polygons[i].is_convex = src_polygon->is_convex;
 		continue;
 	err_1:
 		free(dup_v_indices);
@@ -433,25 +441,23 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		unsigned int j, has_test_dot = 0;
-		CCTNum_t test_dot;
+		int flag_sign = 0;
+		unsigned int j;
 		for (j = 0; j < mesh->v_indices_cnt; ++j) {
 			CCTNum_t vj[3], dot;
 			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
 			dot = mathVec3Dot(polygon->normal, vj);
-			if (dot <= CCT_EPSILON && dot >= CCT_EPSILON_NEGATE) {
-				continue;
+			if (dot > CCTNum(0.0)) {
+				if (flag_sign < 0) {
+					return 0;
+				}
+				flag_sign = 1;
 			}
-			if (!has_test_dot) {
-				has_test_dot = 1;
-				test_dot = dot;
-				continue;
-			}
-			if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
-				return 0;
-			}
-			if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
-				return 0;
+			else if (dot < CCTNum(0.0)) {
+				if (flag_sign > 0) {
+					return 0;
+				}
+				flag_sign = -1;
 			}
 		}
 	}
