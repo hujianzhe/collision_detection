@@ -245,7 +245,9 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 			polygon->is_convex = mathPolygonIsConvex(polygon);
 		}
 	}
-	mathConvexMeshMakeFacesOut(mesh);
+	if (mesh->is_convex) {
+		mathConvexMeshMakeFacesOut(mesh);
+	}
 	return mesh;
 err_1:
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
