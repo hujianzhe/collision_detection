@@ -285,13 +285,14 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 			CCTNum_t v[3], dot;
 			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
 			dot = mathVec3Dot(v, ls_v);
-			if (dot > CCTNum(0.0)) {
+			/* some module needed epsilon */
+			if (dot > CCT_EPSILON) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < CCTNum(0.0)) {
+			else if (dot < CCT_EPSILON_NEGATE) {
 				if (flag_sign > 0) {
 					return 0;
 				}

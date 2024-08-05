@@ -447,13 +447,14 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 			CCTNum_t vj[3], dot;
 			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
 			dot = mathVec3Dot(polygon->normal, vj);
-			if (dot > CCTNum(0.0)) {
+			/* some module needed epsilon */
+			if (dot > CCT_EPSILON) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < CCTNum(0.0)) {
+			else if (dot < CCT_EPSILON_NEGATE) {
 				if (flag_sign > 0) {
 					return 0;
 				}
