@@ -401,6 +401,9 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		}
 		return 1;
 	}
+	if (polygon->is_convex) {
+		return ConvexPolygon_Contain_Point(polygon, p);
+	}
 	if (polygon->tri_indices && polygon->tri_indices_cnt >= 3) {
 		unsigned int i;
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
@@ -414,7 +417,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		}
 		return 0;
 	}
-	return ConvexPolygon_Contain_Point(polygon, p);
+	return 0;
 }
 
 static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
