@@ -16,8 +16,6 @@
 
 extern const CCTNum_t AABB_Axis[3][3];
 extern const CCTNum_t AABB_Plane_Normal[6][3];
-extern const unsigned int Box_Edge_Indices[24];
-extern const unsigned int Box_Vertice_Indices_Default[8];
 extern const unsigned int Segment_Indices_Default[2];
 
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
