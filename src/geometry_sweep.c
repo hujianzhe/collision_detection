@@ -211,22 +211,22 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 	return result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometrySegmentIndices_t* si, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < si->edge_indices_cnt; ) {
+	for (i = 0; i < mesh->edge_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
-		v_idx[0] = si->edge_indices[i++];
-		if (2 == si->edge_stride) {
-			v_idx[1] = si->edge_indices[i++];
+		v_idx[0] = mesh->edge_indices[i++];
+		if (2 == mesh->edge_stride) {
+			v_idx[1] = mesh->edge_indices[i++];
 		}
 		else {
-			v_idx[1] = si->edge_indices[i >= si->edge_indices_cnt ? 0 : i];
+			v_idx[1] = mesh->edge_indices[i >= mesh->edge_indices_cnt ? 0 : i];
 		}
-		mathVec3Copy(edge[0], si->v[v_idx[0]]);
-		mathVec3Copy(edge[1], si->v[v_idx[1]]);
+		mathVec3Copy(edge[0], mesh->v[v_idx[0]]);
+		mathVec3Copy(edge[1], mesh->v[v_idx[1]]);
 		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
 			continue;
 		}
@@ -248,7 +248,7 @@ static CCTSweepResult_t* Ray_Sweep_SegmentIndices(const CCTNum_t o[3], const CCT
 			result->peer[1].idx = v_idx[result->peer[1].idx ? 1 : 0];
 		}
 		else {
-			result->peer[1].idx = (i - 1) / si->edge_stride;
+			result->peer[1].idx = (i - 1) / mesh->edge_stride;
 		}
 	}
 	return p_result;
@@ -284,7 +284,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 
 static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	CCTNum_t dot;
-	GeometrySegmentIndices_t si;
+	GeometryMesh_t mesh;
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
@@ -298,11 +298,8 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 		return NULL;
 	}
-	si.v = polygon->v;
-	si.edge_indices = polygon->v_indices;
-	si.edge_indices_cnt = polygon->v_indices_cnt;
-	si.edge_stride = 1;
-	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
+	sweep_mesh_convert_from_polygon(&mesh, polygon);
+	return Ray_Sweep_MeshSegment(o, dir, &mesh, result);
 }
 
 static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) {
@@ -358,7 +355,6 @@ static CCTSweepResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t di
 static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
-	GeometrySegmentIndices_t si;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_intersect(result);
 		return result;
@@ -383,11 +379,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	if (p_result) {
 		return result;
 	}
-	si.v = mesh->v;
-	si.edge_indices = mesh->edge_indices;
-	si.edge_indices_cnt = mesh->edge_indices_cnt;
-	si.edge_stride = mesh->edge_stride;
-	return Ray_Sweep_SegmentIndices(o, dir, &si, result);
+	return Ray_Sweep_MeshSegment(o, dir, mesh, result);
 }
 
 static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
