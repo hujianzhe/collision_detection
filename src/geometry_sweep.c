@@ -244,8 +244,8 @@ static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum
 		else {
 			continue;
 		}
-		if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
-			result->peer[1].idx = v_idx[result->peer[1].idx ? 1 : 0];
+		if (result_temp.peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+			result->peer[1].idx = v_idx[result_temp.peer[1].idx ? 1 : 0];
 		}
 		else {
 			result->peer[1].idx = (i - 1) / mesh->edge_stride;
