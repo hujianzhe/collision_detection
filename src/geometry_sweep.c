@@ -100,23 +100,34 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->polygons_cnt = 1;
 }
 
-static int polygon_edge_contain_point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	CCTNum_t edge[2][3];
 	unsigned int i, v_idx[2];
-	for (i = 1; i < polygon->v_indices_cnt; ) {
+	for (i = 1; i < polygon->v_indices_cnt; ++i) {
 		v_idx[0] = polygon->v_indices[i - 1];
-		v_idx[1] = polygon->v_indices[i++];
+		v_idx[1] = polygon->v_indices[i];
 		mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
 		mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
 		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, p)) {
-			return 1;
+			return i - 1;
 		}
 	}
-	v_idx[0] = polygon->v_indices[i - 1];
+	v_idx[0] = polygon->v_indices[--i];
 	v_idx[1] = polygon->v_indices[0];
 	mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
 	mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
-	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p);
+	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p) ? i : -1;
+}
+
+static unsigned int polygon_find_v_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+	unsigned int i;
+	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		unsigned int v_idx = polygon->v_indices[i];
+		if (mathVec3Equal(polygon->v[v_idx], p)) {
+			return v_idx;
+		}
+	}
+	return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -289,6 +300,18 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		return NULL;
 	}
 	if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
+		unsigned int idx = polygon_find_v_idx(polygon, result->hit_plane_v);
+		if (idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[1].idx = idx;
+			return result;
+		}
+		idx = polygon_find_edge_idx(polygon, result->hit_plane_v);
+		if (idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[1].idx = idx;
+			return result;
+		}
 		return result;
 	}
 	if (result->distance > CCTNum(0.0)) {
@@ -377,6 +400,19 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		result->peer[1].idx = i;
 	}
 	if (p_result) {
+		const GeometryPolygon_t* polygon = mesh->polygons + result->peer[1].idx;
+		unsigned int idx = polygon_find_v_idx(polygon, result->hit_plane_v);
+		if (idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[1].idx = idx;
+			return result;
+		}
+		idx = polygon_find_edge_idx(polygon, result->hit_plane_v);
+		if (idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[1].idx = idx;
+			return result;
+		}
 		return result;
 	}
 	return Ray_Sweep_MeshSegment(o, dir, mesh, result);
@@ -1095,7 +1131,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (polygon_edge_contain_point(polygon2, result_temp.hit_plane_v)) {
+				if (polygon_find_edge_idx(polygon2, result_temp.hit_plane_v) != -1) {
 					continue;
 				}
 				result_temp.peer[0].idx = mesh1->v_indices[j];
@@ -1145,7 +1181,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (polygon_edge_contain_point(polygon1, result_temp.hit_plane_v)) {
+				if (polygon_find_edge_idx(polygon1, result_temp.hit_plane_v) != -1) {
 					continue;
 				}
 				mathVec3Copy(result_temp.hit_plane_v, mesh2_p);
@@ -1855,7 +1891,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-			if (polygon_edge_contain_point(polygon, result_temp.hit_plane_v)) {
+			if (polygon_find_edge_idx(polygon, result_temp.hit_plane_v) != -1) {
 				continue;
 			}
 			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
