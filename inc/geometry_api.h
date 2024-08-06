@@ -25,6 +25,7 @@ enum {
 	CCT_SWEEP_BIT_POINT = 1,
 	CCT_SWEEP_BIT_SEGMENT = 2,
 	CCT_SWEEP_BIT_FACE = 4,
+	CCT_SWEEP_BIT_SPHERE = 8,
 };
 
 #ifdef __cplusplus

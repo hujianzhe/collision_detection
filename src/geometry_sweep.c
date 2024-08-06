@@ -352,7 +352,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	result->distance = dir_d;
 	result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 	result->peer[0].idx = 0;
-	result->peer[1].hit_bits = 0;
+	result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
 	result->peer[1].idx = 0;
 	return result;
 }
@@ -1408,7 +1408,12 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], circle.normal, circle.o, &circle.radius)) {
 			return NULL;
 		}
-		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle.o, circle.radius, result);
+		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle.o, circle.radius, result)) {
+			return NULL;
+		}
+		result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+		result->peer[1].idx = 0;
+		return result;
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, center, radius, result)) {
 		CCTSweepResult_t result_temp;
@@ -1845,7 +1850,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->distance = dn;
-	result->peer[0].hit_bits = 0;
+	result->peer[0].hit_bits = CCT_SWEEP_BIT_SPHERE;
 	result->peer[0].idx = 0;
 	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
 	result->peer[1].idx = 0;
@@ -1896,14 +1901,14 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			}
 			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
 			result_temp.peer[0].idx = i;
-			result_temp.peer[1].hit_bits = 0;
+			result_temp.peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
 			result_temp.peer[1].idx = 0;
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh, NULL);
 			continue;
 		}
 		result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
 		result->peer[0].idx = i;
-		result->peer[1].hit_bits = 0;
+		result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
 		result->peer[1].idx = 0;
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	}
@@ -1944,7 +1949,7 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	mathVec3Copy(result->hit_plane_v, o1);
 	mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	mathVec3SubScalar(result->hit_plane_v, result->hit_plane_n, r1);
-	result->peer[0].hit_bits = 0;
+	result->peer[0].hit_bits = CCT_SWEEP_BIT_SPHERE;
 	return result;
 }
 
