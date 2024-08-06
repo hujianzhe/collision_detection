@@ -314,35 +314,6 @@ void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], const CCTNum_t 
 	mathVec3AddScalar(closest_p, lsdir, d);
 }
 
-int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask) {
-	int res;
-	CCTNum_t lsdir1[3], lsdir2[3], dir_d[2], lslen1, lslen2;
-	mathVec3Sub(lsdir1, ls1[1], ls1[0]);
-	mathVec3Sub(lsdir2, ls2[1], ls2[0]);
-	lslen1 = mathVec3Normalized(lsdir1, lsdir1);
-	lslen2 = mathVec3Normalized(lsdir2, lsdir2);
-	res = mathLineClosestLine(ls1[0], lsdir1, ls2[0], lsdir2, NULL, dir_d);
-	if (line_mask) {
-		*line_mask = res;
-	}
-	if (GEOMETRY_LINE_PARALLEL == res || GEOMETRY_LINE_SKEW == res) {
-		return 0;
-	}
-	if (GEOMETRY_LINE_CROSS == res) {
-		if (dir_d[0] < CCT_EPSILON_NEGATE || dir_d[1] < CCT_EPSILON_NEGATE ||
-			dir_d[0] > lslen1 + CCT_EPSILON || dir_d[1] > lslen2 + CCT_EPSILON)
-		{
-			return 0;
-		}
-		if (p) {
-			mathVec3Copy(p, ls1[0]);
-			mathVec3AddScalar(p, lsdir1, dir_d[0]);
-		}
-		return GEOMETRY_SEGMENT_CONTACT;
-	}
-	return mathSegmentIntersectSegmentWhenInSameLine(ls1, ls2, p);
-}
-
 #ifdef __cplusplus
 }
 #endif

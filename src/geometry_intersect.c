@@ -23,7 +23,6 @@ extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_n
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
-extern int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], CCTNum_t p[3], int* line_mask);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -124,6 +123,87 @@ static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v
 	return 0;
 }
 
+int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+	CCTNum_t d, ls1_len, cos_theta;
+	CCTNum_t v[3], N[3], p[3];
+	CCTNum_t ls1_dir[3], ls2_dir[3];
+
+	mathVec3Sub(ls1_dir, ls1[1], ls1[0]);
+	mathVec3Sub(ls2_dir, ls2[1], ls2[0]);
+	mathVec3Cross(N, ls1_dir, ls2_dir);
+	mathVec3Sub(v, ls2[0], ls1[0]);
+	/* check Line vs Line parallel or collinear */
+	if (mathVec3IsZero(N)) {
+		CCTNum_t l[3], r[3];
+		mathVec3Cross(N, v, ls1_dir);
+		if (!mathVec3IsZero(N)) {
+			/* parallel */
+			return 0;
+		}
+		/* collinear */
+		mathVec3Sub(l, ls1[0], ls2[0]);
+		mathVec3Sub(r, ls1[1], ls2[0]);
+		d = mathVec3Dot(l, r);
+		if (d <= CCT_EPSILON) {
+			return 1;
+		}
+		mathVec3Sub(l, ls1[0], ls2[1]);
+		mathVec3Sub(r, ls1[1], ls2[1]);
+		d = mathVec3Dot(l, r);
+		if (d <= CCT_EPSILON) {
+			return 1;
+		}
+		mathVec3Sub(l, ls2[0], ls1[0]);
+		mathVec3Sub(r, ls2[1], ls1[0]);
+		d = mathVec3Dot(l, r);
+		if (d <= CCT_EPSILON) {
+			return 1;
+		}
+		mathVec3Sub(l, ls2[0], ls1[1]);
+		mathVec3Sub(r, ls2[1], ls1[1]);
+		d = mathVec3Dot(l, r);
+		if (d <= CCT_EPSILON) {
+			return 1;
+		}
+		return 0;
+	}
+	d = mathVec3Dot(v, N);
+	if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
+		/* opposite */
+		return 0;
+	}
+	/* cross */
+	if (mathVec3IsZero(v)) {
+		return 1;
+	}
+	mathVec3Normalized(ls2_dir, ls2_dir);
+	mathPointProjectionLine(ls1[0], ls2[0], ls2_dir, p);
+	if (mathVec3Equal(p, ls1[0])) {
+		mathVec3Sub(N, ls2[0], p);
+		mathVec3Sub(v, ls2[1], p);
+		d = mathVec3Dot(N, v);
+		return d <= CCT_EPSILON;
+	}
+	ls1_len = mathVec3Normalized(ls1_dir, ls1_dir);
+	mathVec3Sub(N, p, ls1[0]);
+	d = mathVec3Normalized(N, N);
+	cos_theta = mathVec3Dot(N, ls1_dir);
+	if (CCTNum(0.0) == cos_theta) {
+		/* no possible */
+		return 1;
+	}
+	d /= cos_theta;
+	if (d < CCTNum(0.0) || d > ls1_len + CCT_EPSILON) {
+		return 0;
+	}
+	mathVec3Copy(p, ls1[0]);
+	mathVec3AddScalar(p, ls1_dir, d);
+	mathVec3Sub(N, ls2[0], p);
+	mathVec3Sub(v, ls2[1], p);
+	d = mathVec3Dot(v, N);
+	return d <= CCT_EPSILON;
+}
+
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t intersect_p[3], CCTNum_t d[3]) {
 	CCTNum_t temp_d[3];
 	if (!d) {
@@ -218,7 +298,7 @@ int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* 
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (Segment_Intersect_Segment(ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
+		if (Segment_Intersect_Segment(ls, (const CCTNum_t(*)[3])edge)) {
 			return 2;
 		}
 	}
@@ -290,7 +370,7 @@ static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const Geom
 			CCTNum_t edge[2][3];
 			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-			if (Segment_Intersect_Segment((const CCTNum_t(*)[3])ls, (const CCTNum_t(*)[3])edge, NULL, NULL)) {
+			if (Segment_Intersect_Segment((const CCTNum_t(*)[3])ls, (const CCTNum_t(*)[3])edge)) {
 				return 1;
 			}
 		}
@@ -802,7 +882,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Intersect_Segment(one_segment_v, (const CCTNum_t(*)[3])two->segment->v, NULL, NULL);
+				return Segment_Intersect_Segment(one_segment_v, (const CCTNum_t(*)[3])two->segment->v);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
