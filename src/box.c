@@ -126,6 +126,8 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	if (!mathBoxFaceNormal(axis, face_idx, polygon->normal)) {
 		return NULL;
 	}
+	mathVec3Add(polygon->center, v[Box_Face_Indices[face_idx][0]], v[Box_Face_Indices[face_idx][2]]);
+	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_Indices[face_idx];
