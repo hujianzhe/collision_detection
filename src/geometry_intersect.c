@@ -123,7 +123,7 @@ static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v
 	return 0;
 }
 
-int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
 	CCTNum_t d, ls1_len, cos_theta;
 	CCTNum_t v[3], N[3], p[3];
 	CCTNum_t ls1_dir[3], ls2_dir[3];

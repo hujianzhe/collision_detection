@@ -433,27 +433,41 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 		mathVec3Cross(N, v, ls1_dir);
 		if (mathVec3IsZero(N)) {
 			/* collinear */
+			CCTNum_t l[3], r[3];
 			unsigned int closest_ls1_indice, closest_ls2_indice;
 			CCTNum_t d;
 			const CCTNum_t* intersect_p = NULL;
-			if (Segment_Contain_Point(ls1, ls2[0])) {
+
+			mathVec3Sub(l, ls1[0], ls2[0]);
+			mathVec3Sub(r, ls1[1], ls2[0]);
+			d = mathVec3Dot(l, r);
+			if (d <= CCT_EPSILON) {
 				intersect_p = ls2[0];
 			}
-			if (Segment_Contain_Point(ls1, ls2[1])) {
+			mathVec3Sub(l, ls1[0], ls2[1]);
+			mathVec3Sub(r, ls1[1], ls2[1]);
+			d = mathVec3Dot(l, r);
+			if (d <= CCT_EPSILON) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls2[1])) {
 					set_intersect(result);
 					return result;
 				}
 				intersect_p = ls2[1];
 			}
-			if (Segment_Contain_Point(ls2, ls1[0])) {
+			mathVec3Sub(l, ls2[0], ls1[0]);
+			mathVec3Sub(r, ls2[1], ls1[0]);
+			d = mathVec3Dot(l, r);
+			if (d <= CCT_EPSILON) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls1[0])) {
 					set_intersect(result);
 					return result;
 				}
 				intersect_p = ls1[0];
 			}
-			if (Segment_Contain_Point(ls2, ls1[1])) {
+			mathVec3Sub(l, ls2[0], ls1[1]);
+			mathVec3Sub(r, ls2[1], ls1[1]);
+			d = mathVec3Dot(l, r);
+			if (d <= CCT_EPSILON) {
 				if (intersect_p && !mathVec3Equal(intersect_p, ls1[1])) {
 					set_intersect(result);
 					return result;
