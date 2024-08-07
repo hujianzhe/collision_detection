@@ -37,68 +37,6 @@ static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], con
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
-static int Circle_Intersect_Plane(const GeometryCircle_t* circle, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t ls_center[3], CCTNum_t ls_dir[3]) {
-	CCTNum_t dir[3];
-	if (!ls_dir) {
-		ls_dir = dir;
-	}
-	mathVec3Cross(ls_dir, circle->normal, plane_n);
-	if (!mathVec3IsZero(ls_dir)) {
-		CCTNum_t v[3], d, dot, abs_d;
-		mathVec3Normalized(ls_dir, ls_dir);
-		mathVec3Cross(v, ls_dir, circle->normal);
-		dot = mathVec3Dot(v, plane_n);
-		d = mathPointProjectionPlane(circle->o, plane_v, plane_n);
-		d /= dot;
-		if (ls_center) {
-			mathVec3Copy(ls_center, circle->o);
-			mathVec3AddScalar(ls_center, v, d);
-		}
-		abs_d = CCTNum_abs(d);
-		if (abs_d > circle->radius) {
-			return 0;
-		}
-		if (abs_d < circle->radius) {
-			return 3;
-		}
-		return 1;
-	}
-	if (ls_center) {
-		mathVec3Copy(ls_center, circle->o);
-	}
-	mathVec3Set(ls_dir, CCTNums_3(0.0, 0.0, 0.0));
-	if (Plane_Contain_Point(plane_v, plane_n, circle->o)) {
-		return 2;
-	}
-	return 0;
-}
-
-static int Circle_Intersect_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
-	CCTNum_t ls_center[3], ls_dir[3];
-	int res = Circle_Intersect_Plane(c1, c2->o, c2->normal, ls_center, ls_dir);
-	if (0 == res) {
-		return 0;
-	}
-	if (1 == res) {
-		CCTNum_t lensq = mathVec3DistanceSq(ls_center, c2->o);
-		return lensq <= CCTNum_sq(c2->radius);
-	}
-	if (2 == res) {
-		CCTNum_t lensq = mathVec3DistanceSq(c1->o, c2->o);
-		CCTNum_t rsum = c1->radius + c2->radius;
-		return lensq <= CCTNum_sq(rsum);
-	}
-	if (3 == res) {
-		CCTNum_t closest_p[3], lensq, half;
-		lensq = mathVec3DistanceSq(c1->o, ls_center);
-		half = CCTNum_sqrt(CCTNum_sq(c1->radius) - lensq);
-		mathSegmentClosestPointTo_v2(ls_center, ls_dir, half, c2->o, closest_p);
-		lensq = mathVec3DistanceSq(closest_p, c2->o);
-		return lensq <= CCTNum_sq(c2->radius);
-	}
-	return 0;
-}
-
 static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	int flag_sign = 0;
 	unsigned int i;
@@ -250,31 +188,6 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	return 1;
 }
 
-static int Segment_Intersect_Circle(const CCTNum_t ls[2][3], const GeometryCircle_t* circle, CCTNum_t p[3]) {
-	int res;
-	CCTNum_t v[3];
-	if (!p) {
-		p = v;
-	}
-	res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p, NULL);
-	if (1 == res) {
-		CCTNum_t op[3], op_lensq;
-		mathVec3Sub(op, p, circle->o);
-		op_lensq = mathVec3LenSq(op);
-		return op_lensq <= CCTNum_sq(circle->radius);
-	}
-	if (2 == res) {
-		CCTNum_t op[3], op_lensq;
-		mathSegmentClosestPointTo(ls, circle->o, p);
-		mathVec3Sub(op, p, circle->o);
-		op_lensq = mathVec3LenSq(op);
-		if (op_lensq <= CCTNum_sq(circle->radius)) {
-			return 2;
-		}
-	}
-	return 0;
-}
-
 int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	unsigned int i;
 	CCTNum_t p[3], d[3];
@@ -315,105 +228,6 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		if (Segment_Intersect_Polygon(ls, mesh->polygons + i, NULL)) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
-static int Polygon_Intersect_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
-	CCTNum_t p[3], line[3];
-	int res = Circle_Intersect_Plane(circle, polygon->v[polygon->v_indices[0]], polygon->normal, p, line);
-	if (0 == res) {
-		return 0;
-	}
-	if (1 == res) {
-		return Polygon_Contain_Point(polygon, p);
-	}
-	if (2 == res) {
-		unsigned int i;
-		CCTNum_t radius_sq;
-		if (Polygon_Contain_Point(polygon, circle->o)) {
-			return 1;
-		}
-		radius_sq = CCTNum_sq(circle->radius);
-		for (i = 0; i < polygon->v_indices_cnt; ) {
-			CCTNum_t edge[2][3], closest_p[3], lensq;
-			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-			mathSegmentClosestPointTo((const CCTNum_t(*)[3])edge, circle->o, closest_p);
-			lensq = mathVec3DistanceSq(closest_p, circle->o);
-			if (lensq <= radius_sq) {
-				return 1;
-			}
-		}
-	}
-	if (3 == res) {
-		unsigned int i;
-		CCTNum_t lensq, half, ls[2][3];
-		if (Polygon_Contain_Point(polygon, p)) {
-			return 1;
-		}
-		lensq = mathVec3DistanceSq(circle->o, p);
-		half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
-		mathVec3Copy(ls[0], p);
-		mathVec3AddScalar(ls[0], line, half);
-		if (Polygon_Contain_Point(polygon, ls[0])) {
-			return 1;
-		}
-		mathVec3Copy(ls[1], p);
-		mathVec3SubScalar(ls[1], line, half);
-		if (Polygon_Contain_Point(polygon, ls[1])) {
-			return 1;
-		}
-		for (i = 0; i < polygon->v_indices_cnt; ) {
-			CCTNum_t edge[2][3];
-			mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-			mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-			if (Segment_Intersect_Segment((const CCTNum_t(*)[3])ls, (const CCTNum_t(*)[3])edge)) {
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
-
-int ConvexMesh_Intersect_Circle(const GeometryMesh_t* mesh, const GeometryCircle_t* circle) {
-	int flag_sign = 0, all_one_side = 1;
-	unsigned int i;
-	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const CCTNum_t* mesh_p = mesh->v[mesh->v_indices[i]];
-		CCTNum_t d = mathPointProjectionPlane(mesh_p, circle->o, circle->normal);
-		if (d > CCTNum(0.0)) {
-			if (flag_sign < 0) {
-				all_one_side = 0;
-				break;
-			}
-			flag_sign = 1;
-		}
-		else if (d < CCTNum(0.0)) {
-			if (flag_sign > 0) {
-				all_one_side = 0;
-				break;
-			}
-			flag_sign = -1;
-		}
-		else {
-			CCTNum_t lensq = mathVec3DistanceSq(circle->o, mesh_p);
-			if (lensq <= CCTNum_sq(circle->radius)) {
-				return 1;
-			}
-			all_one_side = 0;
-		}
-	}
-	if (all_one_side) {
-		return 0;
-	}
-	if (ConvexMesh_Contain_Point(mesh, circle->o)) {
-		return 1;
-	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		if (Polygon_Intersect_Circle(mesh->polygons + i, circle)) {
 			return 1;
 		}
 	}
@@ -543,29 +357,6 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 	}
 	if (new_r) {
 		*new_r = CCTNum_sqrt(CCTNum_sq(radius) - CCTNum_sq(abs_d));
-	}
-	return 2;
-}
-
-static int Sphere_Intersect_Circle(const CCTNum_t o[3], CCTNum_t radius, const GeometryCircle_t* circle) {
-	CCTNum_t new_o[3], new_r, dsq, rsum_sq;
-	int res = Sphere_Intersect_Plane(o, radius, circle->o, circle->normal, new_o, &new_r);
-	if (0 == res) {
-		return 0;
-	}
-	dsq = mathVec3DistanceSq(new_o, circle->o);
-	if (1 == res) {
-		if (dsq > CCTNum_sq(circle->radius)) {
-			return 0;
-		}
-		return 1;
-	}
-	rsum_sq = CCTNum_sq(circle->radius + new_r);
-	if (dsq > rsum_sq) {
-		return 0;
-	}
-	if (dsq == rsum_sq) {
-		return 1;
 	}
 	return 2;
 }

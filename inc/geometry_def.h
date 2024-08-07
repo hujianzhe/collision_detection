@@ -19,12 +19,6 @@ typedef struct GeometryPlane_t {
 	CCTNum_t normal[3];
 } GeometryPlane_t;
 
-typedef struct GeometryCircle_t {
-	CCTNum_t o[3];
-	CCTNum_t normal[3];
-	CCTNum_t radius;
-} GeometryCircle_t;
-
 typedef struct GeometrySphere_t {
 	CCTNum_t o[3];
 	CCTNum_t radius;

@@ -71,57 +71,6 @@ static int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const
 	return mathVec3IsZero(v);
 }
 
-int Circle_Contain_Point(const GeometryCircle_t* circle, const CCTNum_t p[3]) {
-	CCTNum_t op[3], dot;
-	mathVec3Sub(op, p, circle->o);
-	dot = mathVec3Dot(op, circle->normal);
-	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
-		return 0;
-	}
-	return mathVec3LenSq(op) <= CCTNum_sq(circle->radius);
-}
-
-static int Circle_Contain_Segment(const GeometryCircle_t* circle, const CCTNum_t ls[2][3]) {
-	return Circle_Contain_Point(circle, ls[0]) && Circle_Contain_Point(circle, ls[1]);
-}
-
-static int Circle_Contain_Circle(const GeometryCircle_t* c1, const GeometryCircle_t* c2) {
-	CCTNum_t v[3], r, v_lensq;
-	if (c1->radius < c2->radius) {
-		return 0;
-	}
-	mathVec3Cross(v, c1->normal, c2->normal);
-	if (!mathVec3IsZero(v)) {
-		return 0;
-	}
-	mathVec3Sub(v, c2->o, c1->o);
-	r = mathVec3Dot(v, c1->normal);
-	if (r < CCT_EPSILON_NEGATE || r > CCT_EPSILON) {
-		return 0;
-	}
-	r = c1->radius - c2->radius;
-	v_lensq = mathVec3LenSq(v);
-	return v_lensq <= CCTNum_sq(r);
-}
-
-static int Circle_Contain_Polygon(const GeometryCircle_t* circle, const GeometryPolygon_t* polygon) {
-	unsigned int i;
-	CCTNum_t radius_sq = CCTNum_sq(circle->radius);
-	const CCTNum_t* pp = polygon->v[polygon->v_indices[0]];
-	if (0 == Plane_Contain_Plane(circle->o, circle->normal, pp, polygon->normal)) {
-		return 0;
-	}
-	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		CCTNum_t dsq;
-		pp = polygon->v[polygon->v_indices[i]];
-		dsq = mathVec3DistanceSq(pp, circle->o);
-		if (dsq > radius_sq) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
 	CCTNum_t op[3], op_lensq;
 	mathVec3Sub(op, p, o);
@@ -137,28 +86,6 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	mathVec3Sub(o1o2, o2, o1);
 	len_sq = mathVec3LenSq(o1o2);
 	return len_sq <= CCTNum_sq(r1 - r2);
-}
-
-static int Sphere_Contain_Circle(const CCTNum_t o[3], CCTNum_t r, const GeometryCircle_t* circle) {
-	CCTNum_t new_o[3], d, dsq, rsq, new_r;
-	d = mathPointProjectionPlane(o, circle->o, circle->normal);
-	rsq = CCTNum_sq(r);
-	dsq = CCTNum_sq(d);
-	if (dsq >= rsq) {
-		return 0;
-	}
-	rsq -= dsq;
-	if (rsq < CCTNum_sq(circle->radius)) {
-		return 0;
-	}
-	mathVec3Copy(new_o, o);
-	mathVec3AddScalar(new_o, circle->normal, d);
-	dsq = mathVec3DistanceSq(circle->o, new_o);
-	if (dsq >= rsq) {
-		return 0;
-	}
-	new_r = CCTNum_sqrt(rsq);
-	return dsq <= CCTNum_sq(new_r - circle->radius);
 }
 
 static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
@@ -428,32 +355,6 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
 		if (!Polygon_Contain_Point(polygon1, p)) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-static int Polygon_Contain_Circle(const GeometryPolygon_t* polygon, const GeometryCircle_t* circle) {
-	unsigned int i;
-	CCTNum_t N[3], radius_sq;
-	mathVec3Cross(N, polygon->normal, circle->normal);
-	if (!mathVec3IsZero(N)) {
-		return 0;
-	}
-	if (!Polygon_Contain_Point(polygon, circle->o)) {
-		return 0;
-	}
-	radius_sq = CCTNum_sq(circle->radius);
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTNum_t edge[2][3], edge_dir[3], p[3], op_lensq;
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		mathVec3Sub(edge_dir, edge[1], edge[0]);
-		mathVec3Normalized(edge_dir, edge_dir);
-		mathPointProjectionLine(circle->o, edge[0], edge_dir, p);
-		op_lensq = mathVec3DistanceSq(circle->o, p);
-		if (op_lensq < radius_sq) {
 			return 0;
 		}
 	}

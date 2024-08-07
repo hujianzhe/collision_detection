@@ -357,24 +357,6 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	return result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_Circle(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
-	if (!Ray_Sweep_Plane(o, dir, circle->o, circle->normal, result)) {
-		return NULL;
-	}
-	if (result->distance > CCTNum(0.0)) {
-		CCTNum_t lensq = mathVec3DistanceSq(circle->o, result->hit_plane_v);
-		if (lensq <= CCTNum_sq(circle->radius)) {
-			return result;
-		}
-		return NULL;
-	}
-	if (!Ray_Sweep_Sphere(o, dir, circle->o, circle->radius, result)) {
-		return NULL;
-	}
-	result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
-	return result;
-}
-
 static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
@@ -1299,115 +1281,6 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 	return result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Circle(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCircle_t* circle, CCTSweepResult_t* result) {
-	CCTNum_t p[3], d[3], v[3], plane_n[3], cos_theta;
-	int res = Segment_Intersect_Plane(ls, circle->o, circle->normal, p, d);
-	if (1 == res) {
-		CCTNum_t lensq = mathVec3DistanceSq(circle->o, p);
-		if (lensq <= CCTNum_sq(circle->radius)) {
-			set_intersect(result);
-			set_unique_hit_point(result, p);
-			return result;
-		}
-	}
-	else if (2 == res) {
-		CCTNum_t lensq;
-		mathSegmentClosestPointTo(ls, circle->o, p);
-		lensq = mathVec3DistanceSq(circle->o, p);
-		if (lensq <= CCTNum_sq(circle->radius)) {
-			set_intersect(result);
-			return result;
-		}
-		cos_theta = mathVec3Dot(circle->normal, dir);
-		if (cos_theta < CCT_EPSILON_NEGATE || cos_theta > CCT_EPSILON) {
-			return NULL;
-		}
-		return Segment_Sweep_Circle_InSamePlane(ls, dir, circle->o, circle->radius, result);
-	}
-	else {
-		CCTNum_t dlen, lensq;
-		cos_theta = mathVec3Dot(circle->normal, dir);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		dlen = d[2] / cos_theta;
-		if (dlen < CCTNum(0.0)) {
-			return NULL;
-		}
-		if (d[0] == d[1]) {
-			CCTNum_t new_ls[2][3], lensq;
-			mathVec3Copy(new_ls[0], ls[0]);
-			mathVec3AddScalar(new_ls[0], dir, dlen);
-			mathVec3Copy(new_ls[1], ls[1]);
-			mathVec3AddScalar(new_ls[1], dir, dlen);
-			mathSegmentClosestPointTo((const CCTNum_t(*)[3])new_ls, circle->o, p);
-			lensq = mathVec3DistanceSq(circle->o, p);
-			if (lensq > CCTNum_sq(circle->radius)) {
-				return NULL;
-			}
-			mathVec3Copy(result->hit_plane_v, p);
-			mathVec3Copy(result->hit_plane_n, circle->normal);
-			result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->distance = dlen;
-			return result;
-		}
-		if (d[0] == d[2]) {
-			mathVec3Copy(p, ls[0]);
-		}
-		else {
-			mathVec3Copy(p, ls[1]);
-		}
-		mathVec3AddScalar(p, dir, dlen);
-		lensq = mathVec3DistanceSq(circle->o, p);
-		if (lensq <= CCTNum_sq(circle->radius)) {
-			mathVec3Copy(result->hit_plane_v, p);
-			mathVec3Copy(result->hit_plane_n, circle->normal);
-			result->hit_bits = CCT_SWEEP_BIT_POINT;
-			result->distance = dlen;
-			return result;
-		}
-	}
-	mathVec3Sub(v, ls[1], ls[0]);
-	mathVec3Cross(plane_n, v, dir);
-	if (mathVec3IsZero(plane_n)) {
-		return NULL;
-	}
-	/* circle vs sweep_plane */
-	mathVec3Normalized(plane_n, plane_n);
-	mathVec3Cross(v, circle->normal, plane_n);
-	mathVec3Cross(v, circle->normal, v);
-	mathVec3Normalized(v, v);
-	cos_theta = mathVec3Dot(v, plane_n);
-	if (CCTNum(0.0) == cos_theta) {
-		return NULL;
-	}
-	d[0] = mathPointProjectionPlane(circle->o, ls[0], plane_n);
-	d[0] /= cos_theta;
-	d[1] = CCTNum_abs(d[0]);
-	if (d[1] > circle->radius) {
-		return NULL;
-	}
-	mathVec3Copy(p, circle->o);
-	mathVec3AddScalar(p, v, d[0]);
-	if (d[1] < circle->radius) {
-		CCTNum_t new_ls[2][3];
-		CCTNum_t lensq = mathVec3DistanceSq(circle->o, p);
-		CCTNum_t half = CCTNum_sqrt(CCTNum_sq(circle->radius) - lensq);
-		mathVec3Cross(v, circle->normal, v);
-		mathVec3Copy(new_ls[0], p);
-		mathVec3AddScalar(new_ls[0], v, half);
-		mathVec3Copy(new_ls[1], p);
-		mathVec3SubScalar(new_ls[1], v, half);
-		return Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])new_ls, result);
-	}
-	mathVec3Negate(v, dir);
-	if (!Ray_Sweep_Segment(p, v, ls, result)) {
-		return NULL;
-	}
-	set_unique_hit_point(result, p);
-	return result;
-}
-
 static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t lsdir[3], N[3];
 	if (check_intersect && Sphere_Intersect_Segment(center, radius, ls, result->hit_plane_v)) {
@@ -1417,12 +1290,12 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Cross(N, lsdir, dir);
 	if (!mathVec3IsZero(N)) {
-		GeometryCircle_t circle;
-		mathVec3Normalized(circle.normal, N);
-		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], circle.normal, circle.o, &circle.radius)) {
+		CCTNum_t circle_o[3], circle_r;
+		mathVec3Normalized(N, N);
+		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], N, circle_o, &circle_r)) {
 			return NULL;
 		}
-		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle.o, circle.radius, result)) {
+		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle_o, circle_r, result)) {
 			return NULL;
 		}
 		result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
@@ -1500,95 +1373,6 @@ static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, co
 		}
 	}
 	return p_result;
-}
-
-static CCTSweepResult_t* Circle_Sweep_Plane(const GeometryCircle_t* circle, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	CCTNum_t v[3], p[3], d, abs_d, cos_theta;
-	mathVec3Cross(v, circle->normal, plane_n);
-	if (mathVec3IsZero(v)) {
-		if (!Ray_Sweep_Plane(circle->o, dir, plane_v, plane_n, result)) {
-			return NULL;
-		}
-		mathVec3Copy(result->hit_plane_v, plane_v);
-		mathVec3Copy(result->hit_plane_n, plane_n);
-		result->hit_bits = CCT_SWEEP_BIT_FACE;
-		result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-		return result;
-	}
-	d = mathPointProjectionPlane(circle->o, plane_v, plane_n);
-	mathVec3Cross(v, circle->normal, v);
-	mathVec3Normalized(v, v);
-	cos_theta = mathVec3Dot(v, plane_n);
-	if (CCTNum(0.0) == cos_theta) {
-		return NULL;
-	}
-	d /= cos_theta;
-	abs_d = CCTNum_abs(d);
-	if (abs_d <= circle->radius) {
-		set_intersect(result);
-		return result;
-	}
-	mathVec3Copy(p, circle->o);
-	if (d > CCTNum(0.0)) {
-		mathVec3AddScalar(p, v, circle->radius);
-	}
-	else {
-		mathVec3SubScalar(p, v, circle->radius);
-	}
-	if (!Ray_Sweep_Plane(p, dir, plane_v, plane_n, result)) {
-		return NULL;
-	}
-	result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-	return result;
-}
-
-static CCTSweepResult_t* Circle_Sweep_Polygon(const GeometryCircle_t* circle, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	unsigned int i;
-	CCTSweepResult_t* p_result;
-	CCTNum_t p[3], neg_dir[3];
-	if (!Circle_Sweep_Plane(circle, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
-		return NULL;
-	}
-	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
-		if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
-			return result;
-		}
-	}
-	mathVec3Copy(p, circle->o);
-	mathVec3AddScalar(p, dir, result->distance);
-	if (Polygon_Contain_Point(polygon, p)) {
-		return result;
-	}
-	p_result = NULL;
-	mathVec3Negate(neg_dir, dir);
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTSweepResult_t result_temp;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		if (!Segment_Sweep_Circle((const CCTNum_t(*)[3])edge, neg_dir, circle, &result_temp)) {
-			continue;
-		}
-		if (!p_result) {
-			p_result = result;
-			*result = result_temp;
-		}
-		else if (result_temp.distance < result->distance) {
-			*result = result_temp;
-		}
-		else {
-			continue;
-		}
-		result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-		result->peer[0].idx = i - 1;
-	}
-	if (!p_result) {
-		return NULL;
-	}
-	reverse_result(result, dir);
-	result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-	result->peer[0].idx = 0;
-	return result;
 }
 
 static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
