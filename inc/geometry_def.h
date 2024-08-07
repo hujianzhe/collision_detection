@@ -24,6 +24,12 @@ typedef struct GeometrySphere_t {
 	CCTNum_t radius;
 } GeometrySphere_t;
 
+typedef struct GeometryCapsule_t {
+	CCTNum_t o[3];
+	CCTNum_t radius;
+	CCTNum_t half;
+} GeometryCapsule_t;
+
 typedef struct GeometryAABB_t {
 	CCTNum_t o[3];
 	CCTNum_t half[3];
@@ -60,14 +66,6 @@ typedef struct GeometryMesh_t {
 	const unsigned int* v_indices; /* vertices index */
 } GeometryMesh_t;
 
-typedef struct GeometrySegmentIndices_t {
-	CCTNum_t(*v)[3];
-	const unsigned int* edge_indices;
-	unsigned int edge_indices_cnt;
-	unsigned short edge_stride;
-	short is_convex;
-} GeometrySegmentIndices_t;
-
 /*********************************************************************/
 
 enum {
@@ -79,7 +77,6 @@ enum {
 	GEOMETRY_BODY_OBB = 6,
 	GEOMETRY_BODY_POLYGON = 7,
 	GEOMETRY_BODY_CONVEX_MESH = 8,
-	GEOMETRY_BODY_SEGMENT_INDICES = 9,
 };
 
 typedef struct GeometryBody_t {
@@ -93,7 +90,6 @@ typedef struct GeometryBody_t {
 		GeometryOBB_t obb;
 		GeometryPolygon_t polygon;
 		GeometryMesh_t mesh;
-		GeometrySegmentIndices_t segment_indices;
 	};
 	int type;
 } GeometryBody_t;
@@ -109,7 +105,6 @@ typedef struct GeometryBodyRef_t {
 		GeometryOBB_t* obb;
 		GeometryPolygon_t* polygon;
 		GeometryMesh_t* mesh;
-		GeometrySegmentIndices_t* segment_indices;
 	};
 	int type;
 } GeometryBodyRef_t;

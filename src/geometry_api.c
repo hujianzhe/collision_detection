@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 size_t mathGeometrySize(int geo_type) {
-	static const size_t s_geometry_size[10] = {
+	static const size_t s_geometry_size[] = {
 		0,
 		sizeof(CCTNum_t[3]),
 		sizeof(GeometrySegment_t),
@@ -45,10 +45,9 @@ size_t mathGeometrySize(int geo_type) {
 		sizeof(GeometryOBB_t),
 		sizeof(GeometryPolygon_t),
 		sizeof(GeometryMesh_t),
-		sizeof(GeometrySegmentIndices_t)
 	};
 
-	if (((size_t)geo_type) >= 10) {
+	if (((size_t)geo_type) >= sizeof(s_geometry_size) / sizeof(s_geometry_size[0])) {
 		return 0;
 	}
 	return s_geometry_size[(size_t)geo_type];

@@ -78,16 +78,6 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->polygons_cnt = 0;
 }
 
-static void sweep_mesh_convert_from_segentindices(GeometryMesh_t* mesh, const GeometrySegmentIndices_t* si) {
-	mesh->v = si->v;
-	mesh->edge_indices = si->edge_indices;
-	mesh->edge_indices_cnt = si->edge_indices_cnt;
-	mesh->edge_stride = si->edge_stride;
-	mesh->is_convex = si->is_convex;
-	mesh->polygons = NULL;
-	mesh->polygons_cnt = 0;
-}
-
 static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
 	mesh->v = polygon->v;
 	mesh->v_indices = polygon->v_indices;
@@ -2171,18 +2161,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_SEGMENT_INDICES == one->type) {
-		switch (two->type) {
-			case GEOMETRY_BODY_SEGMENT_INDICES:
-			{
-				GeometryMesh_t one_mesh, two_mesh;
-				sweep_mesh_convert_from_segentindices(&one_mesh, one->segment_indices);
-				sweep_mesh_convert_from_segentindices(&two_mesh, two->segment_indices);
-				result = MeshSegment_Sweep_MeshSegment(&one_mesh, dir, &two_mesh, result);
-				break;
-			}
-		}
-	}
+
 	if (!result) {
 		return NULL;
 	}
