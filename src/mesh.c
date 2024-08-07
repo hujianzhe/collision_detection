@@ -332,6 +332,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 			dup_tri_indices[j] = src_polygon->tri_indices[j];
 		}
 		mathVec3Copy(dup_polygons[i].o, src_polygon->o);
+		mathVec3Copy(dup_polygons[i].center, src_polygon->center);
 		mathVec3Copy(dup_polygons[i].normal, src_polygon->normal);
 		dup_polygons[i].v = dup_v;
 		dup_polygons[i].v_indices_cnt = src_polygon->v_indices_cnt;

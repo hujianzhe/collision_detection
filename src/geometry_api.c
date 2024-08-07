@@ -168,7 +168,8 @@ const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			return NULL;
+			ptr_v = b->polygon->center;
+			break;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
@@ -222,7 +223,16 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			/* TODO */
+			unsigned int i;
+			GeometryPolygon_t* polygon = b->polygon;
+			CCTNum_t delta[3];
+			mathVec3Sub(delta, v, polygon->center);
+			for (i = 0; i < polygon->v_indices_cnt; ++i) {
+				CCTNum_t* p = polygon->v[polygon->v_indices[i]];
+				mathVec3Add(p, p, delta);
+			}
+			mathVec3Add(polygon->o, polygon->o, delta);
+			mathVec3Copy(polygon->center, v);
 			return;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:

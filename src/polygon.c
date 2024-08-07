@@ -38,10 +38,8 @@ GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsi
 		ret_v_indices[0] = tri_indices[0];
 		ret_v_indices[1] = tri_indices[1];
 		ret_v_indices[2] = tri_indices[2];
-
-		polygon->v_indices = ret_v_indices;
-		polygon->v_indices_cnt = 3;
-		return polygon;
+		ret_v_indices_cnt = 3;
+		goto finish;
 	}
 	/* Filters all share triangle edges, leaving all non-shared edges */
 	for (i = 0; i < tri_indices_cnt; i += 3) {
@@ -197,8 +195,16 @@ GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsi
 	}
 	free(tmp_edge_indices);
 	/* save result */
+finish:
+	mathVertexIndicesFindMinMaxXYZ(v, ret_v_indices, ret_v_indices_cnt, v1, v2);
+	mathVec3Add(polygon->center, v1, v2);
+	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
+	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
+	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = ret_v_indices;
 	polygon->v_indices_cnt = ret_v_indices_cnt;
+	polygon->tri_indices = tri_indices;
+	polygon->tri_indices_cnt = tri_indices_cnt;
 	return polygon;
 }
 
@@ -270,34 +276,35 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 }
 
 int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
-	unsigned int i;
+	CCTNum_t e1[3], e2[3], test_n[3];
+	unsigned int i, has_test_n;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
-	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTNum_t ls_v[3];
-		int flag_sign = 0;
-		unsigned int j, v_idx[2];
-		v_idx[0] = polygon->v_indices[i++];
-		v_idx[1] = polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i];
-		mathVec3Sub(ls_v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
-		for (j = 0; j < polygon->v_indices_cnt; ++j) {
-			CCTNum_t v[3], dot;
-			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
-			dot = mathVec3Dot(v, ls_v);
-			/* some module needed epsilon */
-			if (dot > CCT_EPSILON) {
-				if (flag_sign < 0) {
-					return 0;
-				}
-				flag_sign = 1;
+	has_test_n = 0;
+	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		CCTNum_t n[3];
+		unsigned int v_idx1, v_idx2;
+		if (i) {
+			v_idx1 = polygon->v_indices[i - 1];
+			v_idx2 = polygon->v_indices[i + 1 < polygon->v_indices_cnt ? i + 1 : 0];
+		}
+		else {
+			v_idx1 = polygon->v_indices[polygon->v_indices_cnt - 1];
+			v_idx2 = polygon->v_indices[1];
+		}
+		mathVec3Sub(e1, polygon->v[polygon->v_indices[i]], polygon->v[v_idx1]);
+		mathVec3Sub(e2, polygon->v[v_idx2], polygon->v[polygon->v_indices[i]]);
+		if (!has_test_n) {
+			mathVec3Cross(test_n, e1, e2);
+			if (!mathVec3IsZero(test_n)) {
+				has_test_n = 1;
 			}
-			else if (dot < CCT_EPSILON_NEGATE) {
-				if (flag_sign > 0) {
-					return 0;
-				}
-				flag_sign = -1;
-			}
+			continue;
+		}
+		mathVec3Cross(n, e1, e2);
+		if (mathVec3Dot(test_n, n) < CCTNum(0.0)) {
+			return 0;
 		}
 	}
 	return 1;
@@ -327,10 +334,6 @@ GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
 		goto err;
 	}
-	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
-	polygon->v = dup_v;
-	polygon->tri_indices = dup_tri_indices;
-	polygon->tri_indices_cnt = tri_indices_cnt;
 	polygon->is_convex = mathPolygonIsConvex(polygon);
 	return polygon;
 err:
@@ -380,6 +383,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		dup_tri_indices[i] = src->tri_indices[i];
 	}
 	mathVec3Copy(dst->o, src->o);
+	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
 	dst->tri_indices_cnt = src->tri_indices_cnt;
 	dst->v_indices_cnt = src->v_indices_cnt;
