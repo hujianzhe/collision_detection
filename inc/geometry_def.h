@@ -26,6 +26,7 @@ typedef struct GeometrySphere_t {
 
 typedef struct GeometryCapsule_t {
 	CCTNum_t o[3];
+	CCTNum_t axis[3];
 	CCTNum_t radius;
 	CCTNum_t half;
 } GeometryCapsule_t;
