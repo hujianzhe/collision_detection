@@ -211,10 +211,25 @@ static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCT
 }
 
 int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) {
-	CCTNum_t closest_p[3], lensq;
-	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, p, closest_p);
-	lensq = mathVec3DistanceSq(p, closest_p);
-	return lensq <= CCTNum_sq(capsule->radius);
+	CCTNum_t v[3], dot, lensq, radius_sq = CCTNum_sq(capsule->radius);
+	mathVec3Sub(v, p, capsule->o);
+	dot = mathVec3Dot(v, capsule->axis);
+	lensq = mathVec3LenSq(v) - CCTNum_sq(dot);
+	if (lensq > radius_sq + CCT_EPSILON) {
+		return 0;
+	}
+	if (CCTNum_abs(dot) <= capsule->half) {
+		return 1;
+	}
+	mathVec3Copy(v, capsule->o);
+	if (dot > CCTNum(0.0)) {
+		mathVec3AddScalar(v, capsule->axis, capsule->half);
+	}
+	else {
+		mathVec3SubScalar(v, capsule->axis, capsule->half);
+	}
+	lensq = mathVec3DistanceSq(v, p);
+	return lensq <= radius_sq + CCT_EPSILON;
 }
 
 static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
