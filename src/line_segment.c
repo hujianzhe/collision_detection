@@ -21,45 +21,13 @@ CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], co
 	return dot;
 }
 
-void mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* min_d, CCTNum_t dir_d[2]) {
-	CCTNum_t N[3], n[3], v[3], dot, nlen;
+static void mathLineClosestLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t dir_d[2]) {
+	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
 	mathVec3Sub(v, lsv2, lsv1);
 	mathVec3Cross(n, lsdir1, lsdir2);
-	if (mathVec3IsZero(n)) {
-		dot = mathVec3Dot(v, lsdir1);
-		dot *= dot;
-		nlen = mathVec3LenSq(v);
-		if (nlen > dot) {
-			if (min_d) {
-				*min_d = CCTNum_sqrt(nlen - dot);
-			}
-			return;
-		}
-		if (min_d) {
-			*min_d = CCTNum(0.0);
-		}
-		return;
-	}
-	if (mathVec3IsZero(v)) {
-		if (min_d) {
-			*min_d = CCTNum(0.0);
-		}
-		if (dir_d) {
-			dir_d[0] = dir_d[1] = CCTNum(0.0);
-		}
-		return;
-	}
-	nlen = mathVec3Normalized(N, n);
-	dot = mathVec3Dot(v, N);
-	dot = CCTNum_abs(dot);
-	if (min_d) {
-		*min_d = dot;
-	}
-	if (dir_d) {
-		CCTNum_t cross_v[3], nlensq_inv = CCTNum(1.0) / CCTNum_sq(nlen);
-		dir_d[0] = mathVec3Dot(mathVec3Cross(cross_v, v, lsdir2), n) * nlensq_inv;
-		dir_d[1] = mathVec3Dot(mathVec3Cross(cross_v, v, lsdir1), n) * nlensq_inv;
-	}
+	nlensq_inv = CCTNum(1.0) / mathVec3LenSq(n);
+	dir_d[0] = mathVec3Dot(mathVec3Cross(temp, v, lsdir2), n) * nlensq_inv;
+	dir_d[1] = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
 CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {

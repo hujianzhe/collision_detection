@@ -210,6 +210,13 @@ static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCT
 	return 1;
 }
 
+int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) {
+	CCTNum_t closest_p[3], lensq;
+	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, p, closest_p);
+	lensq = mathVec3DistanceSq(p, closest_p);
+	return lensq <= CCTNum_sq(capsule->radius);
+}
+
 static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (AABB_Contain_AABB(o, half, mesh->bound_box.o, mesh->bound_box.half)) {
@@ -307,8 +314,8 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
 		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
 	}
-	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Indices[0] &&
-		(const void*)polygon->v_indices < (const void*)Box_Face_Indices[6])
+	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Indices &&
+		(const void*)polygon->v_indices < (const void*)(Box_Face_Indices + 6))
 	{
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);

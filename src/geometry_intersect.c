@@ -23,6 +23,7 @@ extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_n
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -315,6 +316,25 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 		}
 	}
 	return 0;
+}
+
+int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+	CCTNum_t edge[2][3], d[3], abs_d;
+	mathVec3Copy(edge[0], capsule->o);
+	mathVec3AddScalar(edge[0], capsule->axis, capsule->half);
+	mathVec3Copy(edge[1], capsule->o);
+	mathVec3AddScalar(edge[1], capsule->axis, capsule->half);
+	if (Segment_Intersect_Plane((const CCTNum_t(*)[3])edge, plane_v, plane_n, NULL, d)) {
+		return 2;
+	}
+	abs_d = CCTNum_abs(d[2]);
+	if (abs_d > capsule->radius) {
+		return 0;
+	}
+	if (abs_d < capsule->radius) {
+		return 2;
+	}
+	return 1;
 }
 
 int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t closest_p[3]) {
