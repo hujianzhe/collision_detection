@@ -258,7 +258,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			d = mathPointProjectionLine(ls1[i], ls2[0], ls2_dir, v);
 			mathVec3Sub(l, ls2[0], v);
 			mathVec3Sub(r, ls2[1], v);
-			if (mathVec3Dot(l, r) <= CCT_EPSILON) {
+			if (mathVec3Dot(l, r) > CCT_EPSILON) {
 				continue;
 			}
 			d = mathVec3DistanceSq(ls1[i], ls2[0]) - CCTNum_sq(d);
@@ -272,7 +272,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			d = mathPointProjectionLine(ls2[i], ls1[0], ls1_dir, v);
 			mathVec3Sub(l, ls1[0], v);
 			mathVec3Sub(r, ls1[1], v);
-			if (mathVec3Dot(l, r) <= CCT_EPSILON) {
+			if (mathVec3Dot(l, r) > CCT_EPSILON) {
 				continue;
 			}
 			d = mathVec3DistanceSq(ls2[i], ls1[0]) - CCTNum_sq(d);
