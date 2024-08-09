@@ -9,6 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
+#include "../inc/vertex.h"
 #include "../inc/geometry_api.h"
 #include <math.h>
 #include <stddef.h>
@@ -237,10 +238,7 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 
 static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
 	CCTNum_t edge[2][3], min_lensq;
-	mathVec3Copy(edge[0], capsule->o);
-	mathVec3SubScalar(edge[0], capsule->axis, capsule->half);
-	mathVec3Copy(edge[1], capsule->o);
-	mathVec3AddScalar(edge[1], capsule->axis, capsule->half);
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	min_lensq = mathSegmentClosestSegmentDistanceSq(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
 	return min_lensq <= CCTNum_sq(capsule->radius) + CCT_EPSILON;
 }
@@ -330,10 +328,7 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 
 static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	CCTNum_t edge[2][3], d[3], abs_d;
-	mathVec3Copy(edge[0], capsule->o);
-	mathVec3AddScalar(edge[0], capsule->axis, capsule->half);
-	mathVec3Copy(edge[1], capsule->o);
-	mathVec3AddScalar(edge[1], capsule->axis, capsule->half);
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	if (Segment_Intersect_Plane((const CCTNum_t(*)[3])edge, plane_v, plane_n, NULL, d)) {
 		return 2;
 	}
@@ -345,6 +340,18 @@ static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNu
 		return 2;
 	}
 	return 1;
+}
+
+static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const GeometryCapsule_t* c2) {
+	CCTNum_t c1_edge[2][3], c2_edge[2][3], min_lensq, radius_sum;
+	mathTwoVertexFromCenterHalf(c1->o, c1->axis, c1->half, c1_edge[0], c1_edge[1]);
+	mathTwoVertexFromCenterHalf(c2->o, c2->axis, c2->half, c2_edge[0], c2_edge[1]);
+	min_lensq = mathSegmentClosestSegmentDistanceSq(
+		(const CCTNum_t(*)[3])c1_edge, c1->axis, c1->half + c1->half,
+		(const CCTNum_t(*)[3])c2_edge, c2->axis, c2->half + c2->half
+	);
+	radius_sum = c1->radius + c2->radius;
+	return min_lensq <= CCTNum_sq(radius_sum);
 }
 
 int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t closest_p[3]) {

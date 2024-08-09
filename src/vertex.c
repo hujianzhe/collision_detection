@@ -90,7 +90,14 @@ int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_
 	return 1;
 }
 
-unsigned int mathFindEdgeIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned short edge_stride, unsigned int v_idx0, unsigned int v_idx1) {
+void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]) {
+	mathVec3Copy(start_v, center_p);
+	mathVec3SubScalar(start_v, dir, half_len);
+	mathVec3Copy(end_v, center_p);
+	mathVec3AddScalar(end_v, dir, half_len);
+}
+
+unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned short edge_stride, unsigned int v_idx0, unsigned int v_idx1) {
 	unsigned int i;
 	if (edge_stride != 1) {
 		for (i = 0; i < edge_indices_cnt; ++i) {

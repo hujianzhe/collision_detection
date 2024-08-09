@@ -877,7 +877,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		if (dst_info->idx == src_info->idx) {
 			return 0;
 		}
-		idx = mathFindEdgeIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, dst_info->idx, src_info->idx);
+		idx = mathFindEdgeIndexByTwoVertexIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, dst_info->idx, src_info->idx);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			dst_info->idx = idx;
@@ -1417,7 +1417,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 			}
 			same_v_idx[same_v_cnt++] = mesh->v_indices[i];
 			if (2 == same_v_cnt) {
-				idx = mathFindEdgeIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, same_v_idx[0], same_v_idx[1]);
+				idx = mathFindEdgeIndexByTwoVertexIndex(mesh->edge_indices, mesh->edge_indices_cnt, mesh->edge_stride, same_v_idx[0], same_v_idx[1]);
 				if (idx != -1) {
 					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 					result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
