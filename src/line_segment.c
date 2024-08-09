@@ -239,7 +239,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 	}
 	else {
 		/* cross */
-		int i, lensq_set;
+		int i, lensq_set, set_cnt;
 		CCTNum_t l[3], r[3], lensq;
 		mathLineCrossLine(ls1[0], ls1_dir, ls2[0], ls2_dir, v);
 		mathVec3Sub(l, ls1[0], v);
@@ -254,6 +254,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			}
 		}
 		lensq_set = 0;
+		set_cnt = 0;
 		for (i = 0; i < 2; ++i) {
 			d = mathPointProjectionLine(ls1[i], ls2[0], ls2_dir, v);
 			mathVec3Sub(l, ls2[0], v);
@@ -261,6 +262,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			if (mathVec3Dot(l, r) > CCT_EPSILON) {
 				continue;
 			}
+			set_cnt++;
 			d = mathVec3DistanceSq(ls1[i], ls2[0]) - CCTNum_sq(d);
 			if (lensq_set && lensq <= d) {
 				continue;
@@ -268,6 +270,10 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			lensq = d;
 			lensq_set = 1;
 		}
+		if (set_cnt >= 2) {
+			return lensq;
+		}
+		set_cnt = 0;
 		for (i = 0; i < 2; ++i) {
 			d = mathPointProjectionLine(ls2[i], ls1[0], ls1_dir, v);
 			mathVec3Sub(l, ls1[0], v);
@@ -275,6 +281,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			if (mathVec3Dot(l, r) > CCT_EPSILON) {
 				continue;
 			}
+			set_cnt++;
 			d = mathVec3DistanceSq(ls2[i], ls1[0]) - CCTNum_sq(d);
 			if (lensq_set && lensq <= d) {
 				continue;
@@ -282,9 +289,13 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			lensq = d;
 			lensq_set = 1;
 		}
-		if (!lensq_set) {
+		if (set_cnt < 2) {
 			unsigned int v_idx[2];
-			return mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
+			CCTNum_t lensq2 = mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
+			if (lensq_set && lensq < lensq2) {
+				return lensq;
+			}
+			return lensq2;
 		}
 		return lensq;
 	}
