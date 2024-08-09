@@ -235,6 +235,16 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 	return 0;
 }
 
+int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
+	CCTNum_t edge[2][3], min_lensq;
+	mathVec3Copy(edge[0], capsule->o);
+	mathVec3SubScalar(edge[0], capsule->axis, capsule->half);
+	mathVec3Copy(edge[1], capsule->o);
+	mathVec3AddScalar(edge[1], capsule->axis, capsule->half);
+	min_lensq = mathSegmentClosestSegmentDistanceSq(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
+	return min_lensq <= CCTNum_sq(capsule->radius) + CCT_EPSILON;
+}
+
 int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) {
 	int plane_side = 0;
 	unsigned int i;
