@@ -354,19 +354,31 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 	return min_lensq <= CCTNum_sq(radius_sum);
 }
 
-int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3], CCTNum_t closest_p[3]) {
-	CCTNum_t closest_v_lensq, radius_sq;
-	CCTNum_t temp_closest_p[3];
-	if (!closest_p) {
-		closest_p = temp_closest_p;
-	}
+int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3]) {
+	CCTNum_t lensq, radius_sq;
+	CCTNum_t closest_p[3];
 	mathSegmentClosestPointTo(ls, o, closest_p);
-	closest_v_lensq = mathVec3DistanceSq(closest_p, o);
+	lensq = mathVec3DistanceSq(closest_p, o);
 	radius_sq = CCTNum_sq(radius);
-	if (closest_v_lensq > radius_sq) {
+	if (lensq > radius_sq) {
 		return 0;
 	}
-	if (closest_v_lensq < radius_sq) {
+	if (lensq < radius_sq) {
+		return 2;
+	}
+	return 1;
+}
+
+static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const GeometryCapsule_t* capsule) {
+	CCTNum_t lensq, radius_sq;
+	CCTNum_t closest_p[3];
+	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+	lensq = mathVec3DistanceSq(o, closest_p);
+	radius_sq = CCTNum_sq(radius + capsule->radius);
+	if (lensq > radius_sq) {
+		return 0;
+	}
+	if (lensq < radius_sq) {
 		return 2;
 	}
 	return 1;
@@ -419,8 +431,8 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge, p);
-		if (res != 0) {
+		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge);
+		if (res) {
 			return res;
 		}
 	}
@@ -448,7 +460,7 @@ int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const Geom
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[i++]]);
 		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[i++]]);
-		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge, NULL);
+		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge);
 		if (res) {
 			return res;
 		}
@@ -726,7 +738,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return Sphere_Intersect_Segment(two->sphere->o, two->sphere->radius, one_segment_v, NULL);
+				return Sphere_Intersect_Segment(two->sphere->o, two->sphere->radius, one_segment_v);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -811,7 +823,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Sphere_Intersect_Segment(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->segment->v, NULL);
+				return Sphere_Intersect_Segment(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->segment->v);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
