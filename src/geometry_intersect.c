@@ -235,7 +235,7 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 	return 0;
 }
 
-int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
+static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
 	CCTNum_t edge[2][3], min_lensq;
 	mathVec3Copy(edge[0], capsule->o);
 	mathVec3SubScalar(edge[0], capsule->axis, capsule->half);
@@ -328,7 +328,7 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 	return 0;
 }
 
-int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	CCTNum_t edge[2][3], d[3], abs_d;
 	mathVec3Copy(edge[0], capsule->o);
 	mathVec3AddScalar(edge[0], capsule->axis, capsule->half);
