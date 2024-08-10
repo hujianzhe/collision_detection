@@ -549,27 +549,12 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
-		return 2;
+		return 1;
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTNum_t p[3];
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		int res = Sphere_Intersect_Plane(o, radius, polygon->v[polygon->v_indices[0]], polygon->normal, p, NULL);
-		if (0 == res) {
-			continue;
-		}
-		if (Polygon_Contain_Point(polygon, p)) {
-			return res;
-		}
-	}
-	for (i = 0; i < mesh->edge_indices_cnt; ) {
-		int res;
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[i++]]);
-		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[i++]]);
-		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge);
-		if (res) {
-			return res;
+		if (Sphere_Intersect_Polygon(o, radius, polygon, NULL)) {
+			return 1;
 		}
 	}
 	return 0;
