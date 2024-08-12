@@ -408,17 +408,23 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 		/* Line vs Line opposite or cross */
 		d = mathVec3Dot(v, N);
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
-			CCTNum_t cd;
-			mathLineClosestLineOpposite(o, dir, capsule->o, capsule->axis, &d, &cd);
+			CCTNum_t od, cd, lensq;
+			mathLineClosestLineOpposite(o, dir, capsule->o, capsule->axis, &od, &cd);
+			if (od < CCTNum(0.0)) {
+				return NULL;
+			}
+			cos_theta = mathVec3Dot(dir, capsule->axis);
+			lensq = CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta));
+			d = od - CCTNum_sqrt(lensq - CCTNum_sq(d));
 		}
 		else {
 			d = mathLineCrossLine(o, dir, capsule->o, capsule->axis);
+			if (d < CCTNum(0.0)) {
+				return NULL;
+			}
+			cos_theta = mathVec3Dot(dir, capsule->axis);
+			d -= CCTNum_sqrt(CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta)));
 		}
-		if (d < CCTNum(0.0)) {
-			return NULL;
-		}
-		cos_theta = mathVec3Dot(dir, capsule->axis);
-		d -= CCTNum_sqrt(CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta)));
 		result->distance = d;
 		mathVec3Copy(result->hit_plane_v, o);
 		mathVec3AddScalar(result->hit_plane_v, dir, d);
@@ -448,6 +454,10 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 	}
 	result->peer[1].idx = (d > CCTNum(0.0) ? 1 : 0);
 	return result;
+}
+
+static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	return NULL;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
