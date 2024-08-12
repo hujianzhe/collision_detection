@@ -399,14 +399,13 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 		return result;
 	}
 	mathVec3Cross(N, dir, capsule->axis);
+	mathVec3Sub(v, o, capsule->o);
 	if (mathVec3IsZero(N)) {
 		/* Line vs Line parallel or collinear */
-		mathVec3Sub(v, o, capsule->o);
 		d = mathVec3Dot(v, capsule->axis);
 	}
 	else {
 		/* Line vs Line opposite or cross */
-		mathVec3Sub(v, o, capsule->o);
 		d = mathVec3Dot(v, N);
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
 			CCTNum_t cd;
