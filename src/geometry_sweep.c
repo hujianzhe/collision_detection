@@ -331,10 +331,12 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 		return NULL;
 	}
 	d_sq = oc_lensq - CCTNum_sq(dir_d);
-	if (d_sq > radius_sq) {
+	if (d_sq > radius_sq + CCT_EPSILON) {
 		return NULL;
 	}
-	dir_d -= CCTNum_sqrt(radius_sq - d_sq);
+	if (d_sq < radius_sq) {
+		dir_d -= CCTNum_sqrt(radius_sq - d_sq);
+	}
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, dir_d);
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
@@ -459,6 +461,202 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 }
 
 static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	CCTNum_t ls_dir[3], axis_edge[2][3];
+	CCTNum_t N[3], v[3];
+	CCTNum_t ls_len, lensq, radius_sq;
+
+	mathVec3Sub(ls_dir, ls[1], ls[0]);
+	ls_len = mathVec3Normalized(ls_dir, ls_dir);
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
+	lensq = mathSegmentClosestSegmentDistanceSq(
+		ls, ls_dir, ls_len,
+		(const CCTNum_t(*)[3])axis_edge, capsule->axis, capsule->half + capsule->half
+	);
+	radius_sq = CCTNum_sq(capsule->radius);
+	if (lensq <= radius_sq + CCT_EPSILON) {
+		set_intersect(result);
+		return result;
+	}
+	mathVec3Sub(v, ls[0], capsule->o);
+	mathVec3Cross(N, capsule->axis, ls_dir);
+	if (mathVec3IsZero(N)) {
+		mathVec3Cross(N, v, capsule->axis);
+		if (mathVec3IsZero(N)) {
+			/* collinear */
+			unsigned int v_idx, s_idx;
+			if (mathVec3Dot(dir, ls_dir) > CCTNum(0.0)) {
+				v_idx = 1;
+			}
+			else {
+				v_idx = 0;
+			}
+			if (mathVec3Dot(dir, capsule->axis) > CCTNum(0.0)) {
+				s_idx = 0;
+			}
+			else {
+				s_idx = 1;
+			}
+			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
+				return NULL;
+			}
+			result->peer[0].idx = v_idx;
+			result->peer[1].idx = s_idx;
+		}
+		else {
+			/* parallel */
+			unsigned int v_idx, s_idx;
+			CCTNum_t d = mathVec3Dot(v, capsule->axis);
+			lensq = mathVec3LenSq(v) - CCTNum_sq(d);
+			if (lensq > radius_sq) {
+				CCTNum_t new_ls[2][3], p[3];
+				CCTNum_t cos_theta, plane_d;
+				mathVec3Cross(N, ls_dir, dir);
+				if (mathVec3IsZero(N)) {
+					return NULL;
+				}
+				mathVec3Cross(N, ls_dir, dir);
+				mathVec3Normalized(N, N);
+				plane_d = mathPointProjectionPlane(axis_edge[0], ls[0], N);
+				if (CCTNum_abs(plane_d) > capsule->radius + CCT_EPSILON) {
+					return NULL;
+				}
+				mathVec3Copy(new_ls[0], axis_edge[0]);
+				mathVec3AddScalar(new_ls[0], N, plane_d);
+				mathPointProjectionLine(ls[0], new_ls[0], capsule->axis, p);
+				mathVec3Sub(v, p, ls[0]);
+				d = mathVec3Normalized(v, v);
+				cos_theta = mathVec3Dot(v, dir);
+				if (cos_theta <= CCTNum(0.0)) {
+					return NULL;
+				}
+				if (CCTNum_abs(plane_d) < capsule->radius) {
+					d -= CCTNum_sqrt(radius_sq - CCTNum_sq(plane_d));
+				}
+				d /= cos_theta;
+				mathVec3Copy(new_ls[0], ls[0]);
+				mathVec3AddScalar(new_ls[0], dir, d);
+				mathVec3Copy(new_ls[1], ls[1]);
+				mathVec3AddScalar(new_ls[1], dir, d);
+				do {
+					CCTNum_t dot;
+					mathVec3Sub(v, axis_edge[0], new_ls[0]);
+					dot = mathVec3Dot(v, ls_dir);
+					if (dot < CCT_EPSILON_NEGATE) {
+						mathVec3Sub(v, axis_edge[1], new_ls[0]);
+						dot = mathVec3Dot(v, ls_dir);
+						if (dot < CCT_EPSILON_NEGATE) {
+							dot = mathVec3Dot(capsule->axis, ls_dir);
+							s_idx = (dot > CCTNum(0.0) ? 1 : 0);
+							v_idx = 0;
+							break;
+						}
+						mathVec3Copy(result->hit_plane_v, new_ls[0]);
+						if (dot > CCT_EPSILON) {
+							result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
+						else {
+							result->hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+							result->peer[1].idx = 1;
+						}
+					}
+					else if (dot > ls_len + CCT_EPSILON) {
+						mathVec3Sub(v, axis_edge[1], new_ls[0]);
+						dot = mathVec3Dot(v, ls_dir);
+						if (dot > ls_len + CCT_EPSILON) {
+							dot = mathVec3Dot(capsule->axis, ls_dir);
+							s_idx = (dot > CCTNum(0.0) ? 0 : 1);
+							v_idx = 1;
+							break;
+						}
+						if (dot < ls_len - CCT_EPSILON) {
+							result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
+						else {
+							result->hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].idx = 1;
+							result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+							result->peer[1].idx = 1;
+						}
+					}
+					else if (dot <= CCT_EPSILON) {
+						dot = mathVec3Dot(capsule->axis, ls_dir);
+						if (dot > CCTNum(0.0)) {
+							mathVec3Copy(result->hit_plane_v, new_ls[0]);
+							result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
+						else {
+							mathVec3Copy(result->hit_plane_v, new_ls[0]);
+							result->hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+							result->peer[1].idx = 0;
+						}
+					}
+					else if (dot >= ls_len - CCT_EPSILON) {
+						dot = mathVec3Dot(capsule->axis, ls_dir);
+						if (dot > CCTNum(0.0)) {
+							mathVec3Copy(result->hit_plane_v, new_ls[1]);
+							result->hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+							result->peer[0].idx = 1;
+							result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+							result->peer[1].idx = 0;
+						}
+						else {
+							mathVec3Copy(result->hit_plane_v, new_ls[0]);
+							result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+							result->peer[0].idx = 0;
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
+					}
+					else {
+						mathVec3Copy(result->hit_plane_v, new_ls[0]);
+						result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
+						result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+						result->peer[0].idx = 0;
+						result->peer[1].hit_bits = 0;
+						result->peer[1].idx = 0;
+					}
+					result->distance = d;
+					mathPointProjectionLine(new_ls[0], capsule->o, capsule->axis, p);
+					mathVec3Sub(result->hit_plane_n, p, new_ls[0]);
+					mathVec3MultiplyScalar(result->hit_plane_n, result->hit_plane_n, CCTNum(1.0) / capsule->radius);
+					return result;
+				} while (0);
+			}
+			else {
+				mathSegmentSegmentClosestIndices(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
+			}
+			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
+				return NULL;
+			}
+			result->peer[0].idx = v_idx;
+			result->peer[1].idx = s_idx;
+		}
+		return result;
+	}
+	else {
+		/* Line vs Line opposite or cross */
+	}
 	return NULL;
 }
 
