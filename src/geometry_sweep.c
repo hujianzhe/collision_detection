@@ -392,12 +392,63 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 }
 
 static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	CCTNum_t N[3], v[3];
+	CCTNum_t d, cos_theta;
 	if (Capsule_Contain_Point(capsule, o)) {
 		set_intersect(result);
 		return result;
 	}
-
-	return NULL;
+	mathVec3Cross(N, dir, capsule->axis);
+	if (mathVec3IsZero(N)) {
+		/* Line vs Line parallel or collinear */
+		mathVec3Sub(v, o, capsule->o);
+		d = mathVec3Dot(v, capsule->axis);
+	}
+	else {
+		/* Line vs Line opposite or cross */
+		mathVec3Sub(v, o, capsule->o);
+		d = mathVec3Dot(v, N);
+		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
+			CCTNum_t cd;
+			mathLineClosestLineOpposite(o, dir, capsule->o, capsule->axis, &d, &cd);
+		}
+		else {
+			d = mathLineCrossLine(o, dir, capsule->o, capsule->axis);
+		}
+		if (d < CCTNum(0.0)) {
+			return NULL;
+		}
+		cos_theta = mathVec3Dot(dir, capsule->axis);
+		d -= CCTNum_sqrt(CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta)));
+		result->distance = d;
+		mathVec3Copy(result->hit_plane_v, o);
+		mathVec3AddScalar(result->hit_plane_v, dir, d);
+		mathVec3Sub(v, result->hit_plane_v, capsule->o);
+		d = mathVec3Dot(v, capsule->axis);
+		if (CCTNum_abs(d) <= capsule->half) {
+			mathPointProjectionLine(result->hit_plane_v, capsule->o, capsule->axis, v);
+			mathVec3Sub(result->hit_plane_n, result->hit_plane_v, v);
+			mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[0].idx = 0;
+			result->peer[1].hit_bits = 0;
+			result->peer[1].idx = 0;
+			return result;
+		}
+	}
+	mathVec3Copy(v, capsule->o);
+	if (d > CCTNum(0.0)) {
+		mathVec3AddScalar(v, capsule->axis, capsule->half);
+	}
+	else {
+		mathVec3SubScalar(v, capsule->axis, capsule->half);
+	}
+	if (!Ray_Sweep_Sphere(o, dir, v, capsule->radius, result)) {
+		return NULL;
+	}
+	result->peer[1].idx = (d > CCTNum(0.0) ? 1 : 0);
+	return result;
 }
 
 static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {

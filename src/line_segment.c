@@ -21,7 +21,7 @@ CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], co
 	return dot;
 }
 
-static void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
+void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
 	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
 	mathVec3Sub(v, lsv2, lsv1);
 	mathVec3Cross(n, lsdir1, lsdir2);
@@ -30,18 +30,17 @@ static void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t l
 	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
-static void mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t point[3]) {
+CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]) {
 	CCTNum_t v[3], cos_theta, d;
-	mathPointProjectionLine(lsv1, lsv2, lsdir2, point);
-	if (mathVec3Equal(lsv1, point)) {
-		return;
+	mathPointProjectionLine(lsv1, lsv2, lsdir2, v);
+	if (mathVec3Equal(lsv1, v)) {
+		return CCTNum(0.0);
 	}
-	mathVec3Sub(v, point, lsv1);
+	mathVec3Sub(v, v, lsv1);
 	d = mathVec3Normalized(v, v);
 	cos_theta = mathVec3Dot(lsdir1, v);
 	d /= cos_theta;
-	mathVec3Copy(point, lsv1);
-	mathVec3AddScalar(point, lsdir1, d);
+	return d;
 }
 
 CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
@@ -268,7 +267,11 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		/* cross */
 		int i, lensq_set, set_cnt;
 		CCTNum_t l[3], r[3], lensq;
-		mathLineCrossLine(ls1[0], ls1_dir, ls2[0], ls2_dir, v);
+		d = mathLineCrossLine(ls1[0], ls1_dir, ls2[0], ls2_dir);
+		mathVec3Copy(v, ls1[0]);
+		if (d != CCTNum(0.0)) {
+			mathVec3AddScalar(v, ls1_dir, d);
+		}
 		mathVec3Sub(l, ls1[0], v);
 		mathVec3Sub(r, ls1[1], v);
 		d = mathVec3Dot(l, r);
