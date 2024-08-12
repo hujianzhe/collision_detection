@@ -418,12 +418,14 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 			d = od - CCTNum_sqrt(lensq - CCTNum_sq(d));
 		}
 		else {
+			CCTNum_t lensq;
 			d = mathLineCrossLine(o, dir, capsule->o, capsule->axis);
 			if (d < CCTNum(0.0)) {
 				return NULL;
 			}
 			cos_theta = mathVec3Dot(dir, capsule->axis);
-			d -= CCTNum_sqrt(CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta)));
+			lensq = CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta));
+			d -= CCTNum_sqrt(lensq);
 		}
 		result->distance = d;
 		mathVec3Copy(result->hit_plane_v, o);
