@@ -1431,7 +1431,6 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 				if (mathVec3IsZero(N)) {
 					return NULL;
 				}
-				mathVec3Cross(N, ls_dir, dir);
 				mathVec3Normalized(N, N);
 				plane_d = mathPointProjectionPlane(axis_edge[0], ls[0], N);
 				if (CCTNum_abs(plane_d) > capsule->radius + CCT_EPSILON) {
@@ -1569,34 +1568,73 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			result->peer[0].idx = v_idx;
 			result->peer[1].idx = s_idx;
 		}
-		return result;
 	}
 	else {
 		CCTNum_t d = mathVec3Dot(v, N);
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
 			/* opposite */
-			CCTNum_t closest_d[2], temp_ls[2][3];
-			mathLineClosestLineOpposite(capsule->o, capsule->axis, ls[0], ls_dir, &closest_d[0], &closest_d[1]);
-			mathVec3Copy(temp_ls[0], capsule->o);
-			mathVec3AddScalar(temp_ls[0], capsule->axis, closest_d[0]);
-			mathVec3Copy(temp_ls[1], ls[0]);
-			mathVec3AddScalar(temp_ls[1], ls_dir, closest_d[1]);
-			mathVec3Sub(N, temp_ls[1], temp_ls[0]);
-			lensq = mathVec3LenSq(N);
-			if (lensq < radius_sq) {
-				/* Segment Sweep Sphere */
-				return result;
+			mathVec3Cross(N, ls_dir, dir);
+			if (mathVec3IsZero(N)) {
+				d = mathVec3Dot(dir, ls_dir);
+				if (d > CCTNum(0.0)) {
+					if (!Ray_Sweep_Capsule(ls[1], dir, capsule, result)) {
+						return NULL;
+					}
+					result->peer[0].idx = 1;
+				}
+				else if (!Ray_Sweep_Capsule(ls[0], dir, capsule, result)) {
+					return NULL;
+				}
 			}
-			mathVec3Normalized(N, N);
-			mathVec3Copy(temp_ls[0], axis_edge[0]);
-			mathVec3AddScalar(temp_ls[0], N, capsule->radius);
-			mathVec3Copy(temp_ls[1], axis_edge[1]);
-			mathVec3AddScalar(temp_ls[1], N, capsule->radius);
-			if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
-				return result;
+			else {
+				CCTNum_t temp_ls[2][3];
+				d = mathVec3Dot(N, capsule->axis);
+				if (CCT_EPSILON_NEGATE <= d && d <= CCT_EPSILON) {
+					mathVec3Normalized(N, N);
+					d = mathPointProjectionPlane(capsule->o, ls[0], N);
+					if (CCTNum_abs(d) > capsule->radius + CCT_EPSILON) {
+						return NULL;
+					}
+					mathVec3Copy(temp_ls[0], axis_edge[0]);
+					mathVec3Copy(temp_ls[1], axis_edge[1]);
+					mathVec3AddScalar(temp_ls[0], N, d);
+					mathVec3AddScalar(temp_ls[1], N, d);
+					if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
+						return NULL;
+					}
+					if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+						result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+					}
+				}
+				else {
+					int res;
+					CCTNum_t rd[3];
+					mathVec3Normalized(N, N);
+					res = Segment_Intersect_Plane((const CCTNum_t(*)[3])axis_edge, ls[0], N, NULL, rd);
+					if (2 == res) {
+						/* no possible */
+						return NULL;
+					}
+					if (1 == res) {
+						mathLineClosestLineOpposite(capsule->o, capsule->axis, ls[0], ls_dir, &rd[0], &rd[1]);
+						mathVec3Copy(temp_ls[0], capsule->o);
+						mathVec3AddScalar(temp_ls[0], capsule->axis, rd[0]);
+						mathVec3Copy(temp_ls[1], ls[0]);
+						mathVec3AddScalar(temp_ls[1], ls_dir, rd[1]);
+						mathVec3Sub(v, temp_ls[1], temp_ls[0]);
+						mathVec3Normalized(v, v);
+						mathVec3Copy(temp_ls[0], axis_edge[0]);
+						mathVec3AddScalar(temp_ls[0], v, capsule->radius);
+						mathVec3Copy(temp_ls[1], axis_edge[1]);
+						mathVec3AddScalar(temp_ls[1], v, capsule->radius);
+						if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
+							return result;
+						}
+					}
+				}
+				/* TODO */
+				return NULL;
 			}
-			/* TODO */
-			return NULL;
 		}
 		else {
 			/* cross */
@@ -1630,9 +1668,9 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			}
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[0].idx = v_idx;
-			return result;
 		}
 	}
+	return result;
 }
 
 static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
