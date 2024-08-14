@@ -393,10 +393,10 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	return Ray_Sweep_MeshSegment(o, dir, mesh, result);
 }
 
-static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t N[3], v[3];
 	CCTNum_t d, cos_theta;
-	if (Capsule_Contain_Point(capsule, o)) {
+	if (check_intersect && Capsule_Contain_Point(capsule, o)) {
 		set_intersect(result);
 		return result;
 	}
@@ -1577,12 +1577,12 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (mathVec3IsZero(N)) {
 				d = mathVec3Dot(dir, ls_dir);
 				if (d > CCTNum(0.0)) {
-					if (!Ray_Sweep_Capsule(ls[1], dir, capsule, result)) {
+					if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
 						return NULL;
 					}
 					result->peer[0].idx = 1;
 				}
-				else if (!Ray_Sweep_Capsule(ls[0], dir, capsule, result)) {
+				else if (!Ray_Sweep_Capsule(ls[0], dir, capsule, 0, result)) {
 					return NULL;
 				}
 			}
@@ -1634,9 +1634,9 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 							return result;
 						}
 						if (Segment_Intersect_Plane((const CCTNum_t(*)[3])temp_ls, ls[0], N, NULL, rd)) {
-							if (Ray_Sweep_Capsule(ls[0], dir, capsule, result)) {
+							if (Ray_Sweep_Capsule(ls[0], dir, capsule, 0, result)) {
 								CCTSweepResult_t result_temp;
-								if (Ray_Sweep_Capsule(ls[1], dir, capsule, &result_temp)) {
+								if (Ray_Sweep_Capsule(ls[1], dir, capsule, 0, &result_temp)) {
 									if (result_temp.distance < result->distance) {
 										*result = result_temp;
 										result->peer[0].idx = 1;
@@ -1644,7 +1644,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 								}
 								return result;
 							}
-							if (!Ray_Sweep_Capsule(ls[1], dir, capsule, result)) {
+							if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
 								return NULL;
 							}
 							result->peer[0].idx = 1;
@@ -1692,7 +1692,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 				result->peer[1].idx = s_idx;
 				return result;
 			}
-			if (!Ray_Sweep_Capsule(ls[v_idx], dir, capsule, result)) {
+			if (!Ray_Sweep_Capsule(ls[v_idx], dir, capsule, 0, result)) {
 				return NULL;
 			}
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
