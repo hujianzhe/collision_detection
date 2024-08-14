@@ -1413,6 +1413,18 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	if (CCT_EPSILON_NEGATE <= cos_theta && cos_theta <= CCT_EPSILON) {
 		CCTNum_t temp_ls[2][3];
 		CCTNum_t d, abs_d;
+		mathVec3Sub(v, capsule->o, ls[0]);
+		mathVec3Cross(v, v, capsule->axis);
+		if (mathVec3IsZero(v)) {
+			unsigned int v_idx, s_idx;
+			mathSegmentSegmentClosestIndices(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
+			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
+				return NULL;
+			}
+			result->peer[0].idx = v_idx;
+			result->peer[1].idx = s_idx;
+			return result;
+		}
 		d = mathPointProjectionPlane(axis_edge[0], ls[0], plane_n);
 		abs_d = CCTNum_abs(d);
 		if (abs_d > capsule->radius + CCT_EPSILON) {
