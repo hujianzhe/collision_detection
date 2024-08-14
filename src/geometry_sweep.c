@@ -1631,6 +1631,13 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 						mathVec3Copy(temp_ls[1], axis_edge[1]);
 						mathVec3AddScalar(temp_ls[1], v, capsule->radius);
 						if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
+							if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+								result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+							}
+							else {
+								result->peer[1].hit_bits = 0;
+								result->peer[1].idx = 0;
+							}
 							return result;
 						}
 						if (Segment_Intersect_Plane((const CCTNum_t(*)[3])temp_ls, ls[0], N, NULL, rd)) {
