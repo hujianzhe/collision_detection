@@ -1612,59 +1612,56 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 					CCTNum_t rd[3];
 					mathVec3Normalized(N, N);
 					res = Segment_Intersect_Plane((const CCTNum_t(*)[3])axis_edge, ls[0], N, NULL, rd);
+					if (2 == res) {
+						/* no possible */
+						return NULL;
+					}
 					if (0 == res) {
 						if (CCTNum_abs(rd[2]) > capsule->radius) {
 							return NULL;
 						}
-						s_idx = (rd[0] == rd[2] ? 0 : 1);
 					}
-					else if (1 == res) {
-						mathLineClosestLineOpposite(capsule->o, capsule->axis, ls[0], ls_dir, &rd[0], &rd[1]);
-						mathVec3Copy(temp_ls[0], capsule->o);
-						mathVec3AddScalar(temp_ls[0], capsule->axis, rd[0]);
-						mathVec3Copy(temp_ls[1], ls[0]);
-						mathVec3AddScalar(temp_ls[1], ls_dir, rd[1]);
-						mathVec3Sub(v, temp_ls[1], temp_ls[0]);
-						mathVec3Normalized(v, v);
-						mathVec3Copy(temp_ls[0], axis_edge[0]);
-						mathVec3AddScalar(temp_ls[0], v, capsule->radius);
-						mathVec3Copy(temp_ls[1], axis_edge[1]);
-						mathVec3AddScalar(temp_ls[1], v, capsule->radius);
-						if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
-							if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
-								result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
-							}
-							else {
-								result->peer[1].hit_bits = 0;
-								result->peer[1].idx = 0;
-							}
-							return result;
+					mathLineClosestLineOpposite(capsule->o, capsule->axis, ls[0], ls_dir, &rd[0], &rd[1]);
+					mathVec3Copy(temp_ls[0], capsule->o);
+					mathVec3AddScalar(temp_ls[0], capsule->axis, rd[0]);
+					mathVec3Copy(temp_ls[1], ls[0]);
+					mathVec3AddScalar(temp_ls[1], ls_dir, rd[1]);
+					mathVec3Sub(v, temp_ls[1], temp_ls[0]);
+					mathVec3Normalized(v, v);
+					mathVec3Copy(temp_ls[0], axis_edge[0]);
+					mathVec3AddScalar(temp_ls[0], v, capsule->radius);
+					mathVec3Copy(temp_ls[1], axis_edge[1]);
+					mathVec3AddScalar(temp_ls[1], v, capsule->radius);
+					if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
+						if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+							result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
 						}
-						if (Segment_Intersect_Plane((const CCTNum_t(*)[3])temp_ls, ls[0], N, NULL, rd)) {
-							if (Ray_Sweep_Capsule(ls[0], dir, capsule, 0, result)) {
-								CCTSweepResult_t result_temp;
-								if (Ray_Sweep_Capsule(ls[1], dir, capsule, 0, &result_temp)) {
-									if (result_temp.distance < result->distance) {
-										*result = result_temp;
-										result->peer[0].idx = 1;
-									}
+						else {
+							result->peer[1].hit_bits = 0;
+							result->peer[1].idx = 0;
+						}
+						return result;
+					}
+					if (Segment_Intersect_Plane((const CCTNum_t(*)[3])temp_ls, ls[0], N, NULL, rd)) {
+						if (Ray_Sweep_Capsule(ls[0], dir, capsule, 0, result)) {
+							CCTSweepResult_t result_temp;
+							if (Ray_Sweep_Capsule(ls[1], dir, capsule, 0, &result_temp)) {
+								if (result_temp.distance < result->distance) {
+									*result = result_temp;
+									result->peer[0].idx = 1;
 								}
-								return result;
 							}
-							if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
-								return NULL;
-							}
-							result->peer[0].idx = 1;
 							return result;
 						}
-						rd[0] = mathPointProjectionPlane(temp_ls[0], ls[0], N);
-						rd[1] = mathPointProjectionPlane(temp_ls[1], ls[0], N);
-						s_idx = (CCTNum_abs(rd[0]) < CCTNum_abs(rd[1]) ? 0 : 1);
+						if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
+							return NULL;
+						}
+						result->peer[0].idx = 1;
+						return result;
 					}
-					else {
-						/* no possible */
-						return NULL;
-					}
+					rd[0] = mathPointProjectionPlane(temp_ls[0], ls[0], N);
+					rd[1] = mathPointProjectionPlane(temp_ls[1], ls[0], N);
+					s_idx = (CCTNum_abs(rd[0]) < CCTNum_abs(rd[1]) ? 0 : 1);
 					if (!Segment_Sweep_Sphere(ls, dir, axis_edge[s_idx], capsule->radius, 0, result)) {
 						return NULL;
 					}
