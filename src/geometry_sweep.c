@@ -2215,6 +2215,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = Ray_Sweep_ConvexMesh(one->point, dir, two->mesh, result);
 				break;
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				result = Ray_Sweep_Capsule(one->point, dir, two->capsule, 1, result);
+				break;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SEGMENT == one->type) {
@@ -2263,6 +2268,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				result = Segment_Sweep_ConvexMesh(one_segment_v, dir, two->mesh, result);
+				break;
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				result = Segment_Sweep_Capsule(one_segment_v, dir, two->capsule, result);
 				break;
 			}
 		}
@@ -2552,6 +2562,18 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, two->mesh, result);
+				break;
+			}
+		}
+	}
+	else if (GEOMETRY_BODY_CAPSULE == one->type) {
+		switch (two->type) {
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				CCTNum_t neg_dir[3];
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Segment_Sweep_Capsule((const CCTNum_t(*)[3])two->segment->v, neg_dir, one->capsule, result);
 				break;
 			}
 		}
