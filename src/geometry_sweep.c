@@ -434,7 +434,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 		mathVec3AddScalar(result->hit_plane_v, dir, d);
 		mathVec3Sub(v, result->hit_plane_v, capsule->o);
 		d = mathVec3Dot(v, capsule->axis);
-		if (CCTNum_abs(d) <= capsule->half) {
+		if (CCTNum_abs(d) <= capsule->half + CCT_EPSILON) {
 			mathPointProjectionLine(result->hit_plane_v, capsule->o, capsule->axis, v);
 			mathVec3Sub(result->hit_plane_n, result->hit_plane_v, v);
 			mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
