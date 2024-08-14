@@ -45,6 +45,7 @@ size_t mathGeometrySize(int geo_type) {
 		sizeof(GeometryOBB_t),
 		sizeof(GeometryPolygon_t),
 		sizeof(GeometryMesh_t),
+		sizeof(GeometryCapsule_t)
 	};
 
 	if (((size_t)geo_type) >= sizeof(s_geometry_size) / sizeof(s_geometry_size[0])) {

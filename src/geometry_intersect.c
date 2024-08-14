@@ -24,6 +24,7 @@ extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_n
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
+extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -347,14 +348,18 @@ struct GeometryCapsuleExtra_t {
 	CCTNum_t radius_sq;
 };
 
+static void capsule_fill_extra(const GeometryCapsule_t* capsule, struct GeometryCapsuleExtra_t* capsule_extra) {
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, capsule_extra->axis_edge[0], capsule_extra->axis_edge[1]);
+	capsule_extra->axis_len = capsule->half + capsule->half;
+	capsule_extra->radius_sq = CCTNum_sq(capsule->radius);
+}
+
 static int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const struct GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	int res, i;
 	CCTNum_t p[3], d[3];
 	struct GeometryCapsuleExtra_t capsule_extra_temp;
 	if (!capsule_extra) {
-		mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, capsule_extra_temp.axis_edge[0], capsule_extra_temp.axis_edge[1]);
-		capsule_extra_temp.axis_len = capsule->half + capsule->half;
-		capsule_extra_temp.radius_sq = CCTNum_sq(capsule->radius);
+		capsule_fill_extra(capsule, &capsule_extra_temp);
 		capsule_extra = &capsule_extra_temp;
 	}
 	if (ret_plane_side) {
@@ -802,6 +807,10 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			{
 				return ConvexMesh_Contain_Point(two->mesh, one->point);
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Capsule_Contain_Point(two->capsule, one->point);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SEGMENT == one->type) {
@@ -838,6 +847,10 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return Segment_Intersect_ConvexMesh(one_segment_v, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Segment_Intersect_Capsule(one_segment_v, two->capsule);
 			}
 		}
 	}
@@ -888,6 +901,14 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, AABB_Axis);
 				return ConvexMesh_Intersect_ConvexMesh(&one_mesh.mesh, two->mesh);
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				GeometryBoxMesh_t one_mesh;
+				CCTNum_t v[8][3];
+				mathAABBVertices(one->aabb->o, one->aabb->half, v);
+				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, AABB_Axis);
+				return Capsule_Intersect_ConvexMesh(two->capsule, &one_mesh.mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SPHERE == one->type) {
@@ -923,6 +944,10 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return Sphere_Intersect_ConvexMesh(one->sphere->o, one->sphere->radius, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Sphere_Intersect_Capsule(one->sphere->o, one->sphere->radius, two->capsule);
 			}
 		}
 	}
@@ -970,6 +995,10 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				const GeometryMesh_t* mesh = two->mesh;
 				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane->v, plane->normal);
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Capsule_Intersect_Plane(two->capsule, one->plane->v, one->plane->normal);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_POLYGON == one->type) {
@@ -1015,6 +1044,12 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return ConvexMesh_Intersect_Polygon(two->mesh, one->polygon, NULL);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				struct GeometryCapsuleExtra_t capsule_extra;
+				capsule_fill_extra(two->capsule, &capsule_extra);
+				return Capsule_Intersect_Polygon(two->capsule, &capsule_extra, one->polygon, NULL);
 			}
 		}
 	}
@@ -1065,6 +1100,14 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])one->obb->axis);
 				return ConvexMesh_Intersect_ConvexMesh(&one_mesh.mesh, two->mesh);
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				GeometryBoxMesh_t one_mesh;
+				CCTNum_t v[8][3];
+				mathOBBVertices(one->obb, v);
+				mathBoxMesh(&one_mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])one->obb->axis);
+				return Capsule_Intersect_ConvexMesh(two->capsule, &one_mesh.mesh);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_CONVEX_MESH == one->type) {
@@ -1110,6 +1153,60 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return ConvexMesh_Intersect_ConvexMesh(one->mesh, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Capsule_Intersect_ConvexMesh(two->capsule, one->mesh);
+			}
+		}
+	}
+	else if (GEOMETRY_BODY_CAPSULE == one->type) {
+		switch (two->type) {
+			case GEOMETRY_BODY_POINT:
+			{
+				return Capsule_Contain_Point(one->capsule, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return Segment_Intersect_Capsule((const CCTNum_t(*)[3])two->segment, one->capsule);
+			}
+			case GEOMETRY_BODY_PLANE:
+			{
+				return Capsule_Intersect_Plane(one->capsule, two->plane->v, two->plane->normal);
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				return Sphere_Intersect_Capsule(two->sphere->o, two->sphere->radius, one->capsule);
+			}
+			case GEOMETRY_BODY_AABB:
+			{
+				GeometryBoxMesh_t two_mesh;
+				CCTNum_t v[8][3];
+				mathAABBVertices(two->aabb->o, two->aabb->half, v);
+				mathBoxMesh(&two_mesh, (const CCTNum_t(*)[3])v, AABB_Axis);
+				return Capsule_Intersect_ConvexMesh(one->capsule, &two_mesh.mesh);
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				GeometryBoxMesh_t two_mesh;
+				CCTNum_t v[8][3];
+				mathOBBVertices(two->obb, v);
+				mathBoxMesh(&two_mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])two->obb->axis);
+				return Capsule_Intersect_ConvexMesh(one->capsule, &two_mesh.mesh);
+			}
+			case GEOMETRY_BODY_POLYGON:
+			{
+				struct GeometryCapsuleExtra_t capsule_extra;
+				capsule_fill_extra(one->capsule, &capsule_extra);
+				return Capsule_Intersect_Polygon(one->capsule, &capsule_extra, two->polygon, NULL);
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return Capsule_Intersect_ConvexMesh(one->capsule, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Capsule_Intersect_Capsule(one->capsule, two->capsule);
 			}
 		}
 	}

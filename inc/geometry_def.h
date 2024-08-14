@@ -79,6 +79,7 @@ enum {
 	GEOMETRY_BODY_OBB = 6,
 	GEOMETRY_BODY_POLYGON = 7,
 	GEOMETRY_BODY_CONVEX_MESH = 8,
+	GEOMETRY_BODY_CAPSULE = 9,
 };
 
 typedef struct GeometryBody_t {
@@ -92,6 +93,7 @@ typedef struct GeometryBody_t {
 		GeometryOBB_t obb;
 		GeometryPolygon_t polygon;
 		GeometryMesh_t mesh;
+		GeometryCapsule_t capsule;
 	};
 	int type;
 } GeometryBody_t;
@@ -107,6 +109,7 @@ typedef struct GeometryBodyRef_t {
 		GeometryOBB_t* obb;
 		GeometryPolygon_t* polygon;
 		GeometryMesh_t* mesh;
+		GeometryCapsule_t* capsule;
 	};
 	int type;
 } GeometryBodyRef_t;
