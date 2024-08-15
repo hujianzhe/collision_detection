@@ -342,19 +342,13 @@ static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNu
 	return 1;
 }
 
-typedef struct GeometryCapsuleExtra_t {
-	CCTNum_t axis_edge[2][3];
-	CCTNum_t axis_len;
-	CCTNum_t radius_sq;
-} GeometryCapsuleExtra_t;
-
 static void capsule_fill_extra(const GeometryCapsule_t* capsule, GeometryCapsuleExtra_t* capsule_extra) {
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, capsule_extra->axis_edge[0], capsule_extra->axis_edge[1]);
 	capsule_extra->axis_len = capsule->half + capsule->half;
 	capsule_extra->radius_sq = CCTNum_sq(capsule->radius);
 }
 
-static int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
+int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	int res, i;
 	CCTNum_t p[3], d[3];
 	if (ret_plane_side) {

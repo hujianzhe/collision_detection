@@ -34,6 +34,7 @@ extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
+extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -2134,8 +2135,71 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 }
 
 static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	/* TODO */
-	return NULL;
+	int plane_side;
+	CCTNum_t neg_dir[3];
+	GeometryMesh_t m;
+	GeometryCapsuleExtra_t extra;
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, extra.axis_edge[0], extra.axis_edge[1]);
+	extra.axis_len = capsule->half + capsule->half;
+	extra.radius_sq = CCTNum_sq(capsule->radius);
+	if (Capsule_Intersect_Polygon(capsule, &extra, polygon, &plane_side)) {
+		set_intersect(result);
+		return result;
+	}
+	if (plane_side) {
+		CCTNum_t cos_theta;
+		if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+			return NULL;
+		}
+		cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
+		if (CCTNum(0.0) == cos_theta) {
+			int i;
+			CCTNum_t d = mathPointProjectionPlane(extra.axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+			for (i = 0; i < 2; ++i) {
+				CCTNum_t p[3];
+				mathVec3Copy(p, extra.axis_edge[i]);
+				mathVec3AddScalar(p, dir, result->distance);
+				if (d > CCTNum(0.0)) {
+					mathVec3AddScalar(p, polygon->normal, capsule->radius);
+				}
+				else {
+					mathVec3SubScalar(p, polygon->normal, capsule->radius);
+				}
+				if (Polygon_Contain_Point(polygon, p)) {
+					return result;
+				}
+			}
+		}
+		else {
+			CCTNum_t d[2], p[3];
+			d[0] = mathPointProjectionPlane(extra.axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+			d[1] = mathPointProjectionPlane(extra.axis_edge[1], polygon->v[polygon->v_indices[0]], polygon->normal);
+			if (d[0] > CCTNum(0.0)) {
+				unsigned int idx = (d[0] < d[1] ? 0 : 1);
+				mathVec3Copy(p, extra.axis_edge[idx]);
+				mathVec3AddScalar(p, dir, result->distance);
+				mathVec3AddScalar(p, polygon->normal, capsule->radius);
+			}
+			else {
+				unsigned int idx = (d[0] < d[1] ? 1 : 0);
+				mathVec3Copy(p, extra.axis_edge[idx]);
+				mathVec3AddScalar(p, dir, result->distance);
+				mathVec3SubScalar(p, polygon->normal, capsule->radius);
+			}
+			if (Polygon_Contain_Point(polygon, p)) {
+				return result;
+			}
+		}
+	}
+	sweep_mesh_convert_from_polygon(&m, polygon);
+	m.polygons = NULL;
+	m.polygons_cnt = 0;
+	mathVec3Negate(neg_dir, dir);
+	if (!MeshSegment_Sweep_Capsule(&m, neg_dir, capsule, 0, result)) {
+		return NULL;
+	}
+	reverse_result(result, dir);
+	return result;
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {

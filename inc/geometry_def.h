@@ -30,6 +30,11 @@ typedef struct GeometryCapsule_t {
 	CCTNum_t radius;
 	CCTNum_t half;
 } GeometryCapsule_t;
+typedef struct GeometryCapsuleExtra_t {
+	CCTNum_t axis_edge[2][3];
+	CCTNum_t axis_len;
+	CCTNum_t radius_sq;
+} GeometryCapsuleExtra_t;
 
 typedef struct GeometryAABB_t {
 	CCTNum_t o[3];
