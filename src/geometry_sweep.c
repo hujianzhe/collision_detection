@@ -1484,10 +1484,12 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
+				result->peer[1].hit_bits = 0;
 				p_result = result;
 			}
 			else if (result_temp.distance < result->distance) {
 				*result = result_temp;
+				result->peer[1].hit_bits = 0;
 			}
 		}
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[0], capsule->radius, 0, &result_temp)) {
