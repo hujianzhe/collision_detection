@@ -1976,7 +1976,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 }
 
 static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
-	unsigned int idx, axis_parallel_flag;
+	unsigned int idx;
 	CCTNum_t cos_theta;
 	CCTNum_t axis_edge[2][3], d[2], abs_d[2];
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
@@ -1990,17 +1990,16 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 		set_intersect(result);
 		return result;
 	}
-	cos_theta = mathVec3Dot(dir, plane_n);
-	if (CCTNum(0.0) == cos_theta) {
-		return NULL;
-	}
-	axis_parallel_flag = (d[0] == d[1]);
 	abs_d[0] = CCTNum_abs(d[0]);
 	abs_d[1] = CCTNum_abs(d[1]);
 	idx = (abs_d[0] < abs_d[1] ? 0 : 1);
 	if (abs_d[idx] <= capsule->radius) {
 		set_intersect(result);
 		return result;
+	}
+	cos_theta = mathVec3Dot(dir, plane_n);
+	if (CCTNum(0.0) == cos_theta) {
+		return NULL;
 	}
 	mathVec3Copy(result->hit_plane_v, axis_edge[idx]);
 	if (d[idx] > CCTNum(0.0)) {
@@ -2015,7 +2014,7 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 	if (d[idx] < CCTNum(0.0)) {
 		return NULL;
 	}
-	if (axis_parallel_flag) {
+	if (abs_d[0] == abs_d[1]) {
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_bits = 0;
 		result->peer[0].hit_bits = 0;
@@ -2132,6 +2131,11 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	}
 	return p_result;
+}
+
+static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	/* TODO */
+	return NULL;
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {

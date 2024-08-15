@@ -342,26 +342,21 @@ static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNu
 	return 1;
 }
 
-struct GeometryCapsuleExtra_t {
+typedef struct GeometryCapsuleExtra_t {
 	CCTNum_t axis_edge[2][3];
 	CCTNum_t axis_len;
 	CCTNum_t radius_sq;
-};
+} GeometryCapsuleExtra_t;
 
-static void capsule_fill_extra(const GeometryCapsule_t* capsule, struct GeometryCapsuleExtra_t* capsule_extra) {
+static void capsule_fill_extra(const GeometryCapsule_t* capsule, GeometryCapsuleExtra_t* capsule_extra) {
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, capsule_extra->axis_edge[0], capsule_extra->axis_edge[1]);
 	capsule_extra->axis_len = capsule->half + capsule->half;
 	capsule_extra->radius_sq = CCTNum_sq(capsule->radius);
 }
 
-static int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const struct GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
+static int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	int res, i;
 	CCTNum_t p[3], d[3];
-	struct GeometryCapsuleExtra_t capsule_extra_temp;
-	if (!capsule_extra) {
-		capsule_fill_extra(capsule, &capsule_extra_temp);
-		capsule_extra = &capsule_extra_temp;
-	}
 	if (ret_plane_side) {
 		*ret_plane_side = 0;
 	}
@@ -1047,7 +1042,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				struct GeometryCapsuleExtra_t capsule_extra;
+				GeometryCapsuleExtra_t capsule_extra;
 				capsule_fill_extra(two->capsule, &capsule_extra);
 				return Capsule_Intersect_Polygon(two->capsule, &capsule_extra, one->polygon, NULL);
 			}
@@ -1196,7 +1191,7 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				struct GeometryCapsuleExtra_t capsule_extra;
+				GeometryCapsuleExtra_t capsule_extra;
 				capsule_fill_extra(one->capsule, &capsule_extra);
 				return Capsule_Intersect_Polygon(one->capsule, &capsule_extra, two->polygon, NULL);
 			}
