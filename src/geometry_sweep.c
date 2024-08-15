@@ -410,14 +410,29 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 		/* Line vs Line opposite or cross */
 		d = mathVec3Dot(v, N);
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
-			CCTNum_t od, cd, lensq;
+			CCTNum_t closest_p[2][3];
+			CCTNum_t od, cd, lensq, radius_sq;
 			mathLineClosestLineOpposite(o, dir, capsule->o, capsule->axis, &od, &cd);
 			if (od < CCTNum(0.0)) {
 				return NULL;
 			}
-			cos_theta = mathVec3Dot(dir, capsule->axis);
-			lensq = CCTNum_sq(capsule->radius) / (1 - CCTNum_sq(cos_theta));
-			d = od - CCTNum_sqrt(lensq - CCTNum_sq(d));
+			mathVec3Copy(closest_p[0], o);
+			mathVec3AddScalar(closest_p[0], dir, od);
+			mathVec3Copy(closest_p[1], capsule->o);
+			mathVec3AddScalar(closest_p[1], dir, cd);
+			lensq = mathVec3DistanceSq(closest_p[0], closest_p[1]);
+			radius_sq = CCTNum_sq(capsule->radius);
+			if (lensq > radius_sq + CCT_EPSILON) {
+				return NULL;
+			}
+			else if (lensq < radius_sq) {
+				cos_theta = mathVec3Dot(dir, capsule->axis);
+				lensq = radius_sq / (1 - CCTNum_sq(cos_theta));
+				d = od - CCTNum_sqrt(lensq - CCTNum_sq(d));
+			}
+			else {
+				d = od;
+			}
 		}
 		else {
 			CCTNum_t lensq;
@@ -1480,22 +1495,36 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 				*result = result_temp;
 				p_result = result;
 			}
-			else if (result_temp.distance < result->distance) {
+			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
 			}
-			result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
-			result->peer[1].idx = 0;
+			else if (result_temp.distance <= result->distance + CCT_EPSILON) {
+				if (result_temp.distance < result->distance) {
+					result->distance = result_temp.distance;
+				}
+				if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+					result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+					result->peer[1].idx = 0;
+				}
+			}
 		}
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
 				p_result = result;
 			}
-			else if (result_temp.distance < result->distance) {
+			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
 			}
-			result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
-			result->peer[1].idx = 1;
+			else if (result_temp.distance <= result->distance + CCT_EPSILON) {
+				if (result_temp.distance < result->distance) {
+					result->distance = result_temp.distance;
+				}
+				if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+					result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+					result->peer[1].idx = 1;
+				}
+			}
 		}
 		return p_result;
 	}
@@ -1549,35 +1578,39 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
+				result->peer[1].idx = 1;
 				p_result = result;
 			}
 			else if (result_temp.distance < result->distance) {
 				*result = result_temp;
+				result->peer[1].idx = 1;
 			}
-
-			result->peer[1].idx = 1;
 		}
 		if (Ray_Sweep_Capsule(ls[0], dir, capsule, 0, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
 				p_result = result;
 			}
-			else if (result_temp.distance < result->distance) {
+			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
 			}
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[0].idx = 0;
+			else if (result_temp.distance < result->distance) {
+				result->distance = result_temp.distance;
+			}
 		}
 		if (Ray_Sweep_Capsule(ls[1], dir, capsule, 0, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
+				result->peer[0].idx = 1;
 				p_result = result;
 			}
-			else if (result_temp.distance < result->distance) {
+			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
+				result->peer[0].idx = 1;
 			}
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[0].idx = 1;
+			else if (result_temp.distance < result->distance) {
+				result->distance = result_temp.distance;
+			}
 		}
 		return p_result;
 	}
