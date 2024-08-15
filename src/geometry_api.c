@@ -100,6 +100,11 @@ unsigned char* mathGeometryClone(unsigned char* dst, const unsigned char* src_ge
 			}
 			break;
 		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			*(GeometryCapsule_t*)dst = *(const GeometryCapsule_t*)src_geo_data;
+			break;
+		}
 		default:
 		{
 			return NULL;
@@ -177,6 +182,11 @@ const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3
 			ptr_v = b->mesh->bound_box.o;
 			break;
 		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			ptr_v = b->capsule->o;
+			break;
+		}
 		default:
 			return NULL;
 	}
@@ -250,6 +260,11 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 			mathVec3Copy(mesh->bound_box.o, v);
 			return;
 		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			mathVec3Copy(b->capsule->o, v);
+			return;
+		}
 	}
 }
 
@@ -299,6 +314,11 @@ GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB
 		{
 			*aabb = b->mesh->bound_box;
 			break;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			/* TODO */
+			return NULL;
 		}
 		default:
 		{
@@ -422,6 +442,12 @@ int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 			mathAABBFromTwoVertice(min_xyz, max_xyz, mesh->bound_box.o, mesh->bound_box.half);
 			break;
 		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			GeometryCapsule_t* capsule = b->capsule;
+			mathQuatMulVec3(capsule->axis, q, capsule->axis);
+			break;
+		}
 		default:
 			return 0;
 	}
@@ -432,6 +458,11 @@ int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], C
 	CCTNum_t q[4];
 	if (GEOMETRY_BODY_SPHERE == b->type) {
 		return 1;
+	}
+	if (GEOMETRY_BODY_CAPSULE == b->type) {
+		if (mathVec3Equal(axis, b->capsule->axis)) {
+			return 1;
+		}
 	}
 	mathQuatFromAxisRadian(q, axis, radian);
 	return mathGeometryRotate(b, q);
