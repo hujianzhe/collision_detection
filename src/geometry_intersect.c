@@ -326,7 +326,7 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 	return 0;
 }
 
-int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	CCTNum_t edge[2][3], d[3], abs_d;
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	if (Segment_Intersect_Plane((const CCTNum_t(*)[3])edge, plane_v, plane_n, NULL, d)) {

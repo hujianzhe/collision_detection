@@ -34,7 +34,6 @@ extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
-extern int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
 extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh);
 
@@ -59,11 +58,6 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 	if (result->hit_bits & CCT_SWEEP_BIT_POINT) {
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	}
-}
-
-static void set_unique_hit_point(CCTSweepResult_t* result, const CCTNum_t p[3]) {
-	result->hit_bits |= CCT_SWEEP_BIT_POINT;
-	mathVec3Copy(result->hit_plane_v, p);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,7 +258,8 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	d = mathPointProjectionPlane(o, plane_v, plane_n);
 	if (CCTNum(0.0) == d) {
 		set_intersect(result);
-		set_unique_hit_point(result, o);
+		result->hit_bits = CCT_SWEEP_BIT_POINT;
+		mathVec3Copy(result->hit_plane_v, o);
 		return result;
 	}
 	cos_theta = mathVec3Dot(dir, plane_n);
@@ -493,50 +488,35 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 		mathVec3Cross(N, v, ls1_dir);
 		if (mathVec3IsZero(N)) {
 			/* collinear */
-			CCTNum_t l[3], r[3];
+			CCTNum_t l[3], r[3], d;
 			unsigned int closest_ls1_indice, closest_ls2_indice;
-			CCTNum_t d;
-			const CCTNum_t* intersect_p = NULL;
 
 			mathVec3Sub(l, ls1[0], ls2[0]);
 			mathVec3Sub(r, ls1[1], ls2[0]);
 			d = mathVec3Dot(l, r);
 			if (d <= CCT_EPSILON) {
-				intersect_p = ls2[0];
+				set_intersect(result);
+				return result;
 			}
 			mathVec3Sub(l, ls1[0], ls2[1]);
 			mathVec3Sub(r, ls1[1], ls2[1]);
 			d = mathVec3Dot(l, r);
 			if (d <= CCT_EPSILON) {
-				if (intersect_p && !mathVec3Equal(intersect_p, ls2[1])) {
-					set_intersect(result);
-					return result;
-				}
-				intersect_p = ls2[1];
+				set_intersect(result);
+				return result;
 			}
 			mathVec3Sub(l, ls2[0], ls1[0]);
 			mathVec3Sub(r, ls2[1], ls1[0]);
 			d = mathVec3Dot(l, r);
 			if (d <= CCT_EPSILON) {
-				if (intersect_p && !mathVec3Equal(intersect_p, ls1[0])) {
-					set_intersect(result);
-					return result;
-				}
-				intersect_p = ls1[0];
+				set_intersect(result);
+				return result;
 			}
 			mathVec3Sub(l, ls2[0], ls1[1]);
 			mathVec3Sub(r, ls2[1], ls1[1]);
 			d = mathVec3Dot(l, r);
 			if (d <= CCT_EPSILON) {
-				if (intersect_p && !mathVec3Equal(intersect_p, ls1[1])) {
-					set_intersect(result);
-					return result;
-				}
-				intersect_p = ls1[1];
-			}
-			if (intersect_p) {
 				set_intersect(result);
-				set_unique_hit_point(result, intersect_p);
 				return result;
 			}
 			/* dir and ls1_dir must parallel */
@@ -734,7 +714,6 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			/* cross */
 			if (mathVec3IsZero(v)) {
 				set_intersect(result);
-				set_unique_hit_point(result, ls2[0]);
 				return result;
 			}
 			/* calculate Line cross point */
@@ -767,7 +746,6 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				/* check cross point locate ls1 */
 				if (d >= CCTNum(0.0) && d <= ls1_len + CCT_EPSILON) {
 					set_intersect(result);
-					set_unique_hit_point(result, p);
 					return result;
 				}
 				mathVec3Cross(v, ls1_dir, dir);
@@ -2046,8 +2024,6 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	}
 	if (dn_abs == radius) {
 		set_intersect(result);
-		set_unique_hit_point(result, o);
-		mathVec3AddScalar(result->hit_plane_v, plane_n, dn);
 		return result;
 	}
 	cos_theta = mathVec3Dot(plane_n, dir);
@@ -2091,7 +2067,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		if (!Sphere_Sweep_Plane(o, radius, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
-		if (!(result_temp.hit_bits & CCT_SWEEP_BIT_POINT)) {
+		if (result_temp.distance <= CCTNum(0.0)) {
 			continue;
 		}
 		if (!p_result) {
@@ -2136,19 +2112,15 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	return p_result;
 }
 
-static CCTSweepResult_t* Capsule_Sweep_Polygon_Plane(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	CCTNum_t cos_theta;
-	if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
-		return NULL;
-	}
-	cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
+static int Capsule_Sweep_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], CCTNum_t distance, const GeometryPolygon_t* polygon) {
+	CCTNum_t cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
 	if (CCTNum(0.0) == cos_theta) {
 		int i;
 		CCTNum_t d = mathPointProjectionPlane(extra->axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
 		for (i = 0; i < 2; ++i) {
 			CCTNum_t p[3];
 			mathVec3Copy(p, extra->axis_edge[i]);
-			mathVec3AddScalar(p, dir, result->distance);
+			mathVec3AddScalar(p, dir, distance);
 			if (d > CCTNum(0.0)) {
 				mathVec3AddScalar(p, polygon->normal, capsule->radius);
 			}
@@ -2156,7 +2128,7 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon_Plane(const GeometryCapsule_t* ca
 				mathVec3SubScalar(p, polygon->normal, capsule->radius);
 			}
 			if (Polygon_Contain_Point(polygon, p)) {
-				return result;
+				return 1;
 			}
 		}
 	}
@@ -2167,20 +2139,20 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon_Plane(const GeometryCapsule_t* ca
 		if (d[0] > CCTNum(0.0)) {
 			unsigned int idx = (d[0] < d[1] ? 0 : 1);
 			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3AddScalar(p, dir, result->distance);
+			mathVec3AddScalar(p, dir, distance);
 			mathVec3AddScalar(p, polygon->normal, capsule->radius);
 		}
 		else {
 			unsigned int idx = (d[0] < d[1] ? 1 : 0);
 			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3AddScalar(p, dir, result->distance);
+			mathVec3AddScalar(p, dir, distance);
 			mathVec3SubScalar(p, polygon->normal, capsule->radius);
 		}
 		if (Polygon_Contain_Point(polygon, p)) {
-			return result;
+			return 1;
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -2196,7 +2168,10 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 		return result;
 	}
 	if (plane_side) {
-		if (Capsule_Sweep_Polygon_Plane(capsule, &extra, dir, polygon, result)) {
+		if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+			return NULL;
+		}
+		if (Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, dir, result->distance, polygon)) {
 			return result;
 		}
 	}
@@ -2225,13 +2200,16 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		if (Capsule_Intersect_Plane(capsule, polygon->v[polygon->v_indices[0]], polygon->normal)) {
+		if (!Capsule_Sweep_Plane(capsule, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
-		if (!Capsule_Sweep_Polygon_Plane(capsule, &extra, neg_dir, polygon, &result_temp)) {
+		if (result_temp.distance <= CCTNum(0.0)) {
 			continue;
 		}
 		if (!p_result) {
+			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+				continue;
+			}
 			*result = result_temp;
 			p_result = result;
 		}
@@ -2239,9 +2217,15 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
+			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+				continue;
+			}
 			*result = result_temp;
 		}
 		else {
+			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+				continue;
+			}
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
@@ -2250,10 +2234,12 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 					continue;
 				}
 			}
+			result_temp.peer[1].idx = i;
 			reverse_result(&result_temp, dir);
 			/* TODO merge result hit info */
 			continue;
 		}
+		result->peer[1].idx = i;
 		reverse_result(result, dir);
 	}
 	return p_result;
