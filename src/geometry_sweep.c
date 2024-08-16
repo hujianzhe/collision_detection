@@ -34,7 +34,9 @@ extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
+extern int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
 extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
+extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -2134,6 +2136,53 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	return p_result;
 }
 
+static CCTSweepResult_t* Capsule_Sweep_Polygon_Plane(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	CCTNum_t cos_theta;
+	if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+		return NULL;
+	}
+	cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
+	if (CCTNum(0.0) == cos_theta) {
+		int i;
+		CCTNum_t d = mathPointProjectionPlane(extra->axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+		for (i = 0; i < 2; ++i) {
+			CCTNum_t p[3];
+			mathVec3Copy(p, extra->axis_edge[i]);
+			mathVec3AddScalar(p, dir, result->distance);
+			if (d > CCTNum(0.0)) {
+				mathVec3AddScalar(p, polygon->normal, capsule->radius);
+			}
+			else {
+				mathVec3SubScalar(p, polygon->normal, capsule->radius);
+			}
+			if (Polygon_Contain_Point(polygon, p)) {
+				return result;
+			}
+		}
+	}
+	else {
+		CCTNum_t d[2], p[3];
+		d[0] = mathPointProjectionPlane(extra->axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
+		d[1] = mathPointProjectionPlane(extra->axis_edge[1], polygon->v[polygon->v_indices[0]], polygon->normal);
+		if (d[0] > CCTNum(0.0)) {
+			unsigned int idx = (d[0] < d[1] ? 0 : 1);
+			mathVec3Copy(p, extra->axis_edge[idx]);
+			mathVec3AddScalar(p, dir, result->distance);
+			mathVec3AddScalar(p, polygon->normal, capsule->radius);
+		}
+		else {
+			unsigned int idx = (d[0] < d[1] ? 1 : 0);
+			mathVec3Copy(p, extra->axis_edge[idx]);
+			mathVec3AddScalar(p, dir, result->distance);
+			mathVec3SubScalar(p, polygon->normal, capsule->radius);
+		}
+		if (Polygon_Contain_Point(polygon, p)) {
+			return result;
+		}
+	}
+	return NULL;
+}
+
 static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	int plane_side;
 	CCTNum_t neg_dir[3];
@@ -2147,48 +2196,8 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 		return result;
 	}
 	if (plane_side) {
-		CCTNum_t cos_theta;
-		if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
-			return NULL;
-		}
-		cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
-		if (CCTNum(0.0) == cos_theta) {
-			int i;
-			CCTNum_t d = mathPointProjectionPlane(extra.axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
-			for (i = 0; i < 2; ++i) {
-				CCTNum_t p[3];
-				mathVec3Copy(p, extra.axis_edge[i]);
-				mathVec3AddScalar(p, dir, result->distance);
-				if (d > CCTNum(0.0)) {
-					mathVec3AddScalar(p, polygon->normal, capsule->radius);
-				}
-				else {
-					mathVec3SubScalar(p, polygon->normal, capsule->radius);
-				}
-				if (Polygon_Contain_Point(polygon, p)) {
-					return result;
-				}
-			}
-		}
-		else {
-			CCTNum_t d[2], p[3];
-			d[0] = mathPointProjectionPlane(extra.axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
-			d[1] = mathPointProjectionPlane(extra.axis_edge[1], polygon->v[polygon->v_indices[0]], polygon->normal);
-			if (d[0] > CCTNum(0.0)) {
-				unsigned int idx = (d[0] < d[1] ? 0 : 1);
-				mathVec3Copy(p, extra.axis_edge[idx]);
-				mathVec3AddScalar(p, dir, result->distance);
-				mathVec3AddScalar(p, polygon->normal, capsule->radius);
-			}
-			else {
-				unsigned int idx = (d[0] < d[1] ? 1 : 0);
-				mathVec3Copy(p, extra.axis_edge[idx]);
-				mathVec3AddScalar(p, dir, result->distance);
-				mathVec3SubScalar(p, polygon->normal, capsule->radius);
-			}
-			if (Polygon_Contain_Point(polygon, p)) {
-				return result;
-			}
+		if (Capsule_Sweep_Polygon_Plane(capsule, &extra, dir, polygon, result)) {
+			return result;
 		}
 	}
 	sweep_mesh_convert_from_polygon(&m, polygon);
@@ -2200,6 +2209,54 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 	}
 	reverse_result(result, dir);
 	return result;
+}
+
+static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	unsigned int i;
+	CCTNum_t neg_dir[3];
+	GeometryCapsuleExtra_t extra;
+	CCTSweepResult_t* p_result;
+
+	p_result = MeshSegment_Sweep_Capsule(mesh, dir, capsule, 0, result);
+	mathVec3Negate(neg_dir, dir);
+	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, extra.axis_edge[0], extra.axis_edge[1]);
+	extra.axis_len = capsule->half + capsule->half;
+	extra.radius_sq = CCTNum_sq(capsule->radius);
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		CCTSweepResult_t result_temp;
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		if (Capsule_Intersect_Plane(capsule, polygon->v[polygon->v_indices[0]], polygon->normal)) {
+			continue;
+		}
+		if (!Capsule_Sweep_Polygon_Plane(capsule, &extra, neg_dir, polygon, &result_temp)) {
+			continue;
+		}
+		if (!p_result) {
+			*result = result_temp;
+			p_result = result;
+		}
+		else if (result_temp.distance > result->distance + CCT_EPSILON) {
+			continue;
+		}
+		else if (result_temp.distance < result->distance - CCT_EPSILON) {
+			*result = result_temp;
+		}
+		else {
+			if (result_temp.distance < result->distance) {
+				result->distance = result_temp.distance;
+			}
+			if (result_temp.hit_bits & CCT_SWEEP_BIT_POINT) {
+				if (polygon_find_edge_idx(polygon, result_temp.hit_plane_v) != -1) {
+					continue;
+				}
+			}
+			reverse_result(&result_temp, dir);
+			/* TODO merge result hit info */
+			continue;
+		}
+		reverse_result(result, dir);
+	}
+	return p_result;
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -2238,6 +2295,14 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	mathVec3SubScalar(result->hit_plane_v, result->hit_plane_n, r1);
 	result->peer[0].hit_bits = CCT_SWEEP_BIT_SPHERE;
 	return result;
+}
+
+static CCTSweepResult_t* ConvexMesh_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	if (Capsule_Intersect_ConvexMesh(capsule, mesh)) {
+		set_intersect(result);
+		return result;
+	}
+	return Mesh_Sweep_Capsule_InternalProc(mesh, dir, capsule, result);
 }
 
 static CCTSweepResult_t* ConvexMesh_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
@@ -2616,6 +2681,14 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = ConvexMesh_Sweep_Polygon(two->mesh, neg_dir, one->polygon, result);
 				break;
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				CCTNum_t neg_dir[3];
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Capsule_Sweep_Polygon(two->capsule, neg_dir, one->polygon, result);
+				break;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_CONVEX_MESH == one->type) {
@@ -2668,6 +2741,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = ConvexMesh_Sweep_ConvexMesh(one->mesh, dir, two->mesh, result);
 				break;
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				result = ConvexMesh_Sweep_Capsule(one->mesh, dir, two->capsule, result);
+				break;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_CAPSULE == one->type) {
@@ -2683,6 +2761,19 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			case GEOMETRY_BODY_PLANE:
 			{
 				result = Capsule_Sweep_Plane(one->capsule, dir, two->plane->v, two->plane->normal, result);
+				break;
+			}
+			case GEOMETRY_BODY_POLYGON:
+			{
+				result = Capsule_Sweep_Polygon(one->capsule, dir, two->polygon, result);
+				break;
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				CCTNum_t neg_dir[3];
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = ConvexMesh_Sweep_Capsule(two->mesh, neg_dir, one->capsule, result);
 				break;
 			}
 		}
