@@ -317,8 +317,24 @@ GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			/* TODO */
-			return NULL;
+			int i;
+			CCTNum_t axis_edge[2][3], min_v[3], max_v[3];
+			const GeometryCapsule_t* capsule = b->capsule;
+			mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
+			for (i = 0; i < 3; ++i) {
+				if (axis_edge[0][i] < axis_edge[1][i]) {
+					min_v[i] = axis_edge[0][i];
+					max_v[i] = axis_edge[1][i];
+				}
+				else {
+					min_v[i] = axis_edge[1][i];
+					max_v[i] = axis_edge[0][i];
+				}
+				min_v[i] -= capsule->radius;
+				max_v[i] += capsule->radius;
+			}
+			mathAABBFromTwoVertice(min_v, max_v, aabb->o, aabb->half);
+			break;
 		}
 		default:
 		{
