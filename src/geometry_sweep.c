@@ -2276,9 +2276,27 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	if (!Ray_Sweep_Sphere(o1, dir, o2, r1 + r2, result)) {
 		return NULL;
 	}
-	mathVec3Copy(result->hit_plane_v, o1);
-	mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	mathVec3SubScalar(result->hit_plane_v, result->hit_plane_n, r1);
+	result->peer[0].hit_bits = CCT_SWEEP_BIT_SPHERE;
+	return result;
+}
+
+static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+	CCTNum_t closest_p[3], lensq;
+	CCTNum_t radius_sum = radius + capsule->radius;
+	GeometryCapsule_t new_capsule;
+	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+	lensq = mathVec3DistanceSq(closest_p, o);
+	if (lensq <= CCTNum_sq(radius_sum)) {
+		set_intersect(result);
+		return result;
+	}
+	new_capsule = *capsule;
+	new_capsule.radius += radius;
+	if (!Ray_Sweep_Capsule(o, dir, &new_capsule, 0, result)) {
+		return NULL;
+	}
+	mathVec3SubScalar(result->hit_plane_v, result->hit_plane_n, radius);
 	result->peer[0].hit_bits = CCT_SWEEP_BIT_SPHERE;
 	return result;
 }
@@ -2618,6 +2636,11 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = ConvexMesh_Sweep_Sphere(two->mesh, neg_dir, one->sphere->o, one->sphere->radius, result);
 				break;
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				result = Sphere_Sweep_Capsule(one->sphere->o, one->sphere->radius, dir, two->capsule, result);
+				break;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_POLYGON == one->type) {
@@ -2790,6 +2813,13 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
 				result = ConvexMesh_Sweep_Capsule(&two_mesh.mesh, neg_dir, one->capsule, result);
+				break;
+			}
+			case GEOMETRY_BODY_SPHERE:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Sphere_Sweep_Capsule(two->sphere->o, two->sphere->radius, neg_dir, one->capsule, result);
 				break;
 			}
 		}
