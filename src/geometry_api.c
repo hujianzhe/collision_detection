@@ -268,11 +268,12 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 	}
 }
 
-GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb) {
-	switch (b->type) {
+GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_type, GeometryAABB_t* aabb) {
+	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			mathVec3Copy(aabb->o, b->point);
+			const CCTNum_t* point = (const CCTNum_t*)geo_data;
+			mathVec3Copy(aabb->o, point);
 			aabb->half[0] = GEOMETRY_BODY_BOX_MIN_HALF;
 			aabb->half[1] = GEOMETRY_BODY_BOX_MIN_HALF;
 			aabb->half[2] = GEOMETRY_BODY_BOX_MIN_HALF;
@@ -280,30 +281,31 @@ GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			mathAABBFromTwoVertice(b->segment->v[0], b->segment->v[1], aabb->o, aabb->half);
+			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			mathAABBFromTwoVertice(segment->v[0], segment->v[1], aabb->o, aabb->half);
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			*aabb = *(b->aabb);
+			*aabb = *(const GeometryAABB_t*)geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			CCTNum_t r = b->sphere->radius;
-			mathVec3Copy(aabb->o, b->sphere->o);
-			mathVec3Set(aabb->half, r, r, r);
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			mathVec3Copy(aabb->o, sphere->o);
+			mathVec3Set(aabb->half, sphere->radius, sphere->radius, sphere->radius);
 			break;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			mathOBBToAABB(b->obb, aabb->o, aabb->half);
+			mathOBBToAABB((const GeometryOBB_t*)geo_data, aabb->o, aabb->half);
 			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
 			CCTNum_t min_v[3], max_v[3];
-			const GeometryPolygon_t* polygon = b->polygon;
+			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
 			if (!mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, min_v, max_v)) {
 				return NULL;
 			}
@@ -312,14 +314,14 @@ GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			*aabb = b->mesh->bound_box;
+			*aabb = ((const GeometryMesh_t*)geo_data)->bound_box;
 			break;
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			int i;
 			CCTNum_t axis_edge[2][3], min_v[3], max_v[3];
-			const GeometryCapsule_t* capsule = b->capsule;
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
 			mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
 			for (i = 0; i < 3; ++i) {
 				if (axis_edge[0][i] < axis_edge[1][i]) {

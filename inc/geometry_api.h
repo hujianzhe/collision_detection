@@ -42,7 +42,7 @@ __declspec_dll void mathGeometryFreeRef(GeometryBodyRef_t* b);
 __declspec_dll const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]);
 __declspec_dll void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]);
 
-__declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const GeometryBodyRef_t* b, GeometryAABB_t* aabb);
+__declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_type, GeometryAABB_t* aabb);
 __declspec_dll int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]);
 __declspec_dll int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian);
 
