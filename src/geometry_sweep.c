@@ -418,7 +418,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 			mathVec3Copy(closest_p[0], o);
 			mathVec3AddScalar(closest_p[0], dir, od);
 			mathVec3Copy(closest_p[1], capsule->o);
-			mathVec3AddScalar(closest_p[1], dir, cd);
+			mathVec3AddScalar(closest_p[1], capsule->axis, cd);
 			lensq = mathVec3DistanceSq(closest_p[0], closest_p[1]);
 			radius_sq = CCTNum_sq(capsule->radius);
 			if (lensq > radius_sq + CCT_EPSILON) {
@@ -2284,11 +2284,10 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 
 static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
 	CCTNum_t closest_p[3], lensq;
-	CCTNum_t radius_sum = radius + capsule->radius;
 	GeometryCapsule_t new_capsule;
 	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 	lensq = mathVec3DistanceSq(closest_p, o);
-	if (lensq <= CCTNum_sq(radius_sum)) {
+	if (lensq <= CCTNum_sq(radius + capsule->radius)) {
 		set_intersect(result);
 		return result;
 	}
