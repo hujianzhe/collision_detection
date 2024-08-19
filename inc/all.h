@@ -20,5 +20,6 @@
 #include "plane.h"
 #include "polygon.h"
 #include "vertex.h"
+#include "capsule.h"
 
 #endif

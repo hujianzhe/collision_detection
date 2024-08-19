@@ -10,6 +10,7 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include "../inc/vertex.h"
+#include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
 #include <math.h>
 #include <stddef.h>

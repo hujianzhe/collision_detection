@@ -10,6 +10,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
+#include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
 #include <stddef.h>
 
@@ -244,6 +245,12 @@ static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const 
 		}
 	}
 	return 1;
+}
+
+static int AABB_Contain_Capsule(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryCapsule_t* capsule) {
+	CCTNum_t min_v[3], max_v[3];
+	mathCapsuleFindMaxMinXYZ(capsule, min_v, max_v);
+	return AABB_Contain_Point(o, half, min_v) && AABB_Contain_Point(o, half, max_v);
 }
 
 static int Sphere_Contain_Mesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
@@ -506,6 +513,10 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return AABB_Contain_Mesh(one->aabb->o, one->aabb->half, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return AABB_Contain_Capsule(one->aabb->o, one->aabb->half, two->capsule);
 			}
 		}
 	}

@@ -9,6 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
+#include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
 #include <stddef.h>
 
@@ -319,22 +320,9 @@ GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_t
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			int i;
-			CCTNum_t axis_edge[2][3], min_v[3], max_v[3];
+			CCTNum_t min_v[3], max_v[3];
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
-			mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
-			for (i = 0; i < 3; ++i) {
-				if (axis_edge[0][i] < axis_edge[1][i]) {
-					min_v[i] = axis_edge[0][i];
-					max_v[i] = axis_edge[1][i];
-				}
-				else {
-					min_v[i] = axis_edge[1][i];
-					max_v[i] = axis_edge[0][i];
-				}
-				min_v[i] -= capsule->radius;
-				max_v[i] += capsule->radius;
-			}
+			mathCapsuleFindMaxMinXYZ(capsule, min_v, max_v);
 			mathAABBFromTwoVertice(min_v, max_v, aabb->o, aabb->half);
 			break;
 		}
