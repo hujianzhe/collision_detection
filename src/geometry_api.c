@@ -466,7 +466,9 @@ int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], C
 		return 1;
 	}
 	if (GEOMETRY_BODY_CAPSULE == b->type) {
-		if (mathVec3Equal(axis, b->capsule->axis)) {
+		CCTNum_t v[3];
+		mathVec3Cross(v, b->capsule->axis, axis);
+		if (mathVec3IsZero(v)) {
 			return 1;
 		}
 	}
