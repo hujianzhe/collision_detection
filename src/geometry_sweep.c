@@ -1393,7 +1393,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			(const CCTNum_t(*)[3])axis_edge, capsule->axis, capsule->half + capsule->half
 		);
 		radius_sq = CCTNum_sq(capsule->radius);
-		if (lensq <= radius_sq + CCT_EPSILON) {
+		if (lensq <= radius_sq) {
 			set_intersect(result);
 			return result;
 		}

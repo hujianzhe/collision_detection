@@ -241,7 +241,7 @@ static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCaps
 	CCTNum_t edge[2][3], min_lensq;
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	min_lensq = mathSegmentClosestSegmentDistanceSq(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
-	return min_lensq <= CCTNum_sq(capsule->radius) + CCT_EPSILON;
+	return min_lensq <= CCTNum_sq(capsule->radius);
 }
 
 int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) {
@@ -405,14 +405,14 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 		}
 	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
-		CCTNum_t edge[2][3], min_lensq;
+		CCTNum_t edge[2][3], lensq;
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-		min_lensq = mathSegmentClosestSegmentDistanceSq(
+		lensq = mathSegmentClosestSegmentDistanceSq(
 			(const CCTNum_t(*)[3])edge, NULL, 0,
 			(const CCTNum_t(*)[3])capsule_extra->axis_edge, capsule->axis, capsule_extra->axis_len
 		);
-		if (min_lensq <= capsule_extra->radius_sq + CCT_EPSILON) {
+		if (lensq <= capsule_extra->radius_sq) {
 			return 1;
 		}
 	}
