@@ -172,50 +172,32 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		else {
 			/* parallel */
 			int i;
+			if (ls1_dir == ls1_dir_temp) {
+				ls1_len = mathVec3Normalized(ls1_dir_temp, ls1_dir_temp);
+			}
+			if (ls2_dir == ls2_dir_temp) {
+				ls2_len = mathVec3Normalized(ls2_dir_temp, ls2_dir_temp);
+			}
 			for (i = 0; i < 2; ++i) {
-				CCTNum_t lensq;
 				mathVec3Sub(v, ls1[i], ls2[0]);
 				d = mathVec3Dot(v, ls2_dir);
 				if (d < CCTNum(0.0)) {
 					continue;
 				}
-				if (ls2_dir == ls2_dir_temp) {
-					lensq = mathVec3LenSq(ls2_dir);
-					if (d > lensq) {
-						continue;
-					}
-					ls2_len = CCTNum_sqrt(lensq);
+				if (d > ls2_len) {
+					continue;
 				}
-				else {
-					lensq = CCTNum_sq(ls2_len);
-					if (d > lensq) {
-						continue;
-					}
-				}
-				d /= ls2_len;
 				return mathVec3LenSq(v) - CCTNum_sq(d);
 			}
 			for (i = 0; i < 2; ++i) {
-				CCTNum_t lensq;
 				mathVec3Sub(v, ls2[i], ls1[0]);
 				d = mathVec3Dot(v, ls1_dir);
 				if (d < CCTNum(0.0)) {
 					continue;
 				}
-				if (ls1_dir == ls1_dir_temp) {
-					lensq = mathVec3LenSq(ls1_dir);
-					if (d > lensq) {
-						continue;
-					}
-					ls1_len = CCTNum_sqrt(lensq);
+				if (d > ls1_len) {
+					continue;
 				}
-				else {
-					lensq = CCTNum_sq(ls1_len);
-					if (d > lensq) {
-						continue;
-					}
-				}
-				d /= ls1_len;
 				return mathVec3LenSq(v) - CCTNum_sq(d);
 			}
 		}
