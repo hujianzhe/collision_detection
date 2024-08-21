@@ -2,6 +2,7 @@
 // Created by hujianzhe
 //
 
+#include "../inc/vertex.h"
 #include "../inc/math_vec3.h"
 
 #ifdef	__cplusplus
