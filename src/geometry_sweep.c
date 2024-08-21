@@ -425,9 +425,12 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 				return NULL;
 			}
 			else if (lensq < radius_sq) {
-				cos_theta = mathVec3Dot(dir, capsule->axis);
-				lensq = radius_sq / (1 - CCTNum_sq(cos_theta));
-				d = od - CCTNum_sqrt(lensq - CCTNum_sq(d));
+				CCTNum_t sin_theta;
+				d = CCTNum_sqrt(radius_sq - lensq);
+				mathVec3Cross(v, dir, capsule->axis);
+				sin_theta = mathVec3Normalized(v, v);
+				d /= sin_theta;
+				d = od - d;
 			}
 			else {
 				d = od;
