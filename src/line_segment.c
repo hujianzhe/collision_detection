@@ -147,25 +147,25 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 			mathVec3Sub(l, ls1[0], ls2[0]);
 			mathVec3Sub(r, ls1[1], ls2[0]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				return CCTNum(0.0);
 			}
 			mathVec3Sub(l, ls1[0], ls2[1]);
 			mathVec3Sub(r, ls1[1], ls2[1]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				return CCTNum(0.0);
 			}
 			mathVec3Sub(l, ls2[0], ls1[0]);
 			mathVec3Sub(r, ls2[1], ls1[0]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				return CCTNum(0.0);
 			}
 			mathVec3Sub(l, ls2[0], ls1[1]);
 			mathVec3Sub(r, ls2[1], ls1[1]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				return CCTNum(0.0);
 			}
 		}
@@ -203,75 +203,59 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		}
 		return mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
 	}
-	d = mathVec3Dot(v, N);
-	if (ls1_dir == ls1_dir_temp) {
-		ls1_len = mathVec3Normalized(ls1_dir_temp, ls1_dir_temp);
-	}
-	if (ls2_dir == ls2_dir_temp) {
-		ls2_len = mathVec3Normalized(ls2_dir_temp, ls2_dir_temp);
-	}
-	if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
-		/* opposite */
-		CCTNum_t ls1_dir_d, ls2_dir_d;
-		mathLineClosestLineOpposite(ls1[0], ls1_dir, ls2[0], ls2_dir, &ls1_dir_d, &ls2_dir_d);
-		if (ls1_dir_d > ls1_len || ls1_dir_d < CCTNum(0.0)) {
-			if (ls2_dir_d > ls2_len || ls2_dir_d < CCTNum(0.0)) {
-				unsigned int v_idx[2];
-				return mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
-			}
-			else {
-				CCTNum_t lensq1, lensq2;
-				mathVec3Copy(v, ls2[0]);
-				mathVec3AddScalar(v, ls2_dir, ls2_dir_d);
-				lensq1 = mathVec3DistanceSq(v, ls1[0]);
-				lensq2 = mathVec3DistanceSq(v, ls1[1]);
-				return lensq1 < lensq2 ? lensq1 : lensq2;
-			}
+	else {
+		int i, lensq_set, set_cnt;
+		CCTNum_t lensq;
+		if (ls1_dir == ls1_dir_temp) {
+			ls1_len = mathVec3Normalized(ls1_dir_temp, ls1_dir_temp);
 		}
-		else if (ls2_dir_d > ls2_len || ls2_dir_d < CCTNum(0.0)) {
-			CCTNum_t lensq1, lensq2;
-			mathVec3Copy(v, ls1[0]);
-			mathVec3AddScalar(v, ls1_dir, ls1_dir_d);
-			lensq1 = mathVec3DistanceSq(v, ls2[0]);
-			lensq2 = mathVec3DistanceSq(v, ls2[1]);
-			return lensq1 < lensq2 ? lensq1 : lensq2;
+		if (ls2_dir == ls2_dir_temp) {
+			ls2_len = mathVec3Normalized(ls2_dir_temp, ls2_dir_temp);
+		}
+		d = mathVec3Dot(v, N);
+		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
+			/* opposite */
+			CCTNum_t ls1_dir_d, ls2_dir_d;
+			mathLineClosestLineOpposite(ls1[0], ls1_dir, ls2[0], ls2_dir, &ls1_dir_d, &ls2_dir_d);
+			if ((ls1_dir_d <= ls1_len && ls1_dir_d >= CCTNum(0.0)) &&
+				(ls2_dir_d <= ls2_len && ls2_dir_d >= CCTNum(0.0)))
+			{
+				CCTNum_t closest_p1[3], closest_p2[3];
+				mathVec3Copy(closest_p1, ls1[0]);
+				mathVec3AddScalar(closest_p1, ls1_dir, ls1_dir_d);
+				mathVec3Copy(closest_p2, ls2[0]);
+				mathVec3AddScalar(closest_p2, ls2_dir, ls2_dir_d);
+				return mathVec3DistanceSq(closest_p1, closest_p2);
+			}
 		}
 		else {
-			CCTNum_t closest_p1[3], closest_p2[3];
-			mathVec3Copy(closest_p1, ls1[0]);
-			mathVec3AddScalar(closest_p1, ls1_dir, ls1_dir_d);
-			mathVec3Copy(closest_p2, ls2[0]);
-			mathVec3AddScalar(closest_p2, ls2_dir, ls2_dir_d);
-			return mathVec3DistanceSq(closest_p1, closest_p2);
-		}
-	}
-	else {
-		/* cross */
-		int i, lensq_set, set_cnt;
-		CCTNum_t l[3], r[3], lensq;
-		d = mathLineCrossLine(ls1[0], ls1_dir, ls2[0], ls2_dir);
-		mathVec3Copy(v, ls1[0]);
-		if (d != CCTNum(0.0)) {
-			mathVec3AddScalar(v, ls1_dir, d);
-		}
-		mathVec3Sub(l, ls1[0], v);
-		mathVec3Sub(r, ls1[1], v);
-		d = mathVec3Dot(l, r);
-		if (d <= CCT_EPSILON) {
-			mathVec3Sub(l, ls2[0], v);
-			mathVec3Sub(r, ls2[1], v);
+			/* cross */
+			CCTNum_t l[3], r[3];
+			d = mathLineCrossLine(ls1[0], ls1_dir, ls2[0], ls2_dir);
+			mathVec3Copy(v, ls1[0]);
+			if (d != CCTNum(0.0)) {
+				mathVec3AddScalar(v, ls1_dir, d);
+			}
+			mathVec3Sub(l, ls1[0], v);
+			mathVec3Sub(r, ls1[1], v);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
-				return CCTNum(0.0);
+			if (d <= CCTNum(0.0)) {
+				mathVec3Sub(l, ls2[0], v);
+				mathVec3Sub(r, ls2[1], v);
+				d = mathVec3Dot(l, r);
+				if (d <= CCTNum(0.0)) {
+					return CCTNum(0.0);
+				}
 			}
 		}
 		lensq_set = 0;
 		set_cnt = 0;
 		for (i = 0; i < 2; ++i) {
+			CCTNum_t l[3], r[3];
 			d = mathPointProjectionLine(ls1[i], ls2[0], ls2_dir, v);
 			mathVec3Sub(l, ls2[0], v);
 			mathVec3Sub(r, ls2[1], v);
-			if (mathVec3Dot(l, r) > CCT_EPSILON) {
+			if (mathVec3Dot(l, r) > CCTNum(0.0)) {
 				continue;
 			}
 			set_cnt++;
@@ -287,10 +271,11 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		}
 		set_cnt = 0;
 		for (i = 0; i < 2; ++i) {
+			CCTNum_t l[3], r[3];
 			d = mathPointProjectionLine(ls2[i], ls1[0], ls1_dir, v);
 			mathVec3Sub(l, ls1[0], v);
 			mathVec3Sub(r, ls1[1], v);
-			if (mathVec3Dot(l, r) > CCT_EPSILON) {
+			if (mathVec3Dot(l, r) > CCTNum(0.0)) {
 				continue;
 			}
 			set_cnt++;
