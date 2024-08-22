@@ -1390,7 +1390,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CCTNum_t ls_dir[3], CCTNum_t ls_len, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t ls_dir_temp[3], axis_edge[2][3];
 	CCTNum_t plane_n[3], v[3], cos_theta;
-	CCTNum_t radius_sq;
+	CCTNum_t radius_sq = CCTNum_sq(capsule->radius);
 	CCTSweepResult_t result_temp;
 	CCTSweepResult_t* p_result;
 
@@ -1405,7 +1405,6 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			ls, ls_dir, ls_len,
 			(const CCTNum_t(*)[3])axis_edge, capsule->axis, capsule->half + capsule->half
 		);
-		radius_sq = CCTNum_sq(capsule->radius);
 		if (lensq <= radius_sq) {
 			set_intersect(result);
 			return result;
