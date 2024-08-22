@@ -508,28 +508,28 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3Sub(l, ls1[0], ls2[0]);
 			mathVec3Sub(r, ls1[1], ls2[0]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				set_intersect(result);
 				return result;
 			}
 			mathVec3Sub(l, ls1[0], ls2[1]);
 			mathVec3Sub(r, ls1[1], ls2[1]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				set_intersect(result);
 				return result;
 			}
 			mathVec3Sub(l, ls2[0], ls1[0]);
 			mathVec3Sub(r, ls2[1], ls1[0]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				set_intersect(result);
 				return result;
 			}
 			mathVec3Sub(l, ls2[0], ls1[1]);
 			mathVec3Sub(r, ls2[1], ls1[1]);
 			d = mathVec3Dot(l, r);
-			if (d <= CCT_EPSILON) {
+			if (d <= CCTNum(0.0)) {
 				set_intersect(result);
 				return result;
 			}
@@ -756,9 +756,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3Sub(v, ls2[0], p);
 			mathVec3Sub(vp, ls2[1], p);
 			cos_theta = mathVec3Dot(v, vp);
-			if (cos_theta <= CCT_EPSILON) {
+			if (cos_theta <= CCTNum(0.0)) {
 				/* check cross point locate ls1 */
-				if (d >= CCTNum(0.0) && d <= ls1_len + CCT_EPSILON) {
+				if (d >= CCTNum(0.0) && d <= ls1_len) {
 					set_intersect(result);
 					return result;
 				}

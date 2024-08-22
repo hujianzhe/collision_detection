@@ -85,25 +85,25 @@ static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls
 		mathVec3Sub(l, ls1[0], ls2[0]);
 		mathVec3Sub(r, ls1[1], ls2[0]);
 		d = mathVec3Dot(l, r);
-		if (d <= CCT_EPSILON) {
+		if (d <= CCTNum(0.0)) {
 			return 1;
 		}
 		mathVec3Sub(l, ls1[0], ls2[1]);
 		mathVec3Sub(r, ls1[1], ls2[1]);
 		d = mathVec3Dot(l, r);
-		if (d <= CCT_EPSILON) {
+		if (d <= CCTNum(0.0)) {
 			return 1;
 		}
 		mathVec3Sub(l, ls2[0], ls1[0]);
 		mathVec3Sub(r, ls2[1], ls1[0]);
 		d = mathVec3Dot(l, r);
-		if (d <= CCT_EPSILON) {
+		if (d <= CCTNum(0.0)) {
 			return 1;
 		}
 		mathVec3Sub(l, ls2[0], ls1[1]);
 		mathVec3Sub(r, ls2[1], ls1[1]);
 		d = mathVec3Dot(l, r);
-		if (d <= CCT_EPSILON) {
+		if (d <= CCTNum(0.0)) {
 			return 1;
 		}
 		return 0;
@@ -123,7 +123,7 @@ static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls
 		mathVec3Sub(N, ls2[0], p);
 		mathVec3Sub(v, ls2[1], p);
 		d = mathVec3Dot(N, v);
-		return d <= CCT_EPSILON;
+		return d <= CCTNum(0.0);
 	}
 	ls1_len = mathVec3Normalized(ls1_dir, ls1_dir);
 	mathVec3Sub(N, p, ls1[0]);
@@ -134,7 +134,7 @@ static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls
 		return 1;
 	}
 	d /= cos_theta;
-	if (d < CCTNum(0.0) || d > ls1_len + CCT_EPSILON) {
+	if (d < CCTNum(0.0) || d > ls1_len) {
 		return 0;
 	}
 	mathVec3Copy(p, ls1[0]);
@@ -142,7 +142,7 @@ static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls
 	mathVec3Sub(N, ls2[0], p);
 	mathVec3Sub(v, ls2[1], p);
 	d = mathVec3Dot(v, N);
-	return d <= CCT_EPSILON;
+	return d <= CCTNum(0.0);
 }
 
 int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t intersect_p[3], CCTNum_t d[3]) {
