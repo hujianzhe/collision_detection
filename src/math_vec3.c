@@ -231,20 +231,6 @@ CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3])
 	return mathVec3Sub(r, v, temp_v);
 }
 
-void mathVec3ComputeBasis(const CCTNum_t dir[3], CCTNum_t right[3], CCTNum_t up[3]) {
-	/* these code is copy from PhysX-3.4 */
-	if (dir[1] <= CCTNum(0.9999) && dir[1] >= CCTNum(-0.9999)) {
-		mathVec3Set(right, dir[2], CCTNum(0.0), -dir[0]);
-		mathVec3Normalized(right, right);
-		mathVec3Cross(up, dir, right);
-	}
-	else {
-		mathVec3Set(right, CCTNums_3(1.0, 0.0, 0.0));
-		mathVec3Set(up, CCTNum(0.0), dir[2], -dir[1]);
-		mathVec3Normalized(up, up);
-	}
-}
-
 CCTNum_t* mathVec3DelComponent(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t dir[3]) {
 	CCTNum_t va[3];
 	CCTNum_t d = mathVec3Dot(v, dir);
