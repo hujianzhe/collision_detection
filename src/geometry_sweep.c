@@ -1360,10 +1360,48 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Cross(N, lsdir, dir);
 	if (!mathVec3IsZero(N)) {
+		int res;
 		CCTNum_t circle_o[3], circle_r;
 		mathVec3Normalized(N, N);
-		if (0 == Sphere_Intersect_Plane(center, radius, ls[0], N, circle_o, &circle_r)) {
+		res = Sphere_Intersect_Plane(center, radius, ls[0], N, circle_o, &circle_r);
+		if (0 == res) {
 			return NULL;
+		}
+		if (1 == res) {
+			CCTNum_t v[3], l[3], p[3];
+			CCTNum_t d, dot;
+			mathVec3Normalized(lsdir, lsdir);
+			mathPointProjectionLine(circle_o, ls[0], lsdir, p);
+			mathVec3Sub(N, circle_o, p);
+			d = mathVec3Normalized(N, N);
+			dot = mathVec3Dot(N, dir);
+			if (dot <= CCTNum(0.0)) {
+				return NULL;
+			}
+			d /= dot;
+			mathVec3Copy(p, circle_o);
+			mathVec3SubScalar(p, dir, d);
+			mathVec3Sub(l, ls[0], p);
+			mathVec3Sub(v, ls[1], p);
+			dot = mathVec3Dot(l, v);
+			if (dot > CCT_EPSILON) {
+				return NULL;
+			}
+			result->distance = d;
+			result->hit_bits = CCT_SWEEP_BIT_POINT;
+			mathVec3Copy(result->hit_plane_v, circle_o);
+			mathVec3Copy(result->hit_plane_n, N);
+			if (dot < CCTNum(0.0)) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[0].idx = 0;
+			}
+			else {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[0].idx = (mathVec3IsZero(l) ? 0 : 1);
+			}
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+			result->peer[1].idx = 0;
+			return result;
 		}
 		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle_o, circle_r, result)) {
 			return NULL;

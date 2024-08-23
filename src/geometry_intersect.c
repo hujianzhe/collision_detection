@@ -528,6 +528,9 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 	if (Polygon_Contain_Point(polygon, p)) {
 		return res;
 	}
+	if (1 == res) {
+		return 0;
+	}
 	for (i = 0; i < polygon->v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
 		mathVec3Copy(edge[0], polygon->v[polygon->v_indices[i++]]);
