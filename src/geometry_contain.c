@@ -89,6 +89,17 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	return len_sq <= CCTNum_sq(r1 - r2);
 }
 
+static int Sphere_Contain_Capsule(const CCTNum_t o[3], CCTNum_t r, const GeometryCapsule_t* capsule) {
+	CCTNum_t sp_o[3];
+	mathVec3Copy(sp_o, capsule->o);
+	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
+	if (!Sphere_Contain_Sphere(o, r, sp_o, capsule->radius)) {
+		return 0;
+	}
+	mathVec3AddScalar(sp_o, capsule->axis, capsule->half + capsule->half);
+	return Sphere_Contain_Sphere(o, r, sp_o, capsule->radius);
+}
+
 static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
 	CCTNum_t vp[3], edge_v[3], dot;
 	mathVec3Sub(vp, p, v[0]);
@@ -247,29 +258,15 @@ static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const 
 	return 1;
 }
 
-static int AABB_Contain_Capsule(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryCapsule_t* capsule) {
-	CCTNum_t min_v[3], max_v[3];
-	mathCapsuleFindMaxMinXYZ(capsule, min_v, max_v);
-	return AABB_Contain_Point(o, half, min_v) && AABB_Contain_Point(o, half, max_v);
-}
-
-static int Sphere_Contain_Mesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
-	CCTNum_t v[3];
-	unsigned int i;
-	mathAABBMinVertice(mesh->bound_box.o, mesh->bound_box.half, v);
-	if (Sphere_Contain_Point(o, radius, v)) {
-		mathAABBMaxVertice(mesh->bound_box.o, mesh->bound_box.half, v);
-		if (Sphere_Contain_Point(o, radius, v)) {
-			return 1;
-		}
+static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t* capsule) {
+	CCTNum_t sp_o[3];
+	mathVec3Copy(sp_o, capsule->o);
+	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
+	if (!OBB_Contain_Sphere(obb, sp_o, capsule->radius)) {
+		return 0;
 	}
-	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!Sphere_Contain_Point(o, radius, p)) {
-			return 0;
-		}
-	}
-	return 1;
+	mathVec3AddScalar(sp_o, capsule->axis, capsule->half + capsule->half);
+	return OBB_Contain_Sphere(obb, sp_o, capsule->radius);
 }
 
 static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
@@ -471,6 +468,39 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 	return ConvexMesh_Contain_Point(mesh, o);
 }
 
+static int ConvexMesh_Contain_Capsule(const GeometryMesh_t* mesh, const GeometryCapsule_t* capsule) {
+	CCTNum_t sp_o[3];
+	mathVec3Copy(sp_o, capsule->o);
+	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
+	if (!ConvexMesh_Contain_Sphere(mesh, sp_o, capsule->radius)) {
+		return 0;
+	}
+	mathVec3AddScalar(sp_o, capsule->axis, capsule->half + capsule->half);
+	return ConvexMesh_Contain_Sphere(mesh, sp_o, capsule->radius);
+}
+
+static int Sphere_Contain_VerticeIndices(const CCTNum_t o[3], CCTNum_t r, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+	unsigned int i;
+	for (i = 0; i < v_indices_cnt; ++i) {
+		const CCTNum_t* p = v[v_indices[i]];
+		if (!Sphere_Contain_Point(o, r, p)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int Capsule_Contain_VerticeIndices(const GeometryCapsule_t* capsule, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+	unsigned int i;
+	for (i = 0; i < v_indices_cnt; ++i) {
+		const CCTNum_t* p = v[v_indices[i]];
+		if (!Capsule_Contain_Point(capsule, p)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -516,7 +546,9 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				return AABB_Contain_Capsule(one->aabb->o, one->aabb->half, two->capsule);
+				GeometryOBB_t one_obb;
+				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
+				return OBB_Contain_Capsule(&one_obb, two->capsule);
 			}
 		}
 	}
@@ -549,6 +581,10 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			{
 				return OBB_Contain_Mesh(one->obb, two->mesh);
 			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return OBB_Contain_Capsule(one->obb, two->capsule);
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SPHERE == one->type) {
@@ -564,23 +600,17 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				CCTNum_t v[3];
-				mathAABBMinVertice(two->aabb->o, two->aabb->half, v);
-				if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
-					return 0;
-				}
-				mathAABBMaxVertice(two->aabb->o, two->aabb->half, v);
-				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
+				CCTNum_t v[8][3];
+				mathAABBVertices(two->aabb->o, two->aabb->half, v);
+				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])v,
+					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				CCTNum_t v[3];
-				mathOBBMinVertice(two->obb, v);
-				if (!Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v)) {
-					return 0;
-				}
-				mathOBBMaxVertice(two->obb, v);
-				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, v);
+				CCTNum_t v[8][3];
+				mathOBBVertices(two->obb, v);
+				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])v,
+					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -588,7 +618,12 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return Sphere_Contain_Mesh(one->sphere->o, one->sphere->radius, two->mesh);
+				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->mesh->v,
+					two->mesh->v_indices, two->mesh->v_indices_cnt);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return Sphere_Contain_Capsule(one->sphere->o, one->sphere->radius, two->capsule);
 			}
 		}
 	}
@@ -618,6 +653,41 @@ int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* t
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
 				return ConvexMesh_Contain_ConvexMesh(one->mesh, two->mesh);
+			}
+			case GEOMETRY_BODY_CAPSULE:
+			{
+				return ConvexMesh_Contain_Capsule(one->mesh, two->capsule);
+			}
+		}
+	}
+	else if (GEOMETRY_BODY_CAPSULE == one->type) {
+		switch (two->type) {
+			case GEOMETRY_BODY_POINT:
+			{
+				return Capsule_Contain_Point(one->capsule, two->point);
+			}
+			case GEOMETRY_BODY_SEGMENT:
+			{
+				return Capsule_Contain_Point(one->capsule, two->segment->v[0]) &&
+					Capsule_Contain_Point(one->capsule, two->segment->v[1]);
+			}
+			case GEOMETRY_BODY_AABB:
+			{
+				CCTNum_t v[8][3];
+				mathAABBVertices(two->aabb->o, two->aabb->half, v);
+				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])v,
+					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+			}
+			case GEOMETRY_BODY_OBB:
+			{
+				CCTNum_t v[8][3];
+				mathOBBVertices(two->obb, v);
+				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])v,
+					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+			}
+			case GEOMETRY_BODY_CONVEX_MESH:
+			{
+				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])two->mesh->v, two->mesh->v_indices, two->mesh->v_indices_cnt);
 			}
 		}
 	}
