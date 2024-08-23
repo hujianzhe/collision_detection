@@ -1476,19 +1476,26 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!p_result) {
 				*result = result_temp;
 				p_result = result;
+				if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+					result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+				}
+				else {
+					result->peer[1].hit_bits = 0;
+				}
 			}
 		}
 		mathVec3SubScalar(temp_ls[0], v, d + d);
 		mathVec3SubScalar(temp_ls[1], v, d + d);
 		if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, &result_temp)) {
-			if (!p_result) {
+			if (!p_result || result_temp.distance < result->distance) {
 				*result = result_temp;
-				result->peer[1].hit_bits = 0;
 				p_result = result;
-			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-				result->peer[1].hit_bits = 0;
+				if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+					result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+				}
+				else {
+					result->peer[1].hit_bits = 0;
+				}
 			}
 		}
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[0], capsule->radius, 0, &result_temp)) {
@@ -1677,6 +1684,12 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 				result_temp.peer[0].idx = (i - 1) / mesh->edge_stride;
 			}
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh, NULL);
+			if (result->peer[1].hit_bits != result_temp.peer[1].hit_bits ||
+				result->peer[1].idx != result_temp.peer[1].idx)
+			{
+				result->peer[1].hit_bits = 0;
+				result->hit_bits = 0;
+			}
 			continue;
 		}
 		if (result_temp.peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
@@ -2266,7 +2279,6 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			}
 			result_temp.peer[1].idx = i;
 			reverse_result(&result_temp, dir);
-			/* TODO merge result hit info */
 			continue;
 		}
 		result->peer[1].idx = i;
