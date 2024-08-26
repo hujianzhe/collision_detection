@@ -295,12 +295,11 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 	CCTNum_t v[3], dot;
 	CCTNum_t vp[3], eg[3];
 
-	mathVec3Sub(v, polygon->v[polygon->v_indices[0]], p);
-	dot = mathVec3Dot(polygon->normal, v);
+	mathVec3Sub(vp, p, polygon->v[polygon->v_indices[0]]);
+	dot = mathVec3Dot(polygon->normal, vp);
 	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
 		return 0;
 	}
-	mathVec3Sub(vp, p, polygon->v[polygon->v_indices[0]]);
 	mathVec3Sub(eg, polygon->v[polygon->v_indices[0]], polygon->v[polygon->v_indices[polygon->v_indices_cnt - 1]]);
 	mathVec3Cross(v, vp, eg);
 	if (mathVec3IsZero(v) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
