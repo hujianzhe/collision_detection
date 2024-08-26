@@ -293,28 +293,39 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	unsigned int i;
 	CCTNum_t v[3], dot;
-	CCTNum_t vp[3], eg[3];
-
-	mathVec3Sub(vp, p, polygon->v[polygon->v_indices[0]]);
-	dot = mathVec3Dot(polygon->normal, vp);
+	mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
+	dot = mathVec3Dot(polygon->normal, v);
 	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
 		return 0;
 	}
-	mathVec3Sub(eg, polygon->v[polygon->v_indices[0]], polygon->v[polygon->v_indices[polygon->v_indices_cnt - 1]]);
-	mathVec3Cross(v, vp, eg);
-	if (mathVec3IsZero(v) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
-		return 1;
-	}
-	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		CCTNum_t vi[3];
-		mathVec3Sub(vp, p, polygon->v[polygon->v_indices[i]]);
-		mathVec3Sub(eg, polygon->v[polygon->v_indices[i]], polygon->v[polygon->v_indices[i - 1]]);
-		mathVec3Cross(vi, vp, eg);
-		if (mathVec3IsZero(vi) && mathVec3LenSq(vp) <= mathVec3LenSq(eg)) {
-			return 1;
+	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		CCTNum_t ls_dir[3], ls_n[3], test_dot;
+		unsigned int other_v_idx, other_other_v_idx;
+		other_v_idx = i + 1;
+		if (other_v_idx >= polygon->v_indices_cnt) {
+			other_v_idx = 0;
 		}
-		dot = mathVec3Dot(v, vi);
-		if (dot <= CCTNum(0.0)) {
+		other_other_v_idx = other_v_idx + 1;
+		if (other_other_v_idx >= polygon->v_indices_cnt) {
+			other_other_v_idx = 0;
+		}
+		mathVec3Sub(ls_dir, polygon->v[polygon->v_indices[other_v_idx]], polygon->v[polygon->v_indices[i]]);
+		mathVec3Cross(ls_n, ls_dir, polygon->normal);
+		mathVec3Sub(v, polygon->v[polygon->v_indices[other_other_v_idx]], polygon->v[polygon->v_indices[i]]);
+		test_dot = mathVec3Dot(v, ls_n);
+		mathVec3Sub(v, p, polygon->v[polygon->v_indices[i]]);
+		dot = mathVec3Dot(v, ls_n);
+		if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
+			CCTNum_t l[3], r[3];
+			mathVec3Sub(l, polygon->v[polygon->v_indices[i]], p);
+			mathVec3Sub(r, polygon->v[polygon->v_indices[other_v_idx]], p);
+			dot = mathVec3Dot(l, r);
+			return dot <= CCT_EPSILON;
+		}
+		else if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
+			return 0;
+		}
+		else if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
 			return 0;
 		}
 	}
