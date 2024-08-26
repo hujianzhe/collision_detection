@@ -2473,6 +2473,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = Ray_Sweep_Capsule(one->point, dir, two->capsule, 1, result);
 				break;
 			}
+			default:
+			{
+				return NULL;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SEGMENT == one->type) {
@@ -2527,6 +2531,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				result = Segment_Sweep_Capsule(one_segment_v, NULL, 0, dir, two->capsule, 1, result);
 				break;
+			}
+			default:
+			{
+				return NULL;
 			}
 		}
 	}
@@ -2598,6 +2606,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = ConvexMesh_Sweep_Capsule(&one_mesh.mesh, dir, two->capsule, result);
 				break;
 			}
+			default:
+			{
+				return NULL;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_OBB == one->type) {
@@ -2666,6 +2678,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = ConvexMesh_Sweep_Capsule(&one_mesh.mesh, dir, two->capsule, result);
 				break;
 			}
+			default:
+			{
+				return NULL;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_SPHERE == one->type) {
@@ -2719,6 +2735,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				result = Sphere_Sweep_Capsule(one->sphere->o, one->sphere->radius, dir, two->capsule, result);
 				break;
+			}
+			default:
+			{
+				return NULL;
 			}
 		}
 	}
@@ -2788,6 +2808,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = Capsule_Sweep_Polygon(two->capsule, neg_dir, one->polygon, result);
 				break;
 			}
+			default:
+			{
+				return NULL;
+			}
 		}
 	}
 	else if (GEOMETRY_BODY_CONVEX_MESH == one->type) {
@@ -2843,6 +2867,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				result = ConvexMesh_Sweep_Capsule(one->mesh, dir, two->capsule, result);
 				break;
+			}
+			default:
+			{
+				return NULL;
 			}
 		}
 	}
@@ -2906,7 +2934,14 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 				result = Capsule_Sweep_Capsule(one->capsule, dir, two->capsule, result);
 				break;
 			}
+			default:
+			{
+				return NULL;
+			}
 		}
+	}
+	else {
+		return NULL;
 	}
 
 	if (!result) {
