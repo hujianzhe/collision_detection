@@ -359,6 +359,9 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	}
 	if (polygon->tri_indices && polygon->tri_indices_cnt >= 3) {
 		unsigned int i;
+		if (!Plane_Contain_Point(polygon->v[polygon->tri_indices[0]], polygon->normal, p)) {
+			return 0;
+		}
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
 			CCTNum_t tri[3][3];
 			mathVec3Copy(tri[0], polygon->v[polygon->tri_indices[i++]]);
