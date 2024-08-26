@@ -274,7 +274,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->is_convex = 1;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
 	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
-	mathVertexIndicesFindMinMaxXYZ(polygon->v, polygon->v_indices, polygon->v_indices_cnt, minXYZ, maxXYZ);
+	mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, minXYZ, maxXYZ);
 	mathVec3Add(polygon->center, minXYZ, maxXYZ);
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 }
