@@ -227,7 +227,7 @@ int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3])
 	mathVec3Sub(v, p, capsule->o);
 	dot = mathVec3Dot(v, capsule->axis);
 	lensq = mathVec3LenSq(v) - CCTNum_sq(dot);
-	if (lensq > radius_sq + CCT_EPSILON) {
+	if (lensq > radius_sq) {
 		return 0;
 	}
 	if (CCTNum_abs(dot) <= capsule->half) {
@@ -241,7 +241,7 @@ int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3])
 		mathVec3SubScalar(v, capsule->axis, capsule->half);
 	}
 	lensq = mathVec3DistanceSq(v, p);
-	return lensq <= radius_sq + CCT_EPSILON;
+	return lensq <= radius_sq;
 }
 
 static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
@@ -397,7 +397,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 		if (dot < CCTNum(0.0)) {
 			continue;
 		}
-		if (dot > CCTNum(1e-6)) {
+		if (dot > CCTNum(0.0)) {
 			return 0;
 		}
 		return ConvexPolygon_Contain_Point(polygon, p);
