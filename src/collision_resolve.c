@@ -77,21 +77,6 @@ CCTNum_t* physCollisionInertiaTensor(CCTNum_t mass, const unsigned char* geo_dat
 		return mat44;
 	}
 	switch (geo_type) {
-		case GEOMETRY_BODY_AABB:
-		{
-			int i;
-			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			CCTNum_t size_sq[3], fraction = mass / CCTNum(12.0);
-			for (i = 0; i < 3; ++i) {
-				size_sq[i] = aabb->half[i] + aabb->half[i];
-				size_sq[i] *= size_sq[i];
-			}
-			*mathMat44Element(mat44, 0, 0) = (size_sq[1] + size_sq[2]) * fraction;
-			*mathMat44Element(mat44, 1, 1) = (size_sq[0] + size_sq[2]) * fraction;
-			*mathMat44Element(mat44, 2, 2) = (size_sq[0] + size_sq[1]) * fraction;
-			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
-			break;
-		}
 		case GEOMETRY_BODY_OBB:
 		{
 			int i;
@@ -114,6 +99,22 @@ CCTNum_t* physCollisionInertiaTensor(CCTNum_t mass, const unsigned char* geo_dat
 			*mathMat44Element(mat44, 0, 0) = e;
 			*mathMat44Element(mat44, 1, 1) = e;
 			*mathMat44Element(mat44, 2, 2) = e;
+			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
+			break;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+			/* this code is copy from PhysX 4.1 */
+			CCTNum_t v[3];
+			CCTNum_t r = capsule->radius, h = capsule->half;
+			CCTNum_t a = r * r * r * (CCTNum(8.0) / CCTNum(15.0)) + h * r * r * (CCTNum(3.0) / CCTNum(2.0)) + h * h * r * (CCTNum(4.0) / CCTNum(3.0)) + h * h * h * (CCTNum(2.0) / CCTNum(3.0));
+			CCTNum_t b = r * r * r * (CCTNum(8.0) / CCTNum(15.0)) + h * r * r;
+			mathVec3Set(v, b, a, a);
+			mathVec3MultiplyScalar(v, v, CCTNum(3.1415926) * r * r);
+			*mathMat44Element(mat44, 0, 0) = v[0] * mass;
+			*mathMat44Element(mat44, 1, 1) = v[1] * mass;
+			*mathMat44Element(mat44, 2, 2) = v[2] * mass;
 			*mathMat44Element(mat44, 3, 3) = CCTNum(1.0);
 			break;
 		}

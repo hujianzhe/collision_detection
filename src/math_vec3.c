@@ -9,15 +9,6 @@
 extern "C" {
 #endif
 
-CCTNum_t* mathCoordinateSystemTransform(const CCTNum_t v[3], const CCTNum_t new_origin[3], const CCTNum_t new_axies[3][3], CCTNum_t new_v[3]) {
-	CCTNum_t t[3];
-	mathVec3Sub(t, v, new_origin);
-	new_v[0] = mathVec3Dot(t, new_axies[0]);
-	new_v[1] = mathVec3Dot(t, new_axies[1]);
-	new_v[2] = mathVec3Dot(t, new_axies[2]);
-	return new_v;
-}
-
 int mathVec3IsValid(const CCTNum_t v[3]) {
 	if (isinf(v[0]) || isnan(v[0])) {
 		return 0;
