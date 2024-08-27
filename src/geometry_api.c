@@ -140,52 +140,52 @@ void mathGeometryFreeRef(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3]) {
+const CCTNum_t* mathGeometryGetPosition(const unsigned char* geo_data, int geo_type, CCTNum_t v[3]) {
 	const CCTNum_t* ptr_v;
-	switch (b->type) {
+	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			ptr_v = b->point;
+			ptr_v = (const CCTNum_t*)geo_data;
 			break;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			ptr_v = b->segment->v[0];
+			ptr_v = ((const GeometrySegment_t*)geo_data)->v[0];
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			ptr_v = b->plane->v;
+			ptr_v = ((const GeometryPlane_t*)geo_data)->v;
 			break;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			ptr_v = b->sphere->o;
+			ptr_v = ((const GeometrySphere_t*)geo_data)->o;
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			ptr_v = b->aabb->o;
+			ptr_v = ((const GeometryAABB_t*)geo_data)->o;
 			break;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			ptr_v = b->obb->o;
+			ptr_v = ((const GeometryOBB_t*)geo_data)->o;
 			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			ptr_v = b->polygon->center;
+			ptr_v = ((const GeometryPolygon_t*)geo_data)->center;
 			break;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			ptr_v = b->mesh->bound_box.o;
+			ptr_v = ((const GeometryMesh_t*)geo_data)->bound_box.o;
 			break;
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			ptr_v = b->capsule->o;
+			ptr_v = ((const GeometryCapsule_t*)geo_data)->o;
 			break;
 		}
 		default:
@@ -197,16 +197,16 @@ const CCTNum_t* mathGeometryGetPosition(const GeometryBodyRef_t* b, CCTNum_t v[3
 	return ptr_v;
 }
 
-void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
-	switch (b->type) {
+void mathGeometrySetPosition(unsigned char* geo_data, int geo_type, const CCTNum_t v[3]) {
+	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			mathVec3Copy(b->point, v);
+			mathVec3Copy((CCTNum_t*)geo_data, v);
 			return;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			GeometrySegment_t* segment = b->segment;
+			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
 			CCTNum_t delta[3];
 			mathVec3Sub(delta, v, segment->v[0]);
 			mathVec3Copy(segment->v[0], v);
@@ -215,28 +215,32 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			mathVec3Copy(b->plane->v, v);
+			GeometryPlane_t* plane = (GeometryPlane_t*)geo_data;
+			mathVec3Copy(plane->v, v);
 			return;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			mathVec3Copy(b->sphere->o, v);
+			GeometrySphere_t* sphere = (GeometrySphere_t*)geo_data;
+			mathVec3Copy(sphere->o, v);
 			return;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			mathVec3Copy(b->aabb->o, v);
+			GeometryAABB_t* aabb = (GeometryAABB_t*)geo_data;
+			mathVec3Copy(aabb->o, v);
 			return;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			mathVec3Copy(b->obb->o, v);
+			GeometryOBB_t* obb = (GeometryOBB_t*)geo_data;
+			mathVec3Copy(obb->o, v);
 			return;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
 			unsigned int i;
-			GeometryPolygon_t* polygon = b->polygon;
+			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
 			CCTNum_t delta[3];
 			mathVec3Sub(delta, v, polygon->center);
 			for (i = 0; i < polygon->v_indices_cnt; ++i) {
@@ -250,7 +254,7 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
 			unsigned int i;
-			GeometryMesh_t* mesh = b->mesh;
+			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			CCTNum_t delta[3];
 			mathVec3Sub(delta, v, mesh->bound_box.o);
 			for (i = 0; i < mesh->v_indices_cnt; ++i) {
@@ -263,7 +267,8 @@ void mathGeometrySetPosition(GeometryBodyRef_t* b, const CCTNum_t v[3]) {
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			mathVec3Copy(b->capsule->o, v);
+			GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
+			mathVec3Copy(capsule->o, v);
 			return;
 		}
 	}
@@ -334,26 +339,23 @@ GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_t
 	return aabb;
 }
 
-int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
-	switch (b->type) {
+int mathGeometryRotate(unsigned char* geo_data, int geo_type, const CCTNum_t q[4]) {
+	switch (geo_type) {
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			CCTNum_t o[3];
-			mathVec3Add(o, b->segment->v[0], b->segment->v[1]);
-			mathVec3MultiplyScalar(o, o, CCTNum(0.5));
-			point_rotate(b->segment->v[0], o, q);
-			point_rotate(b->segment->v[1], o, q);
+			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
+			point_rotate(segment->v[1], segment->v[0], q);
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			GeometryPlane_t* plane = b->plane;
+			GeometryPlane_t* plane = (GeometryPlane_t*)geo_data;
 			mathQuatMulVec3(plane->normal, q, plane->normal);
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
 		{
-			GeometryAABB_t* aabb = b->aabb;
+			GeometryAABB_t* aabb = (GeometryAABB_t*)geo_data;
 			CCTNum_t axis[3], new_axis[3];
 			/* check rotate by X axis ??? */
 			mathVec3Set(axis, CCTNums_3(1.0, 0.0, 0.0));
@@ -417,7 +419,7 @@ int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			GeometryOBB_t* obb = b->obb;
+			GeometryOBB_t* obb = (GeometryOBB_t*)geo_data;
 			mathQuatMulVec3(obb->axis[0], q, obb->axis[0]);
 			mathQuatMulVec3(obb->axis[1], q, obb->axis[1]);
 			mathQuatMulVec3(obb->axis[2], q, obb->axis[2]);
@@ -425,14 +427,14 @@ int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			GeometryPolygon_t* polygon = b->polygon;
+			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
 			indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->o, q);
 			mathQuatMulVec3(polygon->normal, q, polygon->normal);
 			break;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
-			GeometryMesh_t* mesh = b->mesh;
+			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			unsigned int i;
 			CCTNum_t min_xyz[3], max_xyz[3];
 
@@ -450,7 +452,7 @@ int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			GeometryCapsule_t* capsule = b->capsule;
+			GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
 			mathQuatMulVec3(capsule->axis, q, capsule->axis);
 			break;
 		}
@@ -460,20 +462,21 @@ int mathGeometryRotate(GeometryBodyRef_t* b, const CCTNum_t q[4]) {
 	return 1;
 }
 
-int mathGeometryRotateAxisRadian(GeometryBodyRef_t* b, const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRotateAxisRadian(unsigned char* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) {
 	CCTNum_t q[4];
-	if (GEOMETRY_BODY_SPHERE == b->type) {
+	if (GEOMETRY_BODY_SPHERE == geo_type) {
 		return 1;
 	}
-	if (GEOMETRY_BODY_CAPSULE == b->type) {
+	if (GEOMETRY_BODY_CAPSULE == geo_type) {
 		CCTNum_t v[3];
-		mathVec3Cross(v, b->capsule->axis, axis);
+		GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
+		mathVec3Cross(v, capsule->axis, axis);
 		if (mathVec3IsZero(v)) {
 			return 1;
 		}
 	}
 	mathQuatFromAxisRadian(q, axis, radian);
-	return mathGeometryRotate(b, q);
+	return mathGeometryRotate(geo_data, geo_type, q);
 }
 
 #ifdef __cplusplus
