@@ -279,7 +279,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 }
 
-int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
+int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
 	unsigned int i;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
@@ -297,13 +297,13 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
 			dot = mathVec3Dot(v, N);
 			/* some module needed epsilon */
-			if (dot > CCT_EPSILON) {
+			if (dot > epsilon) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < CCT_EPSILON_NEGATE) {
+			else if (dot < -epsilon) {
 				if (flag_sign > 0) {
 					return 0;
 				}
@@ -338,7 +338,7 @@ GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
 		goto err;
 	}
-	polygon->is_convex = mathPolygonIsConvex(polygon);
+	polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);
 	return polygon;
 err:
 	free(dup_v);

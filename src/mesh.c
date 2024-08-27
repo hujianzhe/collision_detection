@@ -234,7 +234,7 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	mesh->v = dup_v;
 	mesh->v_indices = dup_v_indices;
 	mesh->v_indices_cnt = dup_v_cnt;
-	mesh->is_convex = mathMeshIsConvex(mesh);
+	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		GeometryPolygon_t* polygon = mesh->polygons + i;
 		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
@@ -242,7 +242,7 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 			polygon->is_convex = 1;
 		}
 		else {
-			polygon->is_convex = mathPolygonIsConvex(polygon);
+			polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);
 		}
 	}
 	if (mesh->is_convex) {
@@ -437,7 +437,7 @@ int mathMeshIsClosed(const GeometryMesh_t* mesh) {
 	return 1;
 }
 
-int mathMeshIsConvex(const GeometryMesh_t* mesh) {
+int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon) {
 	unsigned int i;
 	if (mesh->polygons_cnt < 4) {
 		return 0;
@@ -451,13 +451,13 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
 			dot = mathVec3Dot(polygon->normal, vj);
 			/* some module needed epsilon */
-			if (dot > CCT_EPSILON) {
+			if (dot > epsilon) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < CCT_EPSILON_NEGATE) {
+			else if (dot < -epsilon) {
 				if (flag_sign > 0) {
 					return 0;
 				}
