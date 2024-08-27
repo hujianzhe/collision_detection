@@ -55,7 +55,7 @@ size_t mathGeometrySize(int geo_type) {
 	return s_geometry_size[(size_t)geo_type];
 }
 
-int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type) {
+int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -184,7 +184,7 @@ int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type
 				GeometrySegment_t segment;
 				mathVec3Copy(segment.v[0], polygon->v[polygon->v_indices[i++]]);
 				mathVec3Copy(segment.v[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
-				if (!mathGeometryCheckParametersValid((const unsigned char*)&segment, GEOMETRY_BODY_SEGMENT)) {
+				if (!mathGeometryCheckParametersValid(&segment, GEOMETRY_BODY_SEGMENT)) {
 					return 0;
 				}
 			}
@@ -218,7 +218,7 @@ int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
 				const GeometryPolygon_t* polygon = mesh->polygons + i;
 				/* avoid polygon edge is different from mesh edge... */
-				if (!mathGeometryCheckParametersValid((const unsigned char*)polygon, GEOMETRY_BODY_POLYGON)) {
+				if (!mathGeometryCheckParametersValid(polygon, GEOMETRY_BODY_POLYGON)) {
 					return 0;
 				}
 			}
@@ -227,11 +227,11 @@ int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type
 				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_indices[i++]]);
 				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_indices[i++]]);
 				/* avoid polygon edge is different from mesh edge... */
-				if (!mathGeometryCheckParametersValid((const unsigned char*)&segment, GEOMETRY_BODY_SEGMENT)) {
+				if (!mathGeometryCheckParametersValid(&segment, GEOMETRY_BODY_SEGMENT)) {
 					return 0;
 				}
 			}
-			if (!mathGeometryCheckParametersValid((const unsigned char*)&mesh->bound_box, GEOMETRY_BODY_AABB)) {
+			if (!mathGeometryCheckParametersValid(&mesh->bound_box, GEOMETRY_BODY_AABB)) {
 				return 0;
 			}
 			return mathVec3IsValid(mesh->o);
@@ -240,7 +240,7 @@ int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type
 	return 0;
 }
 
-unsigned char* mathGeometryClone(unsigned char* dst, int* dst_type, const unsigned char* src_geo_data, int src_geo_type) {
+void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int src_geo_type) {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -328,7 +328,7 @@ void mathGeometryFreeRef(GeometryBodyRef_t* b) {
 	b->type = 0;
 }
 
-const CCTNum_t* mathGeometryGetPosition(const unsigned char* geo_data, int geo_type, CCTNum_t v[3]) {
+const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]) {
 	const CCTNum_t* ptr_v;
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
@@ -385,7 +385,7 @@ const CCTNum_t* mathGeometryGetPosition(const unsigned char* geo_data, int geo_t
 	return ptr_v;
 }
 
-void mathGeometrySetPosition(unsigned char* geo_data, int geo_type, const CCTNum_t v[3]) {
+void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -462,7 +462,7 @@ void mathGeometrySetPosition(unsigned char* geo_data, int geo_type, const CCTNum
 	}
 }
 
-GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_type, GeometryAABB_t* aabb) {
+GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -527,8 +527,12 @@ GeometryAABB_t* mathGeometryBoundingBox(const unsigned char* geo_data, int geo_t
 	return aabb;
 }
 
-int mathGeometryRotate(unsigned char* geo_data, int geo_type, const CCTNum_t q[4]) {
+int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 	switch (geo_type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			break;
+		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
@@ -650,7 +654,7 @@ int mathGeometryRotate(unsigned char* geo_data, int geo_type, const CCTNum_t q[4
 	return 1;
 }
 
-int mathGeometryRotateAxisRadian(unsigned char* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) {
 	CCTNum_t q[4];
 	if (GEOMETRY_BODY_SPHERE == geo_type) {
 		return 1;
