@@ -34,7 +34,7 @@ extern "C" {
 
 __declspec_dll size_t mathGeometrySize(int geo_type);
 
-__declspec_dll unsigned char* mathGeometryClone(unsigned char* dst_geo_data, const unsigned char* src_geo_data, int src_geo_type);
+__declspec_dll unsigned char* mathGeometryClone(unsigned char* dst_data, int* dst_type, const unsigned char* src_geo_data, int src_geo_type);
 __declspec_dll void mathGeometryFree(void* geo_data, int geo_type);
 __declspec_dll void mathGeometryFreeBody(GeometryBody_t* b);
 __declspec_dll void mathGeometryFreeRef(GeometryBodyRef_t* b);

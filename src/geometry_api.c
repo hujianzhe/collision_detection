@@ -55,7 +55,7 @@ size_t mathGeometrySize(int geo_type) {
 	return s_geometry_size[(size_t)geo_type];
 }
 
-unsigned char* mathGeometryClone(unsigned char* dst, const unsigned char* src_geo_data, int src_geo_type) {
+unsigned char* mathGeometryClone(unsigned char* dst, int* dst_type, const unsigned char* src_geo_data, int src_geo_type) {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -110,6 +110,9 @@ unsigned char* mathGeometryClone(unsigned char* dst, const unsigned char* src_ge
 		{
 			return NULL;
 		}
+	}
+	if (dst_type) {
+		*dst_type = src_geo_type;
 	}
 	return dst;
 }
