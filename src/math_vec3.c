@@ -18,6 +18,19 @@ CCTNum_t* mathCoordinateSystemTransform(const CCTNum_t v[3], const CCTNum_t new_
 	return new_v;
 }
 
+int mathVec3IsValid(const CCTNum_t v[3]) {
+	if (isinf(v[0]) || isnan(v[0])) {
+		return 0;
+	}
+	if (isinf(v[1]) || isnan(v[1])) {
+		return 0;
+	}
+	if (isinf(v[2]) || isnan(v[2])) {
+		return 0;
+	}
+	return 1;
+}
+
 CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z) {
 	r[0] = x;
 	r[1] = y;

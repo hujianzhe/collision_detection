@@ -33,6 +33,7 @@ extern "C" {
 #endif
 
 __declspec_dll size_t mathGeometrySize(int geo_type);
+__declspec_dll int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type);
 
 __declspec_dll unsigned char* mathGeometryClone(unsigned char* dst_data, int* dst_type, const unsigned char* src_geo_data, int src_geo_type);
 __declspec_dll void mathGeometryFree(void* geo_data, int geo_type);

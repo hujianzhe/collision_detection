@@ -55,6 +55,191 @@ size_t mathGeometrySize(int geo_type) {
 	return s_geometry_size[(size_t)geo_type];
 }
 
+int mathGeometryCheckParametersValid(const unsigned char* geo_data, int geo_type) {
+	switch (geo_type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			return mathVec3IsValid((const CCTNum_t*)geo_data);
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			if (!mathVec3IsValid(segment->v[0])) {
+				return 0;
+			}
+			if (!mathVec3IsValid(segment->v[1])) {
+				return 0;
+			}
+			return !mathVec3Equal(segment->v[0], segment->v[1]);
+		}
+		case GEOMETRY_BODY_PLANE:
+		{
+			const GeometryPlane_t* plane = (const GeometryPlane_t*)geo_data;
+			CCTNum_t lensq;
+			if (!mathVec3IsValid(plane->normal)) {
+				return 0;
+			}
+			lensq = mathVec3LenSq(plane->normal);
+			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
+				return 0;
+			}
+			return mathVec3IsValid(plane->v);
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
+			if (aabb->half[0] < GEOMETRY_BODY_BOX_MIN_HALF) {
+				return 0;
+			}
+			if (aabb->half[1] < GEOMETRY_BODY_BOX_MIN_HALF) {
+				return 0;
+			}
+			if (aabb->half[2] < GEOMETRY_BODY_BOX_MIN_HALF) {
+				return 0;
+			}
+			return mathVec3IsValid(aabb->o);
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			unsigned int i;
+			if (!mathVec3IsValid(obb->half)) {
+				return 0;
+			}
+			for (i = 0; i < 3; ++i) {
+				CCTNum_t lensq;
+				if (obb->half[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
+					return 0;
+				}
+				if (!mathVec3IsValid(obb->axis[i])) {
+					return 0;
+				}
+				lensq = mathVec3LenSq(obb->axis[i]);
+				if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
+					return 0;
+				}
+			}
+			return mathVec3IsValid(obb->o);
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			if (sphere->radius <= CCT_EPSILON) {
+				return 0;
+			}
+			return mathVec3IsValid(sphere->o);
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+			CCTNum_t lensq;
+			if (capsule->radius <= CCT_EPSILON) {
+				return 0;
+			}
+			if (capsule->half <= CCT_EPSILON) {
+				return 0;
+			}
+			if (!mathVec3IsValid(capsule->axis)) {
+				return 0;
+			}
+			lensq = mathVec3LenSq(capsule->axis);
+			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
+				return 0;
+			}
+			return mathVec3IsValid(capsule->o);
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
+			unsigned int i;
+			CCTNum_t lensq;
+			if (polygon->v_indices_cnt < 3) {
+				return 0;
+			}
+			if (polygon->tri_indices_cnt % 3) {
+				return 0;
+			}
+			if (!mathVec3IsValid(polygon->o)) {
+				return 0;
+			}
+			if (!mathVec3IsValid(polygon->center)) {
+				return 0;
+			}
+			if (!mathVec3IsValid(polygon->normal)) {
+				return 0;
+			}
+			lensq = mathVec3LenSq(polygon->normal);
+			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
+				return 0;
+			}
+			if (polygon->is_convex) {
+				if (!mathPolygonIsConvex(polygon, CCT_EPSILON)) {
+					return 0;
+				}
+			}
+			else if (mathPolygonIsConvex(polygon, CCT_EPSILON)) {
+				return 0;
+			}
+			for (i = 0; i < polygon->v_indices_cnt; ) {
+				GeometrySegment_t segment;
+				mathVec3Copy(segment.v[0], polygon->v[polygon->v_indices[i++]]);
+				mathVec3Copy(segment.v[1], polygon->v[polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i]]);
+				if (!mathGeometryCheckParametersValid((const unsigned char*)&segment, GEOMETRY_BODY_SEGMENT)) {
+					return 0;
+				}
+			}
+			return 1;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
+			unsigned int i;
+			if (mesh->polygons_cnt <= 0) {
+				return 0;
+			}
+			if (mesh->v_indices_cnt < 4) {
+				return 0;
+			}
+			if (mesh->edge_indices_cnt < 6) {
+				return 0;
+			}
+			if (mesh->edge_stride != 2) {
+				return 0;
+			}
+			if (!mesh->is_convex) {
+				return 0;
+			}
+			if (!mathMeshIsConvex(mesh, CCT_EPSILON)) {
+				return 0;
+			}
+			if (!mathMeshIsClosed(mesh)) {
+				return 0;
+			}
+			for (i = 0; i < mesh->polygons_cnt; ++i) {
+				const GeometryPolygon_t* polygon = mesh->polygons + i;
+				/* avoid polygon edge is different from mesh edge... */
+				if (!mathGeometryCheckParametersValid((const unsigned char*)polygon, GEOMETRY_BODY_POLYGON)) {
+					return 0;
+				}
+			}
+			for (i = 0; i < mesh->edge_indices_cnt; ) {
+				GeometrySegment_t segment;
+				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_indices[i++]]);
+				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_indices[i++]]);
+				/* avoid polygon edge is different from mesh edge... */
+				if (!mathGeometryCheckParametersValid((const unsigned char*)&segment, GEOMETRY_BODY_SEGMENT)) {
+					return 0;
+				}
+			}
+			if (!mathGeometryCheckParametersValid((const unsigned char*)&mesh->bound_box, GEOMETRY_BODY_AABB)) {
+				return 0;
+			}
+			return mathVec3IsValid(mesh->o);
+		}
+	}
+	return 0;
+}
+
 unsigned char* mathGeometryClone(unsigned char* dst, int* dst_type, const unsigned char* src_geo_data, int src_geo_type) {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
