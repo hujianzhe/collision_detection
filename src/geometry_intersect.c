@@ -12,7 +12,6 @@
 #include "../inc/vertex.h"
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
-#include <stddef.h>
 
 extern const CCTNum_t AABB_Axis[3][3];
 extern const unsigned int Box_Edge_Indices[24];

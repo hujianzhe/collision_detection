@@ -4,7 +4,6 @@
 
 #include "../inc/math_vec3.h"
 #include "../inc/aabb.h"
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

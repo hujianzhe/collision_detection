@@ -6,7 +6,6 @@
 #define	UTIL_C_CRT_COLLISION_H
 
 #include "geometry_def.h"
-#include <stddef.h>
 
 typedef struct CCTRigidBody_t {
 	CCTNum_t velocity[3];

@@ -8,6 +8,7 @@
 #include "compiler_define.h"
 #include <float.h>
 #include <math.h>
+#include <stddef.h>
 
 #ifdef CCT_NUM_FLOAT
 	typedef	float					CCTNum_t;
@@ -65,6 +66,17 @@
 
 #else
 	#error	"CCTNum_t type isn't defined, should be float/double/long double ."
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+__declspec_dll int CCTNum_chkval(CCTNum_t num);
+__declspec_dll int CCTNum_chkvals(const CCTNum_t* num, size_t cnt);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

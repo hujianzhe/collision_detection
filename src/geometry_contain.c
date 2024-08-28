@@ -12,7 +12,6 @@
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
-#include <stddef.h>
 
 extern const unsigned int Box_Vertice_Indices_Default[8];
 extern const unsigned int Box_Face_Indices[6][4];

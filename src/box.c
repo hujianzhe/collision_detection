@@ -5,7 +5,6 @@
 #include "../inc/box.h"
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

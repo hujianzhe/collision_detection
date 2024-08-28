@@ -6,7 +6,6 @@
 #define	UTIL_C_CRT_GEOMETRY_API_H
 
 #include "geometry_def.h"
-#include <stddef.h>
 
 typedef struct CCTSweepHitInfo_t {
 	int hit_bits;

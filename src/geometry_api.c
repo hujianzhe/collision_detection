@@ -11,7 +11,6 @@
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
-#include <stddef.h>
 
 static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
 	CCTNum_t v[3];
@@ -59,15 +58,15 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			return mathVec3IsValid((const CCTNum_t*)geo_data);
+			return CCTNum_chkvals((const CCTNum_t*)geo_data, 3);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
-			if (!mathVec3IsValid(segment->v[0])) {
+			if (!CCTNum_chkvals(segment->v[0], 3)) {
 				return 0;
 			}
-			if (!mathVec3IsValid(segment->v[1])) {
+			if (!CCTNum_chkvals(segment->v[1], 3)) {
 				return 0;
 			}
 			return !mathVec3Equal(segment->v[0], segment->v[1]);
@@ -76,14 +75,14 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		{
 			const GeometryPlane_t* plane = (const GeometryPlane_t*)geo_data;
 			CCTNum_t lensq;
-			if (!mathVec3IsValid(plane->normal)) {
+			if (!CCTNum_chkvals(plane->normal, 3)) {
 				return 0;
 			}
 			lensq = mathVec3LenSq(plane->normal);
 			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
 				return 0;
 			}
-			return mathVec3IsValid(plane->v);
+			return CCTNum_chkvals(plane->v, 3);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
@@ -97,13 +96,13 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (aabb->half[2] < GEOMETRY_BODY_BOX_MIN_HALF) {
 				return 0;
 			}
-			return mathVec3IsValid(aabb->o);
+			return CCTNum_chkvals(aabb->o, 3);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
 			unsigned int i;
-			if (!mathVec3IsValid(obb->half)) {
+			if (!CCTNum_chkvals(obb->half, 3)) {
 				return 0;
 			}
 			for (i = 0; i < 3; ++i) {
@@ -111,7 +110,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				if (obb->half[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
 					return 0;
 				}
-				if (!mathVec3IsValid(obb->axis[i])) {
+				if (!CCTNum_chkvals(obb->axis[i], 3)) {
 					return 0;
 				}
 				lensq = mathVec3LenSq(obb->axis[i]);
@@ -119,7 +118,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 					return 0;
 				}
 			}
-			return mathVec3IsValid(obb->o);
+			return CCTNum_chkvals(obb->o, 3);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -127,7 +126,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (sphere->radius <= CCT_EPSILON) {
 				return 0;
 			}
-			return mathVec3IsValid(sphere->o);
+			return CCTNum_chkvals(sphere->o, 3);
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
@@ -139,14 +138,14 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (capsule->half <= CCT_EPSILON) {
 				return 0;
 			}
-			if (!mathVec3IsValid(capsule->axis)) {
+			if (!CCTNum_chkvals(capsule->axis, 3)) {
 				return 0;
 			}
 			lensq = mathVec3LenSq(capsule->axis);
 			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
 				return 0;
 			}
-			return mathVec3IsValid(capsule->o);
+			return CCTNum_chkvals(capsule->o, 3);
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
@@ -159,13 +158,13 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (polygon->tri_indices_cnt % 3) {
 				return 0;
 			}
-			if (!mathVec3IsValid(polygon->o)) {
+			if (!CCTNum_chkvals(polygon->o, 3)) {
 				return 0;
 			}
-			if (!mathVec3IsValid(polygon->center)) {
+			if (!CCTNum_chkvals(polygon->center, 3)) {
 				return 0;
 			}
-			if (!mathVec3IsValid(polygon->normal)) {
+			if (!CCTNum_chkvals(polygon->normal, 3)) {
 				return 0;
 			}
 			lensq = mathVec3LenSq(polygon->normal);
@@ -234,7 +233,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (!mathGeometryCheckParametersValid(&mesh->bound_box, GEOMETRY_BODY_AABB)) {
 				return 0;
 			}
-			return mathVec3IsValid(mesh->o);
+			return CCTNum_chkvals(mesh->o, 3);
 		}
 	}
 	return 0;

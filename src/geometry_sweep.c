@@ -12,7 +12,6 @@
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
-#include <stddef.h>
 
 extern const CCTNum_t AABB_Axis[3][3];
 extern const CCTNum_t AABB_Plane_Normal[6][3];
