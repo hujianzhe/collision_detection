@@ -6,6 +6,8 @@
 #include "../inc/octree.h"
 #include <stdlib.h>
 
+#define pod_container_of(address, type, field)		((type *)((char*)(address) - (char*)(&((type *)0)->field)))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
