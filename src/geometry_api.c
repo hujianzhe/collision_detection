@@ -185,6 +185,9 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (capsule->half <= CCT_EPSILON) {
 				return 0;
 			}
+			if (!CCTNum_chkval(capsule->radius + capsule->half)) {
+				return 0;
+			}
 			if (!CCTNum_chkvals(capsule->axis, 3)) {
 				return 0;
 			}

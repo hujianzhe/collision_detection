@@ -81,6 +81,11 @@ void mathAABBFromTwoVertice(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t o
 		o[i] = (a[i] + b[i]) * CCTNum(0.5);
 		if (isinf(o[i])) {
 			o[i] = a[i] * CCTNum(0.5) + b[i] * CCTNum(0.5);
+			if (isinf(o[i])) {
+				o[0] = o[1] = o[2] = INFINITY;
+				half[0] = half[1] = half[2] = CCTNum(0.0);
+				return;
+			}
 		}
 		if (a[i] > b[i]) {
 			half[i] = (a[i] - b[i]) * CCTNum(0.5);
