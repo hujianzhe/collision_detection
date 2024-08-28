@@ -69,7 +69,10 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (!CCTNum_chkvals(segment->v[1], 3)) {
 				return 0;
 			}
-			return !mathVec3Equal(segment->v[0], segment->v[1]);
+			if (mathVec3Equal(segment->v[0], segment->v[1])) {
+				return 0;
+			}
+			return CCTNum_chkval(mathVec3DistanceSq(segment->v[0], segment->v[1]));
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
@@ -87,27 +90,45 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			if (aabb->half[0] < GEOMETRY_BODY_BOX_MIN_HALF) {
-				return 0;
-			}
-			if (aabb->half[1] < GEOMETRY_BODY_BOX_MIN_HALF) {
-				return 0;
-			}
-			if (aabb->half[2] < GEOMETRY_BODY_BOX_MIN_HALF) {
-				return 0;
-			}
-			return CCTNum_chkvals(aabb->o, 3);
-		}
-		case GEOMETRY_BODY_OBB:
-		{
-			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			CCTNum_t v[8][3];
 			unsigned int i;
-			if (!CCTNum_chkvals(obb->half, 3)) {
+			if (!CCTNum_chkvals(aabb->o, 3)) {
 				return 0;
 			}
 			for (i = 0; i < 3; ++i) {
 				CCTNum_t lensq;
+				if (!CCTNum_chkval(aabb->half[i])) {
+					return 0;
+				}
+				if (aabb->half[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
+					return 0;
+				}
+				lensq = CCTNum_sq(aabb->half[i]);
+				if (!CCTNum_chkval(lensq)) {
+					return 0;
+				}
+			}
+			mathAABBVertices(aabb->o, aabb->half, v);
+			return CCTNum_chkvals(&v[0][0], 24);;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			CCTNum_t v[8][3];
+			unsigned int i;
+			if (!CCTNum_chkvals(obb->o, 3)) {
+				return 0;
+			}
+			for (i = 0; i < 3; ++i) {
+				CCTNum_t lensq;
+				if (!CCTNum_chkval(obb->half[i])) {
+					return 0;
+				}
 				if (obb->half[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
+					return 0;
+				}
+				lensq = CCTNum_sq(obb->half[i]);
+				if (!CCTNum_chkval(lensq)) {
 					return 0;
 				}
 				if (!CCTNum_chkvals(obb->axis[i], 3)) {
@@ -118,21 +139,47 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 					return 0;
 				}
 			}
-			return CCTNum_chkvals(obb->o, 3);
+			mathOBBVertices(obb, v);
+			return CCTNum_chkvals(&v[0][0], 24);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
 			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			if (!CCTNum_chkval(sphere->radius)) {
+				return 0;
+			}
 			if (sphere->radius <= CCT_EPSILON) {
 				return 0;
 			}
-			return CCTNum_chkvals(sphere->o, 3);
+			if (!CCTNum_chkval(CCTNum_sq(sphere->radius))) {
+				return 0;
+			}
+			if (!CCTNum_chkvals(sphere->o, 3)) {
+				return 0;
+			}
+			if (!CCTNum_chkval(sphere->o[0] + sphere->radius)) {
+				return 0;
+			}
+			if (!CCTNum_chkval(sphere->o[1] + sphere->radius)) {
+				return 0;
+			}
+			if (!CCTNum_chkval(sphere->o[2] + sphere->radius)) {
+				return 0;
+			}
+			return 1;
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
-			CCTNum_t lensq;
+			CCTNum_t lensq, v[2][3];
+			unsigned int i;
+			if (!CCTNum_chkval(capsule->radius)) {
+				return 0;
+			}
 			if (capsule->radius <= CCT_EPSILON) {
+				return 0;
+			}
+			if (!CCTNum_chkval(capsule->half)) {
 				return 0;
 			}
 			if (capsule->half <= CCT_EPSILON) {
@@ -145,7 +192,25 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
 				return 0;
 			}
-			return CCTNum_chkvals(capsule->o, 3);
+			if (!CCTNum_chkvals(capsule->o, 3)) {
+				return 0;
+			}
+			mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, v[0], v[1]);
+			if (!CCTNum_chkvals(&v[0][0], 6)) {
+				return 0;
+			}
+			for (i = 0; i < 2; ++i) {
+				unsigned int j;
+				for (j = 0; j < 3; ++j) {
+					if (!CCTNum_chkval(v[i][j] + capsule->radius)) {
+						return 0;
+					}
+					if (!CCTNum_chkval(v[i][j] - capsule->radius)) {
+						return 0;
+					}
+				}
+			}
+			return 1;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
