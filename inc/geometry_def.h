@@ -5,7 +5,6 @@
 #ifndef	UTIL_C_CRT_GEOMETRY_GEOMETRY_DEF_H
 #define	UTIL_C_CRT_GEOMETRY_GEOMETRY_DEF_H
 
-#include "compiler_define.h"
 #include "number_define.h"
 
 /*********************************************************************/

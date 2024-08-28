@@ -5,8 +5,6 @@
 #ifndef UTIL_C_DATASTRUCT_LIST_H
 #define	UTIL_C_DATASTRUCT_LIST_H
 
-#include "compiler_define.h"
-
 typedef struct ListNode_t {
 	struct ListNode_t *prev, *next;
 } ListNode_t;

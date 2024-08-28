@@ -5,7 +5,6 @@
 #ifndef UTIL_C_CRT_MATH_VEC3_H
 #define	UTIL_C_CRT_MATH_VEC3_H
 
-#include "compiler_define.h"
 #include "number_define.h"
 
 #ifdef	__cplusplus

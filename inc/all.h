@@ -5,6 +5,7 @@
 #ifndef UTIL_COLLISION_DETECTION_ALL_HEADER_H
 #define	UTIL_COLLISION_DETECTION_ALL_HEADER_H
 
+#include "number_define.h"
 #include "aabb.h"
 #include "collision.h"
 #include "geometry_api.h"
@@ -14,7 +15,6 @@
 #include "math_quat.h"
 #include "math_vec3.h"
 #include "mesh.h"
-#include "number_define.h"
 #include "obb.h"
 #include "octree.h"
 #include "plane.h"
