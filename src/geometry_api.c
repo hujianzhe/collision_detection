@@ -109,7 +109,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				}
 			}
 			mathAABBVertices(aabb->o, aabb->half, v);
-			return CCTNum_chkvals(&v[0][0], 24);;
+			return CCTNum_chkvals(&v[0][0], 24);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
