@@ -99,11 +99,10 @@ void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[
 }
 
 void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3], CCTNum_t center_p[3], CCTNum_t dir[3], CCTNum_t* half) {
-	mathVec3Add(center_p, end_v, start_v);
-	mathVec3MultiplyScalar(center_p, center_p, CCTNum(0.5));
 	mathVec3Sub(dir, end_v, start_v);
-	*half = mathVec3Normalized(dir, dir);
-	*half *= CCTNum(0.5);
+	*half = mathVec3Normalized(dir, dir) * CCTNum(0.5);
+	mathVec3Copy(center_p, start_v);
+	mathVec3AddScalar(center_p, dir, *half);
 }
 
 unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned short edge_stride, unsigned int v_idx0, unsigned int v_idx1) {
