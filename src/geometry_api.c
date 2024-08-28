@@ -90,7 +90,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			CCTNum_t v[8][3];
 			unsigned int i;
 			if (!CCTNum_chkvals(aabb->o, 3)) {
 				return 0;
@@ -108,13 +107,18 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 					return 0;
 				}
 			}
-			mathAABBVertices(aabb->o, aabb->half, v);
-			return CCTNum_chkvals(&v[0][0], 24);
+			for (i = 0; i < 8; ++i) {
+				CCTNum_t v[3];
+				mathAABBVertex(aabb->o, aabb->half, i, v);
+				if (!CCTNum_chkvals(v, 3)) {
+					return 0;
+				}
+			}
+			return 1;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
-			CCTNum_t v[8][3];
 			unsigned int i;
 			if (!CCTNum_chkvals(obb->o, 3)) {
 				return 0;
@@ -139,8 +143,14 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 					return 0;
 				}
 			}
-			mathOBBVertices(obb, v);
-			return CCTNum_chkvals(&v[0][0], 24);
+			for (i = 0; i < 8; ++i) {
+				CCTNum_t v[3];
+				mathOBBVertex(obb, i, v);
+				if (!CCTNum_chkvals(v, 3)) {
+					return 0;
+				}
+			}
+			return 1;
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -199,12 +209,12 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				return 0;
 			}
 			mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, v[0], v[1]);
-			if (!CCTNum_chkvals(&v[0][0], 6)) {
-				return 0;
-			}
 			for (i = 0; i < 2; ++i) {
 				unsigned int j;
 				for (j = 0; j < 3; ++j) {
+					if (!CCTNum_chkval(v[i][j])) {
+						return 0;
+					}
 					if (!CCTNum_chkval(v[i][j] + capsule->radius)) {
 						return 0;
 					}

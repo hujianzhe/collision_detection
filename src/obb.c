@@ -88,28 +88,58 @@ void mathOBBVertices(const GeometryOBB_t* obb, CCTNum_t v[8][3]) {
 	mathVec3Add(v[7], v[7], AX[2]);
 }
 
-void mathOBBMinVertice(const GeometryOBB_t* obb, CCTNum_t v[3]) {
+CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int idx, CCTNum_t v[3]) {
 	CCTNum_t AX[3][3];
+	if (idx >= 8) {
+		return NULL;
+	}
+	mathVec3Copy(v, obb->o);
 	mathVec3MultiplyScalar(AX[0], obb->axis[0], obb->half[0]);
 	mathVec3MultiplyScalar(AX[1], obb->axis[1], obb->half[1]);
 	mathVec3MultiplyScalar(AX[2], obb->axis[2], obb->half[2]);
-
-	mathVec3Copy(v, obb->o);
-	mathVec3Sub(v, v, AX[0]);
-	mathVec3Sub(v, v, AX[1]);
-	mathVec3Sub(v, v, AX[2]);
-}
-
-void mathOBBMaxVertice(const GeometryOBB_t* obb, CCTNum_t v[3]) {
-	CCTNum_t AX[3][3];
-	mathVec3MultiplyScalar(AX[0], obb->axis[0], obb->half[0]);
-	mathVec3MultiplyScalar(AX[1], obb->axis[1], obb->half[1]);
-	mathVec3MultiplyScalar(AX[2], obb->axis[2], obb->half[2]);
-
-	mathVec3Copy(v, obb->o);
-	mathVec3Add(v, v, AX[0]);
-	mathVec3Add(v, v, AX[1]);
-	mathVec3Add(v, v, AX[2]);
+	switch (idx) {
+		case 0:
+			mathVec3Sub(v, v, AX[0]);
+			mathVec3Sub(v, v, AX[1]);
+			mathVec3Sub(v, v, AX[2]);
+			return v;
+		case 1:
+			mathVec3Add(v, v, AX[0]);
+			mathVec3Sub(v, v, AX[1]);
+			mathVec3Sub(v, v, AX[2]);
+			return v;
+		case 2:
+			mathVec3Add(v, v, AX[0]);
+			mathVec3Add(v, v, AX[1]);
+			mathVec3Sub(v, v, AX[2]);
+			return v;
+		case 3:
+			mathVec3Sub(v, v, AX[0]);
+			mathVec3Add(v, v, AX[1]);
+			mathVec3Sub(v, v, AX[2]);
+			return v;
+		case 4:
+			mathVec3Sub(v, v, AX[0]);
+			mathVec3Sub(v, v, AX[1]);
+			mathVec3Add(v, v, AX[2]);
+			return v;
+		case 5:
+			mathVec3Add(v, v, AX[0]);
+			mathVec3Sub(v, v, AX[1]);
+			mathVec3Add(v, v, AX[2]);
+			return v;
+		case 6:
+			mathVec3Add(v, v, AX[0]);
+			mathVec3Add(v, v, AX[1]);
+			mathVec3Add(v, v, AX[2]);
+			return v;
+		case 7:
+			mathVec3Sub(v, v, AX[0]);
+			mathVec3Add(v, v, AX[1]);
+			mathVec3Add(v, v, AX[2]);
+			return v;
+	}
+	return NULL;
 }
 
 void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]) {

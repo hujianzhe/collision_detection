@@ -63,6 +63,36 @@ void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8]
 	v[7][0] = o[0] - half[0]; v[7][1] = o[1] + half[1]; v[7][2] = o[2] + half[2];
 }
 
+CCTNum_t* mathAABBVertex(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int idx, CCTNum_t v[3]) {
+	switch (idx) {
+		case 0:
+			v[0] = o[0] - half[0]; v[1] = o[1] - half[1]; v[2] = o[2] - half[2];
+			return v;
+		case 1:
+			v[0] = o[0] + half[0]; v[1] = o[1] - half[1]; v[2] = o[2] - half[2];
+			return v;
+		case 2:
+			v[0] = o[0] + half[0]; v[1] = o[1] + half[1]; v[2] = o[2] - half[2];
+			return v;
+		case 3:
+			v[0] = o[0] - half[0]; v[1] = o[1] + half[1]; v[2] = o[2] - half[2];
+			return v;
+		case 4:
+			v[0] = o[0] - half[0]; v[1] = o[1] - half[1]; v[2] = o[2] + half[2];
+			return v;
+		case 5:
+			v[0] = o[0] + half[0]; v[1] = o[1] - half[1]; v[2] = o[2] + half[2];
+			return v;
+		case 6:
+			v[0] = o[0] + half[0]; v[1] = o[1] + half[1]; v[2] = o[2] + half[2];
+			return v;
+		case 7:
+			v[0] = o[0] - half[0]; v[1] = o[1] + half[1]; v[2] = o[2] + half[2];
+			return v;
+	}
+	return NULL;
+}
+
 void mathAABBMinVertice(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[3]) {
 	v[0] = o[0] - half[0];
 	v[1] = o[1] - half[1];
