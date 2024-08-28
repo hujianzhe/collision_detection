@@ -4,7 +4,6 @@
 
 #include "../inc/math_vec3.h"
 #include "../inc/math_matrix3.h"
-#include <math.h>
 
 #ifdef	__cplusplus
 extern "C" {

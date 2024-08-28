@@ -4,7 +4,6 @@
 
 #include "../inc/math_vec3.h"
 #include "../inc/line_segment.h"
-#include <math.h>
 #include <stddef.h>
 
 #ifdef __cplusplus

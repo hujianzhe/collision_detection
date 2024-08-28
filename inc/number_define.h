@@ -5,6 +5,7 @@
 #ifndef	UTIL_C_CRT_GEOMETRY_NUMBER_DEFINE_H
 #define	UTIL_C_CRT_GEOMETRY_NUMBER_DEFINE_H
 
+#include <float.h>
 #include <math.h>
 
 #ifdef CCT_NUM_FLOAT
