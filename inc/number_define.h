@@ -22,6 +22,7 @@
 
 	#define	CCT_PI					3.1415927f
 	#define	CCT_2PI					6.2831853f
+	#define	CCT_INV_PI				0.31830987f
 
 	#define	CCTNum_abs(n)			fabsf(n)
 	#define	CCTNum_sq(n)			((n)*(n))
@@ -43,6 +44,7 @@
 
 	#define	CCT_PI					3.141592653589793
 	#define	CCT_2PI					6.283185307179586
+	#define	CCT_INV_PI				0.3183098861837907
 
 	#define	CCTNum_abs(n)			fabs(n)
 	#define	CCTNum_sq(n)			((n)*(n))
@@ -64,6 +66,7 @@
 
 	#define	CCT_PI					3.141592653589793238L
 	#define	CCT_2PI					6.283185307179586476L
+	#define	CCT_INV_PI				0.3183098861837906715L
 
 	#define	CCTNum_abs(n)			fabsl(n)
 	#define	CCTNum_sq(n)			((n)*(n))
