@@ -23,6 +23,8 @@
 	#define	CCT_PI					3.1415927f
 	#define	CCT_2PI					6.2831853f
 	#define	CCT_INV_PI				0.31830987f
+	#define	CCT_RADIAN_PER_DEGREE	0.017453292f
+	#define	CCT_DEGREE_PER_RADIAN	57.295776f
 
 	#define	CCTNum_abs(n)			fabsf(n)
 	#define	CCTNum_sq(n)			((n)*(n))
@@ -31,6 +33,8 @@
 	#define	CCTNum_cos(n)			cosf(n)
 	#define	CCTNum_sin(n)			sinf(n)
 	#define	CCTNum_atan2(y, x)		atan2f(y, x)
+	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
+	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
 #elif	CCT_NUM_DOUBLE
 	typedef	double					CCTNum_t;
@@ -45,6 +49,8 @@
 	#define	CCT_PI					3.141592653589793
 	#define	CCT_2PI					6.283185307179586
 	#define	CCT_INV_PI				0.3183098861837907
+	#define	CCT_RADIAN_PER_DEGREE	0.017453292519943295
+	#define	CCT_DEGREE_PER_RADIAN	57.29577951308232
 
 	#define	CCTNum_abs(n)			fabs(n)
 	#define	CCTNum_sq(n)			((n)*(n))
@@ -53,6 +59,8 @@
 	#define	CCTNum_cos(n)			cos(n)
 	#define	CCTNum_sin(n)			sin(n)
 	#define	CCTNum_atan2(y, x)		atan2(y, x)
+	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
+	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
 #elif	CCT_NUM_LONG_DOUBLE
 	typedef	long double				CCTNum_t;
@@ -67,6 +75,8 @@
 	#define	CCT_PI					3.141592653589793238L
 	#define	CCT_2PI					6.283185307179586476L
 	#define	CCT_INV_PI				0.3183098861837906715L
+	#define	CCT_RADIAN_PER_DEGREE	0.017453292519943295767L
+	#define	CCT_DEGREE_PER_RADIAN	57.29577951308232088L
 
 	#define	CCTNum_abs(n)			fabsl(n)
 	#define	CCTNum_sq(n)			((n)*(n))
@@ -75,6 +85,8 @@
 	#define	CCTNum_cos(n)			cosl(n)
 	#define	CCTNum_sin(n)			sinl(n)
 	#define	CCTNum_atan2(y, x)		atan2l(y, x)
+	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
+	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
 #else
 	#error	"CCTNum_t type isn't defined, should be float/double/long double ."
