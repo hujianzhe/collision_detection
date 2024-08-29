@@ -20,6 +20,9 @@
 	#define	CCT_EPSILON_NEGATE		-1e-5f
 	#define	CCT_GAP_DISTANCE		1e-3f
 
+	#define	CCT_PI					3.1415927f
+	#define	CCT_2PI					6.2831853f
+
 	#define	CCTNum_abs(n)			fabsf(n)
 	#define	CCTNum_sq(n)			((n)*(n))
 	#define	CCTNum_sqrt(n)			sqrtf(n)
@@ -38,6 +41,9 @@
 	#define	CCT_EPSILON_NEGATE		-1e-5
 	#define	CCT_GAP_DISTANCE		1e-3
 
+	#define	CCT_PI					3.141592653589793
+	#define	CCT_2PI					6.283185307179586
+
 	#define	CCTNum_abs(n)			fabs(n)
 	#define	CCTNum_sq(n)			((n)*(n))
 	#define	CCTNum_sqrt(n)			sqrt(n)
@@ -55,6 +61,9 @@
 	#define	CCT_EPSILON				1e-5L
 	#define	CCT_EPSILON_NEGATE		-1e-5L
 	#define	CCT_GAP_DISTANCE		1e-3L
+
+	#define	CCT_PI					3.141592653589793238L
+	#define	CCT_2PI					6.283185307179586476L
 
 	#define	CCTNum_abs(n)			fabsl(n)
 	#define	CCTNum_sq(n)			((n)*(n))

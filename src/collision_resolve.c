@@ -119,7 +119,7 @@ CCTNum_t* physCollisionInertiaTensor(const void* geo_data, int geo_type, CCTNum_
 			CCTNum_t b = r_sq * r * (CCTNum(8.0) / CCTNum(15.0)) + h * r_sq;
 			CCTNum_t a = b * CCTNum(1.5) + h_sq * r * (CCTNum(4.0) / CCTNum(3.0)) + h_sq * h * (CCTNum(2.0) / CCTNum(3.0));
 			mathVec3Set(inertia, b, a, a);
-			mathVec3MultiplyScalar(inertia, inertia, CCTNum(3.1415926) * r_sq);
+			mathVec3MultiplyScalar(inertia, inertia, CCT_PI * r_sq);
 			if (!CCTNum_chkvals(inertia, 3)) {
 				return NULL;
 			}
