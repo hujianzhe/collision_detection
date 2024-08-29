@@ -71,29 +71,34 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 	}
 }
 
-CCTNum_t* physCollisionInertiaTensor(const unsigned char* geo_data, int geo_type, CCTNum_t inertia[3]) {
+static CCTNum_t* box_inertia_tensor(const CCTNum_t half[3], CCTNum_t inertia[3]) {
+	const CCTNum_t fraction = CCTNum(1.0) / CCTNum(3.0);
+	const CCTNum_t size_sq[3] = {
+		CCTNum_sq(half[0]),
+		CCTNum_sq(half[1]),
+		CCTNum_sq(half[2])
+	};
+	inertia[0] = (size_sq[1] + size_sq[2]) * fraction;
+	if (!CCTNum_chkval(inertia[0])) {
+		return NULL;
+	}
+	inertia[1] = (size_sq[0] + size_sq[2]) * fraction;
+	if (!CCTNum_chkval(inertia[1])) {
+		return NULL;
+	}
+	inertia[2] = (size_sq[0] + size_sq[1]) * fraction;
+	if (!CCTNum_chkval(inertia[2])) {
+		return NULL;
+	}
+	return inertia;
+}
+
+CCTNum_t* physCollisionInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia[3]) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_OBB:
 		{
-			int i;
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
-			CCTNum_t size_sq[3], fraction = CCTNum(1.0) / CCTNum(3.0);
-			for (i = 0; i < 3; ++i) {
-				size_sq[i] = CCTNum_sq(obb->half[i]);
-			}
-			inertia[0] = (size_sq[1] + size_sq[2]) * fraction;
-			if (!CCTNum_chkval(inertia[0])) {
-				return NULL;
-			}
-			inertia[1] = (size_sq[0] + size_sq[2]) * fraction;
-			if (!CCTNum_chkval(inertia[1])) {
-				return NULL;
-			}
-			inertia[2] = (size_sq[0] + size_sq[1]) * fraction;
-			if (!CCTNum_chkval(inertia[2])) {
-				return NULL;
-			}
-			return inertia;
+			return box_inertia_tensor(obb->half, inertia);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -119,6 +124,11 @@ CCTNum_t* physCollisionInertiaTensor(const unsigned char* geo_data, int geo_type
 				return NULL;
 			}
 			return inertia;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
+			return box_inertia_tensor(mesh->bound_box.half, inertia);
 		}
 	}
 	return NULL;
