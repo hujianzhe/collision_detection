@@ -306,6 +306,19 @@ CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]) {
 	return mathMat44ToMat33(mathMat44FromQuat(m44, q), m);
 }
 
+CCTNum_t* mathMat33DiagonalFromVec3(CCTNum_t m[9], const CCTNum_t v[3]) {
+	m[0] = v[0];
+	m[1] = CCTNum(0.0);
+	m[2] = CCTNum(0.0);
+	m[3] = CCTNum(0.0);
+	m[4] = v[1];
+	m[5] = CCTNum(0.0);
+	m[6] = CCTNum(0.0);
+	m[7] = CCTNum(0.0);
+	m[8] = v[2];
+	return m;
+}
+
 #ifdef	__cplusplus
 }
 #endif

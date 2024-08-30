@@ -14,6 +14,11 @@
  |m[1]	m[5]	m[9]	m[13]|
  |m[2]	m[6]	m[10]	m[14]|
  |m[3]	m[7]	m[11]	m[15]|
+
+  et. m[9] layout
+ |m[0]	m[3]	m[6]|
+ |m[1]	m[4]	m[7]|
+ |m[2]	m[5]	m[8]|
  */
 
 #ifdef	__cplusplus
@@ -37,6 +42,7 @@ __declspec_dll CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]);
+__declspec_dll CCTNum_t* mathMat33DiagonalFromVec3(CCTNum_t m[9], const CCTNum_t v[3]);
 
 #ifdef	__cplusplus
 }
