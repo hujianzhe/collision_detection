@@ -13,6 +13,7 @@ extern "C" {
 
 CCTRigidBody_t* physRigidBodyInit(CCTRigidBody_t* rigid) {
 	mathVec3Set(rigid->velocity, CCTNums_3(0.0, 0.0, 0.0));
+	mathVec3Set(rigid->mass_center, CCTNums_3(0.0, 0.0, 0.0));
 	rigid->mass = CCTNum(0.0);
 	rigid->cor = CCTNum(1.0);
 	return rigid;

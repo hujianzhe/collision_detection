@@ -9,6 +9,7 @@
 
 typedef struct CCTRigidBody_t {
 	CCTNum_t velocity[3];
+	CCTNum_t mass_center[3];
 	CCTNum_t mass;
 	CCTNum_t cor;
 } CCTRigidBody_t;
