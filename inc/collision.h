@@ -20,7 +20,8 @@ extern "C" {
 
 __declspec_dll CCTRigidBody_t* physRigidBodyInit(CCTRigidBody_t* rigid);
 __declspec_dll void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBody_t* target_rd, const CCTNum_t hit_normal[3], CCTNum_t src_v[3], CCTNum_t target_v[3]);
-__declspec_dll CCTNum_t* physCollisionInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia[3]);
+__declspec_dll void physContactPointQuat(const CCTNum_t force[3], const CCTNum_t center[3], const CCTNum_t point[3], CCTNum_t radian, CCTNum_t q[4]);
+__declspec_dll CCTNum_t* physInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia[9]);
 
 #ifdef	__cplusplus
 }

@@ -17,6 +17,14 @@ CCTNum_t* mathQuatSet(CCTNum_t q[4], CCTNum_t x, CCTNum_t y, CCTNum_t z, CCTNum_
 	return q;
 }
 
+CCTNum_t* mathQuatCopy(CCTNum_t r[4], const CCTNum_t q[4]) {
+	r[0] = q[0];
+	r[1] = q[1];
+	r[2] = q[2];
+	r[3] = q[3];
+	return r;
+}
+
 CCTNum_t* mathQuatNormalized(CCTNum_t r[4], const CCTNum_t q[4]) {
 	CCTNum_t m = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
 	if (m > CCTNum(0.0)) {

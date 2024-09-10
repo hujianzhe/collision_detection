@@ -28,7 +28,6 @@ extern "C" {
 __declspec_dll void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]);
 __declspec_dll CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]);
 __declspec_dll CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column_idx, unsigned int row_idx);
-__declspec_dll CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]);
 __declspec_dll CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]);
 __declspec_dll CCTNum_t* mathMat44Identity(CCTNum_t m[16]);
 __declspec_dll CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]);
@@ -40,9 +39,12 @@ __declspec_dll CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[
 __declspec_dll CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]);
 __declspec_dll CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]);
+__declspec_dll CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]);
+
+__declspec_dll CCTNum_t* mathMat33Element(const CCTNum_t m[9], unsigned int column_idx, unsigned int row_idx);
 __declspec_dll CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]);
-__declspec_dll CCTNum_t* mathMat33DiagonalFromVec3(CCTNum_t m[9], const CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathMat33Diagonal(CCTNum_t m[9], CCTNum_t v0, CCTNum_t v1, CCTNum_t v2);
 
 #ifdef	__cplusplus
 }

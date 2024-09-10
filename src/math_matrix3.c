@@ -259,6 +259,10 @@ CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]) {
 	return mathMat33ToQuat(mathMat44ToMat33(m, m33), q);
 }
 
+CCTNum_t* mathMat33Element(const CCTNum_t m[9], unsigned int column_idx, unsigned int row_idx) {
+	return (CCTNum_t*)&m[(column_idx * 3) + row_idx];
+}
+
 CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
 	CCTNum_t t, s;
 	if (m[8] < CCTNum(0.0)) {
@@ -306,16 +310,16 @@ CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]) {
 	return mathMat44ToMat33(mathMat44FromQuat(m44, q), m);
 }
 
-CCTNum_t* mathMat33DiagonalFromVec3(CCTNum_t m[9], const CCTNum_t v[3]) {
-	m[0] = v[0];
+CCTNum_t* mathMat33Diagonal(CCTNum_t m[9], CCTNum_t v0, CCTNum_t v1, CCTNum_t v2) {
+	m[0] = v0;
 	m[1] = CCTNum(0.0);
 	m[2] = CCTNum(0.0);
 	m[3] = CCTNum(0.0);
-	m[4] = v[1];
+	m[4] = v1;
 	m[5] = CCTNum(0.0);
 	m[6] = CCTNum(0.0);
 	m[7] = CCTNum(0.0);
-	m[8] = v[2];
+	m[8] = v2;
 	return m;
 }
 

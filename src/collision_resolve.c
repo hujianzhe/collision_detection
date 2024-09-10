@@ -3,6 +3,7 @@
 //
 
 #include "../inc/math_vec3.h"
+#include "../inc/math_quat.h"
 #include "../inc/math_matrix3.h"
 #include "../inc/collision.h"
 #include <string.h>
@@ -72,29 +73,42 @@ void physCollisionResolveVelocity(const CCTRigidBody_t* src_rd, const CCTRigidBo
 	}
 }
 
-static CCTNum_t* box_inertia_tensor(const CCTNum_t half[3], CCTNum_t inertia[3]) {
+void physContactPointQuat(const CCTNum_t force[3], const CCTNum_t center[3], const CCTNum_t point[3], CCTNum_t radian, CCTNum_t q[4]) {
+	CCTNum_t pc[3], n[3];
+	mathVec3Sub(pc, center, point);
+	mathVec3Cross(n, force, pc);
+	if (mathVec3IsZero(n)) {
+		mathQuatIdentity(q);
+		return;
+	}
+	mathVec3Normalized(n, n);
+	mathQuatFromAxisRadian(q, n, radian);
+}
+
+static CCTNum_t* box_inertia_tensor(const CCTNum_t half[3], CCTNum_t inertia[9]) {
 	const CCTNum_t fraction = CCTNum(1.0) / CCTNum(3.0);
 	const CCTNum_t size_sq[3] = {
 		CCTNum_sq(half[0]),
 		CCTNum_sq(half[1]),
 		CCTNum_sq(half[2])
 	};
-	inertia[0] = (size_sq[1] + size_sq[2]) * fraction;
-	if (!CCTNum_chkval(inertia[0])) {
+	CCTNum_t v[3];
+	v[0] = (size_sq[1] + size_sq[2]) * fraction;
+	if (!CCTNum_chkval(v[0])) {
 		return NULL;
 	}
-	inertia[1] = (size_sq[0] + size_sq[2]) * fraction;
-	if (!CCTNum_chkval(inertia[1])) {
+	v[1] = (size_sq[0] + size_sq[2]) * fraction;
+	if (!CCTNum_chkval(v[1])) {
 		return NULL;
 	}
-	inertia[2] = (size_sq[0] + size_sq[1]) * fraction;
-	if (!CCTNum_chkval(inertia[2])) {
+	v[2] = (size_sq[0] + size_sq[1]) * fraction;
+	if (!CCTNum_chkval(v[2])) {
 		return NULL;
 	}
-	return inertia;
+	return mathMat33Diagonal(inertia, v[0], v[1], v[2]);
 }
 
-CCTNum_t* physCollisionInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia[3]) {
+CCTNum_t* physInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia[9]) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_OBB:
 		{
@@ -108,26 +122,26 @@ CCTNum_t* physCollisionInertiaTensor(const void* geo_data, int geo_type, CCTNum_
 			if (!CCTNum_chkval(e)) {
 				return NULL;
 			}
-			inertia[0] = inertia[1] = inertia[2] = e;
-			return inertia;
+			return mathMat33Diagonal(inertia, e, e, e);
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
-			/* this code is copy from PhysX 4.1 */
+			CCTNum_t v[3];
 			CCTNum_t r = capsule->radius, h = capsule->half;
 			CCTNum_t r_sq = CCTNum_sq(r), h_sq = CCTNum_sq(h);
 			CCTNum_t b = r_sq * r * (CCTNum(8.0) / CCTNum(15.0)) + h * r_sq;
 			CCTNum_t a = b * CCTNum(1.5) + h_sq * r * (CCTNum(4.0) / CCTNum(3.0)) + h_sq * h * (CCTNum(2.0) / CCTNum(3.0));
-			mathVec3Set(inertia, b, a, a);
-			mathVec3MultiplyScalar(inertia, inertia, CCT_PI * r_sq);
-			if (!CCTNum_chkvals(inertia, 3)) {
+			mathVec3Set(v, b, a, a);
+			mathVec3MultiplyScalar(v, v, CCT_PI * r_sq);
+			if (!CCTNum_chkvals(v, 3)) {
 				return NULL;
 			}
-			return inertia;
+			return mathMat33Diagonal(inertia, v[0], v[1], v[2]);
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
+			/* temp code */
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
 			return box_inertia_tensor(mesh->bound_box.half, inertia);
 		}

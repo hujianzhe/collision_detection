@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 __declspec_dll CCTNum_t* mathQuatSet(CCTNum_t q[4], CCTNum_t x, CCTNum_t y, CCTNum_t z, CCTNum_t w);
+__declspec_dll CCTNum_t* mathQuatCopy(CCTNum_t r[4], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathQuatNormalized(CCTNum_t r[4], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathQuatFromEuler(CCTNum_t q[4], const CCTNum_t e[3], const char order[3]);
 __declspec_dll CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTNum_t to[3]);
