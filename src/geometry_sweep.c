@@ -43,6 +43,7 @@ extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const 
 static void set_intersect(CCTSweepResult_t* result) {
 	mathVec3Set(result->hit_plane_n, CCTNums_3(0.0, 0.0, 0.0));
 	result->distance = CCTNum(0.0);
+	result->overlap = 1;
 	result->hit_bits = 0;
 	result->peer[0].hit_bits = 0;
 	result->peer[0].idx = 0;
@@ -203,6 +204,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		mathVec3Copy(result->hit_plane_n, op);
 		result->distance = d;
 	}
+	result->overlap = 0;
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 	result->peer[0].idx = 0;
@@ -228,7 +230,7 @@ static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum
 		if (!Ray_Sweep_Segment(o, dir, (const CCTNum_t(*)[3])edge, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
+		if (result_temp.overlap) {
 			*result = result_temp;
 			return result;
 		}
@@ -272,6 +274,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, d);
 	mathVec3Copy(result->hit_plane_n, plane_n);
+	result->overlap = 0;
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	result->distance = d;
 	result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
@@ -336,6 +339,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	}
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, dir_d);
+	result->overlap = 0;
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Sub(result->hit_plane_n, result->hit_plane_v, sp_o);
 	mathVec3MultiplyScalar(result->hit_plane_n, result->hit_plane_n, CCTNum(1.0) / sp_radius);
@@ -462,6 +466,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 				mathPointProjectionLine(result->hit_plane_v, capsule->o, capsule->axis, v);
 				mathVec3Sub(result->hit_plane_n, result->hit_plane_v, v);
 				mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
+				result->overlap = 0;
 				result->hit_bits = CCT_SWEEP_BIT_POINT;
 				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
 				result->peer[0].idx = 0;
@@ -545,6 +550,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_v, ls2[closest_ls2_indice]);
 			mathVec3Copy(result->hit_plane_n, dir);
+			result->overlap = 0;
 			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
@@ -657,6 +663,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_n, N);
 			result->distance = d;
+			result->overlap = 0;
 			return result;
 		}
 	}
@@ -705,6 +712,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_v, v);
 			mathVec3Copy(result->hit_plane_n, N);
+			result->overlap = 0;
 			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			if (mathVec3Equal(v, ls2[0])) {
@@ -781,6 +789,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					}
 					mathVec3Copy(result->hit_plane_v, p);
 					mathVec3Copy(result->hit_plane_n, hn);
+					result->overlap = 0;
 					result->hit_bits = CCT_SWEEP_BIT_POINT;
 					result->distance = d;
 					if (mathVec3Equal(p, ls2[0])) {
@@ -916,6 +925,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->distance = hn_len;
 				result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
 				result->peer[1].idx = i;
+			}
+			if (p_result) {
+				p_result->overlap = 0;
 			}
 			return p_result;
 		}
@@ -1103,7 +1115,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 			if (!Segment_Sweep_Segment((const CCTNum_t(*)[3])edge1, dir, (const CCTNum_t(*)[3])edge2, &result_temp)) {
 				continue;
 			}
-			if (result_temp.distance <= CCTNum(0.0)) {
+			if (result_temp.overlap) {
 				*result = result_temp;
 				return result;
 			}
@@ -1325,6 +1337,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		if (hit_ok) {
 			mathVec3Copy(result->hit_plane_v, p);
 			mathVec3Copy(result->hit_plane_n, pco);
+			result->overlap = 0;
 			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			result->distance = d;
 			result->peer[1].hit_bits = 0;
@@ -1386,6 +1399,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 				return NULL;
 			}
 			result->distance = d;
+			result->overlap = 0;
 			result->hit_bits = CCT_SWEEP_BIT_POINT;
 			mathVec3Copy(result->hit_plane_v, circle_o);
 			mathVec3Copy(result->hit_plane_n, N);
@@ -1509,15 +1523,13 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		mathVec3AddScalar(temp_ls[1], v, d);
 		p_result = NULL;
 		if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, &result_temp)) {
-			if (!p_result) {
-				*result = result_temp;
-				p_result = result;
-				if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
-					result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
-				}
-				else {
-					result->peer[1].hit_bits = 0;
-				}
+			*result = result_temp;
+			p_result = result;
+			if (result->peer[1].hit_bits & CCT_SWEEP_BIT_POINT) {
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
+			}
+			else {
+				result->peer[1].hit_bits = 0;
 			}
 		}
 		mathVec3SubScalar(temp_ls[0], v, d + d);
@@ -1614,10 +1626,8 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		}
 		p_result = NULL;
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[0], capsule->radius, 0, &result_temp)) {
-			if (!p_result) {
-				*result = result_temp;
-				p_result = result;
-			}
+			*result = result_temp;
+			p_result = result;
 		}
 		if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
 			if (!p_result) {
@@ -1694,7 +1704,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 		if (!Segment_Sweep_Capsule((const CCTNum_t(*)[3])edge, NULL, 0, dir, capsule, check_intersect, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
+		if (result_temp.overlap) {
 			*result = result_temp;
 			return result;
 		}
@@ -1758,7 +1768,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, co
 		if (!Segment_Sweep_Sphere((const CCTNum_t(*)[3])edge, dir, center, radius, check_intersect, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
+		if (result_temp.overlap) {
 			*result = result_temp;
 			return result;
 		}
@@ -1878,6 +1888,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 	if (flag_nohit) {
 		return NULL;
 	}
+	result->overlap = 0;
 	if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
 		mathVec3Copy(result->hit_plane_v, mesh->v[result->peer[0].idx]);
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
@@ -2074,6 +2085,7 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 	if (d[idx] < CCTNum(0.0)) {
 		return NULL;
 	}
+	result->overlap = 0;
 	if (abs_d[0] == abs_d[1]) {
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_bits = 0;
@@ -2123,6 +2135,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 		return NULL;
 	}
 	mathVec3AddScalar(result->hit_plane_v, dir, dn);
+	result->overlap = 0;
 	result->hit_bits = CCT_SWEEP_BIT_POINT;
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->distance = dn;
@@ -2146,7 +2159,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		if (!Sphere_Sweep_Plane(o, radius, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
+		if (result_temp.overlap) {
 			continue;
 		}
 		if (!p_result) {
@@ -2282,7 +2295,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 		if (!Capsule_Sweep_Plane(capsule, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
 			continue;
 		}
-		if (result_temp.distance <= CCTNum(0.0)) {
+		if (result_temp.overlap) {
 			continue;
 		}
 		if (!p_result) {
