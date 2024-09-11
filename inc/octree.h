@@ -33,7 +33,7 @@ typedef struct Octree_t {
 	OctreeNode_t* nodes;
 	unsigned int nodes_cnt;
 	unsigned int max_deep_num; /* must >= 1 */
-	unsigned int max_cnt_per_node; /*/ must >= 1 */
+	unsigned int split_cnt_per_node; /*/ must >= 1 */
 } Octree_t;
 
 typedef struct OctreeFinder_t {
@@ -45,7 +45,7 @@ typedef struct OctreeFinder_t {
 extern "C" {
 #endif
 
-__declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int max_cnt_per_node);
+__declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node);
 __declspec_dll void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj);
 __declspec_dll void octreeRemoveObject(OctreeObject_t* obj);
 

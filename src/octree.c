@@ -81,11 +81,11 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	}
 }
 
-Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int max_cnt_per_node) {
+Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) {
 	OctreeNode_t* nodes;
 	size_t nodes_cnt;
 
-	if (max_deep_num <= 0 || max_cnt_per_node <= 0) {
+	if (max_deep_num <= 0 || split_cnt_per_node <= 0) {
 		return NULL;
 	}
 	nodes_cnt = octree_total_nodes_cnt(max_deep_num);
@@ -98,7 +98,7 @@ Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[
 	octree_node_init(&tree->nodes[0], pos, half);
 	tree->nodes[0].deep_num = 1;
 	tree->max_deep_num = max_deep_num;
-	tree->max_cnt_per_node = max_cnt_per_node;
+	tree->split_cnt_per_node = split_cnt_per_node;
 	return tree;
 }
 
@@ -166,7 +166,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 		obj->oct = root;
 		return;
 	}
-	if (obj->oct->obj_cnt > tree->max_cnt_per_node && obj->oct->deep_num < tree->max_deep_num) {
+	if (obj->oct->obj_cnt > tree->split_cnt_per_node && obj->oct->deep_num < tree->max_deep_num) {
 		octree_node_split(tree, obj->oct);
 	}
 }
