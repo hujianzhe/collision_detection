@@ -125,8 +125,8 @@ CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTN
 }
 
 CCTNum_t* mathQuatFromAxisRadian(CCTNum_t q[4], const CCTNum_t axis[3], CCTNum_t radian) {
-	const CCTNum_t half_rad = radian * CCTNum(0.5);
-	const CCTNum_t s = CCTNum_sin(half_rad);
+	CCTNum_t half_rad = radian * CCTNum(0.5);
+	CCTNum_t s = CCTNum_sin(half_rad);
 	q[0] = axis[0] * s;
 	q[1] = axis[1] * s;
 	q[2] = axis[2] * s;
