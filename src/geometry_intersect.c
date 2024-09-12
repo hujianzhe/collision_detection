@@ -311,6 +311,9 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 			plane_side = 0;
 		}
 	}
+	if (ret_plane_side) {
+		*ret_plane_side = plane_side;
+	}
 	if (plane_side) {
 		return 0;
 	}
