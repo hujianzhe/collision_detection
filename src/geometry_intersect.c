@@ -1239,6 +1239,57 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 	return 0;
 }
 
+int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two, CCTNum_t inflate) {
+	GeometryBodyRef_t inflate_ref;
+	switch (two->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			GeometrySphere_t sphere;
+			mathVec3Copy(sphere.o, two->point);
+			sphere.radius = inflate;
+			inflate_ref.type = GEOMETRY_BODY_SPHERE;
+			inflate_ref.sphere = &sphere;
+			return mathGeometryIntersect(one, &inflate_ref);
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			GeometryCapsule_t capsule;
+			mathTwoVertexToCenterHalf(two->segment->v[0], two->segment->v[1], capsule.o, capsule.axis, &capsule.half);
+			capsule.radius = inflate;
+			inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+			inflate_ref.capsule = &capsule;
+			return mathGeometryIntersect(one, &inflate_ref);
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			GeometrySphere_t sphere = *(two->sphere);
+			sphere.radius += inflate;
+			inflate_ref.type = GEOMETRY_BODY_SPHERE;
+			inflate_ref.sphere = &sphere;
+			return mathGeometryIntersect(one, &inflate_ref);
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			GeometryCapsule_t capsule = *(two->capsule);
+			capsule.radius += inflate;
+			inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+			inflate_ref.capsule = &capsule;
+			return mathGeometryIntersect(one, &inflate_ref);
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			GeometryOBB_t obb;
+			mathOBBFromAABB(&obb, two->aabb->o, two->aabb->half);
+			return Geometry_Intersect_InflateBox(one, &obb, inflate);
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			return Geometry_Intersect_InflateBox(one, two->obb, inflate);
+		}
+	}
+	return mathGeometryIntersect(one, two);
+}
+
 #ifdef __cplusplus
 }
 #endif
