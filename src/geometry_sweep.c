@@ -1673,12 +1673,12 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	return NULL;
 }
 
-static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1, const CCTNum_t dir[3], const GeometryCapsule_t* capsule2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1, const CCTNum_t dir[3], const GeometryCapsule_t* capsule2, int check_intersect, CCTSweepResult_t* result) {
 	CCTNum_t axis_edge[2][3];
 	GeometryCapsule_t new_capsule2 = *capsule2;
 	new_capsule2.radius += capsule1->radius;
 	mathTwoVertexFromCenterHalf(capsule1->o, capsule1->axis, capsule1->half, axis_edge[0], axis_edge[1]);
-	if (!Segment_Sweep_Capsule((const CCTNum_t(*)[3])axis_edge, capsule1->axis, capsule1->half + capsule1->half, dir, &new_capsule2, 1, result)) {
+	if (!Segment_Sweep_Capsule((const CCTNum_t(*)[3])axis_edge, capsule1->axis, capsule1->half + capsule1->half, dir, &new_capsule2, check_intersect, result)) {
 		return NULL;
 	}
 	if (result->peer[0].hit_bits & CCT_SWEEP_BIT_POINT) {
@@ -2374,14 +2374,16 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
-	CCTNum_t closest_p[3], lensq;
+static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
 	GeometryCapsule_t new_capsule;
-	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
-	lensq = mathVec3DistanceSq(closest_p, o);
-	if (lensq <= CCTNum_sq(radius + capsule->radius)) {
-		set_intersect(result);
-		return result;
+	if (check_intersect) {
+		CCTNum_t closest_p[3], lensq, radius_sum = radius + capsule->radius;
+		mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+		lensq = mathVec3DistanceSq(closest_p, o);
+		if (lensq <= CCTNum_sq(radius_sum)) {
+			set_intersect(result);
+			return result;
+		}
 	}
 	new_capsule = *capsule;
 	new_capsule.radius += radius;
@@ -2746,7 +2748,7 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				result = Sphere_Sweep_Capsule(one->sphere->o, one->sphere->radius, dir, two->capsule, result);
+				result = Sphere_Sweep_Capsule(one->sphere->o, one->sphere->radius, dir, two->capsule, 1, result);
 				break;
 			}
 			default:
@@ -2939,12 +2941,12 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 			{
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = Sphere_Sweep_Capsule(two->sphere->o, two->sphere->radius, neg_dir, one->capsule, result);
+				result = Sphere_Sweep_Capsule(two->sphere->o, two->sphere->radius, neg_dir, one->capsule, 1, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				result = Capsule_Sweep_Capsule(one->capsule, dir, two->capsule, result);
+				result = Capsule_Sweep_Capsule(one->capsule, dir, two->capsule, 1, result);
 				break;
 			}
 			default:
