@@ -305,7 +305,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		}
 		return result;
 	}
-	if (result->distance > CCTNum(0.0)) {
+	if (!result->overlap) {
 		return NULL;
 	}
 	dot = mathVec3Dot(dir, polygon->normal);
@@ -313,6 +313,8 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		return NULL;
 	}
 	sweep_mesh_convert_from_polygon(&mesh, polygon);
+	mesh.polygons = NULL;
+	mesh.polygons_cnt = 0;
 	return Ray_Sweep_MeshSegment(o, dir, &mesh, result);
 }
 
