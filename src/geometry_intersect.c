@@ -753,7 +753,7 @@ int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 	return 0;
 }
 
-int Geometry_CheckIntersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOBB_t* obb, CCTNum_t inflate) {
+int Geometry_Intersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOBB_t* obb, CCTNum_t inflate) {
 	unsigned int i;
 	GeometryCapsule_t capsule;
 	GeometryOBB_t face_obb;
