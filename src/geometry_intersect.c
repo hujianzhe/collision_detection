@@ -753,6 +753,40 @@ int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 	return 0;
 }
 
+int Geometry_CheckIntersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOBB_t* obb, CCTNum_t inflate) {
+	unsigned int i;
+	GeometryCapsule_t capsule;
+	GeometryOBB_t face_obb;
+	GeometryBodyRef_t geo_ref;
+	CCTNum_t v[8][3];
+	/* face inflate to box */
+	geo_ref.type = GEOMETRY_BODY_OBB;
+	geo_ref.obb = &face_obb;
+	mathVec3Copy(face_obb.o, obb->o);
+	for (i = 0; i < 3; ++i) {
+		mathVec3Copy(face_obb.axis[i], obb->axis[i]);
+		mathVec3Copy(face_obb.half, obb->half);
+		face_obb.half[i] += inflate;
+		if (mathGeometryIntersect(one, &geo_ref)) {
+			return 1;
+		}
+	}
+	/* edge inflate to Capsule */
+	geo_ref.type = GEOMETRY_BODY_CAPSULE;
+	geo_ref.capsule = &capsule;
+	capsule.radius = inflate;
+	mathOBBVertices(obb, v);
+	for (i = 0; i < 24; ) {
+		const CCTNum_t* p0 = v[Box_Edge_Indices[i++]];
+		const CCTNum_t* p1 = v[Box_Edge_Indices[i++]];
+		mathTwoVertexToCenterHalf(p0, p1, capsule.o, capsule.axis, &capsule.half);
+		if (mathGeometryIntersect(one, &geo_ref)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
