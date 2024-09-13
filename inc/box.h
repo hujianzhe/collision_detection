@@ -18,12 +18,13 @@
 	 4+------+5      *--x	7 = -++
                     /
                    z
-	face_0 = [4, 5, 6, 7]	// +z
-	face_1 = [0, 1, 2, 3]	// -z
-	face_2 = [1, 2, 6, 5]	// +x
-	face_3 = [0, 3, 7, 4]	// -x
-	face_4 = [3, 2, 6, 7]	// +y
-	face_5 = [0, 1, 5, 4]	// -y
+
+	face_0 = [1, 2, 6, 5]	// +x
+	face_1 = [0, 3, 7, 4]	// -x
+	face_2 = [3, 2, 6, 7]	// +y
+	face_3 = [0, 1, 5, 4]	// -y
+	face_4 = [4, 5, 6, 7]	// +z
+	face_5 = [0, 1, 2, 3]	// -z
 
 	edge_0  = [0, 1]
 	edge_1  = [1, 2]
@@ -58,6 +59,7 @@ extern "C" {
 __declspec_dll const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]);
 __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]);
 __declspec_dll const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]);
+__declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CCTNum_t normal[3]);
 __declspec_dll GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_idx, GeometryPolygon_t* polygon);
 __declspec_dll void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t v[8][3], const CCTNum_t axis[3][3]);

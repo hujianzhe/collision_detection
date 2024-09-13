@@ -5,6 +5,7 @@
 #include "../inc/box.h"
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
+#include "../inc/aabb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,12 +32,12 @@ const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
 };
 
 const unsigned int Box_Face_Indices[6][4] = {
-	{ 4, 5, 6, 7 },
-	{ 0, 1, 2, 3 },
 	{ 1, 2, 6, 5 },
 	{ 0, 3, 7, 4 },
 	{ 3, 2, 6, 7 },
-	{ 0, 1, 5, 4 }
+	{ 0, 1, 5, 4 },
+	{ 4, 5, 6, 7 },
+	{ 0, 1, 2, 3 }
 };
 
 /*
@@ -95,28 +96,75 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 	return pi;
 }
 
+void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
+	CCTNum_t AX[3][3];
+	mathVec3MultiplyScalar(AX[0], axis[0], half[0]);
+	mathVec3MultiplyScalar(AX[1], axis[1], half[1]);
+	mathVec3MultiplyScalar(AX[2], axis[2], half[2]);
+
+	mathVec3Copy(v[0], o);
+	mathVec3Sub(v[0], v[0], AX[0]);
+	mathVec3Sub(v[0], v[0], AX[1]);
+	mathVec3Sub(v[0], v[0], AX[2]);
+
+	mathVec3Copy(v[1], o);
+	mathVec3Add(v[1], v[1], AX[0]);
+	mathVec3Sub(v[1], v[1], AX[1]);
+	mathVec3Sub(v[1], v[1], AX[2]);
+
+	mathVec3Copy(v[2], o);
+	mathVec3Add(v[2], v[2], AX[0]);
+	mathVec3Add(v[2], v[2], AX[1]);
+	mathVec3Sub(v[2], v[2], AX[2]);
+
+	mathVec3Copy(v[3], o);
+	mathVec3Sub(v[3], v[3], AX[0]);
+	mathVec3Add(v[3], v[3], AX[1]);
+	mathVec3Sub(v[3], v[3], AX[2]);
+
+	mathVec3Copy(v[4], o);
+	mathVec3Sub(v[4], v[4], AX[0]);
+	mathVec3Sub(v[4], v[4], AX[1]);
+	mathVec3Add(v[4], v[4], AX[2]);
+
+	mathVec3Copy(v[5], o);
+	mathVec3Add(v[5], v[5], AX[0]);
+	mathVec3Sub(v[5], v[5], AX[1]);
+	mathVec3Add(v[5], v[5], AX[2]);
+
+	mathVec3Copy(v[6], o);
+	mathVec3Add(v[6], v[6], AX[0]);
+	mathVec3Add(v[6], v[6], AX[1]);
+	mathVec3Add(v[6], v[6], AX[2]);
+
+	mathVec3Copy(v[7], o);
+	mathVec3Sub(v[7], v[7], AX[0]);
+	mathVec3Add(v[7], v[7], AX[1]);
+	mathVec3Add(v[7], v[7], AX[2]);
+}
+
 CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CCTNum_t normal[3]) {
 	if (face_idx < 2) {
 		if (0 == face_idx) {
-			return mathVec3Copy(normal, axis[2]);
-		}
-		else {
-			return mathVec3Negate(normal, axis[2]);
-		}
-	}
-	else if (face_idx < 4) {
-		if (2 == face_idx) {
 			return mathVec3Copy(normal, axis[0]);
 		}
 		else {
 			return mathVec3Negate(normal, axis[0]);
 		}
 	}
+	else if (face_idx < 4) {
+		if (2 == face_idx) {
+			return mathVec3Copy(normal, axis[1]);
+		}
+		else {
+			return mathVec3Negate(normal, axis[1]);
+		}
+	}
 	else if (4 == face_idx) {
-		return mathVec3Copy(normal, axis[1]);
+		return mathVec3Copy(normal, axis[2]);
 	}
 	else if (5 == face_idx) {
-		return mathVec3Negate(normal, axis[1]);
+		return mathVec3Negate(normal, axis[2]);
 	}
 	return NULL;
 }
@@ -151,16 +199,8 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t v[8][3], const CCTNum_t a
 	mesh->is_convex = 1;
 	mesh->polygons = bm->faces;
 	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathBoxFace(v, axis, i, polygon);
-	}
 	mathVerticesFindMinMaxXYZ(v, 8, min_v, max_v);
-	for (i = 0; i < 3; ++i) {
-		mesh->bound_box.half[i] = CCTNum(0.5) * (max_v[i] - min_v[i]);
-	}
-	mathVec3Add(mesh->bound_box.o, v[0], v[6]);
-	mathVec3MultiplyScalar(mesh->bound_box.o, mesh->bound_box.o, CCTNum(0.5));
+	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
 	mathVec3Copy(mesh->o, mesh->bound_box.o);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mathBoxFace(v, axis, i, mesh->polygons + i);

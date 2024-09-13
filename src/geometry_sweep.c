@@ -16,7 +16,9 @@
 extern const CCTNum_t AABB_Axis[3][3];
 extern const CCTNum_t AABB_Plane_Normal[6][3];
 extern const unsigned int Segment_Indices_Default[2];
+extern const unsigned int Box_Edge_Indices[24];
 
+extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
 extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
 extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side);
@@ -291,7 +293,11 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		return NULL;
 	}
 	if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
-		unsigned int idx = polygon_find_v_idx(polygon, result->hit_plane_v);
+		unsigned int idx;
+		if (result->overlap) {
+			return result;
+		}
+		idx = polygon_find_v_idx(polygon, result->hit_plane_v);
 		if (idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[1].idx = idx;
@@ -363,6 +369,9 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
+			continue;
+		}
+		if (result_temp.overlap) {
 			continue;
 		}
 		if (p_result && result_temp.distance >= result->distance) {
@@ -1087,7 +1096,11 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1, const CCTNum_t dir[3], const GeometryMesh_t* s2, CCTSweepResult_t* result) {
 	unsigned int i, j;
 	CCTSweepResult_t result_temp;
-	CCTSweepResult_t* p_result = NULL;
+	CCTSweepResult_t* p_result;
+	if (s2->edge_indices_cnt < 2) {
+		return NULL;
+	}
+	p_result = NULL;
 	for (i = 0; i < s1->edge_indices_cnt; ) {
 		CCTNum_t edge1[2][3];
 		unsigned int v_idx1[2];
@@ -1964,13 +1977,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 		return result;
 	}
 	if (plane_side) {
-		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		d = mathPointProjectionPlane(ls[0], polygon->v[polygon->v_indices[0]], polygon->normal);
-		d /= cos_theta;
-		if (d < CCTNum(0.0)) {
+		if (!Ray_Intersect_Plane(ls[0], dir, polygon->v[polygon->v_indices[0]], polygon->normal)) {
 			return NULL;
 		}
 	}
@@ -1987,13 +1994,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 		return result;
 	}
 	if (plane_side) {
-		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon2->normal);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		d = mathPointProjectionPlane(polygon1->v[polygon1->v_indices[0]], polygon2->v[polygon2->v_indices[0]], polygon2->normal);
-		d /= cos_theta;
-		if (d < CCTNum(0.0)) {
+		if (!Ray_Intersect_Plane(polygon1->v[polygon1->v_indices[0]], dir, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 			return NULL;
 		}
 	}
@@ -2010,13 +2011,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 		return result;
 	}
 	if (plane_side) {
-		CCTNum_t d, cos_theta = mathVec3Dot(dir, polygon->normal);
-		if (CCTNum(0.0) == cos_theta) {
-			return NULL;
-		}
-		d = mathPointProjectionPlane(mesh->v[mesh->v_indices[0]], polygon->v[polygon->v_indices[0]], polygon->normal);
-		d /= cos_theta;
-		if (d < CCTNum(0.0)) {
+		if (!Ray_Intersect_Plane(mesh->v[mesh->v_indices[0]], dir, polygon->v[polygon->v_indices[0]], polygon->normal)) {
 			return NULL;
 		}
 	}
@@ -2268,8 +2263,6 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 		}
 	}
 	sweep_mesh_convert_from_polygon(&m, polygon);
-	m.polygons = NULL;
-	m.polygons_cnt = 0;
 	mathVec3Negate(neg_dir, dir);
 	if (!MeshSegment_Sweep_Capsule(&m, neg_dir, capsule, 0, result)) {
 		return NULL;
@@ -2353,8 +2346,6 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		}
 	}
 	sweep_mesh_convert_from_polygon(&m, polygon);
-	m.polygons = NULL;
-	m.polygons_cnt = 0;
 	mathVec3Negate(neg_dir, dir);
 	if (!MeshSegment_Sweep_Sphere(&m, neg_dir, o, radius, 0, result)) {
 		return NULL;
@@ -2419,6 +2410,184 @@ static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum
 	mathOBBVertices(obb, v);
 	mathBoxMesh(&mesh, (const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])obb->axis);
 	return Mesh_Sweep_Sphere_InternalProc(&mesh.mesh, dir, o, radius, result);
+}
+
+static CCTSweepResult_t* Geometry_Sweep_PolygonPlane_InternalProc(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	const CCTNum_t* plane_v = polygon->v[polygon->v_indices[0]];
+	CCTNum_t box_v[8][3];
+	GeometryBoxMesh_t box_m;
+	GeometryMesh_t m;
+	GeometryMesh_t* one_mesh = NULL;
+	switch (one->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			const CCTNum_t* o = one->point;
+			if (!Ray_Sweep_Plane(o, dir, plane_v, polygon->normal, result)) {
+				return NULL;
+			}
+			if (result->overlap) {
+				return NULL;
+			}
+			if (!Polygon_Contain_Point(polygon, result->hit_plane_v)) {
+				return NULL;
+			}
+			return result;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			CCTNum_t neg_dir[3];
+			mathVec3Negate(neg_dir, dir);
+			sweep_mesh_convert_from_polygon(&m, polygon);
+			m.edge_indices_cnt = 0;
+			if (!Mesh_Sweep_Sphere_InternalProc(&m, neg_dir, one->sphere->o, one->sphere->radius, result)) {
+				return NULL;
+			}
+			reverse_result(result, dir);
+			return result;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			CCTNum_t neg_dir[3];
+			mathVec3Negate(neg_dir, dir);
+			sweep_mesh_convert_from_polygon(&m, polygon);
+			m.edge_indices_cnt = 0;
+			if (!Mesh_Sweep_Capsule_InternalProc(&m, neg_dir, one->capsule, result)) {
+				return NULL;
+			}
+			reverse_result(result, dir);
+			return result;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			sweep_mesh_convert_from_segment(&m, (const CCTNum_t(*)[3])one->segment->v);
+			one_mesh = &m;
+			break;
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			sweep_mesh_convert_from_polygon(&m, one->polygon);
+			one_mesh = &m;
+			break;
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			mathAABBVertices(one->aabb->o, one->aabb->half, box_v);
+			mathBoxMesh(&box_m, (const CCTNum_t(*)[3])box_v, AABB_Axis);
+			one_mesh = &box_m.mesh;
+			break;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			mathOBBVertices(one->obb, box_v);
+			mathBoxMesh(&box_m, (const CCTNum_t(*)[3])box_v, (const CCTNum_t(*)[3])one->obb->axis);
+			one_mesh = &box_m.mesh;
+			break;
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			one_mesh = one->mesh;
+			break;
+		}
+	}
+	if (one_mesh) {
+		GeometryMesh_t m2;
+		sweep_mesh_convert_from_polygon(&m2, polygon);
+		m2.edge_indices_cnt = 0;
+		return Mesh_Sweep_Mesh_InternalProc(one_mesh, dir, &m2, result);
+	}
+	return NULL;
+}
+
+static CCTSweepResult_t* Geometry_Sweep_InflateBox(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryOBB_t* obb, CCTNum_t inflate, CCTSweepResult_t* result) {
+	unsigned int i;
+	GeometryCapsule_t capsule;
+	GeometryBodyRef_t geo_ref;
+	GeometryOBB_t face_obb;
+	CCTNum_t v[8][3];
+	CCTSweepResult_t result_temp;
+	CCTSweepResult_t* p_result = NULL;
+	/* face inflate to box */
+	geo_ref.type = GEOMETRY_BODY_OBB;
+	geo_ref.obb = &face_obb;
+	mathVec3Copy(face_obb.o, obb->o);
+	mathVec3Copy(face_obb.axis[0], obb->axis[0]);
+	mathVec3Copy(face_obb.axis[1], obb->axis[1]);
+	mathVec3Copy(face_obb.axis[2], obb->axis[2]);
+	for (i = 0; i < 3; ++i) {
+		mathVec3Copy(face_obb.half, obb->half);
+		face_obb.half[i] += inflate;
+		if (mathGeometryIntersect(one, &geo_ref)) {
+			set_intersect(result);
+			return result;
+		}
+	}
+	for (i = 0; i < 3; ++i) {
+		unsigned int j;
+		mathVec3Copy(face_obb.half, obb->half);
+		face_obb.half[i] += inflate;
+		mathOBBVertices(&face_obb, v);
+		for (j = 0; j < 2; ++j) {
+			GeometryPolygon_t face;
+			mathBoxFace((const CCTNum_t(*)[3])v, (const CCTNum_t(*)[3])face_obb.axis, i * 2 + j, &face);
+			if (!Geometry_Sweep_PolygonPlane_InternalProc(one, dir, &face, &result_temp)) {
+				continue;
+			}
+			if (!p_result) {
+				*result = result_temp;
+				p_result = result;
+			}
+			else if (result->distance > result_temp.distance) {
+				*result = result_temp;
+			}
+			else {
+				continue;
+			}
+			result->hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[1].idx = i * 2 + j;
+		}
+	}
+	/* edge inflate to Capsule */
+	geo_ref.type = GEOMETRY_BODY_CAPSULE;
+	geo_ref.capsule = &capsule;
+	capsule.radius = inflate;
+	mathOBBVertices(obb, v);
+	for (i = 0; i < 24; ) {
+		const CCTNum_t* p0 = v[Box_Edge_Indices[i++]];
+		const CCTNum_t* p1 = v[Box_Edge_Indices[i++]];
+		mathTwoVertexToCenterHalf(p0, p1, capsule.o, capsule.axis, &capsule.half);
+		if (!mathGeometrySweep(one, dir, &geo_ref, &result_temp)) {
+			continue;
+		}
+		if (result_temp.overlap) {
+			*result = result_temp;
+			return result;
+		}
+		if (!p_result) {
+			*result = result_temp;
+			p_result = result;
+		}
+		else if (result->distance > result_temp.distance) {
+			*result = result_temp;
+		}
+		else {
+			continue;
+		}
+		if (result->peer[1].hit_bits & CCT_SWEEP_BIT_SPHERE) {
+			if (result->peer[1].idx) {
+				result->peer[1].idx = Box_Edge_Indices[i - 1];
+			}
+			else {
+				result->peer[1].idx = Box_Edge_Indices[i - 2];
+			}
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+		}
+		else {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[1].idx = (i - 1) / 2;
+		}
+	}
+	return p_result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2964,6 +3133,118 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 		reverse_result(result, dir);
 	}
 	return result;
+}
+
+CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTNum_t inflate, CCTSweepResult_t* result) {
+	GeometryBodyRef_t inflate_ref;
+	switch (one->type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			GeometrySphere_t sphere;
+			mathVec3Copy(sphere.o, one->point);
+			sphere.radius = inflate;
+			inflate_ref.type = GEOMETRY_BODY_SPHERE;
+			inflate_ref.sphere = &sphere;
+			return mathGeometrySweep(&inflate_ref, dir, two, result);
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			GeometryCapsule_t capsule;
+			mathTwoVertexToCenterHalf(one->segment->v[0], one->segment->v[1], capsule.o, capsule.axis, &capsule.half);
+			capsule.radius = inflate;
+			inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+			inflate_ref.capsule = &capsule;
+			return mathGeometrySweep(&inflate_ref, dir, two, result);
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			GeometrySphere_t sphere = *(one->sphere);
+			sphere.radius += inflate;
+			inflate_ref.type = GEOMETRY_BODY_SPHERE;
+			inflate_ref.sphere = &sphere;
+			return mathGeometrySweep(&inflate_ref, dir, two, result);
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			GeometryCapsule_t capsule = *(one->capsule);
+			capsule.radius += inflate;
+			inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+			inflate_ref.capsule = &capsule;
+			return mathGeometrySweep(&inflate_ref, dir, two, result);
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			GeometryOBB_t obb;
+			CCTNum_t neg_dir[3];
+			mathVec3Negate(neg_dir, dir);
+			mathOBBFromAABB(&obb, one->aabb->o, one->aabb->half);
+			result = Geometry_Sweep_InflateBox(two, neg_dir, &obb, inflate, result);
+			if (result) {
+				reverse_result(result, dir);
+			}
+			return result;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			CCTNum_t neg_dir[3];
+			mathVec3Negate(neg_dir, dir);
+			result = Geometry_Sweep_InflateBox(two, neg_dir, one->obb, inflate, result);
+			if (result) {
+				reverse_result(result, dir);
+			}
+			return result;
+		}
+		default:
+		{
+			switch (two->type) {
+				case GEOMETRY_BODY_POINT:
+				{
+					GeometrySphere_t sphere;
+					mathVec3Copy(sphere.o, two->point);
+					sphere.radius = inflate;
+					inflate_ref.type = GEOMETRY_BODY_SPHERE;
+					inflate_ref.sphere = &sphere;
+					return mathGeometrySweep(one, dir, &inflate_ref, result);
+				}
+				case GEOMETRY_BODY_SEGMENT:
+				{
+					GeometryCapsule_t capsule;
+					mathTwoVertexToCenterHalf(two->segment->v[0], two->segment->v[1], capsule.o, capsule.axis, &capsule.half);
+					capsule.radius = inflate;
+					inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+					inflate_ref.capsule = &capsule;
+					return mathGeometrySweep(one, dir, &inflate_ref, result);
+				}
+				case GEOMETRY_BODY_SPHERE:
+				{
+					GeometrySphere_t sphere = *(two->sphere);
+					sphere.radius += inflate;
+					inflate_ref.type = GEOMETRY_BODY_SPHERE;
+					inflate_ref.sphere = &sphere;
+					return mathGeometrySweep(one, dir, &inflate_ref, result);
+				}
+				case GEOMETRY_BODY_CAPSULE:
+				{
+					GeometryCapsule_t capsule = *(two->capsule);
+					capsule.radius += inflate;
+					inflate_ref.type = GEOMETRY_BODY_CAPSULE;
+					inflate_ref.capsule = &capsule;
+					return mathGeometrySweep(one, dir, &inflate_ref, result);
+				}
+				case GEOMETRY_BODY_AABB:
+				{
+					GeometryOBB_t obb;
+					mathOBBFromAABB(&obb, two->aabb->o, two->aabb->half);
+					return Geometry_Sweep_InflateBox(one, dir, &obb, inflate, result);
+				}
+				case GEOMETRY_BODY_OBB:
+				{
+					return Geometry_Sweep_InflateBox(one, dir, two->obb, inflate, result);
+				}
+			}
+		}
+	}
+	return mathGeometrySweep(one, dir, two, result);
 }
 
 #ifdef __cplusplus

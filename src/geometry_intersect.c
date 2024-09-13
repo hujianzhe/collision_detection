@@ -38,6 +38,23 @@ static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], con
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
+int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+	CCTNum_t d, cos_theta;
+	d = mathPointProjectionPlane(o, plane_v, plane_n);
+	if (CCTNum(0.0) == d) {
+		return 1;
+	}
+	cos_theta = mathVec3Dot(dir, plane_n);
+	if (CCTNum(0.0) == cos_theta) {
+		return 0;
+	}
+	d /= cos_theta;
+	if (d < CCTNum(0.0)) {
+		return 0;
+	}
+	return 1;
+}
+
 static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
 	int flag_sign = 0;
 	unsigned int i;
@@ -756,7 +773,7 @@ int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 	return 0;
 }
 
-int Geometry_Intersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOBB_t* obb, CCTNum_t inflate) {
+static int Geometry_Intersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOBB_t* obb, CCTNum_t inflate) {
 	unsigned int i;
 	GeometryCapsule_t capsule;
 	GeometryOBB_t face_obb;
@@ -766,8 +783,10 @@ int Geometry_Intersect_InflateBox(const GeometryBodyRef_t* one, const GeometryOB
 	geo_ref.type = GEOMETRY_BODY_OBB;
 	geo_ref.obb = &face_obb;
 	mathVec3Copy(face_obb.o, obb->o);
+	mathVec3Copy(face_obb.axis[0], obb->axis[0]);
+	mathVec3Copy(face_obb.axis[1], obb->axis[1]);
+	mathVec3Copy(face_obb.axis[2], obb->axis[2]);
 	for (i = 0; i < 3; ++i) {
-		mathVec3Copy(face_obb.axis[i], obb->axis[i]);
 		mathVec3Copy(face_obb.half, obb->half);
 		face_obb.half[i] += inflate;
 		if (mathGeometryIntersect(one, &geo_ref)) {
