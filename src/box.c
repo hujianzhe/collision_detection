@@ -201,7 +201,8 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t v[8][3], const CCTNum_t a
 	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
 	mathVerticesFindMinMaxXYZ(v, 8, min_v, max_v);
 	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
-	mathVec3Copy(mesh->o, mesh->bound_box.o);
+	mathVec3Add(mesh->o, v[0], v[6]);
+	mathVec3MultiplyScalar(mesh->o, mesh->o, CCTNum(0.5));
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mathBoxFace(v, axis, i, mesh->polygons + i);
 		mathVec3Copy(mesh->polygons[i].o, mesh->o);
