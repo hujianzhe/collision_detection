@@ -3137,11 +3137,16 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 
 CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTNum_t inflate, CCTSweepResult_t* result) {
 	GeometryBodyRef_t inflate_ref;
-	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
-		return mathGeometrySweep(one, dir, two, result);
-	}
 	if (one->data == two->data || mathVec3IsZero(dir)) {
 		return NULL;
+	}
+	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
+		if (inflate > CCTNum(0.0)) {
+			inflate = CCT_GAP_DISTANCE;
+		}
+		else {
+			inflate = -CCT_GAP_DISTANCE;
+		}
 	}
 	switch (one->type) {
 		case GEOMETRY_BODY_POINT:

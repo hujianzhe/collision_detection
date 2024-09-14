@@ -1264,11 +1264,16 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two, CCTNum_t inflate) {
 	int i;
 	const GeometryBodyRef_t* geo_refs[2];
-	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
-		return mathGeometryIntersect(one, two);
-	}
 	if (one->data == two->data) {
 		return 1;
+	}
+	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
+		if (inflate > CCTNum(0.0)) {
+			inflate = CCT_GAP_DISTANCE;
+		}
+		else {
+			inflate = -CCT_GAP_DISTANCE;
+		}
 	}
 	geo_refs[0] = one;
 	geo_refs[1] = two;
