@@ -16,9 +16,9 @@ const CCTNum_t AABB_Axis[3][3] = {
 };
 
 const CCTNum_t AABB_Plane_Normal[6][3] = {
-	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) },
 	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },
-	{ CCTNums_3(0.0, 1.0, 0.0) }, { CCTNums_3(0.0, -1.0, 0.0) }
+	{ CCTNums_3(0.0, 1.0, 0.0) }, { CCTNums_3(0.0, -1.0, 0.0) },
+	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) }
 };
 
 const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]) {
@@ -37,19 +37,22 @@ const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]) {
 
 void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]) {
 	mathVec3Copy(v[0], o);
-	v[0][2] += half[2];
+	v[0][0] += half[0];
+
 	mathVec3Copy(v[1], o);
-	v[1][2] -= half[2];
+	v[1][0] -= half[0];
 
 	mathVec3Copy(v[2], o);
-	v[2][0] += half[0];
+	v[2][1] += half[1];
+
 	mathVec3Copy(v[3], o);
-	v[3][0] -= half[0];
+	v[3][1] -= half[1];
 
 	mathVec3Copy(v[4], o);
-	v[4][1] += half[1];
+	v[4][2] += half[2];
+
 	mathVec3Copy(v[5], o);
-	v[5][1] -= half[1];
+	v[5][2] -= half[2];
 }
 
 void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]) {
