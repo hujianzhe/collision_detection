@@ -69,6 +69,45 @@ CCTNum_t* mathAABBPlaneVertex(const CCTNum_t o[3], const CCTNum_t half[3], unsig
 	return NULL;
 }
 
+void mathAABBPlaneBoundBox(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int face_idx, CCTNum_t bb_o[3], CCTNum_t bb_half[3]) {
+	if (face_idx < 2) {
+		mathVec3Copy(bb_o, o);
+		if (0 == face_idx) {
+			bb_o[0] += half[0];
+		}
+		else {
+			bb_o[0] -= half[0];
+		}
+		bb_half[0] = GEOMETRY_BODY_BOX_MIN_HALF;
+		bb_half[1] = half[1];
+		bb_half[2] = half[2];
+	}
+	else if (face_idx < 4) {
+		mathVec3Copy(bb_o, o);
+		if (2 == face_idx) {
+			bb_o[1] += half[1];
+		}
+		else {
+			bb_o[1] -= half[1];
+		}
+		bb_half[0] = half[0];
+		bb_half[1] = GEOMETRY_BODY_BOX_MIN_HALF;
+		bb_half[2] = half[2];
+	}
+	else {
+		mathVec3Copy(bb_o, o);
+		if (4 == face_idx) {
+			bb_o[2] += half[2];
+		}
+		else {
+			bb_o[2] -= half[2];
+		}
+		bb_half[0] = half[0];
+		bb_half[1] = half[1];
+		bb_half[2] = GEOMETRY_BODY_BOX_MIN_HALF;
+	}
+}
+
 void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]) {
 	v[0][0] = o[0] - half[0]; v[0][1] = o[1] - half[1]; v[0][2] = o[2] - half[2];
 	v[1][0] = o[0] + half[0]; v[1][1] = o[1] - half[1]; v[1][2] = o[2] - half[2];
