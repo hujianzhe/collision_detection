@@ -3137,6 +3137,12 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 
 CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTNum_t inflate, CCTSweepResult_t* result) {
 	GeometryBodyRef_t inflate_ref;
+	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
+		return mathGeometrySweep(one, dir, two, result);
+	}
+	if (one->data == two->data || mathVec3IsZero(dir)) {
+		return NULL;
+	}
 	switch (one->type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -3176,7 +3182,7 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 		{
 			GeometryOBB_t obb;
 			mathOBBFromAABB(&obb, one->aabb->o, one->aabb->half);
-			if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+			if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
 				obb.half[0] += inflate;
 				obb.half[1] += inflate;
 				obb.half[2] += inflate;
@@ -3196,7 +3202,7 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+			if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
 				GeometryOBB_t obb = *(one->obb);
 				obb.half[0] += inflate;
 				obb.half[1] += inflate;
@@ -3256,7 +3262,7 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 				{
 					GeometryOBB_t obb;
 					mathOBBFromAABB(&obb, two->aabb->o, two->aabb->half);
-					if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+					if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
 						obb.half[0] += inflate;
 						obb.half[1] += inflate;
 						obb.half[2] += inflate;
@@ -3268,7 +3274,7 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 				}
 				case GEOMETRY_BODY_OBB:
 				{
-					if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+					if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
 						GeometryOBB_t obb = *(two->obb);
 						obb.half[0] += inflate;
 						obb.half[1] += inflate;

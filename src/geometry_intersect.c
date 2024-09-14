@@ -1262,8 +1262,16 @@ int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t*
 }
 
 int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two, CCTNum_t inflate) {
-	const GeometryBodyRef_t* geo_refs[2] = { one, two };
 	int i;
+	const GeometryBodyRef_t* geo_refs[2];
+	if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE) {
+		return mathGeometryIntersect(one, two);
+	}
+	if (one->data == two->data) {
+		return 1;
+	}
+	geo_refs[0] = one;
+	geo_refs[1] = two;
 	for (i = 0; i < 2; ++i) {
 		GeometryBodyRef_t inflate_ref;
 		switch (geo_refs[i]->type) {
@@ -1283,6 +1291,14 @@ int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBod
 				capsule.radius = inflate;
 				inflate_ref.type = GEOMETRY_BODY_CAPSULE;
 				inflate_ref.capsule = &capsule;
+				return mathGeometryIntersect(geo_refs[i ? 0 : 1], &inflate_ref);
+			}
+			case GEOMETRY_BODY_PLANE:
+			{
+				GeometryPlane_t plane = *(geo_refs[i]->plane);
+				mathVec3AddScalar(plane.v, plane.normal, inflate);
+				inflate_ref.type = GEOMETRY_BODY_PLANE;
+				inflate_ref.plane = &plane;
 				return mathGeometryIntersect(geo_refs[i ? 0 : 1], &inflate_ref);
 			}
 			case GEOMETRY_BODY_SPHERE:
@@ -1305,10 +1321,27 @@ int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBod
 			{
 				GeometryOBB_t obb;
 				mathOBBFromAABB(&obb, geo_refs[i]->aabb->o, geo_refs[i]->aabb->half);
+				if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
+					obb.half[0] += inflate;
+					obb.half[1] += inflate;
+					obb.half[2] += inflate;
+					inflate_ref.type = GEOMETRY_BODY_OBB;
+					inflate_ref.obb = &obb;
+					return mathGeometryIntersect(geo_refs[i ? 0 : 1], &inflate_ref);
+				}
 				return Geometry_Intersect_InflateBox(geo_refs[i ? 0 : 1], &obb, inflate);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
+				if (CCTNum_abs(inflate) < CCT_GAP_DISTANCE + CCT_GAP_DISTANCE) {
+					GeometryOBB_t obb = *(geo_refs[i]->obb);
+					obb.half[0] += inflate;
+					obb.half[1] += inflate;
+					obb.half[2] += inflate;
+					inflate_ref.type = GEOMETRY_BODY_OBB;
+					inflate_ref.obb = &obb;
+					return mathGeometryIntersect(geo_refs[i ? 0 : 1], &inflate_ref);
+				}
 				return Geometry_Intersect_InflateBox(geo_refs[i ? 0 : 1], geo_refs[i]->obb, inflate);
 			}
 		}

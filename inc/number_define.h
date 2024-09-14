@@ -18,7 +18,7 @@
 
 	#define	CCT_EPSILON				1e-5f
 	#define	CCT_EPSILON_NEGATE		-1e-5f
-	#define	CCT_GAP_DISTANCE		1e-3f
+	#define	CCT_GAP_DISTANCE		0.0142f
 
 	#define	CCT_PI					3.1415927f
 	#define	CCT_2PI					6.2831853f
