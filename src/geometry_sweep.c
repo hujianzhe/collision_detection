@@ -3175,22 +3175,43 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 		case GEOMETRY_BODY_AABB:
 		{
 			GeometryOBB_t obb;
-			CCTNum_t neg_dir[3];
-			mathVec3Negate(neg_dir, dir);
 			mathOBBFromAABB(&obb, one->aabb->o, one->aabb->half);
-			result = Geometry_Sweep_InflateBox(two, neg_dir, &obb, inflate, result);
-			if (result) {
-				reverse_result(result, dir);
+			if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+				obb.half[0] += inflate;
+				obb.half[1] += inflate;
+				obb.half[2] += inflate;
+				inflate_ref.type = GEOMETRY_BODY_OBB;
+				inflate_ref.obb = &obb;
+				result = mathGeometrySweep(&inflate_ref, dir, two, result);
+			}
+			else {
+				CCTNum_t neg_dir[3];
+				mathVec3Negate(neg_dir, dir);
+				result = Geometry_Sweep_InflateBox(two, neg_dir, &obb, inflate, result);
+				if (result) {
+					reverse_result(result, dir);
+				}
 			}
 			return result;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			CCTNum_t neg_dir[3];
-			mathVec3Negate(neg_dir, dir);
-			result = Geometry_Sweep_InflateBox(two, neg_dir, one->obb, inflate, result);
-			if (result) {
-				reverse_result(result, dir);
+			if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+				GeometryOBB_t obb = *(one->obb);
+				obb.half[0] += inflate;
+				obb.half[1] += inflate;
+				obb.half[2] += inflate;
+				inflate_ref.type = GEOMETRY_BODY_OBB;
+				inflate_ref.obb = &obb;
+				result = mathGeometrySweep(&inflate_ref, dir, two, result);
+			}
+			else {
+				CCTNum_t neg_dir[3];
+				mathVec3Negate(neg_dir, dir);
+				result = Geometry_Sweep_InflateBox(two, neg_dir, one->obb, inflate, result);
+				if (result) {
+					reverse_result(result, dir);
+				}
 			}
 			return result;
 		}
@@ -3235,10 +3256,27 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 				{
 					GeometryOBB_t obb;
 					mathOBBFromAABB(&obb, two->aabb->o, two->aabb->half);
+					if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+						obb.half[0] += inflate;
+						obb.half[1] += inflate;
+						obb.half[2] += inflate;
+						inflate_ref.type = GEOMETRY_BODY_OBB;
+						inflate_ref.obb = &obb;
+						return mathGeometrySweep(one, dir, &inflate_ref, result);
+					}
 					return Geometry_Sweep_InflateBox(one, dir, &obb, inflate, result);
 				}
 				case GEOMETRY_BODY_OBB:
 				{
+					if (CCTNum_abs(inflate) <= CCTNum(2e-3)) {
+						GeometryOBB_t obb = *(two->obb);
+						obb.half[0] += inflate;
+						obb.half[1] += inflate;
+						obb.half[2] += inflate;
+						inflate_ref.type = GEOMETRY_BODY_OBB;
+						inflate_ref.obb = &obb;
+						return mathGeometrySweep(one, dir, &inflate_ref, result);
+					}
 					return Geometry_Sweep_InflateBox(one, dir, two->obb, inflate, result);
 				}
 			}
