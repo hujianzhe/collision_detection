@@ -3247,6 +3247,14 @@ CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const C
 					inflate_ref.capsule = &capsule;
 					return mathGeometrySweep(one, dir, &inflate_ref, result);
 				}
+				case GEOMETRY_BODY_PLANE:
+				{
+					GeometryPlane_t plane = *(two->plane);
+					mathVec3AddScalar(plane.v, plane.normal, inflate);
+					inflate_ref.type = GEOMETRY_BODY_PLANE;
+					inflate_ref.plane = &plane;
+					return mathGeometrySweep(one, dir, &inflate_ref, result);
+				}
 				case GEOMETRY_BODY_SPHERE:
 				{
 					GeometrySphere_t sphere = *(two->sphere);
