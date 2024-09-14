@@ -1915,50 +1915,6 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 	return result;
 }
 
-static CCTSweepResult_t* AABB_Sweep_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t dir[3], const CCTNum_t o2[3], const CCTNum_t half2[3], CCTSweepResult_t* result) {
-	if (AABB_Intersect_AABB(o1, half1, o2, half2)) {
-		set_intersect(result);
-		return result;
-	}
-	else {
-		CCTSweepResult_t* p_result = NULL;
-		int i;
-		CCTNum_t v1[6][3], v2[6][3];
-		mathAABBPlaneVertices(o1, half1, v1);
-		mathAABBPlaneVertices(o2, half2, v2);
-		for (i = 0; i < 6; ++i) {
-			CCTNum_t new_o1[3];
-			CCTSweepResult_t result_temp;
-			if (i & 1) {
-				if (!Ray_Sweep_Plane(v1[i], dir, v2[i-1], AABB_Plane_Normal[i], &result_temp)) {
-					continue;
-				}
-			}
-			else {
-				if (!Ray_Sweep_Plane(v1[i], dir, v2[i+1], AABB_Plane_Normal[i], &result_temp)) {
-					continue;
-				}
-			}
-			mathVec3Copy(new_o1, o1);
-			mathVec3AddScalar(new_o1, dir, result_temp.distance);
-			if (!AABB_Intersect_AABB(new_o1, half1, o2, half2)) {
-				continue;
-			}
-			if (!p_result) {
-				p_result = result;
-				*result = result_temp;
-			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-			}
-			else {
-				continue;
-			}
-		}
-		return p_result;
-	}
-}
-
 static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	GeometryMesh_t m1;
 	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
@@ -2724,7 +2680,10 @@ CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t
 		switch (two->type) {
 			case GEOMETRY_BODY_AABB:
 			{
-				result = AABB_Sweep_AABB(one->aabb->o, one->aabb->half, dir, two->aabb->o, two->aabb->half, result);
+				GeometryOBB_t obb1, obb2;
+				mathOBBFromAABB(&obb1, one->aabb->o, one->aabb->half);
+				mathOBBFromAABB(&obb2, two->aabb->o, two->aabb->half);
+				result = OBB_Sweep_OBB(&obb1, dir, &obb2, result);
 				break;
 			}
 			case GEOMETRY_BODY_OBB:

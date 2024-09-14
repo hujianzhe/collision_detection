@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-__declspec_dll void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]);
 __declspec_dll CCTNum_t* mathAABBPlaneVertex(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int face_idx, CCTNum_t v[3]);
 __declspec_dll const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]);
 

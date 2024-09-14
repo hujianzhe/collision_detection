@@ -35,26 +35,6 @@ const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]) {
 	return AABB_Plane_Normal[face_idx];
 }
 
-void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[6][3]) {
-	mathVec3Copy(v[0], o);
-	v[0][0] += half[0];
-
-	mathVec3Copy(v[1], o);
-	v[1][0] -= half[0];
-
-	mathVec3Copy(v[2], o);
-	v[2][1] += half[1];
-
-	mathVec3Copy(v[3], o);
-	v[3][1] -= half[1];
-
-	mathVec3Copy(v[4], o);
-	v[4][2] += half[2];
-
-	mathVec3Copy(v[5], o);
-	v[5][2] -= half[2];
-}
-
 CCTNum_t* mathAABBPlaneVertex(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int face_idx, CCTNum_t v[3]) {
 	if (face_idx < 2) {
 		mathVec3Copy(v, o);
