@@ -55,6 +55,40 @@ void mathAABBPlaneVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t
 	v[5][2] -= half[2];
 }
 
+CCTNum_t* mathAABBPlaneVertex(const CCTNum_t o[3], const CCTNum_t half[3], unsigned int face_idx, CCTNum_t v[3]) {
+	if (face_idx < 2) {
+		mathVec3Copy(v, o);
+		if (0 == face_idx) {
+			v[0] += half[0];
+		}
+		else {
+			v[0] -= half[0];
+		}
+		return v;
+	}
+	else if (face_idx < 4) {
+		mathVec3Copy(v, o);
+		if (2 == face_idx) {
+			v[1] += half[1];
+		}
+		else {
+			v[1] -= half[1];
+		}
+		return v;
+	}
+	else if (4 == face_idx) {
+		mathVec3Copy(v, o);
+		v[2] += half[2];
+		return v;
+	}
+	else if (5 == face_idx) {
+		mathVec3Copy(v, o);
+		v[2] -= half[2];
+		return v;
+	}
+	return NULL;
+}
+
 void mathAABBVertices(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t v[8][3]) {
 	v[0][0] = o[0] - half[0]; v[0][1] = o[1] - half[1]; v[0][2] = o[2] - half[2];
 	v[1][0] = o[0] + half[0]; v[1][1] = o[1] - half[1]; v[1][2] = o[2] - half[2];
