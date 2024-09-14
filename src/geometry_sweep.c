@@ -109,17 +109,6 @@ static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, cons
 	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p) ? i : -1;
 }
 
-static unsigned int polygon_find_v_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	unsigned int i;
-	for (i = 0; i < polygon->v_indices_cnt; ++i) {
-		unsigned int v_idx = polygon->v_indices[i];
-		if (mathVec3Equal(polygon->v[v_idx], p)) {
-			return v_idx;
-		}
-	}
-	return -1;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -297,7 +286,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		if (result->overlap) {
 			return result;
 		}
-		idx = polygon_find_v_idx(polygon, result->hit_plane_v);
+		idx = mathFindVertexIndex((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, result->hit_plane_v);
 		if (idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[1].idx = idx;
@@ -386,7 +375,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	}
 	if (p_result) {
 		const GeometryPolygon_t* polygon = mesh->polygons + result->peer[1].idx;
-		unsigned int idx = polygon_find_v_idx(polygon, result->hit_plane_v);
+		unsigned int idx = mathFindVertexIndex((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, result->hit_plane_v);
 		if (idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[1].idx = idx;

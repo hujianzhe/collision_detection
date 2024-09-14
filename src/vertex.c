@@ -153,6 +153,17 @@ unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices,
 	return -1;
 }
 
+unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
+	unsigned int i;
+	for (i = 0; i < v_indices_cnt; ++i) {
+		unsigned int v_idx = v_indices[i];
+		if (mathVec3Equal(v[v_idx], p)) {
+			return v_idx;
+		}
+	}
+	return -1;
+}
+
 #ifdef	__cplusplus
 }
 #endif
