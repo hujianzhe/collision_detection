@@ -560,273 +560,316 @@ static int Capsule_Contain_Capsule(const GeometryCapsule_t* capsule1, const Geom
 extern "C" {
 #endif
 
-int mathGeometryContain(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two) {
-	if (one->data == two->data) {
+int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) {
+	if (geo_data1 == geo_data2) {
 		return 1;
 	}
-	if (GEOMETRY_BODY_AABB == one->type) {
-		switch (two->type) {
+	if (GEOMETRY_BODY_AABB == geo_type1) {
+		const GeometryAABB_t* aabb1 = (const GeometryAABB_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return AABB_Contain_Point(one->aabb->o, one->aabb->half, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return AABB_Contain_Point(aabb1->o, aabb1->half, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[0]) &&
-					AABB_Contain_Point(one->aabb->o, one->aabb->half, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return	AABB_Contain_Point(aabb1->o, aabb1->half, segment2->v[0]) &&
+					AABB_Contain_Point(aabb1->o, aabb1->half, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return AABB_Contain_AABB(one->aabb->o, one->aabb->half, two->aabb->o, two->aabb->half);
+				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
+				return AABB_Contain_AABB(aabb1->o, aabb1->half, aabb2->o, aabb2->half);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				GeometryOBB_t one_obb;
-				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-				return OBB_Contain_OBB(&one_obb, two->obb);
+				GeometryOBB_t obb1;
+				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				return OBB_Contain_OBB(&obb1, (const GeometryOBB_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				GeometryOBB_t one_obb;
-				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-				return OBB_Contain_VerticeIndices(&one_obb, (const CCTNum_t(*)[3])two->polygon->v, two->polygon->v_indices, two->polygon->v_indices_cnt);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				GeometryOBB_t obb1;
+				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				return OBB_Contain_VerticeIndices(&obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return AABB_Contain_Mesh(one->aabb->o, one->aabb->half, two->mesh);
+				return AABB_Contain_Mesh(aabb1->o, aabb1->half, (const GeometryMesh_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				GeometryOBB_t one_obb;
-				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-				return OBB_Contain_Sphere(&one_obb, two->sphere->o, two->sphere->radius);
+				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
+				GeometryOBB_t obb1;
+				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				return OBB_Contain_Sphere(&obb1, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				GeometryOBB_t one_obb;
-				mathOBBFromAABB(&one_obb, one->aabb->o, one->aabb->half);
-				return OBB_Contain_Capsule(&one_obb, two->capsule);
+				const GeometryCapsule_t* capsule2 = (const GeometryCapsule_t*)geo_data2;
+				GeometryOBB_t obb1;
+				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				return OBB_Contain_Capsule(&obb1, capsule2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_OBB == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_OBB == geo_type1) {
+		const GeometryOBB_t* obb1 = (const GeometryOBB_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return OBB_Contain_Point(one->obb, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return OBB_Contain_Point(obb1, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	OBB_Contain_Point(one->obb, two->segment->v[0]) &&
-					OBB_Contain_Point(one->obb, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return OBB_Contain_Point(obb1, segment2->v[0]) && OBB_Contain_Point(obb1, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				GeometryOBB_t two_obb;
-				mathOBBFromAABB(&two_obb, two->aabb->o, two->aabb->half);
-				return OBB_Contain_OBB(one->obb, &two_obb);
+				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
+				GeometryOBB_t obb2;
+				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				return OBB_Contain_OBB(obb1, &obb2);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				return OBB_Contain_OBB(one->obb, two->obb);
+				return OBB_Contain_OBB(obb1, (const GeometryOBB_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return OBB_Contain_VerticeIndices(one->obb, (const CCTNum_t(*)[3])two->polygon->v, two->polygon->v_indices, two->polygon->v_indices_cnt);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				return OBB_Contain_VerticeIndices(obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return OBB_Contain_Mesh(one->obb, two->mesh);
+				return OBB_Contain_Mesh(obb1, (const GeometryMesh_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return OBB_Contain_Sphere(one->obb, two->sphere->o, two->sphere->radius);
+				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
+				return OBB_Contain_Sphere(obb1, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				return OBB_Contain_Capsule(one->obb, two->capsule);
+				return OBB_Contain_Capsule(obb1, (const GeometryCapsule_t*)geo_data2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_SPHERE == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_SPHERE == geo_type1) {
+		const GeometrySphere_t* sphere1 = (const GeometrySphere_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return Sphere_Contain_Point(sphere1->o, sphere1->radius, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[0]) &&
-					Sphere_Contain_Point(one->sphere->o, one->sphere->radius, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return Sphere_Contain_Point(sphere1->o, sphere1->radius, segment2->v[0]) &&
+					Sphere_Contain_Point(sphere1->o, sphere1->radius, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
+				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(two->aabb->o, two->aabb->half, v);
-				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])v,
+				mathAABBVertices(aabb2->o, aabb2->half, v);
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_OBB:
 			{
+				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathOBBVertices(two->obb, v);
-				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])v,
+				mathOBBVertices(obb2, v);
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->polygon->v,
-					two->polygon->v_indices, two->polygon->v_indices_cnt);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius,
+						(const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return Sphere_Contain_VerticeIndices(one->sphere->o, one->sphere->radius, (const CCTNum_t(*)[3])two->mesh->v,
-					two->mesh->v_indices, two->mesh->v_indices_cnt);
+				const GeometryMesh_t* mesh2 = (const GeometryMesh_t*)geo_data2;
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius,
+						(const CCTNum_t(*)[3])mesh2->v, mesh2->v_indices, mesh2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return Sphere_Contain_Sphere(one->sphere->o, one->sphere->radius, two->sphere->o, two->sphere->radius);
+				const GeometrySphere_t* sphere2 = (GeometrySphere_t*)geo_data2;
+				return Sphere_Contain_Sphere(sphere1->o, sphere1->radius, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				return Sphere_Contain_Capsule(one->sphere->o, one->sphere->radius, two->capsule);
+				const GeometryCapsule_t* capsule2 = (GeometryCapsule_t*)geo_data2;
+				return Sphere_Contain_Capsule(sphere1->o, sphere1->radius, capsule2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_CONVEX_MESH == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_CONVEX_MESH == geo_type1) {
+		const GeometryMesh_t* mesh1 = (const GeometryMesh_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return ConvexMesh_Contain_Point(one->mesh, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return ConvexMesh_Contain_Point(mesh1, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	ConvexMesh_Contain_Point(one->mesh, two->segment->v[0]) &&
-					ConvexMesh_Contain_Point(one->mesh, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return ConvexMesh_Contain_Point(mesh1, segment2->v[0]) && ConvexMesh_Contain_Point(mesh1, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
-				return ConvexMesh_Contain_AABB(one->mesh, two->aabb->o, two->aabb->half);
+				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
+				return ConvexMesh_Contain_AABB(mesh1, aabb2->o, aabb2->half);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
-				return ConvexMesh_Contain_OBB(one->mesh, two->obb);
+				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
+				return ConvexMesh_Contain_OBB(mesh1, obb2);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return ConvexMesh_Contain_VerticeIndices(one->mesh, (const CCTNum_t(*)[3])two->polygon->v, two->polygon->v_indices, two->polygon->v_indices_cnt);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				return ConvexMesh_Contain_VerticeIndices(mesh1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return ConvexMesh_Contain_ConvexMesh(one->mesh, two->mesh);
+				return ConvexMesh_Contain_ConvexMesh(mesh1, (const GeometryMesh_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return ConvexMesh_Contain_Sphere(one->mesh, two->sphere->o, two->sphere->radius);
+				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
+				return ConvexMesh_Contain_Sphere(mesh1, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				return ConvexMesh_Contain_Capsule(one->mesh, two->capsule);
+				return ConvexMesh_Contain_Capsule(mesh1, (const GeometryCapsule_t*)geo_data2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_CAPSULE == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_CAPSULE == geo_type1) {
+		const GeometryCapsule_t* capsule1 = (const GeometryCapsule_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Capsule_Contain_Point(one->capsule, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return Capsule_Contain_Point(capsule1, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Capsule_Contain_Point(one->capsule, two->segment->v[0]) &&
-					Capsule_Contain_Point(one->capsule, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return Capsule_Contain_Point(capsule1, segment2->v[0]) && Capsule_Contain_Point(capsule1, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
+				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(two->aabb->o, two->aabb->half, v);
-				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])v,
+				mathAABBVertices(aabb2->o, aabb2->half, v);
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_OBB:
 			{
+				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathOBBVertices(two->obb, v);
-				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])v,
+				mathOBBVertices(obb2, v);
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])two->polygon->v, two->polygon->v_indices, two->polygon->v_indices_cnt);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_CONVEX_MESH:
 			{
-				return Capsule_Contain_VerticeIndices(one->capsule, (const CCTNum_t(*)[3])two->mesh->v, two->mesh->v_indices, two->mesh->v_indices_cnt);
+				const GeometryMesh_t* mesh2 = (const GeometryMesh_t*)geo_data2;
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])mesh2->v, mesh2->v_indices, mesh2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
-				return Capsule_Contain_Sphere(one->capsule, two->sphere->o, two->sphere->radius);
+				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
+				return Capsule_Contain_Sphere(capsule1, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				return Capsule_Contain_Capsule(one->capsule, two->capsule);
+				return Capsule_Contain_Capsule(capsule1, (const GeometryCapsule_t*)geo_data2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_POLYGON == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_POLYGON == geo_type1) {
+		const GeometryPolygon_t* polygon1 = (const GeometryPolygon_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Polygon_Contain_Point(one->polygon, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return Polygon_Contain_Point(polygon1, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	Polygon_Contain_Point(one->polygon, two->segment->v[0]) &&
-					Polygon_Contain_Point(one->polygon, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return Polygon_Contain_Point(polygon1, segment2->v[0]) && Polygon_Contain_Point(polygon1, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				return Polygon_Contain_Polygon(one->polygon, two->polygon);
+				return Polygon_Contain_Polygon(polygon1, (const GeometryPolygon_t*)geo_data2);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_PLANE == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_PLANE == geo_type1) {
+		const GeometryPlane_t* plane1 = (const GeometryPlane_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Plane_Contain_Point(one->plane->v, one->plane->normal, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return Plane_Contain_Point(plane1->v, plane1->normal, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return	Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[0]) &&
-					Plane_Contain_Point(one->plane->v, one->plane->normal, two->segment->v[1]);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return Plane_Contain_Point(plane1->v, plane1->normal, segment2->v[0]) &&
+					Plane_Contain_Point(plane1->v, plane1->normal, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
-				return Plane_Contain_Plane(one->plane->v, one->plane->normal, two->plane->v, two->plane->normal);
+				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
+				return Plane_Contain_Plane(plane1->v, plane1->normal, plane2->v, plane2->normal);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				const GeometryPolygon_t* polygon = two->polygon;
-				return Plane_Contain_Plane(one->plane->v, one->plane->normal, polygon->v[polygon->v_indices[0]], polygon->normal);
+				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
+				return Plane_Contain_Plane(plane1->v, plane1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_SEGMENT == one->type) {
-		switch (two->type) {
+	else if (GEOMETRY_BODY_SEGMENT == geo_type1) {
+		const GeometrySegment_t* segment1 = (const GeometrySegment_t*)geo_data1;
+		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Segment_Contain_Point((const CCTNum_t(*)[3])one->segment->v, two->point);
+				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
+				return Segment_Contain_Point((const CCTNum_t(*)[3])segment1->v, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
-				return Segment_Contain_Segment((const CCTNum_t(*)[3])one->segment->v, (const CCTNum_t(*)[3])two->segment->v);
+				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+				return Segment_Contain_Segment((const CCTNum_t(*)[3])segment1->v, (const CCTNum_t(*)[3])segment2->v);
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_POINT == one->type) {
-		if (GEOMETRY_BODY_POINT == two->type) {
-			return mathVec3Equal(one->point, two->point);
+	else if (GEOMETRY_BODY_POINT == geo_type1) {
+		if (GEOMETRY_BODY_POINT == geo_type2) {
+			return mathVec3Equal((const CCTNum_t*)geo_data1, (const CCTNum_t*)geo_data2);
 		}
 	}
 	return 0;
