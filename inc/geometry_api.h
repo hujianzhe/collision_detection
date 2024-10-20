@@ -48,10 +48,8 @@ __declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum
 __declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian);
 
 __declspec_dll int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
-__declspec_dll int mathGeometryIntersect(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two);
-__declspec_dll int mathGeometryIntersectInflate(const GeometryBodyRef_t* one, const GeometryBodyRef_t* two, CCTNum_t inflate);
-__declspec_dll CCTSweepResult_t* mathGeometrySweep(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTSweepResult_t* result);
-__declspec_dll CCTSweepResult_t* mathGeometrySweepInflate(const GeometryBodyRef_t* one, const CCTNum_t dir[3], const GeometryBodyRef_t* two, CCTNum_t inflate, CCTSweepResult_t* result);
+__declspec_dll int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
+__declspec_dll CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result);
 
 #ifdef	__cplusplus
 }
