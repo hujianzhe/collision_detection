@@ -42,8 +42,8 @@
 	#define	CCTNums_3(x, y, z)		x, y, z
 	#define	CCTNums_4(x, y, z, w)	x, y, z, w
 
-	#define	CCT_EPSILON				1e-5
-	#define	CCT_EPSILON_NEGATE		-1e-5
+	#define	CCT_EPSILON				1e-7
+	#define	CCT_EPSILON_NEGATE		-1e-7
 	#define	CCT_GAP_DISTANCE		1e-3
 
 	#define	CCT_PI					3.141592653589793
@@ -68,8 +68,8 @@
 	#define	CCTNums_3(x, y, z)		x##L, y##L, z##L
 	#define	CCTNums_4(x, y, z, w)	x##L, y##L, z##L, w##L
 
-	#define	CCT_EPSILON				1e-5L
-	#define	CCT_EPSILON_NEGATE		-1e-5L
+	#define	CCT_EPSILON				1e-7L
+	#define	CCT_EPSILON_NEGATE		-1e-7L
 	#define	CCT_GAP_DISTANCE		1e-3L
 
 	#define	CCT_PI					3.141592653589793238L
