@@ -12,7 +12,7 @@ extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_n
 
 static const unsigned int Triangle_Vertice_Indices_Default[3] = { 0, 1, 2 };
 
-GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
+GeometryPolygon_t* mathPolygonCookingDirect(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	unsigned int i, s, n, p, last_s, first_s;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
@@ -334,7 +334,7 @@ GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (dup_v_cnt < 3) {
 		goto err;
 	}
-	if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
+	if (!mathPolygonCookingDirect((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
 		goto err;
 	}
 	polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);

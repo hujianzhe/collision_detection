@@ -11,7 +11,6 @@
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern GeometryPolygon_t* PolygonCooking_InternalProc(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
 
 static int Mesh_Cooking_Edge_InternalProc(const CCTNum_t (*v)[3], GeometryMesh_t* mesh) {
 	unsigned int i;
@@ -97,12 +96,10 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	return n >= 2;
 }
 
-static int Mesh_Cooking_Polygen_InternalProc(const CCTNum_t (*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
-	unsigned int i;
-	GeometryPolygon_t* tmp_polygons = NULL;
-	unsigned int tmp_polygons_cnt = 0;
-	unsigned int tri_cnt;
+int mathMeshCookingRawPolygons(const CCTNum_t (*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
+	GeometryPolygon_t* tmp_polygons = NULL;
 
 	tri_cnt = tri_indices_cnt / 3;
 	if (tri_cnt < 1) {
@@ -163,22 +160,13 @@ static int Mesh_Cooking_Polygen_InternalProc(const CCTNum_t (*v)[3], const unsig
 		}
 	}
 	free(tri_merge_bits);
-	tri_merge_bits = NULL;
-	/* Cooking all polygen */
-	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = tmp_polygons + i;
-		if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
-			goto err;
-		}
-	}
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
 	return 1;
 err:
 	if (tmp_polygons) {
 		for (i = 0; i < tmp_polygons_cnt; ++i) {
-			tmp_polygons[i].v = NULL;
-			mathPolygonFreeCookingData(tmp_polygons + i);
+			free((void*)tmp_polygons[i].tri_indices);
 		}
 		free(tmp_polygons);
 	}
@@ -197,8 +185,14 @@ GeometryMesh_t* mathMeshCookingDirect(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (v_cnt < 3 || tri_indices_cnt < 3) {
 		return NULL;
 	}
-	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])v, tri_indices, tri_indices_cnt, mesh)) {
+	if (!mathMeshCookingRawPolygons((const CCTNum_t(*)[3])v, tri_indices, tri_indices_cnt, mesh)) {
 		return NULL;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryPolygon_t* polygon = mesh->polygons + i;
+		if (!mathPolygonCookingDirect((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
+			goto err_1;
+		}
 	}
 	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])v, mesh)) {
 		goto err_1;
@@ -261,8 +255,14 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	}
 	mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
 
-	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
+	if (!mathMeshCookingRawPolygons((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
 		goto err_0;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryPolygon_t* polygon = mesh->polygons + i;
+		if (!mathPolygonCookingDirect((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
+			goto err_1;
+		}
 	}
 	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])dup_v, mesh)) {
 		goto err_1;
