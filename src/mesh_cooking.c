@@ -8,6 +8,7 @@
 #include "../inc/plane.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
+#include "../inc/mesh_cooking.h"
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
