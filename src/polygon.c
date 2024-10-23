@@ -205,6 +205,7 @@ finish:
 	polygon->v_indices_cnt = ret_v_indices_cnt;
 	polygon->tri_indices = tri_indices;
 	polygon->tri_indices_cnt = tri_indices_cnt;
+	polygon->is_convex = 0;
 	return polygon;
 }
 
