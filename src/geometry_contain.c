@@ -385,6 +385,11 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	return 0;
 }
 
+static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t p1[3], const CCTNum_t p2[3]) {
+	// TODO
+	return 0;
+}
+
 static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
 	unsigned int i;
 	if (!Plane_Contain_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
@@ -396,7 +401,17 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 			return 0;
 		}
 	}
-	return 1;
+	if (polygon1->is_convex || polygon2->is_convex) {
+		return 1;
+	}
+	for (i = 0; i < polygon2->v_indices_cnt; ) {
+		const CCTNum_t* p1 = polygon2->v[polygon2->v_indices[i++]];
+		const CCTNum_t* p2 = polygon2->v[polygon2->v_indices[i >= polygon2->v_indices_cnt ? 0 : i]];
+		if (!Polygon_Contain_Segment(polygon1, p1, p2)) {
+			return 0;
+		}
+	}
+	return 0;
 }
 
 static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
@@ -818,7 +833,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return Polygon_Contain_Point(polygon1, segment2->v[0]) && Polygon_Contain_Point(polygon1, segment2->v[1]);
+				return Polygon_Contain_Segment(polygon1, segment2->v[0], segment2->v[1]);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
