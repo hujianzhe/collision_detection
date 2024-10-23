@@ -9,20 +9,6 @@
 extern "C" {
 #endif
 
-unsigned int mathVerticesDistinctCount(const CCTNum_t(*v)[3], unsigned int v_cnt) {
-	unsigned int i, len = v_cnt;
-	for (i = 0; i < v_cnt; ++i) {
-		unsigned int j;
-		for (j = i + 1; j < v_cnt; ++j) {
-			if (mathVec3Equal(v[i], v[j])) {
-				--len;
-				break;
-			}
-		}
-	}
-	return len;
-}
-
 unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], unsigned int v_cnt, const unsigned int* src_indices, unsigned int indices_cnt, CCTNum_t(*dst_v)[3], unsigned int* dst_indices) {
 	/* allow src_v == dst_v */
 	/* allow src_indices == dst_indices */
