@@ -97,20 +97,4 @@ typedef struct GeometryBody_t {
 	int type;
 } GeometryBody_t;
 
-typedef struct GeometryBodyRef_t {
-	union {
-		unsigned char* data;
-		CCTNum_t* point; /* CCTNum_t[3] */
-		GeometrySegment_t* segment;
-		GeometryPlane_t* plane;
-		GeometrySphere_t* sphere;
-		GeometryAABB_t* aabb;
-		GeometryOBB_t* obb;
-		GeometryPolygon_t* polygon;
-		GeometryMesh_t* mesh;
-		GeometryCapsule_t* capsule;
-	};
-	int type;
-} GeometryBodyRef_t;
-
 #endif

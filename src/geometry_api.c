@@ -396,15 +396,6 @@ void mathGeometryFreeBody(GeometryBody_t* b) {
 	b->type = 0;
 }
 
-void mathGeometryFreeRef(GeometryBodyRef_t* b) {
-	if (!b) {
-		return;
-	}
-	mathGeometryFree(b->data, b->type);
-	b->data = NULL;
-	b->type = 0;
-}
-
 const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]) {
 	const CCTNum_t* ptr_v;
 	switch (geo_type) {
