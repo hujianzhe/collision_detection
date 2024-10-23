@@ -190,49 +190,25 @@ err:
 extern "C" {
 #endif
 
-GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
-	CCTNum_t(*dup_v)[3] = NULL;
+GeometryMesh_t* mathMeshCookingDirect(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
 	CCTNum_t min_v[3], max_v[3];
-	unsigned int i, dup_v_cnt;
-	unsigned int* dup_v_indices = NULL;
-	unsigned int* dup_tri_indices = NULL;
+	unsigned int i;
 
 	if (v_cnt < 3 || tri_indices_cnt < 3) {
-		goto err_0;
+		return NULL;
 	}
-	dup_v = (CCTNum_t(*)[3])malloc(v_cnt * sizeof(dup_v[0]));
-	if (!dup_v) {
-		goto err_0;
+	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])v, tri_indices, tri_indices_cnt, mesh)) {
+		return NULL;
 	}
-	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * v_cnt);
-	if (!dup_v_indices) {
-		goto err_0;
-	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(tri_indices[0]) * tri_indices_cnt);
-	if (!dup_tri_indices) {
-		goto err_0;
-	}
-	dup_v_cnt = mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
-	if (dup_v_cnt < 3) {
-		goto err_0;
-	}
-
-	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
-		goto err_0;
-	}
-	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])dup_v, mesh)) {
+	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])v, mesh)) {
 		goto err_1;
 	}
-	free(dup_tri_indices);
-	for (i = 0; i < dup_v_cnt; ++i) {
-		dup_v_indices[i] = i;
-	}
-	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, min_v, max_v);
+	mathVerticesFindMinMaxXYZ(v, v_cnt, min_v, max_v);
 	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
 	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
-	mesh->v = dup_v;
-	mesh->v_indices = dup_v_indices;
-	mesh->v_indices_cnt = dup_v_cnt;
+	mesh->v = (CCTNum_t(*)[3])v;
+	mesh->v_indices = tri_indices;
+	mesh->v_indices_cnt = v_cnt;
 	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -254,6 +230,37 @@ err_1:
 		mathPolygonFreeCookingData(mesh->polygons + i);
 	}
 	free(mesh->polygons);
+	return NULL;
+}
+
+GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+	CCTNum_t(*dup_v)[3] = NULL;
+	unsigned int* dup_v_indices = NULL;
+	unsigned int* dup_tri_indices = NULL;
+	unsigned int dup_v_cnt;
+
+	if (v_cnt < 3 || tri_indices_cnt < 3) {
+		goto err_0;
+	}
+	dup_v = (CCTNum_t(*)[3])malloc(v_cnt * sizeof(dup_v[0]));
+	if (!dup_v) {
+		goto err_0;
+	}
+	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * v_cnt);
+	if (!dup_v_indices) {
+		goto err_0;
+	}
+	dup_tri_indices = (unsigned int*)malloc(sizeof(tri_indices[0]) * tri_indices_cnt);
+	if (!dup_tri_indices) {
+		goto err_0;
+	}
+	dup_v_cnt = mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	if (dup_v_cnt < 3) {
+		goto err_0;
+	}
+	if (mathMeshCookingDirect((const CCTNum_t(*)[3])dup_v, dup_v_cnt, dup_tri_indices, tri_indices_cnt, mesh)) {
+		return mesh;
+	}
 err_0:
 	free(dup_v);
 	free(dup_v_indices);
