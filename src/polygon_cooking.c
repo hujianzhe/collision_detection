@@ -227,7 +227,7 @@ GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (!dup_tri_indices) {
 		goto err;
 	}
-	dup_v_cnt = mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	dup_v_cnt = mathVerticesMerge(v, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
 	if (dup_v_cnt < 3) {
 		goto err;
 	}
