@@ -200,15 +200,11 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	if (v_cnt < 3 || tri_indices_cnt < 3) {
 		goto err_0;
 	}
-	dup_v_cnt = mathVerticesDistinctCount(v, v_cnt);
-	if (dup_v_cnt < 3) {
-		goto err_0;
-	}
-	dup_v = (CCTNum_t(*)[3])malloc(dup_v_cnt * sizeof(dup_v[0]));
+	dup_v = (CCTNum_t(*)[3])malloc(v_cnt * sizeof(dup_v[0]));
 	if (!dup_v) {
 		goto err_0;
 	}
-	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * dup_v_cnt);
+	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * v_cnt);
 	if (!dup_v_indices) {
 		goto err_0;
 	}
@@ -216,7 +212,10 @@ GeometryMesh_t* mathMeshCooking(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	if (!dup_tri_indices) {
 		goto err_0;
 	}
-	mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	dup_v_cnt = mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	if (dup_v_cnt < 3) {
+		goto err_0;
+	}
 
 	if (!Mesh_Cooking_Polygen_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, mesh)) {
 		goto err_0;

@@ -27,22 +27,32 @@ unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], unsigned int v_cnt, co
 	/* allow src_v == dst_v */
 	/* allow src_indices == dst_indices */
 	unsigned int i, dst_v_cnt = 0;
+	if (src_indices != dst_indices) {
+		for (i = 0; i < indices_cnt; ++i) {
+			dst_indices[i] = src_indices[i];
+		}
+	}
 	for (i = 0; i < v_cnt; ++i) {
-		unsigned int j;
+		unsigned int j, k;
 		for (j = 0; j < dst_v_cnt; ++j) {
 			if (mathVec3Equal(src_v[i], dst_v[j])) {
 				break;
 			}
 		}
-		if (j < dst_v_cnt) {
+		if (j >= dst_v_cnt) {
+			for (k = 0; k < indices_cnt; ++k) {
+				if (src_indices[k] == i) {
+					dst_indices[k] = dst_v_cnt;
+				}
+			}
+			mathVec3Copy(dst_v[dst_v_cnt++], src_v[i]);
 			continue;
 		}
-		for (j = 0; j < indices_cnt; ++j) {
-			if (src_indices[j] == i || mathVec3Equal(src_v[src_indices[j]], src_v[i])) {
-				dst_indices[j] = dst_v_cnt;
+		for (k = 0; k < indices_cnt; ++k) {
+			if (src_indices[k] == i) {
+				dst_indices[k] = j;
 			}
 		}
-		mathVec3Copy(dst_v[dst_v_cnt++], src_v[i]);
 	}
 	return dst_v_cnt;
 }
