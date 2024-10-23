@@ -316,17 +316,13 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
 
 GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	CCTNum_t(*dup_v)[3] = NULL;
-	unsigned int dup_v_cnt;
 	unsigned int* dup_tri_indices = NULL;
+	unsigned int dup_v_cnt;
 
 	if (v_cnt < 3 || tri_indices_cnt < 3) {
 		return NULL;
 	}
-	dup_v_cnt = mathVerticesDistinctCount(v, v_cnt);
-	if (dup_v_cnt < 3) {
-		return NULL;
-	}
-	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
+	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * v_cnt);
 	if (!dup_v) {
 		goto err;
 	}
@@ -334,7 +330,10 @@ GeometryPolygon_t* mathPolygonCooking(const CCTNum_t(*v)[3], unsigned int v_cnt,
 	if (!dup_tri_indices) {
 		goto err;
 	}
-	mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	dup_v_cnt = mathVerticesMerge(v, v_cnt, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	if (dup_v_cnt < 3) {
+		goto err;
+	}
 	if (!PolygonCooking_InternalProc((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, polygon)) {
 		goto err;
 	}
