@@ -381,10 +381,10 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 
 void mathGeometryFree(void* geo_data, int geo_type) {
 	if (GEOMETRY_BODY_CONVEX_MESH == geo_type) {
-		mathMeshFreeCookingData((GeometryMesh_t*)geo_data);
+		mathMeshFreeData((GeometryMesh_t*)geo_data);
 	}
 	else if (GEOMETRY_BODY_POLYGON == geo_type) {
-		mathPolygonFreeCookingData((GeometryPolygon_t*)geo_data);
+		mathPolygonFreeData((GeometryPolygon_t*)geo_data);
 	}
 }
 
