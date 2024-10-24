@@ -32,10 +32,10 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			return 0;
 		}
 	}
-	int has_adjacent_edge = 0, be_eat = 0;
+	int has_same_edge = 0, be_eat = 0;
 	for (i = 0; i < polygon->tri_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
-		const CCTNum_t* arg_diff_point = NULL, *adjacent_edge_v[2];
+		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
 		CCTNum_t triangle[3][3], triangle_diff_point[3];
 		CCTNum_t v[3], N[3], dot;
 		for (j = 0; j < 3; ++j) {
@@ -58,7 +58,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			return 2;
 		}
 		if (n < 2) {
-			/* no adjacent edge */
+			/* no same edge */
 			continue;
 		}
 		mathVec3Copy(triangle[0], polygon->v[polygon->tri_indices[i]]);
@@ -68,25 +68,25 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			/* eat triangle */
 			return 2;
 		}
-		has_adjacent_edge = 1;
-		/* find adjacent and other diff point */
+		has_same_edge = 1;
+		/* find same and other diff point */
 		if (arg_diff_point == p0) {
-			adjacent_edge_v[0] = p1;
-			adjacent_edge_v[1] = p2;
+			same_edge_v[0] = p1;
+			same_edge_v[1] = p2;
 		}
 		else if (arg_diff_point == p1) {
-			adjacent_edge_v[0] = p0;
-			adjacent_edge_v[1] = p2;
+			same_edge_v[0] = p0;
+			same_edge_v[1] = p2;
 		}
 		else {
-			adjacent_edge_v[0] = p0;
-			adjacent_edge_v[1] = p1;
+			same_edge_v[0] = p0;
+			same_edge_v[1] = p1;
 		}
 		for (j = 0; j < 3; ++j) {
-			if (mathVec3Equal(triangle[j], adjacent_edge_v[0])) {
+			if (mathVec3Equal(triangle[j], same_edge_v[0])) {
 				continue;
 			}
-			if (mathVec3Equal(triangle[j], adjacent_edge_v[1])) {
+			if (mathVec3Equal(triangle[j], same_edge_v[1])) {
 				continue;
 			}
 			mathVec3Copy(triangle_diff_point, triangle[j]);
@@ -105,12 +105,12 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			continue;
 		}
 		/* check diff point and triangle point in same side */
-		mathVec3Sub(v, adjacent_edge_v[1], adjacent_edge_v[0]);
+		mathVec3Sub(v, same_edge_v[1], same_edge_v[0]);
 		mathVec3Cross(N, polygon->normal, v);
-		mathVec3Sub(v, arg_diff_point, adjacent_edge_v[0]);
+		mathVec3Sub(v, arg_diff_point, same_edge_v[0]);
 		dot = mathVec3Dot(v, N);
 		if (dot > CCTNum(0.0)) {
-			mathVec3Sub(v, triangle_diff_point, adjacent_edge_v[0]);
+			mathVec3Sub(v, triangle_diff_point, same_edge_v[0]);
 			dot = mathVec3Dot(v, N);
 			if (dot > CCTNum(0.0)) {
 				/* same side, edge is cross */
@@ -118,7 +118,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			}
 		}
 		else {
-			mathVec3Sub(v, triangle_diff_point, adjacent_edge_v[0]);
+			mathVec3Sub(v, triangle_diff_point, same_edge_v[0]);
 			dot = mathVec3Dot(v, N);
 			if (dot < CCTNum(0.0)) {
 				/* same side, edge is cross */
@@ -129,7 +129,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	if (be_eat) {
 		return 3;
 	}
-	return has_adjacent_edge ? 1 : 0;
+	return has_same_edge ? 1 : 0;
 }
 
 #ifdef	__cplusplus
