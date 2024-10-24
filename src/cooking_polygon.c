@@ -25,25 +25,111 @@ static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const 
 }
 
 static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
-	unsigned int i, n = 0;
+	unsigned int i;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
-		unsigned int j;
 		if (!Plane_Contain_Point(polygon->v[polygon->tri_indices[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
-		if (n >= 2) {
+	}
+	int has_adjacent_edge = 0, be_eat = 0;
+	for (i = 0; i < polygon->tri_indices_cnt; i += 3) {
+		unsigned int j, n = 0;
+		const CCTNum_t* arg_diff_point = NULL, *adjacent_edge_v[2];
+		CCTNum_t triangle[3][3], triangle_diff_point[3];
+		CCTNum_t v[3], N[3], dot;
+		for (j = 0; j < 3; ++j) {
+			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i]])) {
+				++n;
+				continue;
+			}
+			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i + 1]])) {
+				++n;
+				continue;
+			}
+			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i + 2]])) {
+				++n;
+				continue;
+			}
+			arg_diff_point = tri_p[j];
+		}
+		if (n >= 3) {
+			/* eat triangle */
+			return 2;
+		}
+		if (n < 2) {
+			/* no adjacent edge */
 			continue;
 		}
-		for (j = 0; j < polygon->tri_indices_cnt; ++j) {
-			const CCTNum_t* pv = polygon->v[polygon->tri_indices[j]];
-			if (mathVec3Equal(pv, tri_p[i])) {
-				++n;
-				break;
+		mathVec3Copy(triangle[0], polygon->v[polygon->tri_indices[i]]);
+		mathVec3Copy(triangle[1], polygon->v[polygon->tri_indices[i+1]]);
+		mathVec3Copy(triangle[2], polygon->v[polygon->tri_indices[i+2]]);
+		if (mathTrianglePointUV((const CCTNum_t(*)[3])triangle, arg_diff_point, NULL, NULL)) {
+			/* eat triangle */
+			return 2;
+		}
+		has_adjacent_edge = 1;
+		/* find adjacent and other diff point */
+		if (arg_diff_point == p0) {
+			adjacent_edge_v[0] = p1;
+			adjacent_edge_v[1] = p2;
+		}
+		else if (arg_diff_point == p1) {
+			adjacent_edge_v[0] = p0;
+			adjacent_edge_v[1] = p2;
+		}
+		else {
+			adjacent_edge_v[0] = p0;
+			adjacent_edge_v[1] = p1;
+		}
+		for (j = 0; j < 3; ++j) {
+			if (mathVec3Equal(triangle[j], adjacent_edge_v[0])) {
+				continue;
+			}
+			if (mathVec3Equal(triangle[j], adjacent_edge_v[1])) {
+				continue;
+			}
+			mathVec3Copy(triangle_diff_point, triangle[j]);
+			break;
+		}
+		if (j >= 3) {
+			/* no possible */
+			return 0;
+		}
+		/* check be eat */
+		mathVec3Copy(triangle[0], p0);
+		mathVec3Copy(triangle[1], p1);
+		mathVec3Copy(triangle[2], p2);
+		if (mathTrianglePointUV((const CCTNum_t(*)[3])triangle, triangle_diff_point, NULL, NULL)) {
+			be_eat = 1;
+			continue;
+		}
+		/* check diff point and triangle point in same side */
+		mathVec3Sub(v, adjacent_edge_v[1], adjacent_edge_v[0]);
+		mathVec3Cross(N, polygon->normal, v);
+		mathVec3Sub(v, arg_diff_point, adjacent_edge_v[0]);
+		dot = mathVec3Dot(v, N);
+		if (dot > CCTNum(0.0)) {
+			mathVec3Sub(v, triangle_diff_point, adjacent_edge_v[0]);
+			dot = mathVec3Dot(v, N);
+			if (dot > CCTNum(0.0)) {
+				/* same side, edge is cross */
+				return 0;
+			}
+		}
+		else {
+			mathVec3Sub(v, triangle_diff_point, adjacent_edge_v[0]);
+			dot = mathVec3Dot(v, N);
+			if (dot < CCTNum(0.0)) {
+				/* same side, edge is cross */
+				return 0;
 			}
 		}
 	}
-	return n >= 2;
+	if (be_eat) {
+		return 3;
+	}
+	return has_adjacent_edge ? 1 : 0;
 }
 
 #ifdef	__cplusplus
@@ -98,20 +184,27 @@ int mathCookingMorePolygons(const CCTNum_t(*v)[3], const unsigned int* tri_indic
 
 		tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
 		for (j = 0; j < tri_indices_cnt; j += 3) {
+			int ret;
 			tri_idx = j / 3;
 			if (tri_merge_bits[tri_idx / 8] & (1 << tri_idx % 8)) {
 				continue;
 			}
-			if (!_polygon_can_merge_triangle(new_pg,
-				v[tri_indices[j]], v[tri_indices[j + 1]], v[tri_indices[j + 2]]))
-			{
+			ret = _polygon_can_merge_triangle(new_pg, v[tri_indices[j]], v[tri_indices[j + 1]], v[tri_indices[j + 2]]);
+			if (0 == ret) {
 				continue;
 			}
-			if (!_insert_tri_indices(new_pg, tri_indices + j)) {
-				goto err;
-			}
 			tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
-			j = 0;
+			if (1 == ret || 3 == ret) {
+				if (!_insert_tri_indices(new_pg, tri_indices + j)) {
+					goto err;
+				}
+				j = 0;
+				continue;
+			}
+			if (2 == ret) {
+				continue;
+			}
+			goto err;
 		}
 	}
 	free(tri_merge_bits);
