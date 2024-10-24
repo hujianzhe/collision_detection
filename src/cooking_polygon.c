@@ -175,6 +175,8 @@ int mathCookingMorePolygons(const CCTNum_t(*v)[3], const unsigned int* tri_indic
 		new_pg->v_indices_cnt = 0;
 		new_pg->tri_indices = NULL;
 		new_pg->tri_indices_cnt = 0;
+		new_pg->edge_indices = NULL;
+		new_pg->edge_indices_cnt = 0;
 		if (!_insert_tri_indices(new_pg, tri_indices + i)) {
 			goto err;
 		}
@@ -413,6 +415,8 @@ finish:
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = ret_v_indices;
 	polygon->v_indices_cnt = ret_v_indices_cnt;
+	polygon->edge_indices = NULL;
+	polygon->edge_indices_cnt = 0;
 	polygon->tri_indices = tri_indices;
 	polygon->tri_indices_cnt = tri_indices_cnt;
 	polygon->is_convex = 0;
