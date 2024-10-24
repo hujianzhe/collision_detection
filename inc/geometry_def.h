@@ -47,9 +47,11 @@ typedef struct GeometryPolygon_t {
 	CCTNum_t center[3]; /* center position */
 	CCTNum_t normal[3]; /* plane normal */
 	short is_convex;
+	unsigned int edge_indices_cnt; /* number of edge vertices index */
 	unsigned int v_indices_cnt; /* number of edge vertices index */
 	unsigned int tri_indices_cnt;  /* number of triangle vertices index */
-	const unsigned int* v_indices; /* edge vertices index, must be ordered(clockwise or counterclockwise) */
+	const unsigned int* edge_indices; /* edge vertices index */
+	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* tri_indices; /* triangle vertices index */
 } GeometryPolygon_t;
 

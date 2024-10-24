@@ -121,6 +121,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
+	unsigned int* dup_edge_indices = NULL;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
 		if (src->v_indices[i] >= dup_v_cnt) {
@@ -148,6 +149,10 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	if (!dup_tri_indices) {
 		goto err_0;
 	}
+	dup_edge_indices = (unsigned int*)malloc(sizeof(dup_edge_indices[0]) * src->edge_indices_cnt);
+	if (!dup_edge_indices) {
+		goto err_0;
+	}
 	for (i = 0; i < src->v_indices_cnt; ++i) {
 		unsigned int idx = src->v_indices[i];
 		dup_v_indices[i] = idx;
@@ -156,26 +161,37 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	for (i = 0; i < src->tri_indices_cnt; ++i) {
 		dup_tri_indices[i] = src->tri_indices[i];
 	}
+	for (i = 0; i < src->edge_indices_cnt; ++i) {
+		dup_edge_indices[i] = src->edge_indices[i];
+	}
 	mathVec3Copy(dst->o, src->o);
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
 	dst->tri_indices_cnt = src->tri_indices_cnt;
 	dst->v_indices_cnt = src->v_indices_cnt;
+	dst->edge_indices_cnt = src->edge_indices_cnt;
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
 	dst->tri_indices = dup_tri_indices;
+	dst->edge_indices = dup_edge_indices;
 	dst->is_convex = src->is_convex;
 	return dst;
 err_0:
 	free(dup_v);
 	free(dup_v_indices);
 	free(dup_tri_indices);
+	free(dup_edge_indices);
 	return NULL;
 }
 
 void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 	if (!polygon) {
 		return;
+	}
+	if (polygon->edge_indices) {
+		free((void*)polygon->edge_indices);
+		polygon->edge_indices = NULL;
+		polygon->edge_indices_cnt = 0;
 	}
 	if (polygon->tri_indices) {
 		free((void*)polygon->tri_indices);
