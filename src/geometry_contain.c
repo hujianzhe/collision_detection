@@ -14,7 +14,7 @@
 #include "../inc/geometry_api.h"
 
 extern const unsigned int Box_Vertice_Indices_Default[8];
-extern const unsigned int Box_Face_Indices[6][4];
+extern const unsigned int Box_Face_Vertice_Indices[6][4];
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -297,27 +297,21 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
 		return 0;
 	}
-	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+	for (i = 0; i < polygon->edge_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], test_dot;
-		unsigned int other_v_idx, other_other_v_idx;
-		other_v_idx = i + 1;
-		if (other_v_idx >= polygon->v_indices_cnt) {
-			other_v_idx = 0;
-		}
-		other_other_v_idx = other_v_idx + 1;
-		if (other_other_v_idx >= polygon->v_indices_cnt) {
-			other_other_v_idx = 0;
-		}
-		mathVec3Sub(ls_dir, polygon->v[polygon->v_indices[other_v_idx]], polygon->v[polygon->v_indices[i]]);
+		unsigned int edge_idx[2];
+		edge_idx[0] = polygon->edge_indices[i++];
+		edge_idx[1] = polygon->edge_indices[i++];
+		mathVec3Sub(ls_dir, polygon->v[edge_idx[1]], polygon->v[edge_idx[0]]);
 		mathVec3Cross(ls_n, ls_dir, polygon->normal);
-		mathVec3Sub(v, polygon->v[polygon->v_indices[other_other_v_idx]], polygon->v[polygon->v_indices[i]]);
+		mathVec3Sub(v, polygon->v[polygon->edge_indices[i + 1]], polygon->v[edge_idx[0]]);
 		test_dot = mathVec3Dot(v, ls_n);
-		mathVec3Sub(v, p, polygon->v[polygon->v_indices[i]]);
+		mathVec3Sub(v, p, polygon->v[edge_idx[0]]);
 		dot = mathVec3Dot(v, ls_n);
 		if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
 			CCTNum_t l[3], r[3];
-			mathVec3Sub(l, polygon->v[polygon->v_indices[i]], p);
-			mathVec3Sub(r, polygon->v[polygon->v_indices[other_v_idx]], p);
+			mathVec3Sub(l, polygon->v[edge_idx[0]], p);
+			mathVec3Sub(r, polygon->v[edge_idx[1]], p);
 			dot = mathVec3Dot(l, r);
 			return dot <= CCT_EPSILON;
 		}
@@ -342,8 +336,8 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
 		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
 	}
-	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Indices &&
-		(const void*)polygon->v_indices < (const void*)(Box_Face_Indices + 6))
+	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
+		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
 	{
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
@@ -404,9 +398,9 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	if (polygon1->is_convex || polygon2->is_convex) {
 		return 1;
 	}
-	for (i = 0; i < polygon2->v_indices_cnt; ) {
-		const CCTNum_t* p1 = polygon2->v[polygon2->v_indices[i++]];
-		const CCTNum_t* p2 = polygon2->v[polygon2->v_indices[i >= polygon2->v_indices_cnt ? 0 : i]];
+	for (i = 0; i < polygon2->edge_indices_cnt; ) {
+		const CCTNum_t* p1 = polygon2->v[polygon2->edge_indices[i++]];
+		const CCTNum_t* p2 = polygon2->v[polygon2->edge_indices[i++]];
 		if (!Polygon_Contain_Segment(polygon1, p1, p2)) {
 			return 0;
 		}

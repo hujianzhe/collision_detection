@@ -31,13 +31,22 @@ const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
 	{ 6, 4, 3 }
 };
 
-const unsigned int Box_Face_Indices[6][4] = {
+const unsigned int Box_Face_Vertice_Indices[6][4] = {
 	{ 1, 2, 6, 5 },
 	{ 0, 3, 7, 4 },
 	{ 3, 2, 6, 7 },
 	{ 0, 1, 5, 4 },
 	{ 4, 5, 6, 7 },
 	{ 0, 1, 2, 3 }
+};
+
+const unsigned int Box_Face_Edge_Indices[6][8] = {
+	{ 1,2, 2,6, 6,5, 5,1 },
+	{ 0,3, 3,7, 7,4, 4,0 },
+	{ 3,2, 2,6, 6,7, 7,3 },
+	{ 0,1, 1,5, 5,4, 4,0 },
+	{ 4,5, 5,6, 6,7, 7,4 },
+	{ 0,1, 1,2, 2,3, 3,0 }
 };
 
 /*
@@ -85,7 +94,7 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 	if (face_idx >= 6) {
 		return NULL;
 	}
-	pi = Box_Face_Indices[face_idx];
+	pi = Box_Face_Vertice_Indices[face_idx];
 	if (indices) {
 		indices[0] = pi[0];
 		indices[1] = pi[1];
@@ -173,12 +182,14 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	if (!mathBoxFaceNormal(axis, face_idx, polygon->normal)) {
 		return NULL;
 	}
-	mathVec3Add(polygon->center, v[Box_Face_Indices[face_idx][0]], v[Box_Face_Indices[face_idx][2]]);
+	mathVec3Add(polygon->center, v[Box_Face_Vertice_Indices[face_idx][0]], v[Box_Face_Vertice_Indices[face_idx][2]]);
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	polygon->v = (CCTNum_t(*)[3])v;
-	polygon->v_indices = Box_Face_Indices[face_idx];
-	polygon->v_indices_cnt = sizeof(Box_Face_Indices[0]) / sizeof(Box_Face_Indices[0][0]);
+	polygon->v_indices = Box_Face_Vertice_Indices[face_idx];
+	polygon->v_indices_cnt = sizeof(Box_Face_Vertice_Indices[0]) / sizeof(Box_Face_Vertice_Indices[0][0]);
+	polygon->edge_indices = Box_Face_Edge_Indices[face_idx];
+	polygon->edge_indices_cnt = sizeof(Box_Face_Edge_Indices[0]) / sizeof(Box_Face_Edge_Indices[0][0]);
 	polygon->tri_indices = NULL;
 	polygon->tri_indices_cnt = 0;
 	polygon->is_convex = 1;

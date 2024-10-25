@@ -167,49 +167,21 @@ void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3
 	mathVec3AddScalar(center_p, dir, *half);
 }
 
-unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned short edge_stride, unsigned int v_idx0, unsigned int v_idx1) {
+unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
 	unsigned int i;
-	if (edge_stride != 1) {
-		for (i = 0; i < edge_indices_cnt; ++i) {
-			unsigned int idx = edge_indices[i++];
-			if (v_idx0 == idx) {
-				if (v_idx1 == edge_indices[i]) {
-					return i >> 1;
-				}
-				continue;
-			}
-			if (v_idx1 == idx) {
-				if (v_idx0 == edge_indices[i]) {
-					return i >> 1;
-				}
-				continue;
-			}
-		}
-	}
-	else {
-		for (i = 1; i < edge_indices_cnt; ++i) {
-			if (v_idx0 == edge_indices[i]) {
-				if (v_idx1 == edge_indices[i - 1]) {
-					return i - 1;
-				}
-				continue;
-			}
+	for (i = 0; i < edge_indices_cnt; ++i) {
+		unsigned int idx = edge_indices[i++];
+		if (v_idx0 == idx) {
 			if (v_idx1 == edge_indices[i]) {
-				if (v_idx0 == edge_indices[i - 1]) {
-					return i - 1;
-				}
-				continue;
+				return i >> 1;
 			}
+			continue;
 		}
-		if (v_idx0 == edge_indices[0]) {
-			if (v_idx1 == edge_indices[--i]) {
-				return i;
+		if (v_idx1 == idx) {
+			if (v_idx0 == edge_indices[i]) {
+				return i >> 1;
 			}
-		}
-		if (v_idx1 == edge_indices[0]) {
-			if (v_idx0 == edge_indices[--i]) {
-				return i;
-			}
+			continue;
 		}
 	}
 	return -1;

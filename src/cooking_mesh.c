@@ -12,167 +12,106 @@
 #include "../inc/cooking_mesh.h"
 #include <stdlib.h>
 
-static int Mesh_Cooking_Edge_InternalProc(const CCTNum_t(*v)[3], GeometryMesh_t* mesh) {
+static unsigned int Merge_Face_Edge(unsigned int* edge_indices, unsigned int edge_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i;
-	unsigned int* ret_edge_indices = NULL;
-	unsigned int ret_edge_indices_cnt = 0;
-	const GeometryPolygon_t* polygons = mesh->polygons;
-	unsigned int polygons_cnt = mesh->polygons_cnt;
-
-	for (i = 0; i < polygons_cnt; ++i) {
-		const GeometryPolygon_t* polygon = polygons + i;
+	for (i = 0; i < polygon->edge_indices_cnt; i += 2) {
 		unsigned int j;
-		for (j = 0; j < polygon->v_indices_cnt; ) {
-			unsigned int k;
-			unsigned int s = polygon->v_indices[j++];
-			unsigned int e = polygon->v_indices[j >= polygon->v_indices_cnt ? 0 : j];
-			unsigned int* new_p;
-			for (k = 0; k < ret_edge_indices_cnt; k += 2) {
-				if (s == ret_edge_indices[k] || mathVec3Equal(v[s], v[ret_edge_indices[k]])) {
-					if (e == ret_edge_indices[k + 1] || mathVec3Equal(v[e], v[ret_edge_indices[k + 1]])) {
-						break;
-					}
-				}
-				else if (s == ret_edge_indices[k + 1] || mathVec3Equal(v[s], v[ret_edge_indices[k + 1]])) {
-					if ((e == ret_edge_indices[k] || mathVec3Equal(v[e], v[ret_edge_indices[k]]))) {
-						break;
-					}
-				}
+		for (j = 0; j < edge_indices_cnt; j += 2) {
+			if (edge_indices[j] == polygon->edge_indices[i] && edge_indices[j + 1] == polygon->edge_indices[i + 1]) {
+				break;
 			}
-			if (k != ret_edge_indices_cnt) {
-				continue;
+			if (edge_indices[j] == polygon->edge_indices[i + 1] && edge_indices[j + 1] == polygon->edge_indices[i]) {
+				break;
 			}
-			ret_edge_indices_cnt += 2;
-			new_p = (unsigned int*)realloc(ret_edge_indices, ret_edge_indices_cnt * sizeof(ret_edge_indices[0]));
-			if (!new_p) {
-				free(ret_edge_indices);
-				return 0;
-			}
-			ret_edge_indices = new_p;
-			ret_edge_indices[ret_edge_indices_cnt - 2] = s;
-			ret_edge_indices[ret_edge_indices_cnt - 1] = e;
 		}
+		if (j < edge_indices_cnt) {
+			continue;
+		}
+		edge_indices[edge_indices_cnt++] = polygon->edge_indices[i];
+		edge_indices[edge_indices_cnt++] = polygon->edge_indices[i + 1];
 	}
-
-	mesh->edge_indices = ret_edge_indices;
-	mesh->edge_indices_cnt = ret_edge_indices_cnt;
-	mesh->edge_stride = 2;
-	return 1;
+	return edge_indices_cnt;
 }
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-GeometryMesh_t* mathCookingMeshDirect(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
-	unsigned int i;
-	CCTNum_t min_v[3], max_v[3];
-	GeometryPolygon_t* polygons = NULL;
-	unsigned int polygons_cnt = 0;
-
-	if (v_cnt < 3 || tri_indices_cnt < 3) {
-		return NULL;
-	}
-	if (!mathCookingMorePolygons((const CCTNum_t(*)[3])v, tri_indices, tri_indices_cnt, &polygons, &polygons_cnt)) {
-		return NULL;
-	}
-	for (i = 0; i < polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = polygons + i;
-		if (!mathCookingPolygonDirect((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
-			goto err_1;
-		}
-	}
-	mesh->polygons = polygons;
-	mesh->polygons_cnt = polygons_cnt;
-	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])v, mesh)) {
-		goto err_1;
-	}
-	mathVerticesFindMinMaxXYZ(v, v_cnt, min_v, max_v);
-	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
-	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
-	mesh->v = (CCTNum_t(*)[3])v;
-	mesh->v_indices = tri_indices;
-	mesh->v_indices_cnt = v_cnt;
-	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
-		if (mesh->is_convex) {
-			polygon->is_convex = 1;
-		}
-		else {
-			polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);
-		}
-	}
-	if (mesh->is_convex) {
-		mathConvexMeshMakeFacesOut(mesh);
-	}
-	return mesh;
-err_1:
-	for (i = 0; i < polygons_cnt; ++i) {
-		polygons[i].v = NULL;
-		mathPolygonFreeData(polygons + i);
-	}
-	free(polygons);
-	return NULL;
-}
-
-GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
 	CCTNum_t(*dup_v)[3] = NULL;
-	CCTNum_t min_v[3], max_v[3];
-	unsigned int i, dup_v_cnt;
-	unsigned int* dup_v_indices = NULL;
+	CCTNum_t v1[3], v2[3];
 	unsigned int* dup_tri_indices = NULL;
-	GeometryPolygon_t* polygons = NULL;
-	unsigned int polygons_cnt = 0;
-
-	if (v_cnt < 3 || tri_indices_cnt < 3) {
+	unsigned int dup_v_cnt, i;
+	GeometryPolygon_t* tmp_polygons;
+	unsigned int tmp_polygons_cnt;
+	unsigned int total_edge_indices_cnt;
+	unsigned int* edge_indices = NULL;
+	unsigned int* v_indices = NULL;
+	unsigned int v_indices_cnt;
+	/* check */
+	if (tri_indices_cnt < 3) {
+		return NULL;
+	}
+	/* merge distinct vertices, rewrite indices */
+	if (!mathCookingStage1(v, tri_indices, tri_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_indices)) {
 		goto err_0;
 	}
-	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * v_cnt);
-	if (!dup_v) {
+	/* split all face */
+	if (!mathCookingStage2((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, &tmp_polygons, &tmp_polygons_cnt)) {
 		goto err_0;
 	}
-	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * v_cnt);
-	if (!dup_v_indices) {
-		goto err_0;
-	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(tri_indices[0]) * tri_indices_cnt);
-	if (!dup_tri_indices) {
-		goto err_0;
-	}
-	dup_v_cnt = mathVerticesMerge(v, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
-	if (dup_v_cnt < 3) {
-		goto err_0;
-	}
-	if (!mathCookingMorePolygons((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, &polygons, &polygons_cnt)) {
-		goto err_0;
-	}
-	for (i = 0; i < polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = polygons + i;
-		if (!mathCookingPolygonDirect((const CCTNum_t(*)[3])polygon->v, polygon->tri_indices, polygon->tri_indices_cnt, polygon)) {
+	/* cooking every face */
+	total_edge_indices_cnt = 0;
+	for (i = 0; i < tmp_polygons_cnt; ++i) {
+		unsigned int* edge_indices = NULL, *v_indices = NULL;
+		unsigned int edge_indices_cnt, v_indices_cnt;
+		GeometryPolygon_t* pg = tmp_polygons + i;
+		/* cooking edge */
+		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_indices, pg->tri_indices_cnt, &edge_indices, &edge_indices_cnt)) {
 			goto err_1;
 		}
+		/* cooking vertex indice */
+		if (!mathCookingStage4(edge_indices, edge_indices_cnt, &v_indices, &v_indices_cnt)) {
+			goto err_1;
+		}
+		total_edge_indices_cnt += edge_indices_cnt;
+		/* fill polygon other data */
+		mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, v1, v2);
+		mathVec3Add(pg->center, v1, v2);
+		mathVec3MultiplyScalar(pg->center, pg->center, CCTNum(0.5));
+		pg->v_indices = v_indices;
+		pg->v_indices_cnt = v_indices_cnt;
+		pg->edge_indices = edge_indices;
+		pg->edge_indices_cnt = edge_indices_cnt;
 	}
-	mesh->polygons = polygons;
-	mesh->polygons_cnt = polygons_cnt;
-	if (!Mesh_Cooking_Edge_InternalProc((const CCTNum_t(*)[3])dup_v, mesh)) {
+	/* merge face edge */
+	edge_indices = (unsigned int*)malloc(sizeof(edge_indices[0]) * total_edge_indices_cnt);
+	if (!edge_indices) {
 		goto err_1;
 	}
-	free(dup_tri_indices);
-	for (i = 0; i < dup_v_cnt; ++i) {
-		dup_v_indices[i] = i;
+	total_edge_indices_cnt = 0;
+	for (i = 0; i < tmp_polygons_cnt; ++i) {
+		total_edge_indices_cnt = Merge_Face_Edge(edge_indices, total_edge_indices_cnt, tmp_polygons + i);
 	}
-	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, min_v, max_v);
-	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
+	/* cooking vertex indice */
+	if (!mathCookingStage4(edge_indices, total_edge_indices_cnt, &v_indices, &v_indices_cnt)) {
+		goto err_1;
+	}
+	/* save result */
+	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
+	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
 	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
 	mesh->v = dup_v;
-	mesh->v_indices = dup_v_indices;
-	mesh->v_indices_cnt = dup_v_cnt;
+	mesh->v_indices = v_indices;
+	mesh->v_indices_cnt = v_indices_cnt;
+	mesh->edge_indices = edge_indices;
+	mesh->edge_indices_cnt = total_edge_indices_cnt;
+	mesh->edge_stride = 2;
+	mesh->polygons = tmp_polygons;
+	mesh->polygons_cnt = tmp_polygons_cnt;
 	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 		if (mesh->is_convex) {
 			polygon->is_convex = 1;
 		}
@@ -185,14 +124,15 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], unsigned int v_cnt, const
 	}
 	return mesh;
 err_1:
-	for (i = 0; i < polygons_cnt; ++i) {
-		polygons[i].v = NULL;
-		mathPolygonFreeData(polygons + i);
+	for (i = 0; i < tmp_polygons_cnt; ++i) {
+		tmp_polygons[i].v = NULL;
+		mathPolygonFreeData(tmp_polygons + i);
 	}
-	free(polygons);
+	free(tmp_polygons);
 err_0:
 	free(dup_v);
-	free(dup_v_indices);
+	free(v_indices);
+	free(edge_indices);
 	free(dup_tri_indices);
 	return NULL;
 }

@@ -236,6 +236,9 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (polygon->tri_indices_cnt % 3) {
 				return 0;
 			}
+			if (polygon->edge_indices_cnt % 2) {
+				return 0;
+			}
 			if (!CCTNum_chkvals(polygon->o, 3)) {
 				return 0;
 			}

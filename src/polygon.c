@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 static const unsigned int Triangle_Vertice_Indices_Default[3] = { 0, 1, 2 };
+static const unsigned int Triangle_Edge_Indices_Default[6] = { 0,1, 1,2, 2,0 };
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,6 +72,8 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v = (CCTNum_t(*)[3])tri;
 	polygon->v_indices = Triangle_Vertice_Indices_Default;
 	polygon->v_indices_cnt = 3;
+	polygon->edge_indices = Triangle_Edge_Indices_Default;
+	polygon->edge_indices_cnt = 6;
 	polygon->tri_indices = Triangle_Vertice_Indices_Default;
 	polygon->tri_indices_cnt = 3;
 	polygon->is_convex = 1;
@@ -86,12 +89,12 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
-	for (i = 0; i < polygon->v_indices_cnt; ) {
+	for (i = 0; i < polygon->edge_indices_cnt; ) {
 		CCTNum_t ls_v[3], N[3];
 		int flag_sign = 0;
 		unsigned int j, v_idx[2];
-		v_idx[0] = polygon->v_indices[i++];
-		v_idx[1] = polygon->v_indices[i >= polygon->v_indices_cnt ? 0 : i];
+		v_idx[0] = polygon->edge_indices[i++];
+		v_idx[1] = polygon->edge_indices[i++];
 		mathVec3Sub(ls_v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
 		mathVec3Cross(N, ls_v, polygon->normal);
 		for (j = 0; j < polygon->v_indices_cnt; ++j) {

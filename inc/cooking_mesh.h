@@ -11,8 +11,7 @@
 extern "C" {
 #endif
 
-__declspec_dll GeometryMesh_t* mathCookingMeshDirect(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
-__declspec_dll GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], unsigned int v_cnt, const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
+__declspec_dll GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
 
 #ifdef	__cplusplus
 }
