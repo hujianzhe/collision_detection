@@ -69,8 +69,9 @@ int mathEdgeIndicesMergeEdgeIndices(const CCTNum_t(*v)[3], const unsigned int a_
 			if (overlap_test[0] && overlap_test[1]) {
 				final_edge_indices[0] = edge_indices_pp[i][0];
 				final_edge_indices[1] = edge_indices_pp[i][1];
+				return 1;
 			}
-			else if (overlap_test[0] || overlap_test[1]) {
+			if (overlap_test[0] || overlap_test[1]) {
 				for (j = 0; j < 2; ++j) {
 					mathVec3Sub(v1, v[edge_indices_pp[!i][0]], v[edge_indices_pp[i][j]]);
 					mathVec3Sub(v2, v[edge_indices_pp[!i][1]], v[edge_indices_pp[i][j]]);
