@@ -84,7 +84,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 		for (j = 0; j < src_polygon->tri_indices_cnt; ++j) {
 			dup_tri_indices[j] = src_polygon->tri_indices[j];
 		}
-		for (j = 0; j > src_polygon->edge_indices_cnt; ++j) {
+		for (j = 0; j < src_polygon->edge_indices_cnt; ++j) {
 			dup_edge_indices[j] = src_polygon->edge_indices[j];
 		}
 		mathVec3Copy(dup_polygons[i].o, src_polygon->o);
