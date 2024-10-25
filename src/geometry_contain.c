@@ -299,13 +299,13 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 	}
 	for (i = 0; i < polygon->edge_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], test_dot;
-		unsigned int edge_idx[2];
+		unsigned int edge_idx[2], other_i;
+		/* test edge */
 		edge_idx[0] = polygon->edge_indices[i++];
 		edge_idx[1] = polygon->edge_indices[i++];
 		mathVec3Sub(ls_dir, polygon->v[edge_idx[1]], polygon->v[edge_idx[0]]);
 		mathVec3Cross(ls_n, ls_dir, polygon->normal);
-		mathVec3Sub(v, polygon->v[polygon->edge_indices[i + 1]], polygon->v[edge_idx[0]]);
-		test_dot = mathVec3Dot(v, ls_n);
+		/* check edge contain p */
 		mathVec3Sub(v, p, polygon->v[edge_idx[0]]);
 		dot = mathVec3Dot(v, ls_n);
 		if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
@@ -315,7 +315,17 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 			dot = mathVec3Dot(l, r);
 			return dot <= CCT_EPSILON;
 		}
-		else if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
+		/* get test_point */
+		other_i = (i < polygon->edge_indices_cnt ? i : 0);
+		if (polygon->edge_indices[other_i] != edge_idx[0]) {
+			mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_idx[0]]);
+		}
+		else {
+			mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i + 1]], polygon->v[edge_idx[0]]);
+		}
+		test_dot = mathVec3Dot(v, ls_n);
+		/* check in same side */
+		if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
 			return 0;
 		}
 		else if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
