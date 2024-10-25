@@ -262,11 +262,11 @@ static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCaps
 int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) {
 	int plane_side = 0;
 	unsigned int i;
-	for (i = 0; i < polygon1->edge_indices_cnt; ) {
+	for (i = 0; i < polygon1->edge_indices_cnt; i += 2) {
 		int ret_side;
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon1->v[polygon1->edge_indices[i++]]);
-		mathVec3Copy(edge[1], polygon1->v[polygon1->edge_indices[i++]]);
+		mathVec3Copy(edge[0], polygon1->v[polygon1->edge_indices[i]]);
+		mathVec3Copy(edge[1], polygon1->v[polygon1->edge_indices[i+1]]);
 		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon2, &ret_side)) {
 			if (ret_plane_side) {
 				*ret_plane_side = 0;
@@ -301,14 +301,11 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side) {
 	int plane_side = 0;
 	unsigned int i;
-	for (i = 0; i < mesh->edge_indices_cnt; ) {
+	for (i = 0; i < mesh->edge_indices_cnt; i += 2) {
 		int ret_side;
 		CCTNum_t edge[2][3];
-		unsigned int v_idx[2];
-		v_idx[0] = mesh->edge_indices[i++];
-		v_idx[1] = mesh->edge_indices[i++];
-		mathVec3Copy(edge[0], mesh->v[v_idx[0]]);
-		mathVec3Copy(edge[1], mesh->v[v_idx[1]]);
+		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[i]]);
+		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[i+1]]);
 		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon, &ret_side)) {
 			if (ret_plane_side) {
 				*ret_plane_side = 0;
