@@ -268,6 +268,21 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 	unsigned int* tmp_edge_indices = NULL;
 	unsigned int tmp_edge_indices_cnt = 0;
 	/* Filters all share triangle edges, leaving all non-shared edges */
+	if (3 == tri_indices_cnt) {
+		tmp_edge_indices = (unsigned int*)malloc(sizeof(tmp_edge_indices[0]) * 6);
+		if (!tmp_edge_indices) {
+			goto err;
+		}
+		tmp_edge_indices[0] = tri_indices[0];
+		tmp_edge_indices[1] = tri_indices[1];
+		tmp_edge_indices[2] = tri_indices[1];
+		tmp_edge_indices[3] = tri_indices[2];
+		tmp_edge_indices[4] = tri_indices[2];
+		tmp_edge_indices[5] = tri_indices[0];
+		*ret_edge_indices = tmp_edge_indices;
+		*ret_edge_indices_cnt = 6;
+		return 1;
+	}
 	for (i = 0; i < tri_indices_cnt; i += 3) {
 		unsigned int ei[6] = {
 			tri_indices[i], tri_indices[i + 1],
