@@ -136,7 +136,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 extern "C" {
 #endif
 
-int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, const CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_indices) {
+int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_indices) {
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int dup_v_cnt, i;
 	CCTNum_t(*dup_v)[3] = NULL, (*tmp_v)[3] = NULL;
