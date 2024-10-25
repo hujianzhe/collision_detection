@@ -317,7 +317,7 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 		}
 		/* get test_point */
 		other_i = (i < polygon->edge_indices_cnt ? i : 0);
-		if (polygon->edge_indices[other_i] != edge_idx[0]) {
+		if (polygon->edge_indices[other_i] != edge_idx[0] && polygon->edge_indices[other_i] != edge_idx[1]) {
 			mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_idx[0]]);
 		}
 		else {
