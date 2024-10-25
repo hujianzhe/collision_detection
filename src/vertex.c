@@ -27,6 +27,87 @@ unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], const unsigned int* sr
 	return dst_v_cnt;
 }
 
+int mathEdgeIndicesMergeEdgeIndices(const CCTNum_t(*v)[3], const unsigned int a_edge_indices[2], const unsigned int b_edge_indices[2], unsigned int final_edge_indices[2]) {
+	CCTNum_t v1[3], v2[3], N[3];
+	unsigned int i, same_cnt;
+	unsigned int a_same_idx, b_same_idx;
+	mathVec3Sub(v1, v[a_edge_indices[1]], v[a_edge_indices[0]]);
+	mathVec3Sub(v2, v[b_edge_indices[1]], v[b_edge_indices[0]]);
+	mathVec3Cross(N, v1, v2);
+	if (!mathVec3IsZero(N)) {
+		/* not parallel */
+		return 0;
+	}
+	mathVec3Sub(v2, v[b_edge_indices[0]], v[a_edge_indices[0]]);
+	mathVec3Cross(N, v1, v2);
+	if (!mathVec3IsZero(N)) {
+		/* not collinear */
+		return 0;
+	}
+	same_cnt = 0;
+	for (i = 0; i < 2; ++i) {
+		unsigned int j;
+		for (j = 0; j < 2; ++j) {
+			if (mathVec3Equal(v[a_edge_indices[i]], v[b_edge_indices[j]])) {
+				++same_cnt;
+				a_same_idx = i;
+				b_same_idx = j;
+			}
+		}
+	}
+	if (same_cnt < 1) {
+		const unsigned int* edge_indices_pp[2] = { a_edge_indices, b_edge_indices };
+		/* test overlap, a overlap b and b overlap a */
+		for (i = 0; i < 2; ++i) {
+			int overlap_test[2];
+			unsigned int j;
+			for (j = 0; j < 2; ++j) {
+				mathVec3Sub(v1, v[edge_indices_pp[i][0]], v[edge_indices_pp[!i][j]]);
+				mathVec3Sub(v2, v[edge_indices_pp[i][1]], v[edge_indices_pp[!i][j]]);
+				overlap_test[j] = (mathVec3Dot(v1, v2) < CCTNum(0.0));
+			}
+			if (overlap_test[0] && overlap_test[1]) {
+				final_edge_indices[0] = edge_indices_pp[i][0];
+				final_edge_indices[1] = edge_indices_pp[i][1];
+			}
+			else if (overlap_test[0] || overlap_test[1]) {
+				for (j = 0; j < 2; ++j) {
+					mathVec3Sub(v1, v[edge_indices_pp[!i][0]], v[edge_indices_pp[i][j]]);
+					mathVec3Sub(v2, v[edge_indices_pp[!i][1]], v[edge_indices_pp[i][j]]);
+					if (mathVec3Dot(v1, v2) < CCTNum(0.0)) {
+						final_edge_indices[0] = edge_indices_pp[i][!j];
+						final_edge_indices[1] = edge_indices_pp[!i][overlap_test[1] ? 0 : 1];
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+	if (same_cnt >= 2) {
+		/* same edge */
+		final_edge_indices[0] = a_edge_indices[0];
+		final_edge_indices[1] = a_edge_indices[1];
+		return 1;
+	}
+	/* only one pair indices same */
+	mathVec3Sub(v1, v[a_edge_indices[!a_same_idx]], v[a_edge_indices[a_same_idx]]);
+	mathVec3Sub(v2, v[b_edge_indices[!b_same_idx]], v[b_edge_indices[b_same_idx]]);
+	if (mathVec3Dot(v1, v2) < CCTNum(0.0)) {
+		final_edge_indices[0] = a_edge_indices[!a_same_idx];
+		final_edge_indices[1] = b_edge_indices[!b_same_idx];
+	}
+	else if (mathVec3LenSq(v1) > mathVec3LenSq(v2)) {
+		final_edge_indices[0] = a_edge_indices[0];
+		final_edge_indices[1] = a_edge_indices[1];
+	}
+	else {
+		final_edge_indices[0] = b_edge_indices[0];
+		final_edge_indices[1] = b_edge_indices[1];
+	}
+	return 1;
+}
+
 int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
 	unsigned int i;
 	if (v_indices_cnt <= 0) {
