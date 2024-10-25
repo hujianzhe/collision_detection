@@ -99,6 +99,9 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
 		mathVec3Cross(N, ls_v, polygon->normal);
 		for (j = 0; j < polygon->v_indices_cnt; ++j) {
 			CCTNum_t v[3], dot;
+			if (polygon->v_indices[j] == v_idx[0] || polygon->v_indices[j] == v_idx[1]) {
+				continue;
+			}
 			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
 			dot = mathVec3Dot(v, N);
 			/* some module needed epsilon */
