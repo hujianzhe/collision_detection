@@ -60,6 +60,8 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 	if (!mathCookingStage2((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, &tmp_polygons, &tmp_polygons_cnt)) {
 		goto err_0;
 	}
+	free(dup_tri_indices);
+	dup_tri_indices = NULL;
 	/* cooking every face */
 	total_edge_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
