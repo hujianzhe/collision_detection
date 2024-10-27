@@ -360,7 +360,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 			if (-1 == tmp_edge_pair_indices[j]) {
 				continue;
 			}
-			if (!mathEdgeIndicesMergeEdgeIndices(v, tmp_edge_pair_indices + i, tmp_edge_pair_indices + j, tmp_edge_pair_indices)) {
+			if (!mathEdgeIndicesMergeEdgeIndices(v, tmp_edge_pair_indices + i, tmp_edge_pair_indices + j, tmp_edge_pair_indices + i)) {
 				continue;
 			}
 			tmp_edge_indices_cnt -= 2;
