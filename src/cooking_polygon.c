@@ -410,6 +410,18 @@ int mathCookingStage4(const unsigned int* edge_indices, unsigned int edge_indice
 		}
 		tmp_v_indices[tmp_v_indices_cnt++] = edge_indices[i];
 	}
+	if (tmp_v_indices_cnt < edge_indices_cnt) {
+		unsigned int* buf = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * tmp_v_indices_cnt);
+		if (!buf) {
+			free(tmp_v_indices);
+			return 0;
+		}
+		for (i = 0; i < tmp_v_indices_cnt; ++i) {
+			buf[i] = tmp_v_indices[i];
+		}
+		free(tmp_v_indices);
+		tmp_v_indices = buf;
+	}
 	*ret_v_indices = tmp_v_indices;
 	*ret_v_indices_cnt = tmp_v_indices_cnt;
 	return 1;
