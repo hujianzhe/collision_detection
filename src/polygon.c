@@ -134,14 +134,6 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 			dup_v_cnt = src->v_indices[i] + 1;
 		}
 	}
-	for (i = 0; i < src->tri_indices_cnt; ++i) {
-		if (src->tri_indices[i] >= dup_v_cnt) {
-			dup_v_cnt = src->tri_indices[i] + 1;
-		}
-	}
-	if (dup_v_cnt < 3) {
-		return NULL;
-	}
 	/* deep copy */
 	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {

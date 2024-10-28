@@ -23,28 +23,6 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 			dup_v_cnt = src->v_indices[i] + 1;
 		}
 	}
-	for (i = 0; i < src->edge_indices_cnt; ++i) {
-		if (src->edge_indices[i] >= dup_v_cnt) {
-			dup_v_cnt = src->edge_indices[i] + 1;
-		}
-	}
-	for (i = 0; i < src->polygons_cnt; ++i) {
-		const GeometryPolygon_t* src_polygon = src->polygons + i;
-		unsigned int j;
-		for (j = 0; j < src_polygon->v_indices_cnt; ++j) {
-			if (src_polygon->v_indices[j] >= dup_v_cnt) {
-				dup_v_cnt = src_polygon->v_indices[j] + 1;
-			}
-		}
-		for (j = 0; j < src_polygon->tri_indices_cnt; ++j) {
-			if (src_polygon->tri_indices[j] >= dup_v_cnt) {
-				dup_v_cnt = src_polygon->tri_indices[j] + 1;
-			}
-		}
-	}
-	if (dup_v_cnt < 3) {
-		return NULL;
-	}
 	/* deep copy */
 	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {
