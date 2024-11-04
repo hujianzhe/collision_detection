@@ -602,6 +602,70 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 	return aabb;
 }
 
+GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate) {
+	switch (geo_type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			if (inflate <= CCTNum(0.0)) {
+				geo_inflate->type = GEOMETRY_BODY_POINT;
+				mathVec3Copy(geo_inflate->point, (const CCTNum_t*)geo_data);
+			}
+			else {
+				geo_inflate->type = GEOMETRY_BODY_SPHERE;
+				geo_inflate->sphere.radius = inflate;
+				mathVec3Copy(geo_inflate->sphere.o, (const CCTNum_t*)geo_data);
+			}
+			return geo_inflate;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			if (inflate <= CCTNum(0.0)) {
+				geo_inflate->type = GEOMETRY_BODY_SEGMENT;
+				geo_inflate->segment = *segment;
+			}
+			else {
+				geo_inflate->type = GEOMETRY_BODY_CAPSULE;
+				mathTwoVertexToCenterHalf(segment->v[0], segment->v[1], geo_inflate->capsule.o, geo_inflate->capsule.axis, &geo_inflate->capsule.half);
+				geo_inflate->capsule.radius = inflate;
+			}
+			return geo_inflate;
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			CCTNum_t new_radius = sphere->radius + inflate;
+			if (new_radius <= CCTNum(0.0)) {
+				geo_inflate->type = GEOMETRY_BODY_POINT;
+				mathVec3Copy(geo_inflate->point, sphere->o);
+			}
+			else {
+				geo_inflate->type = GEOMETRY_BODY_SPHERE;
+				geo_inflate->sphere = *sphere;
+				geo_inflate->sphere.radius = new_radius;
+			}
+			return geo_inflate;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+			CCTNum_t new_radius = capsule->radius + inflate;
+			if (new_radius <= CCTNum(0.0)) {
+				geo_inflate->type = GEOMETRY_BODY_SEGMENT;
+				mathVec3Copy(geo_inflate->segment.o, capsule->o);
+				mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, geo_inflate->segment.v[0], geo_inflate->segment.v[1]);
+			}
+			else {
+				geo_inflate->type = GEOMETRY_BODY_CAPSULE;
+				geo_inflate->capsule = *(const GeometryCapsule_t*)geo_data;
+				geo_inflate->capsule.radius = new_radius;
+			}
+			return geo_inflate;
+		}
+	}
+	return NULL;
+}
+
 int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
