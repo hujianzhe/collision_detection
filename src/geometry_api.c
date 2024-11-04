@@ -72,6 +72,9 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mathVec3Equal(segment->v[0], segment->v[1])) {
 				return 0;
 			}
+			if (!CCTNum_chkvals(segment->o, 3)) {
+				return 0;
+			}
 			return CCTNum_chkval(mathVec3DistanceSq(segment->v[0], segment->v[1]));
 		}
 		case GEOMETRY_BODY_PLANE:
@@ -409,7 +412,7 @@ const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTN
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			ptr_v = ((const GeometrySegment_t*)geo_data)->v[0];
+			ptr_v = ((const GeometrySegment_t*)geo_data)->o;
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
@@ -465,10 +468,11 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
 			CCTNum_t delta[3];
-			mathVec3Sub(delta, v, segment->v[0]);
-			mathVec3Copy(segment->v[0], v);
+			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
+			mathVec3Sub(delta, v, segment->o);
+			mathVec3Copy(segment->o, v);
+			mathVec3Add(segment->v[0], segment->v[0], delta);
 			mathVec3Add(segment->v[1], segment->v[1], delta);
 			return;
 		}
@@ -607,7 +611,8 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
-			point_rotate(segment->v[1], segment->v[0], q);
+			point_rotate(segment->v[0], segment->o, q);
+			point_rotate(segment->v[1], segment->o, q);
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:

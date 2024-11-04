@@ -41,6 +41,13 @@ CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], con
 	return d;
 }
 
+void mathSegmentFromTwoVertex(GeometrySegment_t* segment, const CCTNum_t v0[3], const CCTNum_t v1[3]) {
+	mathVec3Copy(segment->v[0], v0);
+	mathVec3Copy(segment->v[1], v1);
+	mathVec3Add(segment->o, v0, v1);
+	mathVec3MultiplyScalar(segment->o, segment->o, CCTNum(0.5));
+}
+
 CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
 	CCTNum_t lensq, min_lensq, v[3];
 
@@ -74,16 +81,6 @@ CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum
 	}
 
 	return min_lensq;
-}
-
-int mathSegmentIsSame(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
-	if (mathVec3Equal(ls1[0], ls2[0])) {
-		return mathVec3Equal(ls1[1], ls2[1]);
-	}
-	if (mathVec3Equal(ls1[0], ls2[1])) {
-		return mathVec3Equal(ls1[1], ls2[0]);
-	}
-	return 0;
 }
 
 void mathSegmentClosestPointTo(const CCTNum_t ls[2][3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {

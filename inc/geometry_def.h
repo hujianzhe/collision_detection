@@ -11,6 +11,7 @@
 
 typedef struct GeometrySegment_t {
 	CCTNum_t v[2][3];
+	CCTNum_t o[3];
 } GeometrySegment_t;
 
 typedef struct GeometryPlane_t {
