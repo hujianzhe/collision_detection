@@ -666,17 +666,23 @@ GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t
 	return NULL;
 }
 
-int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
+int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
+			CCTNum_t* point = (CCTNum_t*)geo_data;
+			if (point != base_p && !mathVec3Equal(point, base_p)) {
+				point_rotate(point, base_p, q);
+			}
 			break;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
-			point_rotate(segment->v[0], segment->o, q);
-			point_rotate(segment->v[1], segment->o, q);
+			point_rotate(segment->v[0], base_p, q);
+			point_rotate(segment->v[1], base_p, q);
+			mathVec3Add(segment->o, segment->v[0], segment->v[1]);
+			mathVec3MultiplyScalar(segment->o, segment->o, CCTNum(0.5));
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
@@ -689,6 +695,11 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 		{
 			GeometryAABB_t* aabb = (GeometryAABB_t*)geo_data;
 			CCTNum_t axis[3], new_axis[3];
+			/* not self rotate */
+			if (aabb->o != base_p && !mathVec3Equal(aabb->o, base_p)) {
+				point_rotate(aabb->o, base_p, q);
+				return 0;
+			}
 			/* check rotate by X axis ??? */
 			mathVec3Set(axis, CCTNums_3(1.0, 0.0, 0.0));
 			mathQuatMulVec3(new_axis, q, axis);
@@ -755,29 +766,33 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 			mathQuatMulVec3(obb->axis[0], q, obb->axis[0]);
 			mathQuatMulVec3(obb->axis[1], q, obb->axis[1]);
 			mathQuatMulVec3(obb->axis[2], q, obb->axis[2]);
+			if (obb->o != base_p && !mathVec3Equal(obb->o, base_p)) {
+				point_rotate(obb->o, base_p, q);
+			}
 			break;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
 			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
-			indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->o, q);
+			indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, base_p, q);
 			mathQuatMulVec3(polygon->normal, q, polygon->normal);
+			point_rotate(polygon->center, base_p, q);
 			break;
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
-			unsigned int i;
 			CCTNum_t min_xyz[3], max_xyz[3];
+			unsigned int i;
 
-			indices_rotate(mesh->v, mesh->v_indices, mesh->v_indices_cnt, mesh->o, q);
+			indices_rotate(mesh->v, mesh->v_indices, mesh->v_indices_cnt, base_p, q);
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
 				GeometryPolygon_t* polygon = mesh->polygons + i;
 				if (polygon->v != mesh->v) {
-					indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, mesh->o, q);
+					indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, base_p, q);
 				}
 				mathQuatMulVec3(polygon->normal, q, polygon->normal);
-				point_rotate(polygon->center, mesh->o, q);
+				point_rotate(polygon->center, base_p, q);
 			}
 			mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, min_xyz, max_xyz);
 			mathAABBFromTwoVertice(min_xyz, max_xyz, mesh->bound_box.o, mesh->bound_box.half);
@@ -787,6 +802,9 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 		{
 			GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
 			mathQuatMulVec3(capsule->axis, q, capsule->axis);
+			if (capsule->o != base_p && !mathVec3Equal(capsule->o, base_p)) {
+				point_rotate(capsule->o, base_p, q);
+			}
 			break;
 		}
 		default:
@@ -795,7 +813,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 	return 1;
 }
 
-int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian) {
 	CCTNum_t q[4];
 	if (GEOMETRY_BODY_SPHERE == geo_type) {
 		return 1;
@@ -808,8 +826,11 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ax
 			return 1;
 		}
 	}
+	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
+		return 1;
+	}
 	mathQuatFromAxisRadian(q, axis, radian);
-	return mathGeometryRotate(geo_data, geo_type, q);
+	return mathGeometryRotate(geo_data, geo_type, base_p, q);
 }
 
 #ifdef __cplusplus
