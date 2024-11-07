@@ -777,6 +777,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 					indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, mesh->o, q);
 				}
 				mathQuatMulVec3(polygon->normal, q, polygon->normal);
+				point_rotate(polygon->center, mesh->o, q);
 			}
 			mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, min_xyz, max_xyz);
 			mathAABBFromTwoVertice(min_xyz, max_xyz, mesh->bound_box.o, mesh->bound_box.half);

@@ -78,9 +78,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 		}
 		total_edge_indices_cnt += edge_indices_cnt;
 		/* fill polygon other data */
-		mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, v1, v2);
-		mathVec3Add(pg->center, v1, v2);
-		mathVec3MultiplyScalar(pg->center, pg->center, CCTNum(0.5));
+		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
 		pg->v_indices = v_indices;
 		pg->v_indices_cnt = v_indices_cnt;
 		pg->edge_indices = edge_indices;

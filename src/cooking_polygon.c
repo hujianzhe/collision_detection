@@ -429,7 +429,7 @@ int mathCookingStage4(const unsigned int* edge_indices, unsigned int edge_indice
 
 GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
 	CCTNum_t(*dup_v)[3] = NULL;
-	CCTNum_t v1[3], v2[3], N[3];
+	CCTNum_t N[3];
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int* edge_indices = NULL;
 	unsigned int* v_indices = NULL;
@@ -458,9 +458,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		goto err;
 	}
 	/* save result */
-	mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, v_indices, v_indices_cnt, v1, v2);
-	mathVec3Add(polygon->center, v1, v2);
-	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
+	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])dup_v, v_indices, v_indices_cnt, polygon->center);
 	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	mathVec3Copy(polygon->normal, N);
 	polygon->v = (CCTNum_t(*)[3])dup_v;
