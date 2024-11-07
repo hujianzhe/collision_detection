@@ -153,6 +153,26 @@ int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_
 	return 1;
 }
 
+int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_avgXYZ[3]) {
+	unsigned int i;
+	if (v_indices_cnt <= 0) {
+		return 0;
+	}
+	v_avgXYZ[0] = v_avgXYZ[1] = v_avgXYZ[2] = CCTNum(0.0);
+	for (i = 0; i < v_indices_cnt; ++i) {
+		const CCTNum_t* p = v[v_indices[i]];
+		v_avgXYZ[0] += p[0];
+		v_avgXYZ[1] += p[1];
+		v_avgXYZ[2] += p[2];
+	}
+	if (v_indices_cnt > 1) {
+		v_avgXYZ[0] /= v_indices_cnt;
+		v_avgXYZ[1] /= v_indices_cnt;
+		v_avgXYZ[2] /= v_indices_cnt;
+	}
+	return 1;
+}
+
 void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]) {
 	mathVec3Copy(start_v, center_p);
 	mathVec3SubScalar(start_v, dir, half_len);
