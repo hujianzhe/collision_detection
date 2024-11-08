@@ -5,7 +5,7 @@
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
 #include "../inc/plane.h"
-#include "../inc/cooking_polygon.h"
+#include "../inc/cooking.h"
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);

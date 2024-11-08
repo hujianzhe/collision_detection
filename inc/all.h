@@ -15,12 +15,11 @@
 #include "math_quat.h"
 #include "math_vec3.h"
 #include "mesh.h"
-#include "cooking_mesh.h"
 #include "obb.h"
 #include "octree.h"
 #include "plane.h"
 #include "polygon.h"
-#include "cooking_polygon.h"
+#include "cooking.h"
 #include "vertex.h"
 #include "capsule.h"
 

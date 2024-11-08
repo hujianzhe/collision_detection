@@ -2,8 +2,8 @@
 // Created by hujianzhe
 //
 
-#ifndef	UTIL_C_CRT_GEOMETRY_POLYGON_COOKING_H
-#define	UTIL_C_CRT_GEOMETRY_POLYGON_COOKING_H
+#ifndef	UTIL_C_CRT_GEOMETRY_COOKING_H
+#define	UTIL_C_CRT_GEOMETRY_COOKING_H
 
 #include "polygon.h"
 
@@ -17,6 +17,7 @@ __declspec_dll int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* 
 __declspec_dll int mathCookingStage4(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt);
 
 __declspec_dll GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon);
+__declspec_dll GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh);
 
 #ifdef	__cplusplus
 }

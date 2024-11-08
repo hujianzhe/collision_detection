@@ -8,8 +8,7 @@
 #include "../inc/plane.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include "../inc/cooking_polygon.h"
-#include "../inc/cooking_mesh.h"
+#include "../inc/cooking.h"
 #include <stdlib.h>
 
 static unsigned int Merge_Face_Edge(unsigned int* edge_indices, unsigned int edge_indices_cnt, const GeometryPolygon_t* polygon) {
