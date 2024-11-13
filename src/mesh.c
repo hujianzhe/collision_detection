@@ -116,19 +116,10 @@ err_0:
 }
 
 void mathMeshFreeData(GeometryMesh_t* mesh) {
-	unsigned int i;
 	if (!mesh) {
 		return;
 	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		mesh->polygons[i].v = NULL;
-		mathPolygonFreeData(mesh->polygons + i);
-	}
-	if (mesh->polygons) {
-		free(mesh->polygons);
-		mesh->polygons = NULL;
-		mesh->polygons_cnt = 0;
-	}
+	mathMeshDeleteAllFaces(mesh);
 	if (mesh->edge_indices) {
 		free((void*)mesh->edge_indices);
 		mesh->edge_indices = NULL;
@@ -206,8 +197,11 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon) {
 }
 
 void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
-	CCTNum_t p[2][3], po[3];
+	CCTNum_t p[2][3], o[3];
 	unsigned int i;
+	if (mesh->polygons_cnt < 2) {
+		return;
+	}
 	for (i = 0; i < 2; ++i) {
 		CCTNum_t tri[3][3];
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -216,17 +210,31 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
 		mathTriangleGetPoint((const CCTNum_t(*)[3])tri, CCTNum(0.5), CCTNum(0.5), p[i]);
 	}
-	mathVec3Add(po, p[0], p[1]);
-	mathVec3MultiplyScalar(po, po, CCTNum(0.5));
+	mathVec3Add(o, p[0], p[1]);
+	mathVec3MultiplyScalar(o, o, CCTNum(0.5));
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTNum_t v[3], dot;
 		GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Sub(v, po, polygon->v[polygon->v_indices[0]]);
+		mathVec3Sub(v, o, polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(v, polygon->normal);
 		if (dot > CCTNum(0.0)) {
 			mathVec3Negate(polygon->normal, polygon->normal);
 		}
 	}
+}
+
+void mathMeshDeleteAllFaces(GeometryMesh_t* mesh) {
+	unsigned int i;
+	if (!mesh->polygons) {
+		return;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		mesh->polygons[i].v = NULL;
+		mathPolygonFreeData(mesh->polygons + i);
+	}
+	mesh->polygons_cnt = 0;
+	free(mesh->polygons);
+	mesh->polygons = NULL;
 }
 
 #ifdef __cplusplus

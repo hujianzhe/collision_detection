@@ -16,6 +16,7 @@ __declspec_dll void mathMeshFreeData(GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon);
 __declspec_dll void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh);
+__declspec_dll void mathMeshDeleteAllFaces(GeometryMesh_t* mesh);
 
 #ifdef	__cplusplus
 }
