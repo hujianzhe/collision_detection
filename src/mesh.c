@@ -7,6 +7,20 @@
 #include "../inc/mesh.h"
 #include <stdlib.h>
 
+static void free_all_faces(GeometryMesh_t* mesh) {
+	unsigned int i;
+	if (!mesh->polygons) {
+		return;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		mesh->polygons[i].v = NULL;
+		mathPolygonFreeData(mesh->polygons + i);
+	}
+	mesh->polygons_cnt = 0;
+	free(mesh->polygons);
+	mesh->polygons = NULL;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -119,7 +133,7 @@ void mathMeshFreeData(GeometryMesh_t* mesh) {
 	if (!mesh) {
 		return;
 	}
-	mathMeshDeleteAllFaces(mesh);
+	free_all_faces(mesh);
 	if (mesh->edge_indices) {
 		free((void*)mesh->edge_indices);
 		mesh->edge_indices = NULL;
@@ -221,20 +235,6 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 			mathVec3Negate(polygon->normal, polygon->normal);
 		}
 	}
-}
-
-void mathMeshDeleteAllFaces(GeometryMesh_t* mesh) {
-	unsigned int i;
-	if (!mesh->polygons) {
-		return;
-	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		mesh->polygons[i].v = NULL;
-		mathPolygonFreeData(mesh->polygons + i);
-	}
-	mesh->polygons_cnt = 0;
-	free(mesh->polygons);
-	mesh->polygons = NULL;
 }
 
 #ifdef __cplusplus
