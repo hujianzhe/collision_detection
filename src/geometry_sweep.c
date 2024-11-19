@@ -921,29 +921,6 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-static unsigned int geometry_indices_find_face_index(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
-	unsigned int i;
-	for (i = 0; i < faces_cnt; ++i) {
-		const GeometryPolygon_t* face = faces + i;
-		unsigned int j;
-		for (j = 0; j < v_idx_cnt; ++j) {
-			unsigned int k;
-			for (k = 0; k < face->v_indices_cnt; ++k) {
-				if (face->v_indices[k] == v_idx[j]) {
-					break;
-				}
-			}
-			if (k >= face->v_indices_cnt) {
-				break;
-			}
-		}
-		if (j >= v_idx_cnt) {
-			return i;
-		}
-	}
-	return -1;
-}
-
 static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInfo_t* src_info, const GeometryMesh_t* mesh, int* ret_new_hit_bits) {
 	unsigned int idx, v_idx[3];
 	int new_hit_bits = 0;
@@ -954,7 +931,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		if (dst_info->idx == src_info->idx) {
 			return 0;
 		}
-		idx = mathFindEdgeIndexByTwoVertexIndex(mesh->edge_indices, mesh->edge_indices_cnt, dst_info->idx, src_info->idx);
+		idx = mathFindEdgeIndexByVertexIndices(mesh->edge_indices, mesh->edge_indices_cnt, dst_info->idx, src_info->idx);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 			dst_info->idx = idx;
@@ -963,7 +940,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		}
 		v_idx[0] = dst_info->idx;
 		v_idx[1] = src_info->idx;
-		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 2);
+		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 2);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
 			dst_info->idx = idx;
@@ -987,7 +964,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		if (v_idx[2] == v_idx[0] || v_idx[2] == v_idx[1]) {
 			v_idx[2] = mesh->edge_indices[idx];
 		}
-		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
 			dst_info->idx = idx;
@@ -1008,7 +985,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 			return 1;
 		}
 		v_idx[2] = dst_info->idx;
-		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
 			dst_info->idx = idx;
@@ -1028,7 +1005,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 			return 0;
 		}
 		v_idx[2] = src_info->idx;
-		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
 			dst_info->hit_bits = CCT_SWEEP_BIT_FACE;
 			dst_info->idx = idx;
@@ -1822,7 +1799,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 			}
 			same_v_idx[same_v_cnt++] = mesh->v_indices[i];
 			if (2 == same_v_cnt) {
-				idx = mathFindEdgeIndexByTwoVertexIndex(mesh->edge_indices, mesh->edge_indices_cnt, same_v_idx[0], same_v_idx[1]);
+				idx = mathFindEdgeIndexByVertexIndices(mesh->edge_indices, mesh->edge_indices_cnt, same_v_idx[0], same_v_idx[1]);
 				if (idx != -1) {
 					result->hit_bits = CCT_SWEEP_BIT_SEGMENT;
 					result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
@@ -1830,7 +1807,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 					continue;
 				}
 			}
-			idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
+			idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
 			if (idx != -1) {
 				result->hit_bits = CCT_SWEEP_BIT_FACE;
 				result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;

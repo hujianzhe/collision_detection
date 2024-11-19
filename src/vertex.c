@@ -187,7 +187,18 @@ void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3
 	mathVec3AddScalar(center_p, dir, *half);
 }
 
-unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
+unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
+	unsigned int i;
+	for (i = 0; i < v_indices_cnt; ++i) {
+		unsigned int v_idx = v_indices[i];
+		if (mathVec3Equal(v[v_idx], p)) {
+			return v_idx;
+		}
+	}
+	return -1;
+}
+
+unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
 	unsigned int i;
 	for (i = 0; i < edge_indices_cnt; ++i) {
 		unsigned int idx = edge_indices[i++];
@@ -207,7 +218,7 @@ unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices,
 	return -1;
 }
 
-unsigned int mathFindEdgeIndexByTwoVertex(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]) {
+unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]) {
 	unsigned int i;
 	for (i = 0; i < edge_indices_cnt; ++i) {
 		unsigned int idx = edge_indices[i++];
@@ -227,12 +238,24 @@ unsigned int mathFindEdgeIndexByTwoVertex(const CCTNum_t(*v)[3], const unsigned 
 	return -1;
 }
 
-unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
+unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
 	unsigned int i;
-	for (i = 0; i < v_indices_cnt; ++i) {
-		unsigned int v_idx = v_indices[i];
-		if (mathVec3Equal(v[v_idx], p)) {
-			return v_idx;
+	for (i = 0; i < faces_cnt; ++i) {
+		const GeometryPolygon_t* face = faces + i;
+		unsigned int j;
+		for (j = 0; j < v_idx_cnt; ++j) {
+			unsigned int k;
+			for (k = 0; k < face->v_indices_cnt; ++k) {
+				if (face->v_indices[k] == v_idx[j]) {
+					break;
+				}
+			}
+			if (k >= face->v_indices_cnt) {
+				break;
+			}
+		}
+		if (j >= v_idx_cnt) {
+			return i;
 		}
 	}
 	return -1;

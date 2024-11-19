@@ -22,9 +22,10 @@ __declspec_dll int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsi
 __declspec_dll void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]);
 __declspec_dll void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3], CCTNum_t center_p[3], CCTNum_t dir[3], CCTNum_t* half);
 
-__declspec_dll unsigned int mathFindEdgeIndexByTwoVertexIndex(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
-__declspec_dll unsigned int mathFindEdgeIndexByTwoVertex(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]);
 __declspec_dll unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]);
+__declspec_dll unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
+__declspec_dll unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]);
+__declspec_dll unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt);
 
 #ifdef	__cplusplus
 }
