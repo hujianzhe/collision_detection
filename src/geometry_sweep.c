@@ -91,13 +91,17 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 }
 
 static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	unsigned int i;
+	unsigned int i, v_idx[2];
 	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		if (Segment_Contain_Point(polygon->v[polygon->v_indices[i - 1]], polygon->v[polygon->v_indices[i]], p)) {
+		v_idx[0] = polygon->v_indices[i - 1];
+		v_idx[1] = polygon->v_indices[i];
+		if (Segment_Contain_Point(polygon->v[v_idx[0]], polygon->v[v_idx[1]], p)) {
 			return i - 1;
 		}
 	}
-	return Segment_Contain_Point(polygon->v[polygon->v_indices[--i]], polygon->v[polygon->v_indices[0]], p) ? i : -1;
+	v_idx[0] = polygon->v_indices[--i];
+	v_idx[1] = polygon->v_indices[0];
+	return Segment_Contain_Point(polygon->v[v_idx[0]], polygon->v[v_idx[1]], p) ? i : -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -997,8 +1001,11 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
+		unsigned int edge_v_idx[2];
 		idx = src_info->idx * mesh->edge_stride;
-		if (Segment_Contain_Point(mesh->v[mesh->edge_indices[idx++]], mesh->v[mesh->edge_indices[idx]], mesh->v[dst_info->idx])) {
+		edge_v_idx[0] = mesh->edge_indices[idx++];
+		edge_v_idx[1] = mesh->edge_indices[idx];
+		if (Segment_Contain_Point(mesh->v[edge_v_idx[0]], mesh->v[edge_v_idx[1]], mesh->v[dst_info->idx])) {
 			*dst_info = *src_info;
 			return 1;
 		}
@@ -1019,8 +1026,11 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	else if ((dst_info->hit_bits & CCT_SWEEP_BIT_SEGMENT) && (src_info->hit_bits & CCT_SWEEP_BIT_POINT)) {
+		unsigned int edge_v_idx[2];
 		idx = dst_info->idx * mesh->edge_stride;
-		if (Segment_Contain_Point(mesh->v[mesh->edge_indices[idx++]], mesh->v[mesh->edge_indices[idx]], mesh->v[src_info->idx])) {
+		edge_v_idx[0] = mesh->edge_indices[idx++];
+		edge_v_idx[1] = mesh->edge_indices[idx];
+		if (Segment_Contain_Point(mesh->v[edge_v_idx[0]], mesh->v[edge_v_idx[1]], mesh->v[src_info->idx])) {
 			return 0;
 		}
 		idx = mesh->edge_stride * dst_info->idx;
