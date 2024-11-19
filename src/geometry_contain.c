@@ -20,10 +20,10 @@ extern const unsigned int Box_Face_Vertice_Indices[6][4];
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]) {
+int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) {
 	CCTNum_t pv1[3], pv2[3], N[3], dot;
-	mathVec3Sub(pv1, ls[0], p);
-	mathVec3Sub(pv2, ls[1], p);
+	mathVec3Sub(pv1, ls0, p);
+	mathVec3Sub(pv2, ls1, p);
 	mathVec3Cross(N, pv1, pv2);
 	if (!mathVec3IsZero(N)) {
 		return 0;
@@ -877,7 +877,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_POINT:
 			{
 				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
-				return Segment_Contain_Point((const CCTNum_t(*)[3])segment1->v, point2);
+				return Segment_Contain_Point(segment1->v[0], segment1->v[1], point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{

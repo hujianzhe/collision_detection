@@ -17,7 +17,7 @@ extern const CCTNum_t AABB_Axis[3][3];
 extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Indices_Default[8];
 
-extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
@@ -787,7 +787,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return Segment_Contain_Point((const CCTNum_t(*)[3])segment2->v, point1);
+				return Segment_Contain_Point(segment2->v[0], segment2->v[1], point1);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
@@ -828,7 +828,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return Segment_Contain_Point(segment1_v, (const CCTNum_t*)geo_data2);
+				return Segment_Contain_Point(segment1_v[0], segment1_v[1], (const CCTNum_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{

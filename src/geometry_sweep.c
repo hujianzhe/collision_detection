@@ -19,7 +19,7 @@ extern const unsigned int Segment_Indices_Default[2];
 extern const unsigned int Box_Edge_Indices[24];
 
 extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
-extern int Segment_Contain_Point(const CCTNum_t ls[2][3], const CCTNum_t p[3]);
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
 extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
@@ -91,22 +91,13 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 }
 
 static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	CCTNum_t edge[2][3];
-	unsigned int i, v_idx[2];
+	unsigned int i;
 	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		v_idx[0] = polygon->v_indices[i - 1];
-		v_idx[1] = polygon->v_indices[i];
-		mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
-		mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
-		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, p)) {
+		if (Segment_Contain_Point(polygon->v[polygon->v_indices[i - 1]], polygon->v[polygon->v_indices[i]], p)) {
 			return i - 1;
 		}
 	}
-	v_idx[0] = polygon->v_indices[--i];
-	v_idx[1] = polygon->v_indices[0];
-	mathVec3Copy(edge[0], polygon->v[v_idx[0]]);
-	mathVec3Copy(edge[1], polygon->v[v_idx[1]]);
-	return Segment_Contain_Point((const CCTNum_t(*)[3])edge, p) ? i : -1;
+	return Segment_Contain_Point(polygon->v[polygon->v_indices[--i]], polygon->v[polygon->v_indices[0]], p) ? i : -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1006,11 +997,8 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
-		CCTNum_t edge[2][3];
 		idx = src_info->idx * mesh->edge_stride;
-		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[idx++]]);
-		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[idx]]);
-		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, mesh->v[dst_info->idx])) {
+		if (Segment_Contain_Point(mesh->v[mesh->edge_indices[idx++]], mesh->v[mesh->edge_indices[idx]], mesh->v[dst_info->idx])) {
 			*dst_info = *src_info;
 			return 1;
 		}
@@ -1031,11 +1019,8 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	else if ((dst_info->hit_bits & CCT_SWEEP_BIT_SEGMENT) && (src_info->hit_bits & CCT_SWEEP_BIT_POINT)) {
-		CCTNum_t edge[2][3];
 		idx = dst_info->idx * mesh->edge_stride;
-		mathVec3Copy(edge[0], mesh->v[mesh->edge_indices[idx++]]);
-		mathVec3Copy(edge[1], mesh->v[mesh->edge_indices[idx]]);
-		if (Segment_Contain_Point((const CCTNum_t(*)[3])edge, mesh->v[src_info->idx])) {
+		if (Segment_Contain_Point(mesh->v[mesh->edge_indices[idx++]], mesh->v[mesh->edge_indices[idx]], mesh->v[src_info->idx])) {
 			return 0;
 		}
 		idx = mesh->edge_stride * dst_info->idx;
