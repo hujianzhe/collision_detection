@@ -91,17 +91,16 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 }
 
 static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	unsigned int i, v_idx[2];
-	for (i = 1; i < polygon->v_indices_cnt; ++i) {
-		v_idx[0] = polygon->v_indices[i - 1];
-		v_idx[1] = polygon->v_indices[i];
+	unsigned int i;
+	for (i = 0; i < polygon->edge_indices_cnt; ++i) {
+		unsigned int v_idx[2];
+		v_idx[0] = polygon->edge_indices[i++];
+		v_idx[1] = polygon->edge_indices[i];
 		if (Segment_Contain_Point(polygon->v[v_idx[0]], polygon->v[v_idx[1]], p)) {
-			return i - 1;
+			return i >> 1;
 		}
 	}
-	v_idx[0] = polygon->v_indices[--i];
-	v_idx[1] = polygon->v_indices[0];
-	return Segment_Contain_Point(polygon->v[v_idx[0]], polygon->v[v_idx[1]], p) ? i : -1;
+	return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1001,17 +1000,13 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	if ((dst_info->hit_bits & CCT_SWEEP_BIT_POINT) && (src_info->hit_bits & CCT_SWEEP_BIT_SEGMENT)) {
-		unsigned int edge_v_idx[2];
 		idx = src_info->idx * mesh->edge_stride;
-		edge_v_idx[0] = mesh->edge_indices[idx++];
-		edge_v_idx[1] = mesh->edge_indices[idx];
-		if (Segment_Contain_Point(mesh->v[edge_v_idx[0]], mesh->v[edge_v_idx[1]], mesh->v[dst_info->idx])) {
+		v_idx[0] = mesh->edge_indices[idx++];
+		v_idx[1] = mesh->edge_indices[idx];
+		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[dst_info->idx])) {
 			*dst_info = *src_info;
 			return 1;
 		}
-		idx = mesh->edge_stride * src_info->idx;
-		v_idx[0] = mesh->edge_indices[idx++];
-		v_idx[1] = mesh->edge_indices[idx];
 		v_idx[2] = dst_info->idx;
 		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
@@ -1026,16 +1021,12 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		return 1;
 	}
 	else if ((dst_info->hit_bits & CCT_SWEEP_BIT_SEGMENT) && (src_info->hit_bits & CCT_SWEEP_BIT_POINT)) {
-		unsigned int edge_v_idx[2];
 		idx = dst_info->idx * mesh->edge_stride;
-		edge_v_idx[0] = mesh->edge_indices[idx++];
-		edge_v_idx[1] = mesh->edge_indices[idx];
-		if (Segment_Contain_Point(mesh->v[edge_v_idx[0]], mesh->v[edge_v_idx[1]], mesh->v[src_info->idx])) {
-			return 0;
-		}
-		idx = mesh->edge_stride * dst_info->idx;
 		v_idx[0] = mesh->edge_indices[idx++];
 		v_idx[1] = mesh->edge_indices[idx];
+		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[src_info->idx])) {
+			return 0;
+		}
 		v_idx[2] = src_info->idx;
 		idx = geometry_indices_find_face_index(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
