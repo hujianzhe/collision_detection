@@ -125,11 +125,10 @@ void mathSegmentClosestPointTo_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3
 	CCTNum_t v[3], d;
 	mathVec3Sub(v, p, ls_v);
 	d = mathVec3Dot(v, lsdir);
+	mathVec3Copy(closest_p, ls_v);
 	if (d <= CCTNum(0.0)) {
-		mathVec3Copy(closest_p, ls_v);
 		return;
 	}
-	mathVec3Copy(closest_p, ls_v);
 	if (d > ls_len) {
 		mathVec3AddScalar(closest_p, lsdir, ls_len);
 	}
