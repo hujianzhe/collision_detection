@@ -465,10 +465,10 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 	return min_lensq <= CCTNum_sq(radius_sum);
 }
 
-int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls[2][3]) {
+int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) {
 	CCTNum_t lensq, radius_sq;
 	CCTNum_t closest_p[3];
-	mathSegmentClosestPointTo(ls, o, closest_p);
+	mathSegmentClosestPointTo(ls0, ls1, o, closest_p);
 	lensq = mathVec3DistanceSq(closest_p, o);
 	radius_sq = CCTNum_sq(radius);
 	if (lensq > radius_sq) {
@@ -543,10 +543,10 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 		return 0;
 	}
 	for (i = 0; i < polygon->edge_indices_cnt; ) {
-		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->edge_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->edge_indices[i++]]);
-		res = Sphere_Intersect_Segment(o, radius, (const CCTNum_t(*)[3])edge);
+		unsigned int v_idx[2];
+		v_idx[0] = polygon->edge_indices[i++];
+		v_idx[1] = polygon->edge_indices[i++];
+		res = Sphere_Intersect_Segment(o, radius, polygon->v[v_idx[0]], polygon->v[v_idx[1]]);
 		if (res) {
 			return res;
 		}
@@ -852,7 +852,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_SPHERE:
 			{
 				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
-				return Sphere_Intersect_Segment(sphere2->o, sphere2->radius, segment1_v);
+				return Sphere_Intersect_Segment(sphere2->o, sphere2->radius, segment1_v[0], segment1_v[1]);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -958,7 +958,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return Sphere_Intersect_Segment(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])segment2->v);
+				return Sphere_Intersect_Segment(sphere1->o, sphere1->radius, segment2->v[0], segment2->v[1]);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
