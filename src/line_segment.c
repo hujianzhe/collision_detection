@@ -15,7 +15,8 @@ CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], co
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);
 	dot = mathVec3Dot(vp, lsdir);
-	mathVec3AddScalar(mathVec3Copy(np, ls_v), lsdir, dot);
+	mathVec3Copy(np, ls_v);
+	mathVec3AddScalar(np, lsdir, dot);
 	return dot;
 }
 
@@ -118,6 +119,23 @@ void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], const CCTNum_t 
 		return;
 	}
 	mathVec3AddScalar(closest_p, lsdir, d);
+}
+
+void mathSegmentClosestPointTo_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3], d;
+	mathVec3Sub(v, p, ls_v);
+	d = mathVec3Dot(v, lsdir);
+	if (d <= CCTNum(0.0)) {
+		mathVec3Copy(closest_p, ls_v);
+		return;
+	}
+	mathVec3Copy(closest_p, ls_v);
+	if (d > ls_len) {
+		mathVec3AddScalar(closest_p, lsdir, ls_len);
+	}
+	else {
+		mathVec3AddScalar(closest_p, lsdir, d);
+	}
 }
 
 CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
