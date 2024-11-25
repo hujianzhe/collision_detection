@@ -217,12 +217,13 @@ void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
 		return;
 	}
 	for (i = 0; i < 2; ++i) {
-		CCTNum_t tri[3][3];
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Copy(tri[0], polygon->v[polygon->v_indices[0]]);
-		mathVec3Copy(tri[1], polygon->v[polygon->v_indices[1]]);
-		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
-		mathTriangleGetPoint((const CCTNum_t(*)[3])tri, CCTNum(0.5), CCTNum(0.5), p[i]);
+		mathTriangleGetPoint(
+			polygon->v[polygon->v_indices[0]],
+			polygon->v[polygon->v_indices[1]],
+			polygon->v[polygon->v_indices[2]],
+			CCTNum(0.5), CCTNum(0.5), p[i]
+		);
 	}
 	mathVec3Add(o, p[0], p[1]);
 	mathVec3MultiplyScalar(o, o, CCTNum(0.5));

@@ -19,19 +19,20 @@ static const unsigned int Triangle_Edge_Indices_Default[6] = { 0,1, 1,2, 2,0 };
 extern "C" {
 #endif
 
-void mathTriangleGetPoint(const CCTNum_t tri[3][3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) {
+void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) {
 	CCTNum_t v0[3], v1[3], v2[3];
-	mathVec3MultiplyScalar(v0, tri[0], CCTNum(1.0) - u - v);
-	mathVec3MultiplyScalar(v1, tri[1], u);
-	mathVec3MultiplyScalar(v2, tri[2], v);
-	mathVec3Add(p, mathVec3Add(p, v0, v1), v2);
+	mathVec3MultiplyScalar(v0, tri_p0, CCTNum(1.0) - u - v);
+	mathVec3MultiplyScalar(v1, tri_p1, u);
+	mathVec3MultiplyScalar(v2, tri_p2, v);
+	mathVec3Add(p, v0, v1);
+	mathVec3Add(p, p, v2);
 }
 
-int mathTrianglePointUV(const CCTNum_t tri[3][3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) {
+int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) {
 	CCTNum_t ap[3], ab[3], ac[3], N[3], dot;
-	mathVec3Sub(ap, p, tri[0]);
-	mathVec3Sub(ab, tri[1], tri[0]);
-	mathVec3Sub(ac, tri[2], tri[0]);
+	mathVec3Sub(ap, p, tri_p0);
+	mathVec3Sub(ab, tri_p1, tri_p0);
+	mathVec3Sub(ac, tri_p2, tri_p0);
 	mathVec3Cross(N, ab, ac);
 	dot = mathVec3Dot(N, ap);
 	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
@@ -61,10 +62,6 @@ int mathTrianglePointUV(const CCTNum_t tri[3][3], const CCTNum_t p[3], CCTNum_t*
 		}
 		return 1;
 	}
-}
-
-int mathTriangleHasPoint(const CCTNum_t tri[3][3], const CCTNum_t p[3]) {
-	return mathTrianglePointUV(tri, p, NULL, NULL);
 }
 
 void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon) {

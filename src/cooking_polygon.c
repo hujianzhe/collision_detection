@@ -36,18 +36,23 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	for (i = 0; i < polygon->tri_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
-		CCTNum_t triangle[3][3], triangle_diff_point[3];
+		const CCTNum_t* triangle[3] = {
+			polygon->v[polygon->tri_indices[i]],
+			polygon->v[polygon->tri_indices[i + 1]],
+			polygon->v[polygon->tri_indices[i + 2]]
+		};
+		const CCTNum_t* triangle_diff_point;
 		CCTNum_t v[3], N[3], dot;
 		for (j = 0; j < 3; ++j) {
-			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i]])) {
+			if (mathVec3Equal(tri_p[j], triangle[0])) {
 				++n;
 				continue;
 			}
-			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i + 1]])) {
+			if (mathVec3Equal(tri_p[j], triangle[1])) {
 				++n;
 				continue;
 			}
-			if (mathVec3Equal(tri_p[j], polygon->v[polygon->tri_indices[i + 2]])) {
+			if (mathVec3Equal(tri_p[j], triangle[2])) {
 				++n;
 				continue;
 			}
@@ -61,10 +66,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			/* no same edge */
 			continue;
 		}
-		mathVec3Copy(triangle[0], polygon->v[polygon->tri_indices[i]]);
-		mathVec3Copy(triangle[1], polygon->v[polygon->tri_indices[i+1]]);
-		mathVec3Copy(triangle[2], polygon->v[polygon->tri_indices[i+2]]);
-		if (mathTrianglePointUV((const CCTNum_t(*)[3])triangle, arg_diff_point, NULL, NULL)) {
+		if (mathTrianglePointUV(triangle[0], triangle[1], triangle[2], arg_diff_point, NULL, NULL)) {
 			/* eat triangle */
 			return 2;
 		}
@@ -82,6 +84,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			same_edge_v[0] = p0;
 			same_edge_v[1] = p1;
 		}
+		triangle_diff_point = NULL;
 		for (j = 0; j < 3; ++j) {
 			if (mathVec3Equal(triangle[j], same_edge_v[0])) {
 				continue;
@@ -89,18 +92,15 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			if (mathVec3Equal(triangle[j], same_edge_v[1])) {
 				continue;
 			}
-			mathVec3Copy(triangle_diff_point, triangle[j]);
+			triangle_diff_point = triangle[j];
 			break;
 		}
-		if (j >= 3) {
+		if (!triangle_diff_point) {
 			/* no possible */
 			return 0;
 		}
 		/* check be eat */
-		mathVec3Copy(triangle[0], p0);
-		mathVec3Copy(triangle[1], p1);
-		mathVec3Copy(triangle[2], p2);
-		if (mathTrianglePointUV((const CCTNum_t(*)[3])triangle, triangle_diff_point, NULL, NULL)) {
+		if (mathTrianglePointUV(p0, p1, p2, triangle_diff_point, NULL, NULL)) {
 			be_eat = 1;
 			continue;
 		}

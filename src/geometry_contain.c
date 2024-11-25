@@ -340,11 +340,12 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		return 0;
 	}
 	if (3 == polygon->v_indices_cnt) {
-		CCTNum_t tri[3][3];
-		mathVec3Copy(tri[0], polygon->v[polygon->v_indices[0]]);
-		mathVec3Copy(tri[1], polygon->v[polygon->v_indices[1]]);
-		mathVec3Copy(tri[2], polygon->v[polygon->v_indices[2]]);
-		return mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL);
+		return mathTrianglePointUV(
+			polygon->v[polygon->v_indices[0]],
+			polygon->v[polygon->v_indices[1]],
+			polygon->v[polygon->v_indices[2]],
+			p, NULL, NULL
+		);
 	}
 	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
 		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
@@ -376,11 +377,11 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 			return 0;
 		}
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
-			CCTNum_t tri[3][3];
-			mathVec3Copy(tri[0], polygon->v[polygon->tri_indices[i++]]);
-			mathVec3Copy(tri[1], polygon->v[polygon->tri_indices[i++]]);
-			mathVec3Copy(tri[2], polygon->v[polygon->tri_indices[i++]]);
-			if (mathTrianglePointUV((const CCTNum_t(*)[3])tri, p, NULL, NULL)) {
+			unsigned int v_idx[3];
+			v_idx[0] = polygon->tri_indices[i++];
+			v_idx[1] = polygon->tri_indices[i++];
+			v_idx[2] = polygon->tri_indices[i++];
+			if (mathTrianglePointUV(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], p, NULL, NULL)) {
 				return 1;
 			}
 		}

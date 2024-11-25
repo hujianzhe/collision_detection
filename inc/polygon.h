@@ -11,9 +11,8 @@
 extern "C" {
 #endif
 
-__declspec_dll void mathTriangleGetPoint(const CCTNum_t tri[3][3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]);
-__declspec_dll int mathTrianglePointUV(const CCTNum_t tri[3][3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v);
-__declspec_dll int mathTriangleHasPoint(const CCTNum_t tri[3][3], const CCTNum_t p[3]);
+__declspec_dll void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]);
+__declspec_dll int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v);
 __declspec_dll void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon);
 
 __declspec_dll int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon);
