@@ -49,6 +49,39 @@ void mathSegmentFromTwoVertex(GeometrySegment_t* segment, const CCTNum_t v0[3], 
 	mathVec3MultiplyScalar(segment->o, segment->o, CCTNum(0.5));
 }
 
+int mathPointProjectionSegment(const CCTNum_t p[3], const CCTNum_t ls0[3], const CCTNum_t ls1[3], CCTNum_t np[3], CCTNum_t epsilon) {
+	int inside;
+	CCTNum_t ls_v[3], vp[3];
+	CCTNum_t lensq, dot;
+	mathVec3Sub(vp, p, ls0);
+	mathVec3Sub(ls_v, ls1, ls0);
+	dot = mathVec3Dot(vp, ls_v);
+	if (dot < -epsilon) {
+		inside = 0;
+		if (np) {
+			lensq = mathVec3LenSq(ls_v);
+		}
+		goto cal_np;
+	}
+	lensq = mathVec3LenSq(ls_v);
+	if (dot > lensq + epsilon) {
+		inside = 0;
+		goto cal_np;
+	}
+	inside = 1;
+cal_np:
+	if (np) {
+		CCTNum_t inv_len = CCTNum(1.0) / CCTNum_sqrt(lensq);
+		ls_v[0] *= inv_len;
+		ls_v[1] *= inv_len;
+		ls_v[2] *= inv_len;
+		dot = mathVec3Dot(vp, ls_v);
+		mathVec3Copy(np, ls0);
+		mathVec3AddScalar(np, ls_v, dot);
+	}
+	return inside;
+}
+
 CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
 	CCTNum_t lensq, min_lensq, v[3];
 
