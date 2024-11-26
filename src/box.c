@@ -105,6 +105,7 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 	return pi;
 }
 
+/*
 void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
 	CCTNum_t AX[3][3];
 	mathVec3MultiplyScalar(AX[0], axis[0], half[0]);
@@ -151,6 +152,7 @@ void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t
 	mathVec3Add(v[7], v[7], AX[1]);
 	mathVec3Add(v[7], v[7], AX[2]);
 }
+*/
 
 CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CCTNum_t normal[3]) {
 	if (face_idx < 2) {
