@@ -89,17 +89,6 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 	}
 
 	dot = mathVec3Dot(c, ca_N);
-	/*
-	if (CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON) {
-		if (mathVec3Dot(a, c) <= CCT_EPSILON) {
-			return 1;
-		}
-		mathVec3Copy(s->p[1], c);
-		s->cnt = 2;
-		mathVec3Negate(s->dir, ca_N);
-		return 0;
-	}
-	*/
 	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[1], c);
 		s->cnt = 2;
@@ -108,18 +97,6 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 	}
 
 	dot = mathVec3Dot(c, cb_N);
-	/*
-	if (CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON) {
-		if (mathVec3Dot(b, c) <= CCT_EPSILON) {
-			return 1;
-		}
-		mathVec3Copy(s->p[0], b);
-		mathVec3Copy(s->p[1], c);
-		s->cnt = 2;
-		mathVec3Negate(s->dir, cb_N);
-		return 0;
-	}
-	*/
 	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[0], b);
 		mathVec3Copy(s->p[1], c);
