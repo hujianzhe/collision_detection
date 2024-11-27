@@ -90,18 +90,26 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 
 	dot = mathVec3Dot(c, ca_N);
 	if (dot > CCTNum(0.0)) {
+		mathVec3Cross(s->dir, c, ca);
+		mathVec3Cross(s->dir, s->dir, ca);
+		if (mathVec3Dot(s->dir, c) > CCTNum(0.0)) {
+			mathVec3Negate(s->dir, s->dir);
+		}
 		mathVec3Copy(s->p[1], c);
 		s->cnt = 2;
-		mathVec3Negate(s->dir, ca_N);
 		return 0;
 	}
 
 	dot = mathVec3Dot(c, cb_N);
 	if (dot > CCTNum(0.0)) {
+		mathVec3Cross(s->dir, c, cb);
+		mathVec3Cross(s->dir, s->dir, cb);
+		if (mathVec3Dot(s->dir, c) > CCTNum(0.0)) {
+			mathVec3Negate(s->dir, s->dir);
+		}
 		mathVec3Copy(s->p[0], b);
 		mathVec3Copy(s->p[1], c);
 		s->cnt = 2;
-		mathVec3Negate(s->dir, cb_N);
 		return 0;
 	}
 
