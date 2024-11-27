@@ -128,7 +128,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 		mathVec3Negate(N, N);
 	}
 	dot = mathVec3Dot(d, N);
-	if (dot > CCT_EPSILON) {
+	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[2], d);
 		s->cnt = 3;
 		mathVec3Negate(s->dir, N);
@@ -143,7 +143,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 		mathVec3Negate(N, N);
 	}
 	dot = mathVec3Dot(d, N);
-	if (dot > CCT_EPSILON) {
+	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[0], b);
 		mathVec3Copy(s->p[1], c);
 		mathVec3Copy(s->p[2], d);
@@ -160,7 +160,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 		mathVec3Negate(N, N);
 	}
 	dot = mathVec3Dot(d, N);
-	if (dot > CCT_EPSILON) {
+	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[1], c);
 		mathVec3Copy(s->p[2], d);
 		s->cnt = 3;
