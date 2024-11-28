@@ -30,16 +30,15 @@ void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3
 }
 
 CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]) {
-	CCTNum_t v[3], cos_theta, d;
+	CCTNum_t v[3], dot, lensq;
 	mathPointProjectionLine(lsv1, lsv2, lsdir2, v);
 	if (mathVec3Equal(lsv1, v)) {
 		return CCTNum(0.0);
 	}
 	mathVec3Sub(v, v, lsv1);
-	d = mathVec3Normalized(v, v);
-	cos_theta = mathVec3Dot(lsdir1, v);
-	d /= cos_theta;
-	return d;
+	dot = mathVec3Dot(lsdir1, v);
+	lensq = mathVec3LenSq(v);
+	return lensq / dot;
 }
 
 void mathSegmentFromTwoVertex(GeometrySegment_t* segment, const CCTNum_t v0[3], const CCTNum_t v1[3]) {
