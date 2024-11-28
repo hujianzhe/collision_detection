@@ -140,22 +140,21 @@ CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum
 }
 
 void mathSegmentClosestPointTo(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t lsdir[3], v[3], lslen, dot;
-	mathVec3Sub(v, p, ls0);
-	mathVec3Sub(lsdir, ls1, ls0);
-	dot = mathVec3Dot(v, lsdir);
+	CCTNum_t ls_v[3], vp[3], lensq, dot;
+	mathVec3Sub(vp, p, ls0);
+	mathVec3Sub(ls_v, ls1, ls0);
+	dot = mathVec3Dot(vp, ls_v);
 	if (dot <= CCTNum(0.0)) {
 		mathVec3Copy(closest_p, ls0);
 		return;
 	}
-	lslen = mathVec3Normalized(lsdir, lsdir);
-	dot /= lslen;
-	if (dot >= lslen) {
+	lensq = mathVec3LenSq(ls_v);
+	if (dot >= lensq) {
 		mathVec3Copy(closest_p, ls1);
 		return;
 	}
 	mathVec3Copy(closest_p, ls0);
-	mathVec3AddScalar(closest_p, lsdir, dot);
+	mathVec3AddScalar(closest_p, ls_v, dot / lensq);
 }
 
 void mathSegmentClosestPointTo_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
