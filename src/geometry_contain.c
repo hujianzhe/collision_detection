@@ -125,15 +125,15 @@ int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
 	CCTNum_t op[3], dot;
 	mathVec3Sub(op, p, obb->o);
 	dot = mathVec3Dot(op, obb->axis[0]);
-	if (dot > obb->half[0] || dot < -obb->half[0]) {
+	if (dot > obb->half[0] + CCT_EPSILON || dot < -obb->half[0] - CCT_EPSILON) {
 		return 0;
 	}
 	dot = mathVec3Dot(op, obb->axis[1]);
-	if (dot > obb->half[1] || dot < -obb->half[1]) {
+	if (dot > obb->half[1] + CCT_EPSILON || dot < -obb->half[1] - CCT_EPSILON) {
 		return 0;
 	}
 	dot = mathVec3Dot(op, obb->axis[2]);
-	if (dot > obb->half[2] || dot < -obb->half[2]) {
+	if (dot > obb->half[2] + CCT_EPSILON || dot < -obb->half[2] - CCT_EPSILON) {
 		return 0;
 	}
 	return 1;
