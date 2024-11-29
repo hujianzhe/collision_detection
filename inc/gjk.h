@@ -18,15 +18,27 @@ typedef struct GeometryConvexGJK_t {
 
 typedef struct GeometrySimplexGJK_t {
 	CCTNum_t p[4][3];
-	CCTNum_t dir[3];
 	unsigned int cnt;
 } GeometrySimplexGJK_t;
+
+typedef struct GeometryGJKIterator_t {
+	/* read only */
+	const GeometryConvexGJK_t* geo1;
+	const GeometryConvexGJK_t* geo2;
+	CCTNum_t dir[3];
+	GeometrySimplexGJK_t simplex;
+	int overlap;
+	/* private */
+	unsigned int left_iter_times_;
+} GeometryGJKIterator_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], GeometrySimplexGJK_t* s);
+__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometrySimplexGJK_t* s);
+__declspec_dll void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]);
+__declspec_dll int mathGJKNext(GeometryGJKIterator_t* iter);
 
 #ifdef __cplusplus
 }

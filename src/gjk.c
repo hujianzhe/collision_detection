@@ -65,7 +65,7 @@ static int simplex2(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t dir[3]) {
 	return 0;
 }
 
-static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], GeometrySimplexGJK_t* s) {
+static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 	CCTNum_t plane_N[3], ca[3], cb[3], ca_N[3], cb_N[3];
 	CCTNum_t dot;
 
@@ -84,10 +84,10 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 
 	dot = mathVec3Dot(c, ca_N);
 	if (dot > CCTNum(0.0)) {
-		mathVec3Cross(s->dir, c, ca);
-		mathVec3Cross(s->dir, s->dir, ca);
-		if (mathVec3Dot(s->dir, c) > CCTNum(0.0)) {
-			mathVec3Negate(s->dir, s->dir);
+		mathVec3Cross(dir, c, ca);
+		mathVec3Cross(dir, dir, ca);
+		if (mathVec3Dot(dir, c) > CCTNum(0.0)) {
+			mathVec3Negate(dir, dir);
 		}
 		mathVec3Copy(s->p[1], c);
 		s->cnt = 2;
@@ -96,10 +96,10 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 
 	dot = mathVec3Dot(c, cb_N);
 	if (dot > CCTNum(0.0)) {
-		mathVec3Cross(s->dir, c, cb);
-		mathVec3Cross(s->dir, s->dir, cb);
-		if (mathVec3Dot(s->dir, c) > CCTNum(0.0)) {
-			mathVec3Negate(s->dir, s->dir);
+		mathVec3Cross(dir, c, cb);
+		mathVec3Cross(dir, dir, cb);
+		if (mathVec3Dot(dir, c) > CCTNum(0.0)) {
+			mathVec3Negate(dir, dir);
 		}
 		mathVec3Copy(s->p[0], b);
 		mathVec3Copy(s->p[1], c);
@@ -109,17 +109,17 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 
 	dot = mathVec3Dot(c, plane_N);
 	if (dot > CCT_EPSILON) {
-		mathVec3Negate(s->dir, plane_N);
+		mathVec3Negate(dir, plane_N);
 		return 0;
 	}
 	if (dot < CCT_EPSILON_NEGATE) {
-		mathVec3Copy(s->dir, plane_N);
+		mathVec3Copy(dir, plane_N);
 		return 0;
 	}
 	return 1;
 }
 
-static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t d[3], GeometrySimplexGJK_t* s) {
+static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t d[3], GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 	CCTNum_t N[3], e1[3], e2[3], v[3], dot;
 
 	mathVec3Sub(e1, a, d);
@@ -133,7 +133,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 	if (dot > CCTNum(0.0)) {
 		mathVec3Copy(s->p[2], d);
 		s->cnt = 3;
-		mathVec3Negate(s->dir, N);
+		mathVec3Negate(dir, N);
 		return 0;
 	}
 
@@ -150,7 +150,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 		mathVec3Copy(s->p[1], c);
 		mathVec3Copy(s->p[2], d);
 		s->cnt = 3;
-		mathVec3Negate(s->dir, N);
+		mathVec3Negate(dir, N);
 		return 0;
 	}
 
@@ -166,7 +166,7 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 		mathVec3Copy(s->p[1], c);
 		mathVec3Copy(s->p[2], d);
 		s->cnt = 3;
-		mathVec3Negate(s->dir, N);
+		mathVec3Negate(dir, N);
 		return 0;
 	}
 
@@ -181,43 +181,65 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 extern "C" {
 #endif
 
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], GeometrySimplexGJK_t* s) {
-	unsigned int max_iterator_times = (geo1->v_cnt > geo2->v_cnt ? geo1->v_cnt : geo2->v_cnt);
-	GeometrySimplexGJK_t tmp_s;
-	if (!s) {
-		s = &tmp_s;
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometrySimplexGJK_t* s) {
+	GeometryGJKIterator_t iter;
+	mathGJKBegin(&iter, geo1, geo2, init_dir);
+	while (mathGJKNext(&iter));
+	if (s) {
+		*s = iter.simplex;
 	}
+	return iter.overlap;
+}
 
-	if (!dir || mathVec3IsZero(dir)) {
-		mathVec3Set(s->dir, CCTNums_3(1.0, 0.0, 0.0));
-		dir = s->dir;
+void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) {
+	GeometrySimplexGJK_t* s = &iter->simplex;
+	iter->geo1 = geo1;
+	iter->geo2 = geo2;
+	if (!init_dir || mathVec3IsZero(init_dir)) {
+		mathVec3Set(iter->dir, CCTNums_3(1.0, 0.0, 0.0));
 	}
-	gjk_sub_point(geo1, geo2, dir, s->p[0]);
+	else {
+		mathVec3Copy(iter->dir, init_dir);
+	}
+	gjk_sub_point(geo1, geo2, iter->dir, s->p[0]);
 	s->cnt = 1;
-	mathVec3Negate(s->dir, s->p[0]);
-	while (max_iterator_times--) {
-		gjk_sub_point(geo1, geo2, s->dir, s->p[s->cnt]);
-		if (mathVec3Dot(s->p[s->cnt], s->dir) < CCTNum(0.0)) {
+	mathVec3Negate(iter->dir, s->p[0]);
+	iter->overlap = 0;
+	iter->left_iter_times_ = (geo1->v_cnt > geo2->v_cnt ? geo1->v_cnt : geo2->v_cnt);
+}
+
+int mathGJKNext(GeometryGJKIterator_t* iter) {
+	GeometrySimplexGJK_t* s;
+	if (iter->left_iter_times_ <= 0) {
+		return 0;
+	}
+	iter->left_iter_times_--;
+	s = &iter->simplex;
+	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
+	if (mathVec3Dot(s->p[s->cnt], iter->dir) < CCTNum(0.0)) {
+		iter->overlap = 0;
+		return 0;
+	}
+	s->cnt++;
+	if (2 == s->cnt) {
+		if (simplex2(s->p[0], s->p[1], iter->dir)) {
+			iter->overlap = 1;
 			return 0;
 		}
-		s->cnt++;
-		if (2 == s->cnt) {
-			if (simplex2(s->p[0], s->p[1], s->dir)) {
-				return 1;
-			}
-		}
-		else if (3 == s->cnt) {
-			if (simplex3(s->p[0], s->p[1], s->p[2], s)) {
-				return 1;
-			}
-		}
-		else if (4 == s->cnt) {
-			if (simplex4(s->p[0], s->p[1], s->p[2], s->p[3], s)) {
-				return 1;
-			}
+	}
+	else if (3 == s->cnt) {
+		if (simplex3(s->p[0], s->p[1], s->p[2], s, iter->dir)) {
+			iter->overlap = 1;
+			return 0;
 		}
 	}
-	return 0;
+	else if (4 == s->cnt) {
+		if (simplex4(s->p[0], s->p[1], s->p[2], s->p[3], s, iter->dir)) {
+			iter->overlap = 1;
+			return 0;
+		}
+	}
+	return 1;
 }
 
 #ifdef __cplusplus
