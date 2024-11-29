@@ -216,7 +216,7 @@ int mathGJKNext(GeometryGJKIterator_t* iter) {
 	iter->left_iter_times_--;
 	s = &iter->simplex;
 	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
-	if (mathVec3Dot(s->p[s->cnt], iter->dir) < CCTNum(0.0)) {
+	if (mathVec3Dot(s->p[s->cnt], iter->dir) < CCT_EPSILON_NEGATE) {
 		iter->overlap = 0;
 		return 0;
 	}
