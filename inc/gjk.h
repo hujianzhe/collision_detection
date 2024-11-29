@@ -36,7 +36,7 @@ typedef struct GeometryGJKIterator_t {
 extern "C" {
 #endif
 
-__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometrySimplexGJK_t* s);
+__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometryGJKIterator_t* s);
 __declspec_dll void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]);
 __declspec_dll int mathGJKNext(GeometryGJKIterator_t* iter);
 

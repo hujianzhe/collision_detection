@@ -181,14 +181,14 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 extern "C" {
 #endif
 
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometrySimplexGJK_t* s) {
-	GeometryGJKIterator_t iter;
-	mathGJKBegin(&iter, geo1, geo2, init_dir);
-	while (mathGJKNext(&iter));
-	if (s) {
-		*s = iter.simplex;
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometryGJKIterator_t* iter) {
+	GeometryGJKIterator_t tmp_iter;
+	if (!iter) {
+		iter = &tmp_iter;
 	}
-	return iter.overlap;
+	mathGJKBegin(iter, geo1, geo2, init_dir);
+	while (mathGJKNext(iter));
+	return iter->overlap;
 }
 
 void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) {
