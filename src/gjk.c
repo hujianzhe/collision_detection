@@ -181,8 +181,8 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 extern "C" {
 #endif
 
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometryGJKIterator_t* iter) {
-	GeometryGJKIterator_t tmp_iter;
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometryIteratorGJK_t* iter) {
+	GeometryIteratorGJK_t tmp_iter;
 	if (!iter) {
 		iter = &tmp_iter;
 	}
@@ -191,7 +191,7 @@ int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, co
 	return iter->overlap;
 }
 
-void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) {
+void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) {
 	GeometrySimplexGJK_t* s = &iter->simplex;
 	iter->geo1 = geo1;
 	iter->geo2 = geo2;
@@ -208,7 +208,7 @@ void mathGJKBegin(GeometryGJKIterator_t* iter, const GeometryConvexGJK_t* geo1, 
 	iter->left_iter_times_ = (geo1->v_cnt > geo2->v_cnt ? geo1->v_cnt : geo2->v_cnt);
 }
 
-int mathGJKNext(GeometryGJKIterator_t* iter) {
+int mathGJKNext(GeometryIteratorGJK_t* iter) {
 	GeometrySimplexGJK_t* s;
 	if (iter->left_iter_times_ <= 0) {
 		return 0;
