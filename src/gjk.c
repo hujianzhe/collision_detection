@@ -51,12 +51,6 @@ static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexG
 	mathVec3Sub(sub_p, p1, p2);
 }
 
-typedef struct Simplex_t {
-	CCTNum_t p[4][3];
-	CCTNum_t dir[3];
-	unsigned int cnt;
-} Simplex_t;
-
 static int simplex2(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t dir[3]) {
 	CCTNum_t N[3], ls_v[3];
 	mathVec3Cross(N, a, b);
@@ -71,7 +65,7 @@ static int simplex2(const CCTNum_t a[3], const CCTNum_t b[3], CCTNum_t dir[3]) {
 	return 0;
 }
 
-static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], Simplex_t* s) {
+static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], GeometrySimplexGJK_t* s) {
 	CCTNum_t plane_N[3], ca[3], cb[3], ca_N[3], cb_N[3];
 	CCTNum_t dot;
 
@@ -125,7 +119,7 @@ static int simplex3(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 	return 1;
 }
 
-static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t d[3], Simplex_t* s) {
+static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t d[3], GeometrySimplexGJK_t* s) {
 	CCTNum_t N[3], e1[3], e2[3], v[3], dot;
 
 	mathVec3Sub(e1, a, d);
@@ -187,35 +181,38 @@ static int simplex4(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3
 extern "C" {
 #endif
 
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3]) {
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], GeometrySimplexGJK_t* s) {
 	unsigned int max_iterator_times = (geo1->v_cnt > geo2->v_cnt ? geo1->v_cnt : geo2->v_cnt);
-	Simplex_t s;
+	GeometrySimplexGJK_t tmp_s;
+	if (!s) {
+		s = &tmp_s;
+	}
 
 	if (!dir || mathVec3IsZero(dir)) {
-		mathVec3Set(s.dir, CCTNums_3(1.0, 0.0, 0.0));
-		dir = s.dir;
+		mathVec3Set(s->dir, CCTNums_3(1.0, 0.0, 0.0));
+		dir = s->dir;
 	}
-	gjk_sub_point(geo1, geo2, dir, s.p[0]);
-	s.cnt = 1;
-	mathVec3Negate(s.dir, s.p[0]);
+	gjk_sub_point(geo1, geo2, dir, s->p[0]);
+	s->cnt = 1;
+	mathVec3Negate(s->dir, s->p[0]);
 	while (max_iterator_times--) {
-		gjk_sub_point(geo1, geo2, s.dir, s.p[s.cnt]);
-		if (mathVec3Dot(s.p[s.cnt], s.dir) < CCTNum(0.0)) {
+		gjk_sub_point(geo1, geo2, s->dir, s->p[s->cnt]);
+		if (mathVec3Dot(s->p[s->cnt], s->dir) < CCTNum(0.0)) {
 			return 0;
 		}
-		s.cnt++;
-		if (2 == s.cnt) {
-			if (simplex2(s.p[0], s.p[1], s.dir)) {
+		s->cnt++;
+		if (2 == s->cnt) {
+			if (simplex2(s->p[0], s->p[1], s->dir)) {
 				return 1;
 			}
 		}
-		else if (3 == s.cnt) {
-			if (simplex3(s.p[0], s.p[1], s.p[2], &s)) {
+		else if (3 == s->cnt) {
+			if (simplex3(s->p[0], s->p[1], s->p[2], s)) {
 				return 1;
 			}
 		}
-		else if (4 == s.cnt) {
-			if (simplex4(s.p[0], s.p[1], s.p[2], s.p[3], &s)) {
+		else if (4 == s->cnt) {
+			if (simplex4(s->p[0], s->p[1], s->p[2], s->p[3], s)) {
 				return 1;
 			}
 		}
