@@ -11,6 +11,7 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
+#include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
 extern const unsigned int Box_Vertice_Indices_Default[8];
@@ -557,7 +558,7 @@ static int Capsule_Contain_VerticeIndices(const GeometryCapsule_t* capsule, cons
 
 static int Capsule_Contain_Sphere(const GeometryCapsule_t* capsule, const CCTNum_t o[3], CCTNum_t r) {
 	CCTNum_t closest_p[3];
-	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 	return Sphere_Contain_Sphere(closest_p, capsule->radius, o, r);
 }
 

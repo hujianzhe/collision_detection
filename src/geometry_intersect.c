@@ -11,6 +11,7 @@
 #include "../inc/mesh.h"
 #include "../inc/vertex.h"
 #include "../inc/capsule.h"
+#include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
 extern const CCTNum_t AABB_Axis[3][3];
@@ -468,7 +469,7 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) {
 	CCTNum_t lensq, radius_sq;
 	CCTNum_t closest_p[3];
-	mathSegmentClosestPointTo(ls0, ls1, o, closest_p);
+	mathSegmentClosestPoint(ls0, ls1, o, closest_p);
 	lensq = mathVec3DistanceSq(closest_p, o);
 	radius_sq = CCTNum_sq(radius);
 	if (lensq > radius_sq) {
@@ -483,7 +484,7 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const GeometryCapsule_t* capsule) {
 	CCTNum_t lensq, radius_sq;
 	CCTNum_t closest_p[3];
-	mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 	lensq = mathVec3DistanceSq(o, closest_p);
 	radius_sq = CCTNum_sq(radius + capsule->radius);
 	if (lensq > radius_sq) {
@@ -570,7 +571,7 @@ int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const Geom
 
 int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) {
 	CCTNum_t v[3];
-	mathOBBClosestPointTo(obb, o, v);
+	mathOBBClosestPoint(obb, o, v);
 	mathVec3Sub(v, o, v);
 	return mathVec3LenSq(v) <= CCTNum_sq(radius);
 }
@@ -595,7 +596,7 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 
 static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3]) {
 	CCTNum_t closest_v[3];
-	mathAABBClosestPointTo(aabb_o, aabb_half, sp_o, closest_v);
+	mathAABBClosestPoint(aabb_o, aabb_half, sp_o, closest_v);
 	mathVec3Sub(closest_v, closest_v, sp_o);
 	return mathVec3LenSq(closest_v) <= CCTNum_sq(sp_radius);
 }

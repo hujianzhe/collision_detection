@@ -11,6 +11,7 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
+#include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
 extern const CCTNum_t AABB_Axis[3][3];
@@ -2250,7 +2251,7 @@ static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radi
 	GeometryCapsule_t new_capsule;
 	if (check_intersect) {
 		CCTNum_t closest_p[3], lensq, radius_sum = radius + capsule->radius;
-		mathSegmentClosestPointTo_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
+		mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 		lensq = mathVec3DistanceSq(closest_p, o);
 		if (lensq <= CCTNum_sq(radius_sum)) {
 			set_intersect(result);

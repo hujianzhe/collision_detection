@@ -9,6 +9,7 @@
 #include "aabb.h"
 #include "collision.h"
 #include "geometry_api.h"
+#include "geometry_closest.h"
 #include "gjk.h"
 #include "line_segment.h"
 #include "list.h"

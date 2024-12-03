@@ -142,24 +142,6 @@ CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int idx, CCTNum_t v[3
 	return NULL;
 }
 
-void mathOBBClosestPointTo(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	int i;
-	CCTNum_t v[3];
-
-	mathVec3Sub(v, p, obb->o);
-	mathVec3Copy(closest_p, obb->o);
-	for (i = 0; i < 3; ++i) {
-		CCTNum_t d = mathVec3Dot(v, obb->axis[i]);
-		if (d > obb->half[i]) {
-			d = obb->half[i];
-		}
-		else if (d < -obb->half[i]) {
-			d = -obb->half[i];
-		}
-		mathVec3AddScalar(closest_p, obb->axis[i], d);
-	}
-}
-
 #ifdef __cplusplus
 }
 #endif
