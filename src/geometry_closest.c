@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
+void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
 	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
 	mathVec3Sub(v, lsv2, lsv1);
 	mathVec3Cross(n, lsdir1, lsdir2);
@@ -21,7 +21,7 @@ void mathLineClosestLineOpposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3
 	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
-CCTNum_t mathSegmentSegmentClosestIndices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
+CCTNum_t mathSegmentClosestSegment_indices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
 	CCTNum_t lensq, min_lensq, v[3];
 
 	mathVec3Sub(v, ls1[0], ls2[0]);
@@ -108,7 +108,7 @@ void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3],
 	}
 }
 
-CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
+CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
 	CCTNum_t v[3], N[3], d;
 	CCTNum_t ls1_dir_temp[3], ls2_dir_temp[3];
 	if (!ls1_dir) {
@@ -184,7 +184,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 				return mathVec3LenSq(v) - CCTNum_sq(d);
 			}
 		}
-		return mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
+		return mathSegmentClosestSegment_indices(ls1, ls2, &v_idx[0], &v_idx[1]);
 	}
 	else {
 		int i, lensq_set, set_cnt;
@@ -199,7 +199,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
 			/* opposite */
 			CCTNum_t ls1_dir_d, ls2_dir_d;
-			mathLineClosestLineOpposite(ls1[0], ls1_dir, ls2[0], ls2_dir, &ls1_dir_d, &ls2_dir_d);
+			mathLineClosestLine_opposite(ls1[0], ls1_dir, ls2[0], ls2_dir, &ls1_dir_d, &ls2_dir_d);
 			if ((ls1_dir_d <= ls1_len && ls1_dir_d >= CCTNum(0.0)) &&
 				(ls2_dir_d <= ls2_len && ls2_dir_d >= CCTNum(0.0)))
 			{
@@ -271,7 +271,7 @@ CCTNum_t mathSegmentClosestSegmentDistanceSq(const CCTNum_t ls1[2][3], const CCT
 		}
 		if (set_cnt < 2) {
 			unsigned int v_idx[2];
-			CCTNum_t lensq2 = mathSegmentSegmentClosestIndices(ls1, ls2, &v_idx[0], &v_idx[1]);
+			CCTNum_t lensq2 = mathSegmentClosestSegment_indices(ls1, ls2, &v_idx[0], &v_idx[1]);
 			if (lensq_set && lensq < lensq2) {
 				return lensq;
 			}

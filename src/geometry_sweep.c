@@ -410,7 +410,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 			if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
 				CCTNum_t closest_p[2][3];
 				CCTNum_t od, cd, lensq, radius_sq;
-				mathLineClosestLineOpposite(o, dir, capsule->o, capsule->axis, &od, &cd);
+				mathLineClosestLine_opposite(o, dir, capsule->o, capsule->axis, &od, &cd);
 				if (od < CCTNum(0.0)) {
 					return NULL;
 				}
@@ -530,7 +530,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				return NULL;
 			}
 			/* calculate result */
-			mathSegmentSegmentClosestIndices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
+			mathSegmentClosestSegment_indices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
 			mathVec3Sub(N, ls2[closest_ls2_indice], ls1[closest_ls1_indice]);
 			d = mathVec3Dot(N, dir);
 			if (d <= CCTNum(0.0)) {
@@ -1402,7 +1402,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	}
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
 	if (check_intersect) {
-		CCTNum_t lensq = mathSegmentClosestSegmentDistanceSq(
+		CCTNum_t lensq = mathSegmentClosestSegment_lensq(
 			ls, ls_dir, ls_len,
 			(const CCTNum_t(*)[3])axis_edge, capsule->axis, capsule->half + capsule->half
 		);
@@ -1432,7 +1432,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		mathVec3Cross(v, v, capsule->axis);
 		if (mathVec3IsZero(v)) {
 			unsigned int v_idx, s_idx;
-			mathSegmentSegmentClosestIndices(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
+			mathSegmentClosestSegment_indices(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
 			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
 				return NULL;
 			}
@@ -1552,7 +1552,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		dot = mathVec3Dot(v, N);
 		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 			CCTNum_t temp_ls[2][3];
-			mathLineClosestLineOpposite(capsule->o, capsule->axis, ls[0], ls_dir, &d[0], &d[1]);
+			mathLineClosestLine_opposite(capsule->o, capsule->axis, ls[0], ls_dir, &d[0], &d[1]);
 			mathVec3Copy(temp_ls[0], capsule->o);
 			mathVec3AddScalar(temp_ls[0], capsule->axis, d[0]);
 			mathVec3Copy(temp_ls[1], ls[0]);

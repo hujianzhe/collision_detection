@@ -256,7 +256,7 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
 	CCTNum_t edge[2][3], min_lensq;
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
-	min_lensq = mathSegmentClosestSegmentDistanceSq(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
+	min_lensq = mathSegmentClosestSegment_lensq(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
 	return min_lensq <= CCTNum_sq(capsule->radius);
 }
 
@@ -419,7 +419,7 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 		CCTNum_t edge[2][3], lensq;
 		mathVec3Copy(edge[0], polygon->v[polygon->edge_indices[i++]]);
 		mathVec3Copy(edge[1], polygon->v[polygon->edge_indices[i++]]);
-		lensq = mathSegmentClosestSegmentDistanceSq(
+		lensq = mathSegmentClosestSegment_lensq(
 			(const CCTNum_t(*)[3])edge, NULL, 0,
 			(const CCTNum_t(*)[3])capsule_extra->axis_edge, capsule->axis, capsule_extra->axis_len
 		);
@@ -458,7 +458,7 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 	CCTNum_t c1_edge[2][3], c2_edge[2][3], min_lensq, radius_sum;
 	mathTwoVertexFromCenterHalf(c1->o, c1->axis, c1->half, c1_edge[0], c1_edge[1]);
 	mathTwoVertexFromCenterHalf(c2->o, c2->axis, c2->half, c2_edge[0], c2_edge[1]);
-	min_lensq = mathSegmentClosestSegmentDistanceSq(
+	min_lensq = mathSegmentClosestSegment_lensq(
 		(const CCTNum_t(*)[3])c1_edge, c1->axis, c1->half + c1->half,
 		(const CCTNum_t(*)[3])c2_edge, c2->axis, c2->half + c2->half
 	);
