@@ -317,6 +317,22 @@ void mathOBBClosestPoint(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t
 	}
 }
 
+void mathSphereClosestPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3];
+	mathVec3Sub(v, p, o);
+	mathVec3Normalized(v, v);
+	mathVec3Copy(closest_p, o);
+	mathVec3AddScalar(closest_p, v, radius);
+}
+
+void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3];
+	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, p, closest_p);
+	mathVec3Sub(v, p, closest_p);
+	mathVec3Normalized(v, v);
+	mathVec3AddScalar(closest_p, v, capsule->radius);
+}
+
 #ifdef	__cplusplus
 }
 #endif
