@@ -11,27 +11,6 @@
 
 extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
-static void edge_indices_closest_point(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t min_d;
-	unsigned int i, v_idx[2];
-	v_idx[0] = edge_indices[0];
-	v_idx[1] = edge_indices[1];
-	mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, closest_p);
-	min_d = mathVec3DistanceSq(p, closest_p);
-	for (i = 2; i < edge_indices_cnt; ) {
-		CCTNum_t cp[3], d;
-		v_idx[0] = edge_indices[i++];
-		v_idx[1] = edge_indices[i++];
-		mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, cp);
-		d = mathVec3DistanceSq(p, cp);
-		if (min_d <= d) {
-			continue;
-		}
-		min_d = d;
-		mathVec3Copy(closest_p, cp);
-	}
-}
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -129,6 +108,27 @@ void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3],
 	}
 	else {
 		mathVec3AddScalar(closest_p, lsdir, d);
+	}
+}
+
+void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t min_d;
+	unsigned int i, v_idx[2];
+	v_idx[0] = edge_indices[0];
+	v_idx[1] = edge_indices[1];
+	mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, closest_p);
+	min_d = mathVec3DistanceSq(p, closest_p);
+	for (i = 2; i < edge_indices_cnt; ) {
+		CCTNum_t cp[3], d;
+		v_idx[0] = edge_indices[i++];
+		v_idx[1] = edge_indices[i++];
+		mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, cp);
+		d = mathVec3DistanceSq(p, cp);
+		if (min_d <= d) {
+			continue;
+		}
+		min_d = d;
+		mathVec3Copy(closest_p, cp);
 	}
 }
 
@@ -364,7 +364,7 @@ void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[
 	if (Polygon_Contain_Point_SamePlane(polygon, closest_p)) {
 		return;
 	}
-	edge_indices_closest_point(polygon->v, polygon->edge_indices, polygon->edge_indices_cnt, p, closest_p);
+	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_indices, polygon->edge_indices_cnt, p, closest_p);
 }
 
 #ifdef	__cplusplus
