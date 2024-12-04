@@ -290,16 +290,10 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	return 1;
 }
 
-static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	unsigned int i;
-	CCTNum_t v[3], dot;
-	mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
-	dot = mathVec3Dot(polygon->normal, v);
-	if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
-		return 0;
-	}
 	for (i = 0; i < polygon->edge_indices_cnt; ) {
-		CCTNum_t ls_dir[3], ls_n[3], test_dot;
+		CCTNum_t ls_dir[3], ls_n[3], v[3], test_dot, dot;
 		unsigned int edge_idx[2], other_i;
 		/* test edge */
 		edge_idx[0] = polygon->edge_indices[i++];
@@ -337,26 +331,19 @@ static int ConvexPolygon_Contain_Point(const GeometryPolygon_t* polygon, const C
 }
 
 int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+	CCTNum_t v[3], dot;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
-	if (3 == polygon->v_indices_cnt) {
-		return mathTrianglePointUV(
-			polygon->v[polygon->v_indices[0]],
-			polygon->v[polygon->v_indices[1]],
-			polygon->v[polygon->v_indices[2]],
-			p, NULL, NULL
-		);
+	mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
+	dot = mathVec3Dot(polygon->normal, v);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
 	}
 	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
 		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
 	{
-		CCTNum_t ls_vec[3], v[3], dot;
-		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
-		dot = mathVec3Dot(polygon->normal, v);
-		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
-			return 0;
-		}
+		CCTNum_t ls_vec[3];
 		mathVec3Sub(ls_vec, polygon->v[polygon->v_indices[1]], polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(ls_vec, v);
 		if (dot < CCTNum(0.0) || dot > mathVec3LenSq(ls_vec)) {
@@ -370,13 +357,10 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		return 1;
 	}
 	if (polygon->is_convex) {
-		return ConvexPolygon_Contain_Point(polygon, p);
+		return ConvexPolygon_Contain_Point_SamePlane(polygon, p);
 	}
 	if (polygon->tri_indices && polygon->tri_indices_cnt >= 3) {
 		unsigned int i;
-		if (!Plane_Contain_Point(polygon->v[polygon->tri_indices[0]], polygon->normal, p)) {
-			return 0;
-		}
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
 			unsigned int v_idx[3];
 			v_idx[0] = polygon->tri_indices[i++];
@@ -433,7 +417,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 		if (dot > CCTNum(0.0)) {
 			return 0;
 		}
-		return ConvexPolygon_Contain_Point(polygon, p);
+		return ConvexPolygon_Contain_Point_SamePlane(polygon, p);
 	}
 	return 1;
 }
