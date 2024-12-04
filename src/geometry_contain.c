@@ -392,20 +392,12 @@ int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], c
 	return 1;
 }
 
-int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	CCTNum_t v[3], dot;
-	if (polygon->v_indices_cnt < 3) {
-		return 0;
-	}
-	mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
-	dot = mathVec3Dot(polygon->normal, v);
-	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
-		return 0;
-	}
+int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
 		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
 	{
-		CCTNum_t ls_vec[3];
+		CCTNum_t ls_vec[3], v[3], dot;
+		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		mathVec3Sub(ls_vec, polygon->v[polygon->v_indices[1]], polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(ls_vec, v);
 		if (dot < CCTNum(0.0) || dot > mathVec3LenSq(ls_vec)) {
@@ -421,7 +413,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	if (polygon->is_convex) {
 		return ConvexPolygon_Contain_Point_SamePlane(polygon, p);
 	}
-	if (polygon->tri_indices && polygon->tri_indices_cnt >= 3) {
+	if (polygon->tri_indices) {
 		unsigned int i;
 		for (i = 0; i < polygon->tri_indices_cnt; ) {
 			unsigned int v_idx[3];
@@ -434,6 +426,19 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 		}
 	}
 	return 0;
+}
+
+int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+	CCTNum_t v[3], dot;
+	if (polygon->v_indices_cnt < 3) {
+		return 0;
+	}
+	mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
+	dot = mathVec3Dot(polygon->normal, v);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
+	}
+	return Polygon_Contain_Point_SamePlane(polygon, p);
 }
 
 static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t p1[3], const CCTNum_t p2[3]) {

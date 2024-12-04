@@ -32,7 +32,7 @@ extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const Geom
 extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
-extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
@@ -271,7 +271,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
+	if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v)) {
 		unsigned int idx;
 		if (result->overlap) {
 			return result;
@@ -356,7 +356,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		if (p_result && result_temp.distance >= result->distance) {
 			continue;
 		}
-		if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+		if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
 			continue;
 		}
 		p_result = result;
@@ -1137,7 +1137,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			if (!p_result) {
-				if (!Polygon_Contain_Point(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
 					continue;
 				}
 				p_result = result;
@@ -1146,13 +1146,13 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
-				if (!Polygon_Contain_Point(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
 					continue;
 				}
 			}
 			else {
 				int new_hit_bits = result_temp.hit_bits;
-				if (!Polygon_Contain_Point(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
 					continue;
 				}
 				if (result_temp.distance < result->distance) {
@@ -1187,7 +1187,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			if (!p_result) {
-				if (!Polygon_Contain_Point(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
 					continue;
 				}
 				p_result = result;
@@ -1196,13 +1196,13 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
-				if (!Polygon_Contain_Point(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
 					continue;
 				}
 			}
 			else {
 				int new_hit_bits = result_temp.hit_bits;
-				if (!Polygon_Contain_Point(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
 					continue;
 				}
 				if (result_temp.distance < result->distance) {
@@ -2042,7 +2042,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			continue;
 		}
 		if (!p_result) {
-			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
 			p_result = result;
@@ -2052,13 +2052,13 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
-			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
 			*result = result_temp;
 		}
 		else {
-			if (!Polygon_Contain_Point(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
 				continue;
 			}
 			if (result_temp.distance < result->distance) {
@@ -2098,7 +2098,7 @@ static int Capsule_Sweep_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* c
 			else {
 				mathVec3SubScalar(p, polygon->normal, capsule->radius);
 			}
-			if (Polygon_Contain_Point(polygon, p)) {
+			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 				return 1;
 			}
 		}
@@ -2119,7 +2119,7 @@ static int Capsule_Sweep_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* c
 			mathVec3AddScalar(p, dir, distance);
 			mathVec3SubScalar(p, polygon->normal, capsule->radius);
 		}
-		if (Polygon_Contain_Point(polygon, p)) {
+		if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 			return 1;
 		}
 	}
@@ -2225,7 +2225,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 			return NULL;
 		}
-		if (Polygon_Contain_Point(polygon, result->hit_plane_v)) {
+		if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v)) {
 			return result;
 		}
 	}

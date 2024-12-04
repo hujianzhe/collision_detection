@@ -21,6 +21,7 @@ extern const unsigned int Box_Vertice_Indices_Default[8];
 extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
@@ -221,9 +222,9 @@ int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* 
 		*ret_plane_side = 0;
 	}
 	if (1 == res) {
-		return Polygon_Contain_Point(polygon, p);
+		return Polygon_Contain_Point_SamePlane(polygon, p);
 	}
-	if (Polygon_Contain_Point(polygon, ls[0]) || Polygon_Contain_Point(polygon, ls[1])) {
+	if (Polygon_Contain_Point_SamePlane(polygon, ls[0]) || Polygon_Contain_Point_SamePlane(polygon, ls[1])) {
 		return 2;
 	}
 	for (i = 0; i < polygon->edge_indices_cnt; ) {
@@ -368,13 +369,13 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 	}
 	res = Segment_Intersect_Plane((const CCTNum_t(*)[3])capsule_extra->axis_edge, polygon->v[polygon->v_indices[0]], polygon->normal, NULL, d);
 	if (2 == res) {
-		if (Polygon_Contain_Point(polygon, capsule->o)) {
+		if (Polygon_Contain_Point_SamePlane(polygon, capsule->o)) {
 			return 1;
 		}
-		if (Polygon_Contain_Point(polygon, capsule_extra->axis_edge[0])) {
+		if (Polygon_Contain_Point_SamePlane(polygon, capsule_extra->axis_edge[0])) {
 			return 1;
 		}
-		if (Polygon_Contain_Point(polygon, capsule_extra->axis_edge[1])) {
+		if (Polygon_Contain_Point_SamePlane(polygon, capsule_extra->axis_edge[1])) {
 			return 1;
 		}
 	}
@@ -382,7 +383,7 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 		CCTNum_t cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
 		mathVec3Copy(p, capsule_extra->axis_edge[0]);
 		mathVec3AddScalar(p, capsule->axis, d[0] / cos_theta);
-		if (Polygon_Contain_Point(polygon, p)) {
+		if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 			return 1;
 		}
 	}
@@ -396,21 +397,21 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 		if (CCTNum_abs(d[0]) <= capsule->radius) {
 			mathVec3Copy(p, capsule_extra->axis_edge[0]);
 			mathVec3AddScalar(p, polygon->normal, d[0]);
-			if (Polygon_Contain_Point(polygon, p)) {
+			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 				return 1;
 			}
 		}
 		if (CCTNum_abs(d[1]) <= capsule->radius) {
 			mathVec3Copy(p, capsule_extra->axis_edge[1]);
 			mathVec3AddScalar(p, polygon->normal, d[1]);
-			if (Polygon_Contain_Point(polygon, p)) {
+			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 				return 1;
 			}
 		}
 		if (d[0] == d[1]) {
 			mathVec3Copy(p, capsule->o);
 			mathVec3AddScalar(p, polygon->normal, d[2]);
-			if (Polygon_Contain_Point(polygon, p)) {
+			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 				return 1;
 			}
 		}
@@ -537,7 +538,7 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 	if (ret_plane_side) {
 		*ret_plane_side = 0;
 	}
-	if (Polygon_Contain_Point(polygon, p)) {
+	if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 		return res;
 	}
 	if (1 == res) {
