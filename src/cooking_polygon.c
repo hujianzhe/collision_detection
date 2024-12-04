@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
+extern int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t N[3], const CCTNum_t p[3]);
 
 static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_indices) {
 	unsigned int cnt = polygon->tri_indices_cnt;
@@ -66,7 +67,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			/* no same edge */
 			continue;
 		}
-		if (mathTrianglePointUV(triangle[0], triangle[1], triangle[2], arg_diff_point, NULL, NULL)) {
+		if (Triangle_Contain_Point_SamePlane(triangle[0], triangle[1], triangle[2], polygon->normal, arg_diff_point)) {
 			/* eat triangle */
 			return 2;
 		}
@@ -100,7 +101,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			return 0;
 		}
 		/* check be eat */
-		if (mathTrianglePointUV(p0, p1, p2, triangle_diff_point, NULL, NULL)) {
+		if (Triangle_Contain_Point_SamePlane(p0, p1, p2, polygon->normal, triangle_diff_point)) {
 			be_eat = 1;
 			continue;
 		}

@@ -330,6 +330,68 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 	return 1;
 }
 
+int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t N[3], const CCTNum_t p[3]) {
+	CCTNum_t test_dot, dot, test_v[3];
+	CCTNum_t ab[3], ac[3], bc[3], edge_N[3];
+	/* edge ab test */
+	mathVec3Sub(ab, b, a);
+	mathVec3Cross(edge_N, ab, N);
+	mathVec3Sub(test_v, p, a);
+	dot = mathVec3Dot(test_v, edge_N);
+	if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
+		CCTNum_t l[3], r[3];
+		mathVec3Sub(l, a, p);
+		mathVec3Sub(r, b, p);
+		dot = mathVec3Dot(l, r);
+		return dot <= CCT_EPSILON;
+	}
+	mathVec3Sub(ac, c, a);
+	test_dot = mathVec3Dot(ac, edge_N);
+	if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
+		return 0;
+	}
+	else if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
+		return 0;
+	}
+	/* edge ac test */
+	mathVec3Cross(edge_N, ac, N);
+	dot = mathVec3Dot(test_v, edge_N);
+	if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
+		CCTNum_t l[3], r[3];
+		mathVec3Sub(l, a, p);
+		mathVec3Sub(r, c, p);
+		dot = mathVec3Dot(l, r);
+		return dot <= CCT_EPSILON;
+	}
+	test_dot = mathVec3Dot(ab, edge_N);
+	if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
+		return 0;
+	}
+	else if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
+		return 0;
+	}
+	/* edge bc test */
+	mathVec3Sub(bc, c, b);
+	mathVec3Cross(edge_N, bc, N);
+	mathVec3Sub(test_v, b, p);
+	dot = mathVec3Dot(test_v, edge_N);
+	if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
+		CCTNum_t r[3];
+		mathVec3Sub(r, c, p);
+		dot = mathVec3Dot(test_v, r);
+		return dot <= CCT_EPSILON;
+	}
+	test_dot = mathVec3Dot(ab, edge_N);
+	if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
+		return 0;
+	}
+	else if (test_dot < CCTNum(0.0) && dot > CCTNum(0.0)) {
+		return 0;
+	}
+	/* finish */
+	return 1;
+}
+
 int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
 	CCTNum_t v[3], dot;
 	if (polygon->v_indices_cnt < 3) {
@@ -366,11 +428,10 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 			v_idx[0] = polygon->tri_indices[i++];
 			v_idx[1] = polygon->tri_indices[i++];
 			v_idx[2] = polygon->tri_indices[i++];
-			if (mathTrianglePointUV(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], p, NULL, NULL)) {
+			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
 				return 1;
 			}
 		}
-		return 0;
 	}
 	return 0;
 }
