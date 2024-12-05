@@ -27,6 +27,7 @@ __declspec_dll void mathSphereClosestPoint(const CCTNum_t o[3], CCTNum_t radius,
 __declspec_dll void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 
 __declspec_dll void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3], CCTNum_t closest_p[3]);
+__declspec_dll void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 
 #ifdef	__cplusplus
 }
