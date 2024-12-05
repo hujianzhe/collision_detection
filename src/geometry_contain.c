@@ -457,7 +457,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 			return 0;
 		}
 	}
-	if (polygon1->is_convex || polygon2->is_convex) {
+	if (polygon1->is_convex) {
 		return 1;
 	}
 	for (i = 0; i < polygon2->edge_indices_cnt; ) {
