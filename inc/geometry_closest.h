@@ -18,8 +18,6 @@ __declspec_dll void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], co
 __declspec_dll void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 __declspec_dll void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 
-__declspec_dll CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len);
-
 __declspec_dll void mathAABBClosestPoint(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3], CCTNum_t closest_p[3]);
 __declspec_dll void mathOBBClosestPoint(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]);
 

@@ -46,99 +46,7 @@ CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CC
 	return min_lensq;
 }
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
-	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
-	mathVec3Sub(v, lsv2, lsv1);
-	mathVec3Cross(n, lsdir1, lsdir2);
-	nlensq_inv = CCTNum(1.0) / mathVec3LenSq(n);
-	*lsdir_d1 = mathVec3Dot(mathVec3Cross(temp, v, lsdir2), n) * nlensq_inv;
-	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
-}
-
-void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t ls_v[3], vp[3], lensq, dot;
-	mathVec3Sub(vp, p, ls0);
-	mathVec3Sub(ls_v, ls1, ls0);
-	dot = mathVec3Dot(vp, ls_v);
-	if (dot <= CCTNum(0.0)) {
-		mathVec3Copy(closest_p, ls0);
-		return;
-	}
-	lensq = mathVec3LenSq(ls_v);
-	if (dot >= lensq) {
-		mathVec3Copy(closest_p, ls1);
-		return;
-	}
-	mathVec3Copy(closest_p, ls0);
-	mathVec3AddScalar(closest_p, ls_v, dot / lensq);
-}
-
-void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t v[3], d, abs_d;
-	mathVec3Sub(v, p, ls_center_p);
-	d = mathVec3Dot(v, lsdir);
-	abs_d = CCTNum_abs(d);
-	mathVec3Copy(closest_p, ls_center_p);
-	if (abs_d > ls_half_len) {
-		if (d > CCTNum(0.0)) {
-			mathVec3AddScalar(closest_p, lsdir, ls_half_len);
-		}
-		else {
-			mathVec3SubScalar(closest_p, lsdir, ls_half_len);
-		}
-		return;
-	}
-	mathVec3AddScalar(closest_p, lsdir, d);
-}
-
-void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t v[3], d;
-	mathVec3Sub(v, p, ls_v);
-	d = mathVec3Dot(v, lsdir);
-	mathVec3Copy(closest_p, ls_v);
-	if (d <= CCTNum(0.0)) {
-		return;
-	}
-	if (d > ls_len) {
-		mathVec3AddScalar(closest_p, lsdir, ls_len);
-	}
-	else {
-		mathVec3AddScalar(closest_p, lsdir, d);
-	}
-}
-
-void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
-	CCTNum_t min_d;
-	unsigned int i, v_idx[2];
-	v_idx[0] = edge_indices[0];
-	v_idx[1] = edge_indices[1];
-	mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, closest_p);
-	min_d = mathVec3DistanceSq(p, closest_p);
-	if (CCTNum(0.0) == min_d) {
-		return;
-	}
-	for (i = 2; i < edge_indices_cnt; ) {
-		CCTNum_t cp[3], d;
-		v_idx[0] = edge_indices[i++];
-		v_idx[1] = edge_indices[i++];
-		mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, cp);
-		d = mathVec3DistanceSq(p, cp);
-		if (min_d <= d) {
-			continue;
-		}
-		min_d = d;
-		mathVec3Copy(closest_p, cp);
-		if (CCTNum(0.0) == min_d) {
-			return;
-		}
-	}
-}
-
-CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
+CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
 	CCTNum_t v[3], N[3], d;
 	CCTNum_t ls1_dir_temp[3], ls2_dir_temp[3];
 	if (!ls1_dir) {
@@ -308,6 +216,98 @@ CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_
 			return lensq2;
 		}
 		return lensq;
+	}
+}
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
+	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
+	mathVec3Sub(v, lsv2, lsv1);
+	mathVec3Cross(n, lsdir1, lsdir2);
+	nlensq_inv = CCTNum(1.0) / mathVec3LenSq(n);
+	*lsdir_d1 = mathVec3Dot(mathVec3Cross(temp, v, lsdir2), n) * nlensq_inv;
+	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
+}
+
+void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t ls_v[3], vp[3], lensq, dot;
+	mathVec3Sub(vp, p, ls0);
+	mathVec3Sub(ls_v, ls1, ls0);
+	dot = mathVec3Dot(vp, ls_v);
+	if (dot <= CCTNum(0.0)) {
+		mathVec3Copy(closest_p, ls0);
+		return;
+	}
+	lensq = mathVec3LenSq(ls_v);
+	if (dot >= lensq) {
+		mathVec3Copy(closest_p, ls1);
+		return;
+	}
+	mathVec3Copy(closest_p, ls0);
+	mathVec3AddScalar(closest_p, ls_v, dot / lensq);
+}
+
+void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3], d, abs_d;
+	mathVec3Sub(v, p, ls_center_p);
+	d = mathVec3Dot(v, lsdir);
+	abs_d = CCTNum_abs(d);
+	mathVec3Copy(closest_p, ls_center_p);
+	if (abs_d > ls_half_len) {
+		if (d > CCTNum(0.0)) {
+			mathVec3AddScalar(closest_p, lsdir, ls_half_len);
+		}
+		else {
+			mathVec3SubScalar(closest_p, lsdir, ls_half_len);
+		}
+		return;
+	}
+	mathVec3AddScalar(closest_p, lsdir, d);
+}
+
+void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t v[3], d;
+	mathVec3Sub(v, p, ls_v);
+	d = mathVec3Dot(v, lsdir);
+	mathVec3Copy(closest_p, ls_v);
+	if (d <= CCTNum(0.0)) {
+		return;
+	}
+	if (d > ls_len) {
+		mathVec3AddScalar(closest_p, lsdir, ls_len);
+	}
+	else {
+		mathVec3AddScalar(closest_p, lsdir, d);
+	}
+}
+
+void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	CCTNum_t min_d;
+	unsigned int i, v_idx[2];
+	v_idx[0] = edge_indices[0];
+	v_idx[1] = edge_indices[1];
+	mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, closest_p);
+	min_d = mathVec3DistanceSq(p, closest_p);
+	if (CCTNum(0.0) == min_d) {
+		return;
+	}
+	for (i = 2; i < edge_indices_cnt; ) {
+		CCTNum_t cp[3], d;
+		v_idx[0] = edge_indices[i++];
+		v_idx[1] = edge_indices[i++];
+		mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, cp);
+		d = mathVec3DistanceSq(p, cp);
+		if (min_d <= d) {
+			continue;
+		}
+		min_d = d;
+		mathVec3Copy(closest_p, cp);
+		if (CCTNum(0.0) == min_d) {
+			return;
+		}
 	}
 }
 

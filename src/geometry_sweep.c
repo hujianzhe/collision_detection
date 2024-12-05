@@ -39,6 +39,7 @@ extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_
 extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh);
 extern CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices);
+extern CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1403,7 +1404,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	}
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
 	if (check_intersect) {
-		CCTNum_t lensq = mathSegmentClosestSegment_lensq(
+		CCTNum_t lensq = Segment_ClosestLenSq_Segment(
 			ls, ls_dir, ls_len,
 			(const CCTNum_t(*)[3])axis_edge, capsule->axis, capsule->half + capsule->half
 		);
