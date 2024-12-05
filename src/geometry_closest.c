@@ -394,7 +394,7 @@ void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNu
 		min_d = d;
 		mathVec3Copy(closest_p, cp);
 	}
-	if (flag) {
+	if (mesh->is_convex && flag) {
 		return;
 	}
 	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])mesh->v, mesh->edge_indices, mesh->edge_indices_cnt, p, closest_p);
