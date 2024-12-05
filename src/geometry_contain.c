@@ -13,6 +13,7 @@
 #include "../inc/capsule.h"
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
+#include <stdlib.h>
 
 extern const unsigned int Box_Vertice_Indices_Default[8];
 extern const unsigned int Box_Face_Vertice_Indices[6][4];
@@ -59,17 +60,6 @@ int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3
 	mathVec3Sub(v, plane_v, p);
 	dot = mathVec3Dot(plane_normal, v);
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
-}
-
-static int Plane_Contain_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
-	CCTNum_t v[3], dot;
-	mathVec3Sub(v, v2, v1);
-	dot = mathVec3Dot(n1, v);
-	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
-		return 0;
-	}
-	mathVec3Cross(v, n1, n2);
-	return mathVec3IsZero(v);
 }
 
 int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
@@ -441,33 +431,118 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	return Polygon_Contain_Point_SamePlane(polygon, p);
 }
 
-static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t p1[3], const CCTNum_t p2[3]) {
-	// TODO
-	return 0;
+static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t ls_p0[3], const CCTNum_t ls_p1[3]) {
+	CCTNum_t ls_dir[3], v[3], dot;
+	mathVec3Sub(ls_dir, ls_p1, ls_p0);
+	dot = mathVec3Dot(ls_dir, polygon->normal);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
+	}
+	mathVec3Sub(v, ls_p0, polygon->v[polygon->v_indices[0]]);
+	dot = mathVec3Dot(v, polygon->normal);
+	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+		return 0;
+	}
+	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p0)) {
+		return 0;
+	}
+	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p1)) {
+		return 0;
+	}
+	if (!polygon->is_convex) {
+		unsigned int i;
+		CCTNum_t ls_len = mathVec3Normalized(ls_dir, ls_dir);
+		for (i = 0; i < polygon->edge_indices_cnt; ) {
+			const CCTNum_t* ep0 = polygon->v[polygon->edge_indices[i++]];
+			const CCTNum_t* ep1 = polygon->v[polygon->edge_indices[i++]];
+			CCTNum_t e_dir[3], N[3], d;
+			mathVec3Sub(e_dir, ep1, ep0);
+			mathVec3Cross(N, e_dir, ls_dir);
+			if (mathVec3IsZero(N)) {
+				continue;
+			}
+			mathVec3Normalized(e_dir, e_dir);
+			d = mathLineCrossLine(ls_p0, ls_dir, ep0, e_dir);
+			if (d < ls_len) {
+				return 0;
+			}
+		}
+	}
+	return 1;
 }
 
 static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
 	unsigned int i;
-	if (!Plane_Contain_Plane(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
+	CCTNum_t(*polygon1_ls_dir_caches)[3];
+	if (!mathPlaneEqual(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		return 0;
 	}
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
-		if (!Polygon_Contain_Point(polygon1, p)) {
+		if (!Polygon_Contain_Point_SamePlane(polygon1, p)) {
 			return 0;
 		}
 	}
 	if (polygon1->is_convex) {
 		return 1;
 	}
-	for (i = 0; i < polygon2->edge_indices_cnt; ) {
-		const CCTNum_t* p1 = polygon2->v[polygon2->edge_indices[i++]];
-		const CCTNum_t* p2 = polygon2->v[polygon2->edge_indices[i++]];
-		if (!Polygon_Contain_Segment(polygon1, p1, p2)) {
-			return 0;
+	polygon1_ls_dir_caches = (CCTNum_t(*)[3])malloc(sizeof(*polygon1_ls_dir_caches) * polygon1->edge_indices_cnt / 2);
+	if (polygon1_ls_dir_caches) {
+		for (i = 0; i < polygon1->edge_indices_cnt; ++i) {
+			const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_indices[i++]];
+			const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_indices[i]];
+			mathVec3Sub(polygon1_ls_dir_caches[i / 2], ls1_v2, ls1_v1);
+			mathVec3Normalized(polygon1_ls_dir_caches[i / 2], polygon1_ls_dir_caches[i / 2]);
+		}
+		for (i = 0; i < polygon2->edge_indices_cnt; ) {
+			unsigned int j;
+			CCTNum_t ls2_dir[3], ls2_len;
+			const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_indices[i++]];
+			const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_indices[i++]];
+			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
+			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
+			for (j = 0; j < polygon1->edge_indices_cnt; j += 2) {
+				CCTNum_t d, N[3];
+				const CCTNum_t* ls1_dir = polygon1_ls_dir_caches[j / 2];
+				mathVec3Cross(N, ls2_dir, ls1_dir);
+				if (mathVec3IsZero(N)) {
+					continue;
+				}
+				d = mathLineCrossLine(ls2_v1, ls2_dir, polygon1->v[polygon1->edge_indices[j]], ls1_dir);
+				if (d < ls2_len) {
+					free(polygon1_ls_dir_caches);
+					return 0;
+				}
+			}
+		}
+		free(polygon1_ls_dir_caches);
+	}
+	else {
+		for (i = 0; i < polygon2->edge_indices_cnt; ) {
+			unsigned int j;
+			CCTNum_t ls2_dir[3], ls2_len;
+			const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_indices[i++]];
+			const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_indices[i++]];
+			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
+			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
+			for (j = 0; j < polygon1->edge_indices_cnt; ) {
+				CCTNum_t ls1_dir[3], N[3], d;
+				const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_indices[j++]];
+				const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_indices[j++]];
+				mathVec3Sub(ls1_dir, ls1_v2, ls1_v1);
+				mathVec3Cross(N, ls2_dir, ls1_dir);
+				if (mathVec3IsZero(N)) {
+					continue;
+				}
+				mathVec3Normalized(ls1_dir, ls1_dir);
+				d = mathLineCrossLine(ls2_v1, ls2_dir, ls1_v1, ls1_dir);
+				if (d < ls2_len) {
+					return 0;
+				}
+			}
 		}
 	}
-	return 0;
+	return 1;
 }
 
 static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
@@ -914,12 +989,12 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_PLANE:
 			{
 				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
-				return Plane_Contain_Plane(plane1->v, plane1->normal, plane2->v, plane2->normal);
+				return mathPlaneEqual(plane1->v, plane1->normal, plane2->v, plane2->normal);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
-				return Plane_Contain_Plane(plane1->v, plane1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
+				return mathPlaneEqual(plane1->v, plane1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal);
 			}
 		}
 	}

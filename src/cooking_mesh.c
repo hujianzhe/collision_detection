@@ -105,7 +105,6 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 	mesh->v_indices_cnt = v_indices_cnt;
 	mesh->edge_indices = edge_indices;
 	mesh->edge_indices_cnt = total_edge_indices_cnt;
-	mesh->edge_stride = 2;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
 	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);

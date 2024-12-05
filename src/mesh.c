@@ -114,7 +114,6 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	dst->bound_box = src->bound_box;
 	dst->polygons_cnt = src->polygons_cnt;
 	dst->edge_indices_cnt = src->edge_indices_cnt;
-	dst->edge_stride = src->edge_stride;
 	dst->is_convex = src->is_convex;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->polygons = dup_polygons;

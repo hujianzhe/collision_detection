@@ -20,7 +20,6 @@ __declspec_dll CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]);
 __declspec_dll CCTNum_t mathVec3LenSq(const CCTNum_t v[3]);
 __declspec_dll CCTNum_t mathVec3Len(const CCTNum_t v[3]);
 __declspec_dll CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3Direction(const CCTNum_t end[3], const CCTNum_t start[3], CCTNum_t dir[3]);
 __declspec_dll CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]);
 __declspec_dll CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]);
 __declspec_dll CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);

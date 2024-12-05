@@ -99,19 +99,6 @@ CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
 	}
 }
 
-CCTNum_t mathVec3Direction(const CCTNum_t end[3], const CCTNum_t start[3], CCTNum_t dir[3]) {
-	CCTNum_t v[3];
-	if (!dir) {
-		dir = v;
-	}
-	mathVec3Sub(dir, end, start);
-	if (mathVec3IsZero(dir)) {
-		dir[0] = dir[1] = dir[2] = CCTNum(0.0);
-		return CCTNum(0.0);
-	}
-	return mathVec3Normalized(dir, dir);
-}
-
 CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]) {
 	CCTNum_t dx = p1[0] - p2[0];
 	CCTNum_t dy = p1[1] - p2[1];

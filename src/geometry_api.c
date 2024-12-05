@@ -286,9 +286,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mesh->edge_indices_cnt < 6) {
 				return 0;
 			}
-			if (mesh->edge_stride != 2) {
-				return 0;
-			}
 			if (!mesh->is_convex) {
 				return 0;
 			}
