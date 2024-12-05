@@ -11,20 +11,7 @@
 
 extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
-	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
-	mathVec3Sub(v, lsv2, lsv1);
-	mathVec3Cross(n, lsdir1, lsdir2);
-	nlensq_inv = CCTNum(1.0) / mathVec3LenSq(n);
-	*lsdir_d1 = mathVec3Dot(mathVec3Cross(temp, v, lsdir2), n) * nlensq_inv;
-	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
-}
-
-CCTNum_t mathSegmentClosestSegment_indices(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
+CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
 	CCTNum_t lensq, min_lensq, v[3];
 
 	mathVec3Sub(v, ls1[0], ls2[0]);
@@ -57,6 +44,19 @@ CCTNum_t mathSegmentClosestSegment_indices(const CCTNum_t ls1[2][3], const CCTNu
 	}
 
 	return min_lensq;
+}
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
+	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
+	mathVec3Sub(v, lsv2, lsv1);
+	mathVec3Cross(n, lsdir1, lsdir2);
+	nlensq_inv = CCTNum(1.0) / mathVec3LenSq(n);
+	*lsdir_d1 = mathVec3Dot(mathVec3Cross(temp, v, lsdir2), n) * nlensq_inv;
+	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
 void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
@@ -214,7 +214,7 @@ CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_
 				return mathVec3LenSq(v) - CCTNum_sq(d);
 			}
 		}
-		return mathSegmentClosestSegment_indices(ls1, ls2, &v_idx[0], &v_idx[1]);
+		return Segment_ClosestVertexIndices_Segment(ls1, ls2, &v_idx[0], &v_idx[1]);
 	}
 	else {
 		int i, lensq_set, set_cnt;
@@ -301,7 +301,7 @@ CCTNum_t mathSegmentClosestSegment_lensq(const CCTNum_t ls1[2][3], const CCTNum_
 		}
 		if (set_cnt < 2) {
 			unsigned int v_idx[2];
-			CCTNum_t lensq2 = mathSegmentClosestSegment_indices(ls1, ls2, &v_idx[0], &v_idx[1]);
+			CCTNum_t lensq2 = Segment_ClosestVertexIndices_Segment(ls1, ls2, &v_idx[0], &v_idx[1]);
 			if (lensq_set && lensq < lensq2) {
 				return lensq;
 			}

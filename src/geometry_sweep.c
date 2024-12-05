@@ -38,6 +38,7 @@ extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const Geomet
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
 extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh);
+extern CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -530,7 +531,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				return NULL;
 			}
 			/* calculate result */
-			mathSegmentClosestSegment_indices(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
+			Segment_ClosestVertexIndices_Segment(ls1, ls2, &closest_ls1_indice, &closest_ls2_indice);
 			mathVec3Sub(N, ls2[closest_ls2_indice], ls1[closest_ls1_indice]);
 			d = mathVec3Dot(N, dir);
 			if (d <= CCTNum(0.0)) {
@@ -1432,7 +1433,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		mathVec3Cross(v, v, capsule->axis);
 		if (mathVec3IsZero(v)) {
 			unsigned int v_idx, s_idx;
-			mathSegmentClosestSegment_indices(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
+			Segment_ClosestVertexIndices_Segment(ls, (const CCTNum_t(*)[3])axis_edge, &v_idx, &s_idx);
 			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
 				return NULL;
 			}
