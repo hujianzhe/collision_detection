@@ -68,7 +68,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 		unsigned int edge_indices_cnt, v_indices_cnt;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
-		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_indices, pg->tri_indices_cnt, &edge_indices, &edge_indices_cnt)) {
+		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_indices, pg->tri_indices_cnt, pg->normal, &edge_indices, &edge_indices_cnt)) {
 			goto err_1;
 		}
 		/* cooking vertex indice */

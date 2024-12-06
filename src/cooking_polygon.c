@@ -262,13 +262,13 @@ err:
 	return 0;
 }
 
-int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, unsigned int** ret_edge_indices, unsigned int* ret_edge_indices_cnt) {
+int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_indices, unsigned int* ret_edge_indices_cnt) {
 	unsigned int i, j;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
 	unsigned int* tmp_edge_indices = NULL;
 	unsigned int tmp_edge_indices_cnt = 0;
-	/* Filters all share triangle edges, leaving all non-shared edges */
+	/* Filters all no-border edges */
 	if (3 == tri_indices_cnt) {
 		tmp_edge_indices = (unsigned int*)malloc(sizeof(tmp_edge_indices[0]) * 6);
 		if (!tmp_edge_indices) {
@@ -290,7 +290,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 			tri_indices[i + 1], tri_indices[i + 2],
 			tri_indices[i + 2], tri_indices[i]
 		};
-		int same[3] = { 0 };
+		int same[3] = { 0 }, seperate = 1;
 		for (j = 0; j < tri_indices_cnt; j += 3) {
 			unsigned int k;
 			unsigned int ej[6];
@@ -316,7 +316,42 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 						continue;
 					}
 					if (same[k >> 1]) {
-						break;
+						/* check is border */
+						const CCTNum_t* pi, *pj;
+						CCTNum_t edge_v[3], edge_n[3];
+						CCTNum_t vpi[3], vpj[3], pi_dot, pj_dot;
+						mathVec3Sub(edge_v, v[ei[k + 1]], v[ei[k]]);
+						mathVec3Cross(edge_n, edge_v, plane_n);
+						if (0 == k) {
+							pi = v[tri_indices[i + 2]];
+						}
+						else if (2 == k) {
+							pi = v[tri_indices[i]];
+						}
+						else {
+							pi = v[tri_indices[i + 1]];
+						}
+						mathVec3Sub(vpi, pi, v[ei[k]]);
+						pi_dot = mathVec3Dot(vpi, edge_n);
+						if (0 == m) {
+							pj = v[tri_indices[j + 2]];
+						}
+						else if (2 == m) {
+							pj = v[tri_indices[j]];
+						}
+						else {
+							pj = v[tri_indices[j + 1]];
+						}
+						mathVec3Sub(vpj, pj, v[ei[k]]);
+						pj_dot = mathVec3Dot(vpj, edge_n);
+						if (pi_dot > CCTNum(0.0) && pj_dot < CCTNum(0.0)) {
+							break;
+						}
+						if (pi_dot < CCTNum(0.0) && pj_dot > CCTNum(0.0)) {
+							break;
+						}
+						same[k >> 1] = 0;
+						seperate = 0;
 					}
 				}
 			}
@@ -327,7 +362,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		if (j != tri_indices_cnt) {
 			continue;
 		}
-		if (!same[0] && !same[1] && !same[2]) {
+		if (seperate && !same[0] && !same[1] && !same[2]) {
 			goto err;
 		}
 		for (j = 0; j < 6; j += 2) {
@@ -451,7 +486,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		}
 	}
 	/* cooking edge */
-	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, &edge_indices, &edge_indices_cnt)) {
+	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, N, &edge_indices, &edge_indices_cnt)) {
 		goto err;
 	}
 	/* cooking vertex indice */
