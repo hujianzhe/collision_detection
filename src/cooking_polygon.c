@@ -320,6 +320,8 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 						const CCTNum_t* pi, *pj;
 						CCTNum_t edge_v[3], edge_n[3];
 						CCTNum_t vpi[3], vpj[3], pi_dot, pj_dot;
+
+						seperate = 0;
 						mathVec3Sub(edge_v, v[ei[k + 1]], v[ei[k]]);
 						mathVec3Cross(edge_n, edge_v, plane_n);
 						if (0 == k) {
@@ -351,7 +353,6 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 							break;
 						}
 						same[k >> 1] = 0;
-						seperate = 0;
 					}
 				}
 			}
@@ -362,7 +363,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		if (j != tri_indices_cnt) {
 			continue;
 		}
-		if (seperate && !same[0] && !same[1] && !same[2]) {
+		if (seperate) {
 			goto err;
 		}
 		for (j = 0; j < 6; j += 2) {
