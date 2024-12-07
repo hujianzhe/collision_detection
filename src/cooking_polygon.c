@@ -33,7 +33,6 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			return 0;
 		}
 	}
-	int has_same_edge = 0, be_eat = 0;
 	for (i = 0; i < polygon->tri_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
@@ -60,18 +59,13 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			arg_diff_point = tri_p[j];
 		}
 		if (n >= 3) {
-			/* eat triangle */
+			/* same triangle */
 			return 2;
 		}
 		if (n < 2) {
 			/* no same edge */
 			continue;
 		}
-		if (Triangle_Contain_Point_SamePlane(triangle[0], triangle[1], triangle[2], polygon->normal, arg_diff_point)) {
-			/* eat triangle */
-			return 2;
-		}
-		has_same_edge = 1;
 		/* find same and other diff point */
 		if (arg_diff_point == p0) {
 			same_edge_v[0] = p1;
@@ -98,12 +92,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 		}
 		if (!triangle_diff_point) {
 			/* no possible */
-			return 0;
-		}
-		/* check be eat */
-		if (Triangle_Contain_Point_SamePlane(p0, p1, p2, polygon->normal, triangle_diff_point)) {
-			be_eat = 1;
-			continue;
+			return -1;
 		}
 		/* check diff point and triangle point in same side */
 		mathVec3Sub(v, same_edge_v[1], same_edge_v[0]);
@@ -115,7 +104,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			dot = mathVec3Dot(v, N);
 			if (dot > CCTNum(0.0)) {
 				/* same side, edge is cross */
-				return 0;
+				return -1;
 			}
 		}
 		else {
@@ -123,14 +112,12 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 			dot = mathVec3Dot(v, N);
 			if (dot < CCTNum(0.0)) {
 				/* same side, edge is cross */
-				return 0;
+				return -1;
 			}
 		}
+		return 1;
 	}
-	if (be_eat) {
-		return 3;
-	}
-	return has_same_edge ? 1 : 0;
+	return 0;
 }
 
 #ifdef	__cplusplus
@@ -230,21 +217,20 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 				continue;
 			}
 			ret = _polygon_can_merge_triangle(new_pg, v[tri_indices[j]], v[tri_indices[j + 1]], v[tri_indices[j + 2]]);
+			if (-1 == ret) {
+				goto err;
+			}
 			if (0 == ret) {
 				continue;
 			}
 			tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
-			if (1 == ret || 3 == ret) {
-				if (!_insert_tri_indices(new_pg, tri_indices + j)) {
-					goto err;
-				}
-				j = 0;
-				continue;
-			}
 			if (2 == ret) {
 				continue;
 			}
-			goto err;
+			if (!_insert_tri_indices(new_pg, tri_indices + j)) {
+				goto err;
+			}
+			j = 0;
 		}
 	}
 	free(tri_merge_bits);
