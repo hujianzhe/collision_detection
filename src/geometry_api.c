@@ -5,12 +5,15 @@
 #include "../inc/math_vec3.h"
 #include "../inc/math_quat.h"
 #include "../inc/vertex.h"
+#include "../inc/plane.h"
 #include "../inc/aabb.h"
 #include "../inc/obb.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
+
+extern const unsigned int Box_Vertice_Indices_Default[8];
 
 static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
 	CCTNum_t v[3];
@@ -24,6 +27,30 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 	for (i = 0; i < indices_cnt; ++i) {
 		point_rotate(p[indices[i]], mark_pos, q);
 	}
+}
+
+static CCTNum_t indices_separate_distance(const CCTNum_t(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+	unsigned int i;
+	CCTNum_t d = mathPointProjectionPlane(p[indices[0]], plane_v, separate_dir);
+	for (i = 1; i < indices_cnt; ++i) {
+		CCTNum_t test_d = mathPointProjectionPlane(p[indices[i]], plane_v, separate_dir);
+		if (d < test_d) {
+			d = test_d;
+		}
+	}
+	return d;
+}
+
+static CCTNum_t vertex_separate_distance(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+	unsigned int i;
+	CCTNum_t d = mathPointProjectionPlane(v[0], plane_v, separate_dir);
+	for (i = 1; i < v_cnt; ++i) {
+		CCTNum_t test_d = mathPointProjectionPlane(v[i], plane_v, separate_dir);
+		if (d < test_d) {
+			d = test_d;
+		}
+	}
+	return d;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -828,6 +855,67 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ba
 	}
 	mathQuatFromAxisRadian(q, axis, radian);
 	return mathGeometryRotate(geo_data, geo_type, base_p, q);
+}
+
+CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+	switch (geo_type) {
+		case GEOMETRY_BODY_POINT:
+		{
+			return mathPointProjectionPlane((const CCTNum_t*)geo_data, plane_v, separate_dir);
+		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			CCTNum_t d = mathPointProjectionPlane(sphere->o, plane_v, separate_dir);
+			return d + sphere->radius;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+			CCTNum_t p[3], half_v[3], d0, d1;
+			mathVec3MultiplyScalar(half_v, separate_dir, capsule->half);
+			mathVec3Sub(p, capsule->o, half_v);
+			d0 = mathPointProjectionPlane(p, plane_v, separate_dir);
+			mathVec3Add(p, capsule->o, half_v);
+			d1 = mathPointProjectionPlane(p, plane_v, separate_dir);
+			if (d0 > d1) {
+				return d0 + capsule->radius;
+			}
+			return d1 + capsule->radius;
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			CCTNum_t d0 = mathPointProjectionPlane(segment->v[0], plane_v, separate_dir);
+			CCTNum_t d1 = mathPointProjectionPlane(segment->v[1], plane_v, separate_dir);
+			return d0 > d1 ? d0 : d1;
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
+			return indices_separate_distance(polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane_v, separate_dir);
+		}
+		case GEOMETRY_BODY_CONVEX_MESH:
+		{
+			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
+			return indices_separate_distance(mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane_v, separate_dir);
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
+			CCTNum_t v[8][3];
+			mathAABBVertices(aabb->o, aabb->half, v);
+			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			CCTNum_t v[8][3];
+			mathOBBVertices(obb, v);
+			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
+		}
+	}
+	return CCTNum(0.0);
 }
 
 #ifdef __cplusplus

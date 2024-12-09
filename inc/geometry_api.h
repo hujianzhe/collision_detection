@@ -47,6 +47,8 @@ __declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo
 __declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]);
 __declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
 
+__declspec_dll CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]);
+
 __declspec_dll int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
 __declspec_dll int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
 __declspec_dll CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result);
