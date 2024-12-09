@@ -891,12 +891,12 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 		case GEOMETRY_BODY_POLYGON:
 		{
 			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
-			return indices_separate_distance(polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane_v, separate_dir);
+			return indices_separate_distance((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane_v, separate_dir);
 		}
 		case GEOMETRY_BODY_CONVEX_MESH:
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
-			return indices_separate_distance(mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane_v, separate_dir);
+			return indices_separate_distance((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane_v, separate_dir);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
