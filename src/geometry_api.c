@@ -13,8 +13,6 @@
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
 
-extern const unsigned int Box_Vertice_Indices_Default[8];
-
 static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
 	CCTNum_t v[3];
 	mathVec3Sub(v, p, mark_pos);
