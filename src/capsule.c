@@ -10,7 +10,6 @@
 extern "C" {
 #endif
 
-extern const CCTNum_t AABB_Axis[3][3];
 
 void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
 	int i;
@@ -39,9 +38,11 @@ void mathCapsuleComputeExtendOBB(const GeometryCapsule_t* capsule, const CCTNum_
 		mathVec3Copy(obb->axis[1], radius_axis1);
 	}
 	else {
-		mathVec3Cross(obb->axis[1], capsule->axis, AABB_Axis[0]);
+		static const CCTNum_t Axis0[3] = { CCTNums_3(1.0, 0.0, 0.0) };
+		mathVec3Cross(obb->axis[1], capsule->axis, Axis0);
 		if (mathVec3IsZero(obb->axis[1])) {
-			mathVec3Cross(obb->axis[1], capsule->axis, AABB_Axis[1]);
+			static const CCTNum_t Axis1[3] = { CCTNums_3(0.0, 1.0, 0.0) };
+			mathVec3Cross(obb->axis[1], capsule->axis, Axis1);
 		}
 		mathVec3Normalized(obb->axis[1], obb->axis[1]);
 	}

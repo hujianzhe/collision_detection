@@ -14,11 +14,6 @@
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
-extern const CCTNum_t AABB_Axis[3][3];
-extern const CCTNum_t AABB_Plane_Normal[6][3];
-extern const unsigned int Segment_Indices_Default[2];
-extern const unsigned int Box_Edge_Indices[24];
-
 extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
 extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
