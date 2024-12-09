@@ -490,7 +490,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->edge_indices_cnt = edge_indices_cnt;
 	polygon->tri_indices = dup_tri_indices;
 	polygon->tri_indices_cnt = tri_indices_cnt;
-	polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);
+	polygon->is_convex = mathPolygonIsConvex(polygon);
 	return polygon;
 err:
 	free(dup_v);

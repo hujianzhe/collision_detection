@@ -387,12 +387,12 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
 		mathVec3Sub(ls_vec, polygon->v[polygon->v_indices[1]], polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(ls_vec, v);
-		if (dot < CCTNum(0.0) || dot > mathVec3LenSq(ls_vec)) {
+		if (dot < CCT_EPSILON_NEGATE || dot > mathVec3LenSq(ls_vec) + CCT_EPSILON) {
 			return 0;
 		}
 		mathVec3Sub(ls_vec, polygon->v[polygon->v_indices[3]], polygon->v[polygon->v_indices[0]]);
 		dot = mathVec3Dot(ls_vec, v);
-		if (dot < CCTNum(0.0) || dot > mathVec3LenSq(ls_vec)) {
+		if (dot < CCT_EPSILON_NEGATE || dot > mathVec3LenSq(ls_vec) + CCT_EPSILON) {
 			return 0;
 		}
 		return 1;

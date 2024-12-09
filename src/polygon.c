@@ -78,7 +78,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center);
 }
 
-int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
+int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 	unsigned int i;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
@@ -99,13 +99,13 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon, CCTNum_t epsilon) {
 			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
 			dot = mathVec3Dot(v, N);
 			/* some module needed epsilon */
-			if (dot > epsilon) {
+			if (dot > CCT_EPSILON) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < -epsilon) {
+			else if (dot < CCT_EPSILON_NEGATE) {
 				if (flag_sign > 0) {
 					return 0;
 				}

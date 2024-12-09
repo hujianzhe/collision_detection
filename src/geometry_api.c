@@ -281,11 +281,11 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				return 0;
 			}
 			if (polygon->is_convex) {
-				if (!mathPolygonIsConvex(polygon, CCT_EPSILON)) {
+				if (!mathPolygonIsConvex(polygon)) {
 					return 0;
 				}
 			}
-			else if (mathPolygonIsConvex(polygon, CCT_EPSILON)) {
+			else if (mathPolygonIsConvex(polygon)) {
 				return 0;
 			}
 			for (i = 0; i < polygon->v_indices_cnt; ) {
@@ -314,7 +314,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (!mesh->is_convex) {
 				return 0;
 			}
-			if (!mathMeshIsConvex(mesh, CCT_EPSILON)) {
+			if (!mathMeshIsConvex(mesh)) {
 				return 0;
 			}
 			if (!mathMeshIsClosed(mesh)) {

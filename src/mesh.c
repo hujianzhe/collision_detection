@@ -178,7 +178,7 @@ int mathMeshIsClosed(const GeometryMesh_t* mesh) {
 	return 1;
 }
 
-int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon) {
+int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (mesh->polygons_cnt < 4) {
 		return 0;
@@ -192,13 +192,13 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon) {
 			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
 			dot = mathVec3Dot(polygon->normal, vj);
 			/* some module needed epsilon */
-			if (dot > epsilon) {
+			if (dot > CCT_EPSILON) {
 				if (flag_sign < 0) {
 					return 0;
 				}
 				flag_sign = 1;
 			}
-			else if (dot < -epsilon) {
+			else if (dot < CCT_EPSILON_NEGATE) {
 				if (flag_sign > 0) {
 					return 0;
 				}
@@ -207,34 +207,6 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh, CCTNum_t epsilon) {
 		}
 	}
 	return 1;
-}
-
-void mathConvexMeshMakeFacesOut(GeometryMesh_t* mesh) {
-	CCTNum_t p[2][3], o[3];
-	unsigned int i;
-	if (mesh->polygons_cnt < 2) {
-		return;
-	}
-	for (i = 0; i < 2; ++i) {
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathTriangleGetPoint(
-			polygon->v[polygon->v_indices[0]],
-			polygon->v[polygon->v_indices[1]],
-			polygon->v[polygon->v_indices[2]],
-			CCTNum(0.5), CCTNum(0.5), p[i]
-		);
-	}
-	mathVec3Add(o, p[0], p[1]);
-	mathVec3MultiplyScalar(o, o, CCTNum(0.5));
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		CCTNum_t v[3], dot;
-		GeometryPolygon_t* polygon = mesh->polygons + i;
-		mathVec3Sub(v, o, polygon->v[polygon->v_indices[0]]);
-		dot = mathVec3Dot(v, polygon->normal);
-		if (dot > CCTNum(0.0)) {
-			mathVec3Negate(polygon->normal, polygon->normal);
-		}
-	}
 }
 
 #ifdef __cplusplus

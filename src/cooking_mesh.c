@@ -32,6 +32,24 @@ static unsigned int Merge_Face_Edge(unsigned int* edge_indices, unsigned int edg
 	return edge_indices_cnt;
 }
 
+static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
+	unsigned int i;
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryPolygon_t* polygon = mesh->polygons + i;
+		unsigned int j;
+		for (j = 0; j < mesh->v_indices_cnt; ++j) {
+			CCTNum_t vj[3], dot;
+			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
+			dot = mathVec3Dot(polygon->normal, vj);
+			/* some module needed epsilon */
+			if (dot > CCT_EPSILON) {
+				mathVec3Negate(polygon->normal, polygon->normal);
+				break;
+			}
+		}
+	}
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -107,18 +125,19 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 	mesh->edge_indices_cnt = total_edge_indices_cnt;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
-	mesh->is_convex = mathMeshIsConvex(mesh, CCT_EPSILON);
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		GeometryPolygon_t* polygon = mesh->polygons + i;
-		if (mesh->is_convex) {
+	mesh->is_convex = mathMeshIsConvex(mesh);
+	if (mesh->is_convex) {
+		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = mesh->polygons + i;
 			polygon->is_convex = 1;
 		}
-		else {
-			polygon->is_convex = mathPolygonIsConvex(polygon, CCT_EPSILON);
-		}
+		ConvexMesh_FacesNormalOut(mesh);
 	}
-	if (mesh->is_convex) {
-		mathConvexMeshMakeFacesOut(mesh);
+	else {
+		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = mesh->polygons + i;
+			polygon->is_convex = mathPolygonIsConvex(polygon);
+		}
 	}
 	return mesh;
 err_1:
