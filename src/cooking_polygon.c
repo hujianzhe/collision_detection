@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t N[3], const CCTNum_t p[3]);
 
 static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_indices) {
 	unsigned int cnt = polygon->tri_indices_cnt;
