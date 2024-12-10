@@ -20,6 +20,16 @@ CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], co
 	return dot;
 }
 
+void mathPointProjectionLine_v2(const CCTNum_t p[3], const CCTNum_t ls_v0[3], const CCTNum_t ls_v1[3], CCTNum_t np[3]) {
+	CCTNum_t ls_v[3], vp[3], lensq, dot;
+	mathVec3Sub(vp, p, ls_v0);
+	mathVec3Sub(ls_v, ls_v1, ls_v0);
+	lensq = mathVec3LenSq(ls_v);
+	dot = mathVec3Dot(vp, ls_v);
+	mathVec3Copy(np, ls_v0);
+	mathVec3AddScalar(np, ls_v, dot / lensq);
+}
+
 CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]) {
 	CCTNum_t v[3], dot, lensq;
 	mathPointProjectionLine(lsv1, lsv2, lsdir2, v);
