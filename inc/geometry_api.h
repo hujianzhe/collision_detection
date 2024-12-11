@@ -17,7 +17,7 @@ typedef struct CCTSweepResult_t {
 	CCTNum_t hit_plane_v[3];
 	CCTNum_t hit_plane_n[3];
 	short overlap;
-	short hit_bits;
+	CCTNum_t* hit_unique_point;
 	CCTSweepHitInfo_t peer[2];
 } CCTSweepResult_t;
 
