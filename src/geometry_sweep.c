@@ -1851,7 +1851,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	}
 	sweep_mesh_convert_from_segment(&m1, ls);
 	sweep_mesh_convert_from_polygon(&m2, polygon);
-	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, &m2, result);
+	return MeshSegment_Sweep_MeshSegment(&m1, dir, &m2, result);
 }
 
 static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
