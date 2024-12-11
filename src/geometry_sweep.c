@@ -2067,42 +2067,42 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	return p_result;
 }
 
-static int Capsule_Sweep_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], CCTNum_t distance, const GeometryPolygon_t* polygon) {
-	CCTNum_t cos_theta = mathVec3Dot(capsule->axis, polygon->normal);
-	if (CCTNum(0.0) == cos_theta) {
+static int Capsule_MoveTo_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], CCTNum_t distance, const GeometryPolygon_t* polygon) {
+	CCTNum_t d[2];
+	const CCTNum_t* polygon_v0 = polygon->v[polygon->v_indices[0]];
+	d[0] = mathPointProjectionPlane(extra->axis_edge[0], polygon_v0, polygon->normal);
+	d[1] = mathPointProjectionPlane(extra->axis_edge[1], polygon_v0, polygon->normal);
+	if (d[0] == d[1]) {
 		int i;
-		CCTNum_t d = mathPointProjectionPlane(extra->axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
 		for (i = 0; i < 2; ++i) {
 			CCTNum_t p[3];
 			mathVec3Copy(p, extra->axis_edge[i]);
-			mathVec3AddScalar(p, dir, distance);
-			if (d > CCTNum(0.0)) {
+			if (d[0] > CCTNum(0.0)) {
 				mathVec3AddScalar(p, polygon->normal, capsule->radius);
 			}
 			else {
 				mathVec3SubScalar(p, polygon->normal, capsule->radius);
 			}
+			mathVec3AddScalar(p, dir, distance);
 			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 				return 1;
 			}
 		}
+		/* need test Segment sweep Capsule */
 	}
 	else {
-		CCTNum_t d[2], p[3];
-		d[0] = mathPointProjectionPlane(extra->axis_edge[0], polygon->v[polygon->v_indices[0]], polygon->normal);
-		d[1] = mathPointProjectionPlane(extra->axis_edge[1], polygon->v[polygon->v_indices[0]], polygon->normal);
+		CCTNum_t p[3];
 		if (d[0] > CCTNum(0.0)) {
 			unsigned int idx = (d[0] < d[1] ? 0 : 1);
 			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3AddScalar(p, dir, distance);
 			mathVec3AddScalar(p, polygon->normal, capsule->radius);
 		}
 		else {
 			unsigned int idx = (d[0] < d[1] ? 1 : 0);
 			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3AddScalar(p, dir, distance);
 			mathVec3SubScalar(p, polygon->normal, capsule->radius);
 		}
+		mathVec3AddScalar(p, dir, distance);
 		if (Polygon_Contain_Point_SamePlane(polygon, p)) {
 			return 1;
 		}
@@ -2126,7 +2126,7 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 		if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 			return NULL;
 		}
-		if (Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, dir, result->distance, polygon)) {
+		if (Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, dir, result->distance, polygon)) {
 			return result;
 		}
 	}
@@ -2160,7 +2160,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		if (!p_result) {
-			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
 				continue;
 			}
 			*result = result_temp;
@@ -2170,19 +2170,19 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
-			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
 				continue;
 			}
 			*result = result_temp;
 		}
 		else {
-			if (!Capsule_Sweep_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
 				continue;
 			}
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-
+			result->hit_unique_point = NULL;
 			continue;
 		}
 		result->peer[1].idx = i;
