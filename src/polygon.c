@@ -201,6 +201,26 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 	}
 }
 
+void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_idx, CCTNum_t edge_normal[3]) {
+	CCTNum_t v[3];
+	unsigned int i = edge_idx * 2;
+	unsigned int v_idx[2];
+	v_idx[0] = polygon->edge_indices[i++];
+	v_idx[1] = polygon->edge_indices[i++];
+	if (i >= polygon->edge_indices_cnt) {
+		i = 0;
+	}
+	if (polygon->edge_indices[i] == v_idx[0] || polygon->edge_indices[i] == v_idx[1]) {
+		i++;
+	}
+	mathVec3Sub(v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
+	mathVec3Cross(edge_normal, v, polygon->normal);
+	mathVec3Sub(v, polygon->v[polygon->edge_indices[i]], polygon->v[v_idx[0]]);
+	if (mathVec3Dot(edge_normal, v) > CCTNum(0.0)) {
+		mathVec3Negate(edge_normal, edge_normal);
+	}
+}
+
 #ifdef	__cplusplus
 }
 #endif
