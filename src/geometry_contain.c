@@ -299,12 +299,10 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 		}
 		/* get test_point */
 		other_i = (i < polygon->edge_indices_cnt ? i : 0);
-		if (polygon->edge_indices[other_i] != edge_idx[0] && polygon->edge_indices[other_i] != edge_idx[1]) {
-			mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_idx[0]]);
+		if (polygon->edge_indices[other_i] == edge_idx[0] || polygon->edge_indices[other_i] == edge_idx[1]) {
+			++other_i;
 		}
-		else {
-			mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i + 1]], polygon->v[edge_idx[0]]);
-		}
+		mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_idx[0]]);
 		test_dot = mathVec3Dot(v, ls_n);
 		/* check in same side */
 		if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
