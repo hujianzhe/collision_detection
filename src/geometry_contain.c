@@ -277,32 +277,49 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	return 1;
 }
 
-static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
 	unsigned int i;
 	for (i = 0; i < polygon->edge_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], v[3], test_dot, dot;
-		unsigned int edge_idx[2], other_i;
+		unsigned int edge_v_idx[2], other_i;
 		/* test edge */
-		edge_idx[0] = polygon->edge_indices[i++];
-		edge_idx[1] = polygon->edge_indices[i++];
-		mathVec3Sub(ls_dir, polygon->v[edge_idx[1]], polygon->v[edge_idx[0]]);
+		edge_v_idx[0] = polygon->edge_indices[i++];
+		edge_v_idx[1] = polygon->edge_indices[i++];
+		mathVec3Sub(ls_dir, polygon->v[edge_v_idx[1]], polygon->v[edge_v_idx[0]]);
 		mathVec3Cross(ls_n, ls_dir, polygon->normal);
 		/* check edge contain p */
-		mathVec3Sub(v, p, polygon->v[edge_idx[0]]);
+		mathVec3Sub(v, p, polygon->v[edge_v_idx[0]]);
 		dot = mathVec3Dot(v, ls_n);
 		if (dot >= CCT_EPSILON_NEGATE && dot <= CCT_EPSILON) {
 			CCTNum_t l[3], r[3];
-			mathVec3Sub(l, polygon->v[edge_idx[0]], p);
-			mathVec3Sub(r, polygon->v[edge_idx[1]], p);
+			mathVec3Sub(l, polygon->v[edge_v_idx[0]], p);
+			mathVec3Sub(r, polygon->v[edge_v_idx[1]], p);
 			dot = mathVec3Dot(l, r);
-			return dot <= CCT_EPSILON;
+			if (dot > CCT_EPSILON) {
+				return 0;
+			}
+			if (bi) {
+				if (mathVec3IsZero(l)) {
+					bi->v_idx = edge_v_idx[0];
+					bi->edge_idx = -1;
+				}
+				else if (mathVec3IsZero(r)) {
+					bi->v_idx = edge_v_idx[1];
+					bi->edge_idx = -1;
+				}
+				else {
+					bi->v_idx = -1;
+					bi->edge_idx = (i - 1) / 2;
+				}
+			}
+			return 1;
 		}
 		/* get test_point */
 		other_i = (i < polygon->edge_indices_cnt ? i : 0);
-		if (polygon->edge_indices[other_i] == edge_idx[0] || polygon->edge_indices[other_i] == edge_idx[1]) {
+		if (polygon->edge_indices[other_i] == edge_v_idx[0] || polygon->edge_indices[other_i] == edge_v_idx[1]) {
 			++other_i;
 		}
-		mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_idx[0]]);
+		mathVec3Sub(v, polygon->v[polygon->edge_indices[other_i]], polygon->v[edge_v_idx[0]]);
 		test_dot = mathVec3Dot(v, ls_n);
 		/* check in same side */
 		if (test_dot > CCTNum(0.0) && dot < CCTNum(0.0)) {
@@ -377,7 +394,7 @@ int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], c
 	return 1;
 }
 
-int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
 	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
 		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
 	{
@@ -393,10 +410,13 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 		if (dot < CCT_EPSILON_NEGATE || dot > mathVec3LenSq(ls_vec) + CCT_EPSILON) {
 			return 0;
 		}
+		if (bi) {
+			mathFindBorderIndexByPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_indices, polygon->edge_indices_cnt, p, bi);
+		}
 		return 1;
 	}
 	if (polygon->is_convex) {
-		return ConvexPolygon_Contain_Point_SamePlane(polygon, p);
+		return ConvexPolygon_Contain_Point_SamePlane(polygon, p, bi);
 	}
 	if (polygon->tri_indices) {
 		unsigned int i;
@@ -406,6 +426,7 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			v_idx[1] = polygon->tri_indices[i++];
 			v_idx[2] = polygon->tri_indices[i++];
 			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
+				bi->v_idx = bi->edge_idx = -1;
 				return 1;
 			}
 		}
@@ -423,7 +444,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 		return 0;
 	}
-	return Polygon_Contain_Point_SamePlane(polygon, p);
+	return Polygon_Contain_Point_SamePlane(polygon, p, NULL);
 }
 
 static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t ls_p0[3], const CCTNum_t ls_p1[3]) {
@@ -438,10 +459,10 @@ static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNu
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 		return 0;
 	}
-	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p0)) {
+	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p0, NULL)) {
 		return 0;
 	}
-	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p1)) {
+	if (!Polygon_Contain_Point_SamePlane(polygon, ls_p1, NULL)) {
 		return 0;
 	}
 	if (!polygon->is_convex) {
@@ -474,7 +495,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	}
 	for (i = 0; i < polygon2->v_indices_cnt; ++i) {
 		const CCTNum_t* p = polygon2->v[polygon2->v_indices[i]];
-		if (!Polygon_Contain_Point_SamePlane(polygon1, p)) {
+		if (!Polygon_Contain_Point_SamePlane(polygon1, p, NULL)) {
 			return 0;
 		}
 	}
@@ -553,7 +574,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 		if (dot > CCTNum(0.0)) {
 			return 0;
 		}
-		return ConvexPolygon_Contain_Point_SamePlane(polygon, p);
+		return ConvexPolygon_Contain_Point_SamePlane(polygon, p, NULL);
 	}
 	return 1;
 }

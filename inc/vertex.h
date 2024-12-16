@@ -24,7 +24,7 @@ __declspec_dll void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const C
 
 __declspec_dll unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]);
 __declspec_dll unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
-__declspec_dll int mathFindVertexOrEdgeByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], unsigned int* v_idx, unsigned int* edge_idx);
+__declspec_dll int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
 __declspec_dll unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt);
 
 #ifdef	__cplusplus

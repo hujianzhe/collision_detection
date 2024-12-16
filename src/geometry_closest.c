@@ -9,7 +9,7 @@
 #include "../inc/obb.h"
 #include "../inc/geometry_closest.h"
 
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
 
 CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
 	CCTNum_t lensq, min_lensq, v[3];
@@ -367,7 +367,7 @@ void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[
 	CCTNum_t d = mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal);
 	mathVec3Copy(closest_p, p);
 	mathVec3AddScalar(closest_p, polygon->normal, d);
-	if (Polygon_Contain_Point_SamePlane(polygon, closest_p)) {
+	if (Polygon_Contain_Point_SamePlane(polygon, closest_p, NULL)) {
 		return;
 	}
 	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_indices, polygon->edge_indices_cnt, p, closest_p);
@@ -382,7 +382,7 @@ void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNu
 		CCTNum_t d = mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal);
 		mathVec3Copy(cp, p);
 		mathVec3AddScalar(cp, polygon->normal, d);
-		if (!Polygon_Contain_Point_SamePlane(polygon, cp)) {
+		if (!Polygon_Contain_Point_SamePlane(polygon, cp, NULL)) {
 			continue;
 		}
 		if (!flag) {

@@ -218,7 +218,7 @@ unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_indices, 
 	return -1;
 }
 
-int mathFindVertexOrEdgeByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], unsigned int* v_idx, unsigned int* edge_idx) {
+int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
 	unsigned int i;
 	for (i = 0; i < edge_indices_cnt; ++i) {
 		CCTNum_t l[3], r[3], N[3], dot;
@@ -233,13 +233,13 @@ int mathFindVertexOrEdgeByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_
 		}
 		if (dot >= CCT_EPSILON_NEGATE) {
 			if (mathVec3IsZero(l)) {
-				*v_idx = idx[0];
-				*edge_idx = -1;
+				bi->v_idx = idx[0];
+				bi->edge_idx = -1;
 				return 1;
 			}
 			if (mathVec3IsZero(r)) {
-				*v_idx = idx[1];
-				*edge_idx = -1;
+				bi->v_idx = idx[1];
+				bi->edge_idx = -1;
 				return 1;
 			}
 			continue;
@@ -248,12 +248,12 @@ int mathFindVertexOrEdgeByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_
 		if (!mathVec3IsZero(N)) {
 			continue;
 		}
-		*v_idx = -1;
-		*edge_idx = (i >> 1);
+		bi->v_idx = -1;
+		bi->edge_idx = (i >> 1);
 		return 1;
 	}
-	*v_idx = -1;
-	*edge_idx = -1;
+	bi->v_idx = -1;
+	bi->edge_idx = -1;
 	return 0;
 }
 

@@ -24,6 +24,20 @@ CCTNum_t mathPointProjectionPlanePoint(const CCTNum_t p[3], const CCTNum_t plane
 	return d;
 }
 
+CCTNum_t mathSphereProjectionPlane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t sphere_np[3]) {
+	CCTNum_t d = mathPointProjectionPlane(o, plane_v, plane_n);
+	mathVec3Copy(sphere_np, o);
+	if (d > CCTNum(0.0)) {
+		mathVec3AddScalar(sphere_np, plane_n, radius);
+		d -= radius;
+	}
+	else if (d < CCTNum(0.0)) {
+		mathVec3SubScalar(sphere_np, plane_n, radius);
+		d += radius;
+	}
+	return d;
+}
+
 CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]) {
 	CCTNum_t v0v1[3], v0v2[3];
 	mathVec3Sub(v0v1, v1, v0);

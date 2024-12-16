@@ -69,8 +69,6 @@ typedef struct GeometryMesh_t {
 	const unsigned int* v_indices; /* vertices index */
 } GeometryMesh_t;
 
-/*********************************************************************/
-
 enum {
 	GEOMETRY_BODY_POINT = 1,
 	GEOMETRY_BODY_SEGMENT = 2,
@@ -98,5 +96,12 @@ typedef struct GeometryBody_t {
 	};
 	int type;
 } GeometryBody_t;
+
+/*********************************************************************/
+
+typedef struct GeometryBorderIndex_t {
+	unsigned int v_idx;
+	unsigned int edge_idx;
+} GeometryBorderIndex_t;
 
 #endif

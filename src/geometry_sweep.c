@@ -27,7 +27,7 @@ extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const Geom
 extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
@@ -84,19 +84,6 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->is_convex = polygon->is_convex;
 	mesh->polygons = (GeometryPolygon_t*)polygon;
 	mesh->polygons_cnt = 1;
-}
-
-static unsigned int polygon_find_edge_idx(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
-	unsigned int i;
-	for (i = 0; i < polygon->edge_indices_cnt; ++i) {
-		unsigned int v_idx[2];
-		v_idx[0] = polygon->edge_indices[i++];
-		v_idx[1] = polygon->edge_indices[i];
-		if (Segment_Contain_Point(polygon->v[v_idx[0]], polygon->v[v_idx[1]], p)) {
-			return i >> 1;
-		}
-	}
-	return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -263,25 +250,21 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	CCTNum_t dot;
 	GeometryMesh_t mesh;
+	GeometryBorderIndex_t bi;
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
-	if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v)) {
-		unsigned int idx;
+	if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
 		if (result->overlap) {
 			return result;
 		}
-		idx = mathFindVertexIndex((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, result->hit_plane_v);
-		if (idx != -1) {
+		if (bi.v_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[1].idx = idx;
-			return result;
+			result->peer[1].idx = bi.v_idx;
 		}
-		idx = polygon_find_edge_idx(polygon, result->hit_plane_v);
-		if (idx != -1) {
+		else if (bi.edge_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[1].idx = idx;
-			return result;
+			result->peer[1].idx = bi.edge_idx;
 		}
 		return result;
 	}
@@ -334,11 +317,13 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
+	const GeometryPolygon_t* rface;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		set_intersect(result);
 		return result;
 	}
 	p_result = NULL;
+	rface = NULL;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -351,26 +336,24 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		if (p_result && result_temp.distance >= result->distance) {
 			continue;
 		}
-		if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
+		if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v, NULL)) {
 			continue;
 		}
+		rface = polygon;
 		p_result = result;
 		*result = result_temp;
 		result->peer[1].idx = i;
 	}
 	if (p_result) {
-		const GeometryPolygon_t* polygon = mesh->polygons + result->peer[1].idx;
-		unsigned int idx = mathFindVertexIndex((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, result->hit_plane_v);
-		if (idx != -1) {
+		GeometryBorderIndex_t bi;
+		mathFindBorderIndexByPoint((const CCTNum_t(*)[3])rface->v, rface->edge_indices, rface->edge_indices_cnt, result->hit_plane_v, &bi);
+		if (bi.v_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
-			result->peer[1].idx = idx;
-			return result;
+			result->peer[1].idx = bi.v_idx;
 		}
-		idx = polygon_find_edge_idx(polygon, result->hit_plane_v);
-		if (idx != -1) {
+		else if (bi.edge_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[1].idx = idx;
-			return result;
+			result->peer[1].idx = bi.edge_idx;
 		}
 		return result;
 	}
@@ -1102,6 +1085,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTNum_t neg_dir[3];
+	GeometryBorderIndex_t bi;
 	CCTSweepResult_t* p_result;
 	p_result = MeshSegment_Sweep_MeshSegment(mesh1, dir, mesh2, result);
 	for (i = 0; i < mesh2->polygons_cnt; ++i) {
@@ -1115,7 +1099,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			if (!p_result) {
-				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 				p_result = result;
@@ -1124,18 +1108,18 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
-				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 			}
 			else {
-				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon2, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (polygon_find_edge_idx(polygon2, result_temp.hit_plane_v) != -1) {
+				if (bi.v_idx != -1 || bi.edge_idx != -1) {
 					continue;
 				}
 				result_temp.peer[0].idx = mesh1->v_indices[j];
@@ -1147,7 +1131,17 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			*result = result_temp;
 			result->peer[0].idx = mesh1->v_indices[j];
-			result->peer[1].idx = i;
+			if (bi.v_idx != -1) {
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[1].idx = bi.v_idx;
+			}
+			else if (bi.edge_idx != -1) {
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[1].idx = bi.edge_idx;
+			}
+			else {
+				result->peer[1].idx = i;
+			}
 		}
 	}
 	mathVec3Negate(neg_dir, dir);
@@ -1162,7 +1156,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			if (!p_result) {
-				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 				p_result = result;
@@ -1171,18 +1165,18 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				continue;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
-				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 			}
 			else {
-				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v)) {
+				if (!Polygon_Contain_Point_SamePlane(polygon1, result_temp.hit_plane_v, &bi)) {
 					continue;
 				}
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (polygon_find_edge_idx(polygon1, result_temp.hit_plane_v) != -1) {
+				if (bi.v_idx != -1 || bi.edge_idx != -1) {
 					continue;
 				}
 				mathVec3Copy(result_temp.hit_plane_v, mesh2_p);
@@ -1197,8 +1191,18 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			*result = result_temp;
 			mathVec3Copy(result->hit_plane_v, mesh2_p);
-			result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-			result->peer[0].idx = i;
+			if (bi.v_idx != -1) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[0].idx = bi.v_idx;
+			}
+			else if (bi.edge_idx != -1) {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[0].idx = bi.edge_idx;
+			}
+			else {
+				result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
+				result->peer[0].idx = i;
+			}
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
 			result->peer[1].idx = mesh2->v_indices[j];
 		}
@@ -2003,6 +2007,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	p_result = MeshSegment_Sweep_Sphere(mesh, dir, o, radius, 0, result);
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		GeometryBorderIndex_t bi;
 		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		if (!Sphere_Sweep_Plane(o, radius, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
@@ -2012,7 +2017,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			continue;
 		}
 		if (!p_result) {
-			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v, &bi)) {
 				continue;
 			}
 			p_result = result;
@@ -2022,19 +2027,19 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
-			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v, &bi)) {
 				continue;
 			}
 			*result = result_temp;
 		}
 		else {
-			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v)) {
+			if (!Polygon_Contain_Point_SamePlane(polygon, result_temp.hit_plane_v, &bi)) {
 				continue;
 			}
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-			if (polygon_find_edge_idx(polygon, result_temp.hit_plane_v) != -1) {
+			if (bi.v_idx != -1 || bi.edge_idx != -1) {
 				continue;
 			}
 			result_temp.peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
@@ -2044,8 +2049,18 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh);
 			continue;
 		}
-		result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
-		result->peer[0].idx = i;
+		if (bi.v_idx != -1) {
+			result->peer[0].hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[0].idx = bi.v_idx;
+		}
+		else if (bi.edge_idx != -1) {
+			result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[0].idx = bi.edge_idx;
+		}
+		else {
+			result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[0].idx = i;
+		}
 		result->peer[1].hit_bits = CCT_SWEEP_BIT_SPHERE;
 		result->peer[1].idx = 0;
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
@@ -2053,46 +2068,35 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	return p_result;
 }
 
-static int Capsule_MoveTo_Polygon_Plane_CheckIntersect(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* extra, const CCTNum_t dir[3], CCTNum_t distance, const GeometryPolygon_t* polygon) {
-	CCTNum_t d[2];
-	const CCTNum_t* polygon_v0 = polygon->v[polygon->v_indices[0]];
-	d[0] = mathPointProjectionPlane(extra->axis_edge[0], polygon_v0, polygon->normal);
-	d[1] = mathPointProjectionPlane(extra->axis_edge[1], polygon_v0, polygon->normal);
-	if (d[0] == d[1]) {
+static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+	GeometryBorderIndex_t bi;
+	if (!result->hit_unique_point) {
+		const CCTNum_t* polygon_v0 = polygon->v[polygon->v_indices[0]];
 		int i;
 		for (i = 0; i < 2; ++i) {
 			CCTNum_t p[3];
-			mathVec3Copy(p, extra->axis_edge[i]);
-			if (d[0] > CCTNum(0.0)) {
-				mathVec3AddScalar(p, polygon->normal, capsule->radius);
+			mathSphereProjectionPlane(extra->axis_edge[i], radius, polygon_v0, polygon->normal, p);
+			mathVec3AddScalar(p, dir, result->distance);
+			if (!Polygon_Contain_Point_SamePlane(polygon, p, &bi)) {
+				continue;
 			}
-			else {
-				mathVec3SubScalar(p, polygon->normal, capsule->radius);
-			}
-			mathVec3AddScalar(p, dir, distance);
-			if (Polygon_Contain_Point_SamePlane(polygon, p)) {
+			if (bi.v_idx == -1 && bi.edge_idx == -1) {
 				return 1;
 			}
 		}
-		/* need test Segment sweep Capsule */
 	}
-	else {
-		CCTNum_t p[3];
-		if (d[0] > CCTNum(0.0)) {
-			unsigned int idx = (d[0] < d[1] ? 0 : 1);
-			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3AddScalar(p, polygon->normal, capsule->radius);
+	else if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
+		if (bi.v_idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+			result->peer[1].idx = bi.v_idx;
 		}
-		else {
-			unsigned int idx = (d[0] < d[1] ? 1 : 0);
-			mathVec3Copy(p, extra->axis_edge[idx]);
-			mathVec3SubScalar(p, polygon->normal, capsule->radius);
+		else if (bi.edge_idx != -1) {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+			result->peer[1].idx = bi.edge_idx;
 		}
-		mathVec3AddScalar(p, dir, distance);
-		if (Polygon_Contain_Point_SamePlane(polygon, p)) {
-			return 1;
-		}
+		return 1;
 	}
+	/* need test Segment sweep Capsule */
 	return 0;
 }
 
@@ -2112,7 +2116,7 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 		if (!Capsule_Sweep_Plane(capsule, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 			return NULL;
 		}
-		if (Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, dir, result->distance, polygon)) {
+		if (Capsule_MoveTo_Polygon(&extra, capsule->radius, dir, polygon, result)) {
 			return result;
 		}
 	}
@@ -2126,13 +2130,16 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 }
 
 static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
-	unsigned int i, reverse = 0;
+	unsigned int i;
 	CCTNum_t neg_dir[3];
 	GeometryCapsuleExtra_t extra;
 	CCTSweepResult_t* p_result;
 
 	p_result = MeshSegment_Sweep_Capsule(mesh, dir, capsule, 0, result);
 	mathVec3Negate(neg_dir, dir);
+	if (p_result) {
+		reverse_result(result, neg_dir);
+	}
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, extra.axis_edge[0], extra.axis_edge[1]);
 	extra.axis_len = capsule->half + capsule->half;
 	extra.radius_sq = CCTNum_sq(capsule->radius);
@@ -2146,7 +2153,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		if (!p_result) {
-			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon(&extra, capsule->radius, neg_dir, polygon, &result_temp)) {
 				continue;
 			}
 			*result = result_temp;
@@ -2156,28 +2163,31 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		else if (result_temp.distance < result->distance - CCT_EPSILON) {
-			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon(&extra, capsule->radius, neg_dir, polygon, &result_temp)) {
 				continue;
 			}
 			*result = result_temp;
 		}
 		else {
-			if (!Capsule_MoveTo_Polygon_Plane_CheckIntersect(capsule, &extra, neg_dir, result_temp.distance, polygon)) {
+			if (!Capsule_MoveTo_Polygon(&extra, capsule->radius, neg_dir, polygon, &result_temp)) {
 				continue;
 			}
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-			result->hit_unique_point = 0;
-			continue;
 		}
-		result->peer[1].idx = i;
-		reverse = 1;
+		if (result->peer[1].hit_bits & CCT_SWEEP_BIT_FACE) {
+			result->peer[1].idx = i;
+		}
 	}
-	if (reverse) {
-		reverse_result(result, dir);
+	if (!p_result) {
+		return NULL;
 	}
-	return p_result;
+	reverse_result(result, dir);
+	if (!(result->peer[1].hit_bits & CCT_SWEEP_BIT_SPHERE)) {
+		result->hit_unique_point = 0;
+	}
+	return result;
 }
 
 static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
@@ -2189,10 +2199,19 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		return result;
 	}
 	if (plane_side) {
+		GeometryBorderIndex_t bi;
 		if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 			return NULL;
 		}
-		if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v)) {
+		if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
+			if (bi.v_idx != -1) {
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_POINT;
+				result->peer[1].idx = bi.v_idx;
+			}
+			else if (bi.edge_idx != -1) {
+				result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
+				result->peer[1].idx = bi.edge_idx;
+			}
 			return result;
 		}
 	}
