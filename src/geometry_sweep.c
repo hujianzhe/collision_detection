@@ -1520,10 +1520,8 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			/* no possible */
 			return NULL;
 		}
-		if (0 == res) {
-			if (CCTNum_abs(d[2]) > capsule->radius + CCT_EPSILON) {
-				return NULL;
-			}
+		if (CCTNum_abs(d[2]) > capsule->radius + CCT_EPSILON) {
+			return NULL;
 		}
 		mathVec3Cross(N, ls_dir, capsule->axis);
 		mathVec3Sub(v, capsule->o, ls[0]);
