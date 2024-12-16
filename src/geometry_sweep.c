@@ -1498,6 +1498,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
+				result->peer[1].idx = 1;
 			}
 			else if (result_temp.distance <= result->distance + CCT_EPSILON) {
 				if (result_temp.distance < result->distance) {
