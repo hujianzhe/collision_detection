@@ -232,6 +232,15 @@ void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[
 	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
+void mathLineClosestLine_opposite_v2(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t closest_p1[3], CCTNum_t closest_p2[3]) {
+	CCTNum_t d1, d2;
+	mathLineClosestLine_opposite(lsv1, lsdir1, lsv2, lsdir2, &d1, &d2);
+	mathVec3Copy(closest_p1, lsv1);
+	mathVec3AddScalar(closest_p1, lsdir1, d1);
+	mathVec3Copy(closest_p2, lsv2);
+	mathVec3AddScalar(closest_p2, lsdir2, d2);
+}
+
 void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
 	CCTNum_t ls_v[3], vp[3], lensq, dot;
 	mathVec3Sub(vp, p, ls0);

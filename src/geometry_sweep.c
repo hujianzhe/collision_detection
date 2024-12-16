@@ -1389,6 +1389,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	}
 	mathVec3Cross(plane_n, ls_dir, dir);
 	if (mathVec3IsZero(plane_n)) {
+		/* no sweep plane, Ray vs Capsule */
 		cos_theta = mathVec3Dot(ls_dir, dir);
 		if (cos_theta > CCTNum(0.0)) {
 			if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
@@ -1402,6 +1403,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	mathVec3Normalized(plane_n, plane_n);
 	cos_theta = mathVec3Dot(plane_n, capsule->axis);
 	if (CCT_EPSILON_NEGATE <= cos_theta && cos_theta <= CCT_EPSILON) {
+		/* capsule parallel sweep plane */
 		CCTNum_t temp_ls[2][3];
 		CCTNum_t d, abs_d;
 		mathVec3Sub(v, capsule->o, ls[0]);
@@ -1514,13 +1516,14 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		return p_result;
 	}
 	else {
+		/* capsule not paralle sweep plane */
 		CCTNum_t d[3], N[3], dot;
 		int res = Segment_Intersect_Plane((const CCTNum_t(*)[3])axis_edge, ls[0], plane_n, NULL, d);
 		if (2 == res) {
 			/* no possible */
 			return NULL;
 		}
-		if (CCTNum_abs(d[2]) > capsule->radius + CCT_EPSILON) {
+		if (0 == res && CCTNum_abs(d[2]) > capsule->radius + CCT_EPSILON) {
 			return NULL;
 		}
 		mathVec3Cross(N, ls_dir, capsule->axis);
@@ -1528,11 +1531,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		dot = mathVec3Dot(v, N);
 		if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 			CCTNum_t temp_ls[2][3];
-			mathLineClosestLine_opposite(capsule->o, capsule->axis, ls[0], ls_dir, &d[0], &d[1]);
-			mathVec3Copy(temp_ls[0], capsule->o);
-			mathVec3AddScalar(temp_ls[0], capsule->axis, d[0]);
-			mathVec3Copy(temp_ls[1], ls[0]);
-			mathVec3AddScalar(temp_ls[1], ls_dir, d[1]);
+			mathLineClosestLine_opposite_v2(capsule->o, capsule->axis, ls[0], ls_dir, temp_ls[0], temp_ls[1]);
 			mathVec3Sub(v, temp_ls[1], temp_ls[0]);
 			dot = mathVec3Normalized(v, v);
 			if (dot > capsule->radius) {
@@ -1552,19 +1551,23 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			}
 		}
 		p_result = NULL;
-		if (Segment_Sweep_Sphere(ls, dir, axis_edge[0], capsule->radius, 0, &result_temp)) {
-			*result = result_temp;
-			p_result = result;
-		}
-		if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
-			if (!p_result) {
+		if (CCTNum_abs(d[0]) <= capsule->radius + CCT_EPSILON) {
+			if (Segment_Sweep_Sphere(ls, dir, axis_edge[0], capsule->radius, 0, &result_temp)) {
 				*result = result_temp;
-				result->peer[1].idx = 1;
 				p_result = result;
 			}
-			else if (result_temp.distance < result->distance) {
-				*result = result_temp;
-				result->peer[1].idx = 1;
+		}
+		if (CCTNum_abs(d[1]) <= capsule->radius + CCT_EPSILON) {
+			if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
+				if (!p_result) {
+					*result = result_temp;
+					result->peer[1].idx = 1;
+					p_result = result;
+				}
+				else if (result_temp.distance < result->distance) {
+					*result = result_temp;
+					result->peer[1].idx = 1;
+				}
 			}
 		}
 		if (Ray_Sweep_Capsule(ls[0], dir, capsule, 0, &result_temp)) {
