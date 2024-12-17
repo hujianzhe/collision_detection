@@ -68,8 +68,8 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v = (CCTNum_t(*)[3])tri;
 	polygon->v_indices = Triangle_Vertice_Indices_Default;
 	polygon->v_indices_cnt = 3;
-	polygon->edge_indices = Triangle_Edge_Indices_Default;
-	polygon->edge_indices_cnt = 6;
+	polygon->edge_v_indices = Triangle_Edge_Indices_Default;
+	polygon->edge_v_indices_cnt = 6;
 	polygon->tri_indices = Triangle_Vertice_Indices_Default;
 	polygon->tri_indices_cnt = 3;
 	polygon->is_convex = 1;
@@ -83,12 +83,12 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
 	}
-	for (i = 0; i < polygon->edge_indices_cnt; ) {
+	for (i = 0; i < polygon->edge_v_indices_cnt; ) {
 		CCTNum_t ls_v[3], N[3];
 		int flag_sign = 0;
 		unsigned int j, v_idx[2];
-		v_idx[0] = polygon->edge_indices[i++];
-		v_idx[1] = polygon->edge_indices[i++];
+		v_idx[0] = polygon->edge_v_indices[i++];
+		v_idx[1] = polygon->edge_v_indices[i++];
 		mathVec3Sub(ls_v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
 		mathVec3Cross(N, ls_v, polygon->normal);
 		for (j = 0; j < polygon->v_indices_cnt; ++j) {
@@ -121,7 +121,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
-	unsigned int* dup_edge_indices = NULL;
+	unsigned int* dup_edge_v_indices = NULL;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
 		if (src->v_indices[i] >= dup_v_cnt) {
@@ -141,8 +141,8 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	if (!dup_tri_indices) {
 		goto err_0;
 	}
-	dup_edge_indices = (unsigned int*)malloc(sizeof(dup_edge_indices[0]) * src->edge_indices_cnt);
-	if (!dup_edge_indices) {
+	dup_edge_v_indices = (unsigned int*)malloc(sizeof(dup_edge_v_indices[0]) * src->edge_v_indices_cnt);
+	if (!dup_edge_v_indices) {
 		goto err_0;
 	}
 	for (i = 0; i < src->v_indices_cnt; ++i) {
@@ -153,26 +153,26 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	for (i = 0; i < src->tri_indices_cnt; ++i) {
 		dup_tri_indices[i] = src->tri_indices[i];
 	}
-	for (i = 0; i < src->edge_indices_cnt; ++i) {
-		dup_edge_indices[i] = src->edge_indices[i];
+	for (i = 0; i < src->edge_v_indices_cnt; ++i) {
+		dup_edge_v_indices[i] = src->edge_v_indices[i];
 	}
 	mathVec3Copy(dst->o, src->o);
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
 	dst->tri_indices_cnt = src->tri_indices_cnt;
 	dst->v_indices_cnt = src->v_indices_cnt;
-	dst->edge_indices_cnt = src->edge_indices_cnt;
+	dst->edge_v_indices_cnt = src->edge_v_indices_cnt;
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
 	dst->tri_indices = dup_tri_indices;
-	dst->edge_indices = dup_edge_indices;
+	dst->edge_v_indices = dup_edge_v_indices;
 	dst->is_convex = src->is_convex;
 	return dst;
 err_0:
 	free(dup_v);
 	free(dup_v_indices);
 	free(dup_tri_indices);
-	free(dup_edge_indices);
+	free(dup_edge_v_indices);
 	return NULL;
 }
 
@@ -180,10 +180,10 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 	if (!polygon) {
 		return;
 	}
-	if (polygon->edge_indices) {
-		free((void*)polygon->edge_indices);
-		polygon->edge_indices = NULL;
-		polygon->edge_indices_cnt = 0;
+	if (polygon->edge_v_indices) {
+		free((void*)polygon->edge_v_indices);
+		polygon->edge_v_indices = NULL;
+		polygon->edge_v_indices_cnt = 0;
 	}
 	if (polygon->tri_indices) {
 		free((void*)polygon->tri_indices);
@@ -209,17 +209,17 @@ void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int e
 	CCTNum_t v[3];
 	unsigned int i = edge_idx * 2;
 	unsigned int v_idx[2];
-	v_idx[0] = polygon->edge_indices[i++];
-	v_idx[1] = polygon->edge_indices[i++];
-	if (i >= polygon->edge_indices_cnt) {
+	v_idx[0] = polygon->edge_v_indices[i++];
+	v_idx[1] = polygon->edge_v_indices[i++];
+	if (i >= polygon->edge_v_indices_cnt) {
 		i = 0;
 	}
-	if (polygon->edge_indices[i] == v_idx[0] || polygon->edge_indices[i] == v_idx[1]) {
-		i++;
+	if (polygon->edge_v_indices[i] == v_idx[0] || polygon->edge_v_indices[i] == v_idx[1]) {
+		++i;
 	}
 	mathVec3Sub(v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
 	mathVec3Cross(edge_normal, v, polygon->normal);
-	mathVec3Sub(v, polygon->v[polygon->edge_indices[i]], polygon->v[v_idx[0]]);
+	mathVec3Sub(v, polygon->v[polygon->edge_v_indices[i]], polygon->v[v_idx[0]]);
 	if (mathVec3Dot(edge_normal, v) > CCTNum(0.0)) {
 		mathVec3Negate(edge_normal, edge_normal);
 	}

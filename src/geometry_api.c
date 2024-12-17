@@ -264,7 +264,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (polygon->tri_indices_cnt % 3) {
 				return 0;
 			}
-			if (polygon->edge_indices_cnt % 2) {
+			if (polygon->edge_v_indices_cnt % 2) {
 				return 0;
 			}
 			if (!CCTNum_chkvals(polygon->o, 3)) {
@@ -308,7 +308,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mesh->v_indices_cnt < 4) {
 				return 0;
 			}
-			if (mesh->edge_indices_cnt < 6) {
+			if (mesh->edge_v_indices_cnt < 6) {
 				return 0;
 			}
 			if (!mesh->is_convex || !mesh->is_closed) {
@@ -327,10 +327,10 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 					return 0;
 				}
 			}
-			for (i = 0; i < mesh->edge_indices_cnt; ) {
+			for (i = 0; i < mesh->edge_v_indices_cnt; ) {
 				GeometrySegment_t segment;
-				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_indices[i++]]);
-				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_indices[i++]]);
+				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_v_indices[i++]]);
+				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_v_indices[i++]]);
 				/* avoid polygon edge is different from mesh edge... */
 				if (!mathGeometryCheckParametersValid(&segment, GEOMETRY_BODY_SEGMENT)) {
 					return 0;

@@ -200,8 +200,8 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		}
 		new_pg->v_indices = NULL;
 		new_pg->v_indices_cnt = 0;
-		new_pg->edge_indices = NULL;
-		new_pg->edge_indices_cnt = 0;
+		new_pg->edge_v_indices = NULL;
+		new_pg->edge_v_indices_cnt = 0;
 		new_pg->is_convex = 0;
 		new_pg->v = (CCTNum_t(*)[3])v;
 		mathVec3Copy(new_pg->normal, N);
@@ -382,7 +382,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 			if (-1 == tmp_edge_pair_indices[j]) {
 				continue;
 			}
-			if (!mathEdgeIndicesMergeEdgeIndices(v, tmp_edge_pair_indices + i, tmp_edge_pair_indices + j, tmp_edge_pair_indices + i)) {
+			if (!mathEdgeVertexIndicesMergeEdgeVertexIndices(v, tmp_edge_pair_indices + i, tmp_edge_pair_indices + j, tmp_edge_pair_indices + i)) {
 				continue;
 			}
 			tmp_edge_indices_cnt -= 2;
@@ -412,27 +412,27 @@ err:
 	return 0;
 }
 
-int mathCookingStage4(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt) {
+int mathCookingStage4(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt) {
 	unsigned int* tmp_v_indices = NULL;
 	unsigned int tmp_v_indices_cnt, i;
-	tmp_v_indices = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * edge_indices_cnt);
+	tmp_v_indices = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * edge_v_indices_cnt);
 	if (!tmp_v_indices) {
 		return 0;
 	}
 	tmp_v_indices_cnt = 0;
-	for (i = 0; i < edge_indices_cnt; ++i) {
+	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		unsigned int j;
 		for (j = 0; j < tmp_v_indices_cnt; ++j) {
-			if (edge_indices[i] == tmp_v_indices[j]) {
+			if (edge_v_indices[i] == tmp_v_indices[j]) {
 				break;
 			}
 		}
 		if (j < tmp_v_indices_cnt) {
 			continue;
 		}
-		tmp_v_indices[tmp_v_indices_cnt++] = edge_indices[i];
+		tmp_v_indices[tmp_v_indices_cnt++] = edge_v_indices[i];
 	}
-	if (tmp_v_indices_cnt < edge_indices_cnt) {
+	if (tmp_v_indices_cnt < edge_v_indices_cnt) {
 		unsigned int* buf = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * tmp_v_indices_cnt);
 		if (!buf) {
 			free(tmp_v_indices);
@@ -453,9 +453,9 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t N[3];
 	unsigned int* dup_tri_indices = NULL;
-	unsigned int* edge_indices = NULL;
+	unsigned int* edge_v_indices = NULL;
 	unsigned int* v_indices = NULL;
-	unsigned int edge_indices_cnt, v_indices_cnt, dup_v_cnt, i;
+	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
 	/* check */
 	if (tri_indices_cnt < 3) {
 		return NULL;
@@ -472,11 +472,11 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		}
 	}
 	/* cooking edge */
-	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, N, &edge_indices, &edge_indices_cnt)) {
+	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, N, &edge_v_indices, &edge_v_indices_cnt)) {
 		goto err;
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_indices, edge_indices_cnt, &v_indices, &v_indices_cnt)) {
+	if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt)) {
 		goto err;
 	}
 	/* save result */
@@ -486,8 +486,8 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->v = (CCTNum_t(*)[3])dup_v;
 	polygon->v_indices = v_indices;
 	polygon->v_indices_cnt = v_indices_cnt;
-	polygon->edge_indices = edge_indices;
-	polygon->edge_indices_cnt = edge_indices_cnt;
+	polygon->edge_v_indices = edge_v_indices;
+	polygon->edge_v_indices_cnt = edge_v_indices_cnt;
 	polygon->tri_indices = dup_tri_indices;
 	polygon->tri_indices_cnt = tri_indices_cnt;
 	polygon->is_convex = mathPolygonIsConvex(polygon);
@@ -495,7 +495,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 err:
 	free(dup_v);
 	free(v_indices);
-	free(edge_indices);
+	free(edge_v_indices);
 	free(dup_tri_indices);
 	return NULL;
 }

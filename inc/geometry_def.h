@@ -48,10 +48,10 @@ typedef struct GeometryPolygon_t {
 	CCTNum_t center[3]; /* center position */
 	CCTNum_t normal[3]; /* plane normal */
 	short is_convex;
-	unsigned int edge_indices_cnt; /* number of edge vertices index */
+	unsigned int edge_v_indices_cnt; /* number of edge vertices index */
 	unsigned int v_indices_cnt; /* number of edge vertices index */
 	unsigned int tri_indices_cnt;  /* number of triangle vertices index */
-	const unsigned int* edge_indices; /* edge vertices index */
+	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* tri_indices; /* triangle vertices index */
 	const unsigned int* mesh_edge_index; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
@@ -64,10 +64,10 @@ typedef struct GeometryMesh_t {
 	short is_convex;
 	short is_closed;
 	unsigned int polygons_cnt; /* number of polygen plane */
-	unsigned int edge_indices_cnt; /* number of edge vertices index */
+	unsigned int edge_v_indices_cnt; /* number of edge vertices index */
 	unsigned int v_indices_cnt; /* number of vertices index */
 	GeometryPolygon_t* polygons; /* array of polygens */
-	const unsigned int* edge_indices; /* edge vertices index */
+	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* v_indices; /* vertices index */
 } GeometryMesh_t;
 
