@@ -13,7 +13,7 @@ extern "C" {
 
 const unsigned int Box_Vertice_Indices_Default[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-const unsigned int Box_Edge_Indices[24] = {
+const unsigned int Box_Edge_VertexIndices[24] = {
 	0, 1,	1, 2,	2, 3,	3, 0,
 	7, 6,	6, 5,	5, 4,	4, 7,
 	1, 5,	6, 2,
@@ -40,7 +40,7 @@ const unsigned int Box_Face_Vertice_Indices[6][4] = {
 	{ 0, 1, 2, 3 }
 };
 
-const unsigned int Box_Face_Edge_Indices[6][8] = {
+const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
 	{ 1,2, 2,6, 6,5, 5,1 },
 	{ 0,3, 3,7, 7,4, 4,0 },
 	{ 3,2, 2,6, 6,7, 7,3 },
@@ -76,11 +76,11 @@ const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int
 	}
 	idx = edge_idx + edge_idx;
 	if (indices) {
-		indices[0] = Box_Edge_Indices[idx];
-		indices[1] = Box_Edge_Indices[idx + 1];
+		indices[0] = Box_Edge_VertexIndices[idx];
+		indices[1] = Box_Edge_VertexIndices[idx + 1];
 		return indices;
 	}
-	return Box_Edge_Indices + idx;
+	return Box_Edge_VertexIndices + idx;
 }
 
 const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]) {
@@ -251,8 +251,8 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_Vertice_Indices[face_idx];
 	polygon->v_indices_cnt = sizeof(Box_Face_Vertice_Indices[0]) / sizeof(Box_Face_Vertice_Indices[0][0]);
-	polygon->edge_v_indices = Box_Face_Edge_Indices[face_idx];
-	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_Indices[0]) / sizeof(Box_Face_Edge_Indices[0][0]);
+	polygon->edge_v_indices = Box_Face_Edge_VertexIndices[face_idx];
+	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_VertexIndices[0]) / sizeof(Box_Face_Edge_VertexIndices[0][0]);
 	polygon->mesh_edge_index = Box_Face_MeshEdge_Index[face_idx];
 	polygon->tri_indices = NULL;
 	polygon->tri_indices_cnt = 0;
@@ -270,8 +270,8 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->v = bm->v;
 	mesh->v_indices = Box_Vertice_Indices_Default;
 	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
-	mesh->edge_v_indices = Box_Edge_Indices;
-	mesh->edge_v_indices_cnt = sizeof(Box_Edge_Indices) / sizeof(Box_Edge_Indices[0]);
+	mesh->edge_v_indices = Box_Edge_VertexIndices;
+	mesh->edge_v_indices_cnt = sizeof(Box_Edge_VertexIndices) / sizeof(Box_Edge_VertexIndices[0]);
 	mesh->is_convex = 1;
 	mesh->is_closed = 1;
 	mesh->polygons = bm->faces;
