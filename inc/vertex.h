@@ -26,6 +26,7 @@ __declspec_dll unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const uns
 __declspec_dll unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_indices, unsigned int edge_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
 __declspec_dll int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_indices, unsigned int edge_indices_cnt, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
 __declspec_dll unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt);
+__declspec_dll unsigned int mathFindAdjacentFaceIndexByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int v_idx0, unsigned int v_idx1, unsigned int* face_idx0, unsigned int* face_idx1);
 
 #ifdef	__cplusplus
 }

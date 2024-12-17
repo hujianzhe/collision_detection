@@ -300,6 +300,28 @@ unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, un
 	return -1;
 }
 
+unsigned int mathFindAdjacentFaceIndexByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int v_idx0, unsigned int v_idx1, unsigned int* face_idx0, unsigned int* face_idx1) {
+	unsigned int i;
+	*face_idx0 = *face_idx1 = -1;
+	for (i = 0; i < faces_cnt; ++i) {
+		const GeometryPolygon_t* face = faces + i;
+		if (mathFindEdgeIndexByVertexIndices(face->edge_indices, face->edge_indices_cnt, v_idx0, v_idx1) == -1) {
+			continue;
+		}
+		if (-1 == *face_idx0) {
+			*face_idx0 = i;
+		}
+		else {
+			*face_idx1 = i;
+			return 2;
+		}
+	}
+	if (-1 == *face_idx0) {
+		return 0;
+	}
+	return 1;
+}
+
 #ifdef	__cplusplus
 }
 #endif
