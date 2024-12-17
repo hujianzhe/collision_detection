@@ -2110,7 +2110,12 @@ static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t 
 		}
 		else if (bi.edge_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[1].idx = bi.edge_idx;
+			if (polygon->mesh_edge_index) {
+				result->peer[1].idx = polygon->mesh_edge_index[bi.edge_idx];
+			}
+			else {
+				result->peer[1].idx = bi.edge_idx;
+			}
 		}
 		return 1;
 	}
@@ -2193,6 +2198,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
+			continue;
 		}
 		if (result->peer[1].hit_bits & CCT_SWEEP_BIT_FACE) {
 			result->peer[1].idx = i;
