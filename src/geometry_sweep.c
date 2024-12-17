@@ -1142,7 +1142,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			else if (bi.edge_idx != -1) {
 				result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				if (polygon2->mesh_edge_index) {
+				if (polygon2->mesh_edge_index && mesh2->polygons_cnt > 1) {
 					result->peer[1].idx = polygon2->mesh_edge_index[bi.edge_idx];
 				}
 				else {
@@ -2068,7 +2068,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		}
 		else if (bi.edge_idx != -1) {
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			if (polygon->mesh_edge_index) {
+			if (polygon->mesh_edge_index && mesh->polygons_cnt > 1) {
 				result->peer[0].idx = polygon->mesh_edge_index[bi.edge_idx];
 			}
 			else {
@@ -2110,12 +2110,7 @@ static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t 
 		}
 		else if (bi.edge_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			if (polygon->mesh_edge_index) {
-				result->peer[1].idx = polygon->mesh_edge_index[bi.edge_idx];
-			}
-			else {
-				result->peer[1].idx = bi.edge_idx;
-			}
+			result->peer[1].idx = bi.edge_idx;
 		}
 		return 1;
 	}
