@@ -195,6 +195,10 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 		polygon->v_indices = NULL;
 		polygon->v_indices_cnt = 0;
 	}
+	if (polygon->mesh_edge_index) {
+		free((void*)polygon->mesh_edge_index);
+		polygon->mesh_edge_index = NULL;
+	}
 	if (polygon->v) {
 		free(polygon->v);
 		polygon->v = NULL;

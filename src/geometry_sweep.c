@@ -71,6 +71,7 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->edge_indices = Segment_Indices_Default;
 	mesh->edge_indices_cnt = 2;
 	mesh->is_convex = 1;
+	mesh->is_closed = 0;
 	mesh->polygons = NULL;
 	mesh->polygons_cnt = 0;
 }
@@ -82,6 +83,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->edge_indices = polygon->edge_indices;
 	mesh->edge_indices_cnt = polygon->edge_indices_cnt;
 	mesh->is_convex = polygon->is_convex;
+	mesh->is_closed = 0;
 	mesh->polygons = (GeometryPolygon_t*)polygon;
 	mesh->polygons_cnt = 1;
 }
@@ -342,7 +344,6 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		rface = polygon;
 		p_result = result;
 		*result = result_temp;
-		result->peer[1].idx = i;
 	}
 	if (p_result) {
 		GeometryBorderIndex_t bi;
@@ -353,7 +354,11 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		}
 		else if (bi.edge_idx != -1) {
 			result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[1].idx = bi.edge_idx;
+			result->peer[1].idx = rface->mesh_edge_index[bi.edge_idx];
+		}
+		else {
+			result->peer[1].hit_bits = CCT_SWEEP_BIT_FACE;
+			result->peer[1].idx = rface - mesh->polygons;
 		}
 		return result;
 	}
@@ -1137,7 +1142,12 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			else if (bi.edge_idx != -1) {
 				result->peer[1].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-				result->peer[1].idx = bi.edge_idx;
+				if (polygon2->mesh_edge_index) {
+					result->peer[1].idx = polygon2->mesh_edge_index[bi.edge_idx];
+				}
+				else {
+					result->peer[1].idx = bi.edge_idx;
+				}
 			}
 			else {
 				result->peer[1].idx = i;
@@ -2058,7 +2068,12 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		}
 		else if (bi.edge_idx != -1) {
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_SEGMENT;
-			result->peer[0].idx = bi.edge_idx;
+			if (polygon->mesh_edge_index) {
+				result->peer[0].idx = polygon->mesh_edge_index[bi.edge_idx];
+			}
+			else {
+				result->peer[0].idx = bi.edge_idx;
+			}
 		}
 		else {
 			result->peer[0].hit_bits = CCT_SWEEP_BIT_FACE;

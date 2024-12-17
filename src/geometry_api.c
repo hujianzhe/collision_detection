@@ -311,7 +311,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mesh->edge_indices_cnt < 6) {
 				return 0;
 			}
-			if (!mesh->is_convex) {
+			if (!mesh->is_convex || !mesh->is_closed) {
 				return 0;
 			}
 			if (!mathMeshIsConvex(mesh)) {

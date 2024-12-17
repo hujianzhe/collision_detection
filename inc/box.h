@@ -60,6 +60,7 @@ extern const unsigned int Box_Edge_Indices[24];
 extern const unsigned int Box_Vertice_Indices_Adjacent[8][3];
 extern const unsigned int Box_Face_Vertice_Indices[6][4];
 extern const unsigned int Box_Face_Edge_Indices[6][8];
+extern const unsigned int Box_Face_MeshEdge_Index[6][4];
 
 __declspec_dll const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]);
 __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]);
