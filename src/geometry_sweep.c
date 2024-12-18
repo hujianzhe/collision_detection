@@ -1780,37 +1780,14 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 			result->distance = d;
 		}
 		else {
-			unsigned int idx;
 			if (d < result->distance) {
 				result->distance = d;
 			}
-			if (same_v_cnt >= 3) {
-				continue;
+			if (same_v_cnt < 3) {
+				same_v_idx[same_v_cnt++] = mesh->v_indices[i];
 			}
-			same_v_idx[same_v_cnt++] = mesh->v_indices[i];
-			if (2 == same_v_cnt) {
-				idx = mathFindEdgeIndexByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, same_v_idx[0], same_v_idx[1]);
-				if (idx != -1) {
-					result->hit_unique_point = 0;
-					result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-					result->peer[0].idx = idx;
-					continue;
-				}
-			}
-			idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
-			if (idx != -1) {
-				result->hit_unique_point = 0;
-				result->peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-				result->peer[0].idx = idx;
-				continue;
-			}
-			result->hit_unique_point = 0;
-			result->peer[0].hit_part = 0;
-			result->peer[0].idx = 0;
 			continue;
 		}
-		result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-		result->peer[0].idx = mesh->v_indices[i];
 		same_v_idx[0] = mesh->v_indices[i];
 		same_v_cnt = 1;
 	}
@@ -1818,16 +1795,41 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 		return NULL;
 	}
 	result->overlap = 0;
-	if (result->peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-		mathVec3Copy(result->hit_plane_v, mesh->v[result->peer[0].idx]);
+	mathVec3Copy(result->hit_plane_n, plane_n);
+	if (1 == same_v_cnt) {
+		mathVec3Copy(result->hit_plane_v, mesh->v[same_v_idx[0]]);
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 		result->hit_unique_point = 1;
+		result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
+		result->peer[0].idx = same_v_idx[0];
 	}
 	else {
+		unsigned int idx;
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_unique_point = 0;
+		if (2 == same_v_cnt) {
+			idx = mathFindEdgeIndexByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, same_v_idx[0], same_v_idx[1]);
+			if (idx != -1) {
+				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
+				result->peer[0].idx = idx;
+			}
+			else {
+				result->peer[0].hit_part = 0;
+				result->peer[0].idx = 0;
+			}
+		}
+		else {
+			idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
+			if (idx != -1) {
+				result->peer[0].hit_part = CCT_SWEEP_HIT_FACE;
+				result->peer[0].idx = idx;
+			}
+			else {
+				result->peer[0].hit_part = 0;
+				result->peer[0].idx = 0;
+			}
+		}
 	}
-	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
 	result->peer[1].idx = 0;
 	return result;
