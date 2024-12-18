@@ -8,7 +8,7 @@
 #include "geometry_def.h"
 
 typedef struct CCTSweepHitInfo_t {
-	int hit_bits;
+	int hit_part;
 	unsigned int idx;
 } CCTSweepHitInfo_t;
 
@@ -22,10 +22,10 @@ typedef struct CCTSweepResult_t {
 } CCTSweepResult_t;
 
 enum {
-	CCT_SWEEP_BIT_POINT = 1,
-	CCT_SWEEP_BIT_SEGMENT = 2,
-	CCT_SWEEP_BIT_FACE = 4,
-	CCT_SWEEP_BIT_SPHERE = 8,
+	CCT_SWEEP_HIT_POINT = 1,
+	CCT_SWEEP_HIT_EDGE = 2,
+	CCT_SWEEP_HIT_FACE = 4,
+	CCT_SWEEP_HIT_SPHERE = 8,
 };
 
 #ifdef __cplusplus
