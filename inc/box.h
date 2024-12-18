@@ -61,10 +61,12 @@ extern const unsigned int Box_Vertice_Indices_Adjacent[8][3];
 extern const unsigned int Box_Face_Vertice_Indices[6][4];
 extern const unsigned int Box_Face_Edge_VertexIndices[6][8];
 extern const unsigned int Box_Face_MeshEdge_Index[6][4];
+extern const unsigned int Box_Edge_Adjacent_FaceIndex[24];
 
 __declspec_dll const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]);
 __declspec_dll const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]);
 __declspec_dll const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]);
+__declspec_dll const unsigned int* mathBoxEdgeAdjacentFaces(unsigned int edge_idx, unsigned int adjacent_face_idx[2]);
 
 __declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int idx, CCTNum_t v[3]);

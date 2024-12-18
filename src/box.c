@@ -58,6 +58,11 @@ const unsigned int Box_Face_MeshEdge_Index[6][4] = {
 	{ 0,1,2,3 }
 };
 
+const unsigned int Box_Edge_Adjacent_FaceIndex[24] = {
+	5,3,	5,0,	5,2,	5,1,	4,2,	4,0,
+	4,3,	4,1,	3,0,	2,0,	2,1,	3,1
+};
+
 /*
 const unsigned int Box_Triangle_Vertices_Indices[36] = {
 	0, 1, 2,	2, 3, 0,
@@ -112,6 +117,20 @@ const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int
 		return indices;
 	}
 	return pi;
+}
+
+const unsigned int* mathBoxEdgeAdjacentFaces(unsigned int edge_idx, unsigned int adjacent_face_idx[2]) {
+	unsigned int idx;
+	if (edge_idx >= 12) {
+		return NULL;
+	}
+	idx = edge_idx + edge_idx;
+	if (adjacent_face_idx) {
+		adjacent_face_idx[0] = Box_Edge_Adjacent_FaceIndex[idx];
+		adjacent_face_idx[1] = Box_Edge_Adjacent_FaceIndex[idx + 1];
+		return adjacent_face_idx;
+	}
+	return Box_Edge_Adjacent_FaceIndex + idx;
 }
 
 void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
