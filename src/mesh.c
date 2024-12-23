@@ -29,7 +29,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	unsigned int i, dup_v_cnt = 0;
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
-	unsigned int* dup_edge_v_indices = NULL;
+	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
 	GeometryPolygon_t* dup_polygons = NULL;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
@@ -46,6 +46,10 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	if (!dup_v_indices) {
 		goto err_0;
 	}
+	dup_edge_v_ids = (unsigned int*)malloc(sizeof(dup_edge_v_ids[0]) * src->edge_v_indices_cnt);
+	if (!dup_edge_v_ids) {
+		goto err_0;
+	}
 	dup_edge_v_indices = (unsigned int*)malloc(sizeof(dup_edge_v_indices[0]) * src->edge_v_indices_cnt);
 	if (!dup_edge_v_indices) {
 		goto err_0;
@@ -57,13 +61,21 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	for (i = 0; i < src->polygons_cnt; ++i) {
 		unsigned int j;
 		const GeometryPolygon_t* src_polygon = src->polygons + i;
-		unsigned int* dup_v_indices = NULL, *dup_tri_indices = NULL, *dup_edge_v_indices = NULL, *dup_mesh_edge_index = NULL;
+		GeometryPolygon_t* dst_polygon = dup_polygons + i;
+		unsigned int* dup_v_indices = NULL;
+		unsigned int *dup_tri_indices = NULL;
+		unsigned int* dup_edge_v_indices = NULL, *dup_edge_v = NULL;
+		unsigned int* dup_mesh_edge_index = NULL;
 		dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * src_polygon->v_indices_cnt);
 		if (!dup_v_indices) {
 			goto err_1;
 		}
 		dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src_polygon->tri_v_indices_cnt);
 		if (!dup_tri_indices) {
+			goto err_1;
+		}
+		dup_edge_v = (unsigned int*)malloc(sizeof(dup_edge_v[0]) * src_polygon->edge_v_indices_cnt);
+		if (!dup_edge_v) {
 			goto err_1;
 		}
 		dup_edge_v_indices = (unsigned int*)malloc(sizeof(dup_edge_v_indices[0]) * src_polygon->edge_v_indices_cnt);
@@ -87,30 +99,35 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 			dup_tri_indices[j] = src_polygon->tri_v_indices[j];
 		}
 		for (j = 0; j < src_polygon->edge_v_indices_cnt; ++j) {
+			dup_edge_v[j] = src_polygon->edge_v_ids[j];
 			dup_edge_v_indices[j] = src_polygon->edge_v_indices[j];
 		}
-		mathVec3Copy(dup_polygons[i].center, src_polygon->center);
-		mathVec3Copy(dup_polygons[i].normal, src_polygon->normal);
-		dup_polygons[i].v = dup_v;
-		dup_polygons[i].v_indices_cnt = src_polygon->v_indices_cnt;
-		dup_polygons[i].tri_v_indices_cnt = src_polygon->tri_v_indices_cnt;
-		dup_polygons[i].edge_v_indices_cnt = src_polygon->edge_v_indices_cnt;
-		dup_polygons[i].v_indices = dup_v_indices;
-		dup_polygons[i].tri_v_indices = dup_tri_indices;
-		dup_polygons[i].edge_v_indices = dup_edge_v_indices;
-		dup_polygons[i].mesh_edge_index = dup_mesh_edge_index;
-		dup_polygons[i].is_convex = src_polygon->is_convex;
+		mathVec3Copy(dst_polygon->center, src_polygon->center);
+		mathVec3Copy(dst_polygon->normal, src_polygon->normal);
+		dst_polygon->v = dup_v;
+		dst_polygon->v_indices_cnt = src_polygon->v_indices_cnt;
+		dst_polygon->tri_v_indices_cnt = src_polygon->tri_v_indices_cnt;
+		dst_polygon->edge_v_indices_cnt = src_polygon->edge_v_indices_cnt;
+		dst_polygon->v_indices = dup_v_indices;
+		dst_polygon->tri_v_indices = dup_tri_indices;
+		dst_polygon->edge_v_ids = dup_edge_v_ids;
+		dst_polygon->edge_v_indices = dup_edge_v_indices;
+		dst_polygon->mesh_edge_index = dup_mesh_edge_index;
+		dst_polygon->is_convex = src_polygon->is_convex;
 		continue;
 	err_1:
 		free(dup_v_indices);
 		free(dup_tri_indices);
+		free(dup_edge_v);
 		free(dup_edge_v_indices);
 		free(dup_mesh_edge_index);
 		for (j = 0; j < i; ++j) {
-			free((void*)dup_polygons[j].v_indices);
-			free((void*)dup_polygons[j].tri_v_indices);
-			free((void*)dup_polygons[j].edge_v_indices);
-			free((void*)dup_polygons[j].mesh_edge_index);
+			dst_polygon = dup_polygons + j;
+			free((void*)dst_polygon->v_indices);
+			free((void*)dst_polygon->tri_v_indices);
+			free((void*)dst_polygon->edge_v_ids);
+			free((void*)dst_polygon->edge_v_indices);
+			free((void*)dst_polygon->mesh_edge_index);
 		}
 		goto err_0;
 	}
@@ -120,6 +137,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 		mathVec3Copy(dup_v[idx], src->v[idx]);
 	}
 	for (i = 0; i < src->edge_v_indices_cnt; ++i) {
+		dup_edge_v_ids[i] = src->edge_v_ids[i];
 		dup_edge_v_indices[i] = src->edge_v_indices[i];
 	}
 	dst->v = dup_v;
@@ -130,12 +148,14 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	dst->is_closed = src->is_closed;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->polygons = dup_polygons;
+	dst->edge_v_ids = dup_edge_v_ids;
 	dst->edge_v_indices = dup_edge_v_indices;
 	dst->v_indices = dup_v_indices;
 	return dst;
 err_0:
 	free(dup_v);
 	free(dup_v_indices);
+	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
 	free(dup_polygons);
 	return NULL;
@@ -146,6 +166,11 @@ void mathMeshFreeData(GeometryMesh_t* mesh) {
 		return;
 	}
 	free_all_faces(mesh);
+	if (mesh->edge_v_ids) {
+		free((void*)mesh->edge_v_ids);
+		mesh->edge_v_ids = NULL;
+		mesh->edge_v_indices_cnt = 0;
+	}
 	if (mesh->edge_v_indices) {
 		free((void*)mesh->edge_v_indices);
 		mesh->edge_v_indices = NULL;

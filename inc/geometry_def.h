@@ -52,6 +52,7 @@ typedef struct GeometryPolygon_t {
 	unsigned int tri_v_indices_cnt;  /* number of triangle vertices index */
 	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* edge_v_indices; /* edge vertices index */
+	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	const unsigned int* tri_v_indices; /* triangle vertices index */
 	const unsigned int* mesh_edge_index; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
 } GeometryPolygon_t;
@@ -66,6 +67,7 @@ typedef struct GeometryMesh_t {
 	unsigned int polygons_cnt; /* number of polygen plane */
 	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* edge_v_indices; /* edge vertices index */
+	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	GeometryPolygon_t* polygons; /* array of polygens */
 } GeometryMesh_t;
 

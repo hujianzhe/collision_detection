@@ -82,7 +82,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	GeometryPolygon_t* tmp_polygons = NULL;
 	unsigned int tmp_polygons_cnt = 0;
 	unsigned int total_edge_v_indices_cnt;
-	unsigned int* edge_v_indices = NULL;
+	unsigned int* edge_v_indices = NULL, *edge_v_ids = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
 	/* check */
@@ -102,7 +102,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	/* cooking every face */
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		unsigned int* edge_v_indices = NULL, *v_indices = NULL;
+		unsigned int* edge_v_indices = NULL, *v_indices = NULL, *edge_v_ids = NULL;
 		unsigned int edge_v_indices_cnt, v_indices_cnt;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
@@ -110,7 +110,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 		/* cooking vertex indice */
-		if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt)) {
+		if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
 			goto err_1;
 		}
 		total_edge_v_indices_cnt += edge_v_indices_cnt;
@@ -118,6 +118,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
 		pg->v_indices = v_indices;
 		pg->v_indices_cnt = v_indices_cnt;
+		pg->edge_v_ids = edge_v_ids;
 		pg->edge_v_indices = edge_v_indices;
 		pg->edge_v_indices_cnt = edge_v_indices_cnt;
 		pg->mesh_edge_index = NULL;
@@ -139,7 +140,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		}
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt)) {
+	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
 		goto err_1;
 	}
 	/* save result */
@@ -148,6 +149,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	mesh->v = dup_v;
 	mesh->v_indices = v_indices;
 	mesh->v_indices_cnt = v_indices_cnt;
+	mesh->edge_v_ids = edge_v_ids;
 	mesh->edge_v_indices = edge_v_indices;
 	mesh->edge_v_indices_cnt = total_edge_v_indices_cnt;
 	mesh->polygons = tmp_polygons;
@@ -177,6 +179,7 @@ err_1:
 err_0:
 	free(dup_v);
 	free(v_indices);
+	free(edge_v_ids);
 	free(edge_v_indices);
 	free(dup_tri_v_indices);
 	return NULL;
