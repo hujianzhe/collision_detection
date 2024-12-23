@@ -261,13 +261,10 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (polygon->v_indices_cnt < 3) {
 				return 0;
 			}
-			if (polygon->tri_indices_cnt % 3) {
+			if (polygon->tri_v_indices_cnt % 3) {
 				return 0;
 			}
 			if (polygon->edge_v_indices_cnt % 2) {
-				return 0;
-			}
-			if (!CCTNum_chkvals(polygon->o, 3)) {
 				return 0;
 			}
 			if (!CCTNum_chkvals(polygon->center, 3)) {
@@ -339,7 +336,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (!mathGeometryCheckParametersValid(&mesh->bound_box, GEOMETRY_BODY_AABB)) {
 				return 0;
 			}
-			return CCTNum_chkvals(mesh->o, 3);
+			return 1;
 		}
 	}
 	return 0;
@@ -532,7 +529,6 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 				CCTNum_t* p = polygon->v[polygon->v_indices[i]];
 				mathVec3Add(p, p, delta);
 			}
-			mathVec3Add(polygon->o, polygon->o, delta);
 			mathVec3Copy(polygon->center, v);
 			return;
 		}
@@ -546,7 +542,6 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 				CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 				mathVec3Add(p, p, delta);
 			}
-			mathVec3Add(mesh->o, mesh->o, delta);
 			mathVec3Copy(mesh->bound_box.o, v);
 			return;
 		}

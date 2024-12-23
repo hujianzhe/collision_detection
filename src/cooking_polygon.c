@@ -10,17 +10,17 @@
 
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 
-static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_indices) {
-	unsigned int cnt = polygon->tri_indices_cnt;
-	unsigned int* new_p = (unsigned int*)realloc((void*)polygon->tri_indices, sizeof(polygon->tri_indices[0]) * (cnt + 3));
+static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_v_indices) {
+	unsigned int cnt = polygon->tri_v_indices_cnt;
+	unsigned int* new_p = (unsigned int*)realloc((void*)polygon->tri_v_indices, sizeof(polygon->tri_v_indices[0]) * (cnt + 3));
 	if (!new_p) {
 		return NULL;
 	}
-	new_p[cnt++] = tri_indices[0];
-	new_p[cnt++] = tri_indices[1];
-	new_p[cnt++] = tri_indices[2];
-	polygon->tri_indices = new_p;
-	polygon->tri_indices_cnt = cnt;
+	new_p[cnt++] = tri_v_indices[0];
+	new_p[cnt++] = tri_v_indices[1];
+	new_p[cnt++] = tri_v_indices[2];
+	polygon->tri_v_indices = new_p;
+	polygon->tri_v_indices_cnt = cnt;
 	return polygon;
 }
 
@@ -28,17 +28,17 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	unsigned int i;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
-		if (!Plane_Contain_Point(polygon->v[polygon->tri_indices[0]], polygon->normal, tri_p[i])) {
+		if (!Plane_Contain_Point(polygon->v[polygon->tri_v_indices[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
 	}
-	for (i = 0; i < polygon->tri_indices_cnt; i += 3) {
+	for (i = 0; i < polygon->tri_v_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
 		const CCTNum_t* triangle[3] = {
-			polygon->v[polygon->tri_indices[i]],
-			polygon->v[polygon->tri_indices[i + 1]],
-			polygon->v[polygon->tri_indices[i + 2]]
+			polygon->v[polygon->tri_v_indices[i]],
+			polygon->v[polygon->tri_v_indices[i + 1]],
+			polygon->v[polygon->tri_v_indices[i + 2]]
 		};
 		const CCTNum_t* triangle_diff_point;
 		CCTNum_t v[3], N[3], dot;
@@ -123,20 +123,20 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 extern "C" {
 #endif
 
-int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_indices) {
-	unsigned int* dup_tri_indices = NULL;
+int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices) {
+	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt, i;
 	CCTNum_t(*dup_v)[3] = NULL, (*tmp_v)[3] = NULL;
 
-	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * tri_indices_cnt);
+	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * tri_v_indices_cnt);
 	if (!dup_v) {
 		goto err;
 	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(tri_indices[0]) * tri_indices_cnt);
-	if (!dup_tri_indices) {
+	dup_tri_v_indices = (unsigned int*)malloc(sizeof(tri_v_indices[0]) * tri_v_indices_cnt);
+	if (!dup_tri_v_indices) {
 		goto err;
 	}
-	dup_v_cnt = mathVerticesMerge(v, tri_indices, tri_indices_cnt, dup_v, dup_tri_indices);
+	dup_v_cnt = mathVerticesMerge(v, tri_v_indices, tri_v_indices_cnt, dup_v, dup_tri_v_indices);
 	if (dup_v_cnt < 3) {
 		goto err;
 	}
@@ -150,20 +150,20 @@ int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 	free(dup_v);
 	*ret_v = tmp_v;
 	*ret_v_cnt = dup_v_cnt;
-	*ret_tri_indices = dup_tri_indices;
+	*ret_tri_v_indices = dup_tri_v_indices;
 	return 1;
 err:
 	free(dup_v);
-	free(dup_tri_indices);
+	free(dup_tri_v_indices);
 	return 0;
 }
 
-int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt) {
+int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt) {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
 
-	tri_cnt = tri_indices_cnt / 3;
+	tri_cnt = tri_v_indices_cnt / 3;
 	if (tri_cnt < 1) {
 		goto err;
 	}
@@ -172,7 +172,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		goto err;
 	}
 	/* Merge triangles on the same plane */
-	for (i = 0; i < tri_indices_cnt; i += 3) {
+	for (i = 0; i < tri_v_indices_cnt; i += 3) {
 		unsigned int j, tri_idx;
 		CCTNum_t N[3];
 		GeometryPolygon_t* tmp_parr, * new_pg;
@@ -181,7 +181,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		if (tri_merge_bits[tri_idx / 8] & (1 << (tri_idx % 8))) {
 			continue;
 		}
-		mathPlaneNormalByVertices3(v[tri_indices[i]], v[tri_indices[i + 1]], v[tri_indices[i + 2]], N);
+		mathPlaneNormalByVertices3(v[tri_v_indices[i]], v[tri_v_indices[i + 1]], v[tri_v_indices[i + 2]], N);
 		if (mathVec3IsZero(N)) {
 			goto err;
 		}
@@ -193,9 +193,9 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		new_pg = tmp_polygons + tmp_polygons_cnt;
 		tmp_polygons_cnt++;
 
-		new_pg->tri_indices = NULL;
-		new_pg->tri_indices_cnt = 0;
-		if (!_insert_tri_indices(new_pg, tri_indices + i)) {
+		new_pg->tri_v_indices = NULL;
+		new_pg->tri_v_indices_cnt = 0;
+		if (!_insert_tri_indices(new_pg, tri_v_indices + i)) {
 			goto err;
 		}
 		new_pg->v_indices = NULL;
@@ -205,17 +205,16 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		new_pg->is_convex = 0;
 		new_pg->v = (CCTNum_t(*)[3])v;
 		mathVec3Copy(new_pg->normal, N);
-		mathVec3Set(new_pg->o, CCTNums_3(0.0, 0.0, 0.0));
 		mathVec3Set(new_pg->center, CCTNums_3(0.0, 0.0, 0.0));
 
 		tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
-		for (j = 0; j < tri_indices_cnt; j += 3) {
+		for (j = 0; j < tri_v_indices_cnt; j += 3) {
 			int ret;
 			tri_idx = j / 3;
 			if (tri_merge_bits[tri_idx / 8] & (1 << tri_idx % 8)) {
 				continue;
 			}
-			ret = _polygon_can_merge_triangle(new_pg, v[tri_indices[j]], v[tri_indices[j + 1]], v[tri_indices[j + 2]]);
+			ret = _polygon_can_merge_triangle(new_pg, v[tri_v_indices[j]], v[tri_v_indices[j + 1]], v[tri_v_indices[j + 2]]);
 			if (-1 == ret) {
 				goto err;
 			}
@@ -226,7 +225,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 			if (2 == ret) {
 				continue;
 			}
-			if (!_insert_tri_indices(new_pg, tri_indices + j)) {
+			if (!_insert_tri_indices(new_pg, tri_v_indices + j)) {
 				goto err;
 			}
 			j = 0;
@@ -239,7 +238,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 err:
 	if (tmp_polygons) {
 		for (i = 0; i < tmp_polygons_cnt; ++i) {
-			free((void*)tmp_polygons[i].tri_indices);
+			free((void*)tmp_polygons[i].tri_v_indices);
 		}
 		free(tmp_polygons);
 	}
@@ -247,44 +246,44 @@ err:
 	return 0;
 }
 
-int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_indices, unsigned int* ret_edge_indices_cnt) {
+int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt) {
 	unsigned int i, j;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
 	unsigned int* tmp_edge_indices = NULL;
 	unsigned int tmp_edge_indices_cnt = 0;
 	/* Filters all no-border edges */
-	if (3 == tri_indices_cnt) {
+	if (3 == tri_v_indices_cnt) {
 		tmp_edge_indices = (unsigned int*)malloc(sizeof(tmp_edge_indices[0]) * 6);
 		if (!tmp_edge_indices) {
 			goto err;
 		}
-		tmp_edge_indices[0] = tri_indices[0];
-		tmp_edge_indices[1] = tri_indices[1];
-		tmp_edge_indices[2] = tri_indices[1];
-		tmp_edge_indices[3] = tri_indices[2];
-		tmp_edge_indices[4] = tri_indices[2];
-		tmp_edge_indices[5] = tri_indices[0];
-		*ret_edge_indices = tmp_edge_indices;
-		*ret_edge_indices_cnt = 6;
+		tmp_edge_indices[0] = tri_v_indices[0];
+		tmp_edge_indices[1] = tri_v_indices[1];
+		tmp_edge_indices[2] = tri_v_indices[1];
+		tmp_edge_indices[3] = tri_v_indices[2];
+		tmp_edge_indices[4] = tri_v_indices[2];
+		tmp_edge_indices[5] = tri_v_indices[0];
+		*ret_edge_v_indices = tmp_edge_indices;
+		*ret_edge_v_indices_cnt = 6;
 		return 1;
 	}
-	for (i = 0; i < tri_indices_cnt; i += 3) {
+	for (i = 0; i < tri_v_indices_cnt; i += 3) {
 		unsigned int ei[6] = {
-			tri_indices[i], tri_indices[i + 1],
-			tri_indices[i + 1], tri_indices[i + 2],
-			tri_indices[i + 2], tri_indices[i]
+			tri_v_indices[i], tri_v_indices[i + 1],
+			tri_v_indices[i + 1], tri_v_indices[i + 2],
+			tri_v_indices[i + 2], tri_v_indices[i]
 		};
 		int same[3] = { 0 }, seperate = 1;
-		for (j = 0; j < tri_indices_cnt; j += 3) {
+		for (j = 0; j < tri_v_indices_cnt; j += 3) {
 			unsigned int k;
 			unsigned int ej[6];
 			if (i == j) {
 				continue;
 			}
-			ej[0] = tri_indices[j]; ej[1] = tri_indices[j + 1];
-			ej[2] = tri_indices[j + 1]; ej[3] = tri_indices[j + 2];
-			ej[4] = tri_indices[j + 2]; ej[5] = tri_indices[j];
+			ej[0] = tri_v_indices[j]; ej[1] = tri_v_indices[j + 1];
+			ej[2] = tri_v_indices[j + 1]; ej[3] = tri_v_indices[j + 2];
+			ej[4] = tri_v_indices[j + 2]; ej[5] = tri_v_indices[j];
 			for (k = 0; k < 6; k += 2) {
 				unsigned int m;
 				if (same[k >> 1]) {
@@ -310,24 +309,24 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 						mathVec3Sub(edge_v, v[ei[k + 1]], v[ei[k]]);
 						mathVec3Cross(edge_n, edge_v, plane_n);
 						if (0 == k) {
-							pi = v[tri_indices[i + 2]];
+							pi = v[tri_v_indices[i + 2]];
 						}
 						else if (2 == k) {
-							pi = v[tri_indices[i]];
+							pi = v[tri_v_indices[i]];
 						}
 						else {
-							pi = v[tri_indices[i + 1]];
+							pi = v[tri_v_indices[i + 1]];
 						}
 						mathVec3Sub(vpi, pi, v[ei[k]]);
 						pi_dot = mathVec3Dot(vpi, edge_n);
 						if (0 == m) {
-							pj = v[tri_indices[j + 2]];
+							pj = v[tri_v_indices[j + 2]];
 						}
 						else if (2 == m) {
-							pj = v[tri_indices[j]];
+							pj = v[tri_v_indices[j]];
 						}
 						else {
-							pj = v[tri_indices[j + 1]];
+							pj = v[tri_v_indices[j + 1]];
 						}
 						mathVec3Sub(vpj, pj, v[ei[k]]);
 						pj_dot = mathVec3Dot(vpj, edge_n);
@@ -345,7 +344,7 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 				break;
 			}
 		}
-		if (j != tri_indices_cnt) {
+		if (j != tri_v_indices_cnt) {
 			continue;
 		}
 		if (seperate) {
@@ -403,8 +402,8 @@ int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_indices, un
 		tmp_edge_indices[j++] = tmp_edge_pair_indices[i + 1];
 	}
 	free(tmp_edge_pair_indices);
-	*ret_edge_indices = tmp_edge_indices;
-	*ret_edge_indices_cnt = tmp_edge_indices_cnt;
+	*ret_edge_v_indices = tmp_edge_indices;
+	*ret_edge_v_indices_cnt = tmp_edge_indices_cnt;
 	return 1;
 err:
 	free(tmp_edge_indices);
@@ -449,30 +448,30 @@ int mathCookingStage4(const unsigned int* edge_v_indices, unsigned int edge_v_in
 	return 1;
 }
 
-GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryPolygon_t* polygon) {
+GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t* polygon) {
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t N[3];
-	unsigned int* dup_tri_indices = NULL;
+	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int* edge_v_indices = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
 	/* check */
-	if (tri_indices_cnt < 3) {
+	if (tri_v_indices_cnt < 3) {
 		return NULL;
 	}
 	/* merge distinct vertices, rewrite indices */
-	if (!mathCookingStage1(v, tri_indices, tri_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_indices)) {
+	if (!mathCookingStage1(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
 		goto err;
 	}
 	/* check all triangle in same plane */
-	mathPlaneNormalByVertices3(v[tri_indices[0]], v[tri_indices[1]], v[tri_indices[2]], N);
+	mathPlaneNormalByVertices3(v[tri_v_indices[0]], v[tri_v_indices[1]], v[tri_v_indices[2]], N);
 	for (i = 0; i < dup_v_cnt; ++i) {
-		if (!Plane_Contain_Point(v[tri_indices[0]], N, dup_v[i])) {
+		if (!Plane_Contain_Point(v[tri_v_indices[0]], N, dup_v[i])) {
 			goto err;
 		}
 	}
 	/* cooking edge */
-	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, N, &edge_v_indices, &edge_v_indices_cnt)) {
+	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, N, &edge_v_indices, &edge_v_indices_cnt)) {
 		goto err;
 	}
 	/* cooking vertex indice */
@@ -481,22 +480,21 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	}
 	/* save result */
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])dup_v, v_indices, v_indices_cnt, polygon->center);
-	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	mathVec3Copy(polygon->normal, N);
 	polygon->v = (CCTNum_t(*)[3])dup_v;
 	polygon->v_indices = v_indices;
 	polygon->v_indices_cnt = v_indices_cnt;
 	polygon->edge_v_indices = edge_v_indices;
 	polygon->edge_v_indices_cnt = edge_v_indices_cnt;
-	polygon->tri_indices = dup_tri_indices;
-	polygon->tri_indices_cnt = tri_indices_cnt;
+	polygon->tri_v_indices = dup_tri_v_indices;
+	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
 	polygon->is_convex = mathPolygonIsConvex(polygon);
 	return polygon;
 err:
 	free(dup_v);
 	free(v_indices);
 	free(edge_v_indices);
-	free(dup_tri_indices);
+	free(dup_tri_v_indices);
 	return NULL;
 }
 

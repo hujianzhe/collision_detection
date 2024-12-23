@@ -74,10 +74,10 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 extern "C" {
 #endif
 
-GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_indices, unsigned int tri_indices_cnt, GeometryMesh_t* mesh) {
+GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryMesh_t* mesh) {
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t v1[3], v2[3];
-	unsigned int* dup_tri_indices = NULL;
+	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt = 0, i;
 	GeometryPolygon_t* tmp_polygons = NULL;
 	unsigned int tmp_polygons_cnt = 0;
@@ -86,19 +86,19 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
 	/* check */
-	if (tri_indices_cnt < 3) {
+	if (tri_v_indices_cnt < 3) {
 		return NULL;
 	}
 	/* merge distinct vertices, rewrite indices */
-	if (!mathCookingStage1(v, tri_indices, tri_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_indices)) {
+	if (!mathCookingStage1(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
 		goto err_0;
 	}
 	/* split all face */
-	if (!mathCookingStage2((const CCTNum_t(*)[3])dup_v, dup_tri_indices, tri_indices_cnt, &tmp_polygons, &tmp_polygons_cnt)) {
+	if (!mathCookingStage2((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, &tmp_polygons, &tmp_polygons_cnt)) {
 		goto err_0;
 	}
-	free(dup_tri_indices);
-	dup_tri_indices = NULL;
+	free(dup_tri_v_indices);
+	dup_tri_v_indices = NULL;
 	/* cooking every face */
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
@@ -106,7 +106,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 		unsigned int edge_v_indices_cnt, v_indices_cnt;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
-		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_indices, pg->tri_indices_cnt, pg->normal, &edge_v_indices, &edge_v_indices_cnt)) {
+		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices, pg->tri_v_indices_cnt, pg->normal, &edge_v_indices, &edge_v_indices_cnt)) {
 			goto err_1;
 		}
 		/* cooking vertex indice */
@@ -145,7 +145,6 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_i
 	/* save result */
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
 	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
-	mathVec3Set(mesh->o, CCTNums_3(0.0, 0.0, 0.0));
 	mesh->v = dup_v;
 	mesh->v_indices = v_indices;
 	mesh->v_indices_cnt = v_indices_cnt;
@@ -179,7 +178,7 @@ err_0:
 	free(dup_v);
 	free(v_indices);
 	free(edge_v_indices);
-	free(dup_tri_indices);
+	free(dup_tri_v_indices);
 	return NULL;
 }
 

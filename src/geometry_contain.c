@@ -418,13 +418,13 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 	if (polygon->is_convex) {
 		return ConvexPolygon_Contain_Point_SamePlane(polygon, p, bi);
 	}
-	if (polygon->tri_indices) {
+	if (polygon->tri_v_indices) {
 		unsigned int i;
-		for (i = 0; i < polygon->tri_indices_cnt; ) {
+		for (i = 0; i < polygon->tri_v_indices_cnt; ) {
 			unsigned int v_idx[3];
-			v_idx[0] = polygon->tri_indices[i++];
-			v_idx[1] = polygon->tri_indices[i++];
-			v_idx[2] = polygon->tri_indices[i++];
+			v_idx[0] = polygon->tri_v_indices[i++];
+			v_idx[1] = polygon->tri_v_indices[i++];
+			v_idx[2] = polygon->tri_v_indices[i++];
 			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
 				bi->v_idx = bi->edge_idx = -1;
 				return 1;

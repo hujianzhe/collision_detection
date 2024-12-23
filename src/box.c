@@ -266,15 +266,14 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	}
 	mathVec3Add(polygon->center, v[Box_Face_Vertice_Indices[face_idx][0]], v[Box_Face_Vertice_Indices[face_idx][2]]);
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
-	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_Vertice_Indices[face_idx];
 	polygon->v_indices_cnt = sizeof(Box_Face_Vertice_Indices[0]) / sizeof(Box_Face_Vertice_Indices[0][0]);
 	polygon->edge_v_indices = Box_Face_Edge_VertexIndices[face_idx];
 	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_VertexIndices[0]) / sizeof(Box_Face_Edge_VertexIndices[0][0]);
 	polygon->mesh_edge_index = Box_Face_MeshEdge_Index[face_idx];
-	polygon->tri_indices = NULL;
-	polygon->tri_indices_cnt = 0;
+	polygon->tri_v_indices = NULL;
+	polygon->tri_v_indices_cnt = 0;
 	polygon->is_convex = 1;
 	return polygon;
 }
@@ -297,11 +296,8 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
 	mathVerticesFindMinMaxXYZ(v, 8, min_v, max_v);
 	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
-	mathVec3Add(mesh->o, v[0], v[6]);
-	mathVec3MultiplyScalar(mesh->o, mesh->o, CCTNum(0.5));
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mathBoxFace(v, axis, i, mesh->polygons + i);
-		mathVec3Copy(mesh->polygons[i].o, mesh->o);
 	}
 }
 

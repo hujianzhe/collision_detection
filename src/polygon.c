@@ -70,11 +70,10 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v_indices_cnt = 3;
 	polygon->edge_v_indices = Triangle_Edge_Indices_Default;
 	polygon->edge_v_indices_cnt = 6;
-	polygon->tri_indices = Triangle_Vertice_Indices_Default;
-	polygon->tri_indices_cnt = 3;
+	polygon->tri_v_indices = Triangle_Vertice_Indices_Default;
+	polygon->tri_v_indices_cnt = 3;
 	polygon->is_convex = 1;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
-	mathVec3Set(polygon->o, CCTNums_3(0.0, 0.0, 0.0));
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center);
 }
 
@@ -137,7 +136,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	if (!dup_v_indices) {
 		goto err_0;
 	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_indices_cnt);
+	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_v_indices_cnt);
 	if (!dup_tri_indices) {
 		goto err_0;
 	}
@@ -150,21 +149,20 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		dup_v_indices[i] = idx;
 		mathVec3Copy(dup_v[idx], src->v[idx]);
 	}
-	for (i = 0; i < src->tri_indices_cnt; ++i) {
-		dup_tri_indices[i] = src->tri_indices[i];
+	for (i = 0; i < src->tri_v_indices_cnt; ++i) {
+		dup_tri_indices[i] = src->tri_v_indices[i];
 	}
 	for (i = 0; i < src->edge_v_indices_cnt; ++i) {
 		dup_edge_v_indices[i] = src->edge_v_indices[i];
 	}
-	mathVec3Copy(dst->o, src->o);
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
-	dst->tri_indices_cnt = src->tri_indices_cnt;
+	dst->tri_v_indices_cnt = src->tri_v_indices_cnt;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->edge_v_indices_cnt = src->edge_v_indices_cnt;
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
-	dst->tri_indices = dup_tri_indices;
+	dst->tri_v_indices = dup_tri_indices;
 	dst->edge_v_indices = dup_edge_v_indices;
 	dst->is_convex = src->is_convex;
 	return dst;
@@ -185,10 +183,10 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 		polygon->edge_v_indices = NULL;
 		polygon->edge_v_indices_cnt = 0;
 	}
-	if (polygon->tri_indices) {
-		free((void*)polygon->tri_indices);
-		polygon->tri_indices = NULL;
-		polygon->tri_indices_cnt = 0;
+	if (polygon->tri_v_indices) {
+		free((void*)polygon->tri_v_indices);
+		polygon->tri_v_indices = NULL;
+		polygon->tri_v_indices_cnt = 0;
 	}
 	if (polygon->v_indices) {
 		free((void*)polygon->v_indices);
