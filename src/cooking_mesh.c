@@ -32,7 +32,7 @@ static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices, unsigned int e
 	return edge_v_indices_cnt;
 }
 
-static unsigned int* Polygon_Save_MeshEdgeIndex(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_indices, unsigned int mesh_edge_indices_cnt) {
+static unsigned int* Polygon_Save_MeshEdgeIndex(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_v_indices, unsigned int mesh_edge_v_indices_cnt) {
 	unsigned int i;
 	unsigned int* mesh_edge_index = (unsigned int*)malloc(sizeof(mesh_edge_index[0]) * polygon->edge_v_indices_cnt / 2);
 	if (!mesh_edge_index) {
@@ -42,7 +42,7 @@ static unsigned int* Polygon_Save_MeshEdgeIndex(const GeometryPolygon_t* polygon
 		unsigned int v_idx[2], edge_idx;
 		v_idx[0] = polygon->edge_v_indices[i++];
 		v_idx[1] = polygon->edge_v_indices[i];
-		edge_idx = mathFindEdgeIndexByVertexIndices(mesh_edge_indices, mesh_edge_indices_cnt, v_idx[0], v_idx[1]);
+		edge_idx = mathFindEdgeIndexByVertexIndices(mesh_edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
 		if (-1 == edge_idx) {
 			free(mesh_edge_index);
 			return NULL;
@@ -50,6 +50,29 @@ static unsigned int* Polygon_Save_MeshEdgeIndex(const GeometryPolygon_t* polygon
 		mesh_edge_index[i / 2] = edge_idx;
 	}
 	return mesh_edge_index;
+}
+
+static unsigned int* Polygon_Save_MeshVertexIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_v_indices, unsigned int mesh_v_indices_cnt) {
+	unsigned int i;
+	unsigned int* mesh_v_ids = (unsigned int*)malloc(sizeof(mesh_v_ids[0]) * polygon->v_indices_cnt);
+	if (!mesh_v_ids) {
+		return NULL;
+	}
+	for (i = 0; i < polygon->v_indices_cnt; ++i) {
+		unsigned int j;
+		for (j = 0; j < mesh_v_indices_cnt; ++j) {
+			if (polygon->v_indices[i] == mesh_v_indices[j]) {
+				mesh_v_ids[i] = j;
+				break;
+			}
+		}
+		if (j < mesh_v_indices_cnt) {
+			continue;
+		}
+		free(mesh_v_ids);
+		return NULL;
+	}
+	return mesh_v_ids;
 }
 
 static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
@@ -121,6 +144,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		pg->edge_v_ids = edge_v_ids;
 		pg->edge_v_indices = edge_v_indices;
 		pg->edge_v_indices_cnt = edge_v_indices_cnt;
+		pg->mesh_v_ids = NULL;
 		pg->mesh_edge_index = NULL;
 	}
 	/* merge face edge */
@@ -132,18 +156,22 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
 		total_edge_v_indices_cnt = Merge_Face_Edge(edge_v_indices, total_edge_v_indices_cnt, tmp_polygons + i);
 	}
-	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		GeometryPolygon_t* pg = tmp_polygons + i;
-		pg->mesh_edge_index = Polygon_Save_MeshEdgeIndex(pg, edge_v_indices, total_edge_v_indices_cnt);
-		if (!pg->mesh_edge_index) {
-			goto err_1;
-		}
-	}
 	/* cooking vertex indice */
 	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
 		goto err_1;
 	}
 	/* save result */
+	for (i = 0; i < tmp_polygons_cnt; ++i) {
+		GeometryPolygon_t* pg = tmp_polygons + i;
+		pg->mesh_v_ids = Polygon_Save_MeshVertexIds(pg, v_indices, v_indices_cnt);
+		if (!pg->mesh_v_ids) {
+			goto err_1;
+		}
+		pg->mesh_edge_index = Polygon_Save_MeshEdgeIndex(pg, edge_v_indices, total_edge_v_indices_cnt);
+		if (!pg->mesh_edge_index) {
+			goto err_1;
+		}
+	}
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
 	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
 	mesh->v = dup_v;

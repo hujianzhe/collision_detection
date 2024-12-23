@@ -13,14 +13,23 @@ extern "C" {
 
 const unsigned int Box_Vertice_Indices_Default[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-const unsigned int Box_Edge_VertexIndices[24] = {
+const unsigned int Box_Face_Vertice_Indices[6][4] = {
+	{ 1, 2, 6, 5 },
+	{ 0, 3, 7, 4 },
+	{ 3, 2, 6, 7 },
+	{ 0, 1, 5, 4 },
+	{ 4, 5, 6, 7 },
+	{ 0, 1, 2, 3 }
+};
+
+static const unsigned int Box_Edge_VertexIndices[24] = {
 	0, 1,	1, 2,	2, 3,	3, 0,
 	7, 6,	6, 5,	5, 4,	4, 7,
 	1, 5,	6, 2,
 	3, 7,	4, 0
 };
 
-const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
+static const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
 	{ 1, 3, 4 },
 	{ 0, 2, 5 },
 	{ 3, 1, 6 },
@@ -31,16 +40,7 @@ const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
 	{ 6, 4, 3 }
 };
 
-const unsigned int Box_Face_Vertice_Indices[6][4] = {
-	{ 1, 2, 6, 5 },
-	{ 0, 3, 7, 4 },
-	{ 3, 2, 6, 7 },
-	{ 0, 1, 5, 4 },
-	{ 4, 5, 6, 7 },
-	{ 0, 1, 2, 3 }
-};
-
-const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
+static const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
 	{ 1,2, 2,6, 6,5, 5,1 },
 	{ 0,3, 3,7, 7,4, 4,0 },
 	{ 3,2, 2,6, 6,7, 7,3 },
@@ -49,7 +49,7 @@ const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
 	{ 0,1, 1,2, 2,3, 3,0 }
 };
 
-const unsigned int Box_Face_MeshEdge_Index[6][4] = {
+static const unsigned int Box_Face_MeshEdge_Index[6][4] = {
 	{ 1,9,5,8 },
 	{ 3,10,7,11 },
 	{ 2,9,4,10 },
@@ -58,7 +58,7 @@ const unsigned int Box_Face_MeshEdge_Index[6][4] = {
 	{ 0,1,2,3 }
 };
 
-const unsigned int Box_Edge_Adjacent_FaceIndex[24] = {
+static const unsigned int Box_Edge_Adjacent_FaceIndex[24] = {
 	5,3,	5,0,	5,2,	5,1,	4,2,	4,0,
 	4,3,	4,1,	3,0,	2,0,	2,1,	3,1
 };
@@ -261,6 +261,9 @@ CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_idx, CC
 }
 
 GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_idx, GeometryPolygon_t* polygon) {
+	static const unsigned int Box_Face_Edge_VertexIds[8] = {
+		0,1, 1,2, 2,3, 3,0
+	};
 	if (!mathBoxFaceNormal(axis, face_idx, polygon->normal)) {
 		return NULL;
 	}
@@ -269,9 +272,10 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_Vertice_Indices[face_idx];
 	polygon->v_indices_cnt = sizeof(Box_Face_Vertice_Indices[0]) / sizeof(Box_Face_Vertice_Indices[0][0]);
-	polygon->edge_v_ids = Box_Face_Edge_VertexIndices[face_idx];
+	polygon->edge_v_ids = Box_Face_Edge_VertexIds;
 	polygon->edge_v_indices = Box_Face_Edge_VertexIndices[face_idx];
 	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_VertexIndices[0]) / sizeof(Box_Face_Edge_VertexIndices[0][0]);
+	polygon->mesh_v_ids = Box_Face_Vertice_Indices[face_idx];
 	polygon->mesh_edge_index = Box_Face_MeshEdge_Index[face_idx];
 	polygon->tri_v_indices = NULL;
 	polygon->tri_v_indices_cnt = 0;

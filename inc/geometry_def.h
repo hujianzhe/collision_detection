@@ -54,6 +54,7 @@ typedef struct GeometryPolygon_t {
 	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	const unsigned int* tri_v_indices; /* triangle vertices index */
+	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
 	const unsigned int* mesh_edge_index; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
 } GeometryPolygon_t;
 

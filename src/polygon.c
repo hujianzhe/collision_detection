@@ -170,6 +170,8 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->tri_v_indices = dup_tri_indices;
 	dst->edge_v_ids = dup_edge_v_ids;
 	dst->edge_v_indices = dup_edge_v_indices;
+	dst->mesh_v_ids = NULL;
+	dst->mesh_edge_index = NULL;
 	dst->is_convex = src->is_convex;
 	return dst;
 err_0:
@@ -204,6 +206,10 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 		free((void*)polygon->v_indices);
 		polygon->v_indices = NULL;
 		polygon->v_indices_cnt = 0;
+	}
+	if (polygon->mesh_v_ids) {
+		free((void*)polygon->mesh_v_ids);
+		polygon->mesh_v_ids = NULL;
 	}
 	if (polygon->mesh_edge_index) {
 		free((void*)polygon->mesh_edge_index);
