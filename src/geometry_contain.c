@@ -329,6 +329,9 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 			return 0;
 		}
 	}
+	if (bi) {
+		bi->v_idx = bi->edge_idx = -1;
+	}
 	return 1;
 }
 
@@ -426,7 +429,9 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			v_idx[1] = polygon->tri_v_indices[i++];
 			v_idx[2] = polygon->tri_v_indices[i++];
 			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
-				bi->v_idx = bi->edge_idx = -1;
+				if (bi) {
+					bi->v_idx = bi->edge_idx = -1;
+				}
 				return 1;
 			}
 		}
