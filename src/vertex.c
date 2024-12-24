@@ -187,18 +187,18 @@ void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3
 	mathVec3AddScalar(center_p, dir, *half);
 }
 
-unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
+unsigned int mathFindVertexId(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		unsigned int v_idx = v_indices[i];
 		if (mathVec3Equal(v[v_idx], p)) {
-			return v_idx;
+			return i;
 		}
 	}
 	return -1;
 }
 
-unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
+unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		unsigned int idx = edge_v_indices[i++];
@@ -218,13 +218,13 @@ unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_v_indices
 	return -1;
 }
 
-int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
+int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices, const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderId_t* bi) {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		CCTNum_t l[3], r[3], N[3], dot;
 		unsigned int idx[2];
-		idx[0] = edge_v_indices[i++];
-		idx[1] = edge_v_indices[i];
+		idx[0] = v_indices[edge_v_ids[i++]];
+		idx[1] = v_indices[edge_v_ids[i]];
 		mathVec3Sub(l, v[idx[0]], p);
 		mathVec3Sub(r, v[idx[1]], p);
 		dot = mathVec3Dot(l, r);
@@ -233,13 +233,13 @@ int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v
 		}
 		if (dot >= CCT_EPSILON_NEGATE) {
 			if (mathVec3IsZero(l)) {
-				bi->v_idx = idx[0];
-				bi->edge_idx = -1;
+				bi->v_id = edge_v_ids[i - 1];
+				bi->edge_id = -1;
 				return 1;
 			}
 			if (mathVec3IsZero(r)) {
-				bi->v_idx = idx[1];
-				bi->edge_idx = -1;
+				bi->v_id = edge_v_ids[i];
+				bi->edge_id = -1;
 				return 1;
 			}
 			continue;
@@ -248,12 +248,12 @@ int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v
 		if (!mathVec3IsZero(N)) {
 			continue;
 		}
-		bi->v_idx = -1;
-		bi->edge_idx = (i >> 1);
+		bi->v_id = -1;
+		bi->edge_id = (i >> 1);
 		return 1;
 	}
-	bi->v_idx = -1;
-	bi->edge_idx = -1;
+	bi->v_id = -1;
+	bi->edge_id = -1;
 	return 0;
 }
 
@@ -277,7 +277,7 @@ unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int
 	return -1;
 }
 
-unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
+unsigned int mathFindFaceIdByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
 	unsigned int i;
 	for (i = 0; i < faces_cnt; ++i) {
 		const GeometryPolygon_t* face = faces + i;
@@ -300,12 +300,12 @@ unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, un
 	return -1;
 }
 
-unsigned int mathFindAdjacentFaceIndexByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1) {
+unsigned int mathFindAdjacentFaceIdByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1) {
 	unsigned int i;
 	*face_idx0 = *face_idx1 = -1;
 	for (i = 0; i < faces_cnt; ++i) {
 		const GeometryPolygon_t* face = faces + i;
-		if (mathFindEdgeIndexByVertexIndices(face->edge_v_indices, face->edge_v_indices_cnt, edge_v_idx0, edge_v_idx1) == -1) {
+		if (mathFindEdgeIdByVertexIndices(face->edge_v_indices, face->edge_v_indices_cnt, edge_v_idx0, edge_v_idx1) == -1) {
 			continue;
 		}
 		if (-1 == *face_idx0) {

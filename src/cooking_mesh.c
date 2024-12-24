@@ -32,24 +32,24 @@ static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices, unsigned int e
 	return edge_v_indices_cnt;
 }
 
-static unsigned int* Polygon_Save_MeshEdgeIndex(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_v_indices, unsigned int mesh_edge_v_indices_cnt) {
+static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_v_indices, unsigned int mesh_edge_v_indices_cnt) {
 	unsigned int i;
-	unsigned int* mesh_edge_index = (unsigned int*)malloc(sizeof(mesh_edge_index[0]) * polygon->edge_v_indices_cnt / 2);
-	if (!mesh_edge_index) {
+	unsigned int* mesh_edge_ids = (unsigned int*)malloc(sizeof(mesh_edge_ids[0]) * polygon->edge_v_indices_cnt / 2);
+	if (!mesh_edge_ids) {
 		return NULL;
 	}
 	for (i = 0; i < polygon->edge_v_indices_cnt; ++i) {
-		unsigned int v_idx[2], edge_idx;
+		unsigned int v_idx[2], edge_id;
 		v_idx[0] = polygon->edge_v_indices[i++];
 		v_idx[1] = polygon->edge_v_indices[i];
-		edge_idx = mathFindEdgeIndexByVertexIndices(mesh_edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
-		if (-1 == edge_idx) {
-			free(mesh_edge_index);
+		edge_id = mathFindEdgeIdByVertexIndices(mesh_edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
+		if (-1 == edge_id) {
+			free(mesh_edge_ids);
 			return NULL;
 		}
-		mesh_edge_index[i / 2] = edge_idx;
+		mesh_edge_ids[i / 2] = edge_id;
 	}
-	return mesh_edge_index;
+	return mesh_edge_ids;
 }
 
 static unsigned int* Polygon_Save_MeshVertexIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_v_indices, unsigned int mesh_v_indices_cnt) {
@@ -145,7 +145,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		pg->edge_v_indices = edge_v_indices;
 		pg->edge_v_indices_cnt = edge_v_indices_cnt;
 		pg->mesh_v_ids = NULL;
-		pg->mesh_edge_index = NULL;
+		pg->mesh_edge_ids = NULL;
 	}
 	/* merge face edge */
 	edge_v_indices = (unsigned int*)malloc(sizeof(edge_v_indices[0]) * total_edge_v_indices_cnt);
@@ -167,8 +167,8 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		if (!pg->mesh_v_ids) {
 			goto err_1;
 		}
-		pg->mesh_edge_index = Polygon_Save_MeshEdgeIndex(pg, edge_v_indices, total_edge_v_indices_cnt);
-		if (!pg->mesh_edge_index) {
+		pg->mesh_edge_ids = Polygon_Save_MeshEdgeIds(pg, edge_v_indices, total_edge_v_indices_cnt);
+		if (!pg->mesh_edge_ids) {
 			goto err_1;
 		}
 	}

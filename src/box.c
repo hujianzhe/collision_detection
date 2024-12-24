@@ -13,7 +13,7 @@ extern "C" {
 
 const unsigned int Box_Vertice_Indices_Default[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-const unsigned int Box_Face_Vertice_Indices[6][4] = {
+const unsigned int Box_Face_MeshVerticeIds[6][4] = {
 	{ 1, 2, 6, 5 },
 	{ 0, 3, 7, 4 },
 	{ 3, 2, 6, 7 },
@@ -22,14 +22,14 @@ const unsigned int Box_Face_Vertice_Indices[6][4] = {
 	{ 0, 1, 2, 3 }
 };
 
-static const unsigned int Box_Edge_VertexIndices[24] = {
+static const unsigned int Box_Edge_VertexIds[24] = {
 	0, 1,	1, 2,	2, 3,	3, 0,
 	7, 6,	6, 5,	5, 4,	4, 7,
 	1, 5,	6, 2,
 	3, 7,	4, 0
 };
 
-static const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
+static const unsigned int Box_Vertex_Adjacent_VertexIds[8][3] = {
 	{ 1, 3, 4 },
 	{ 0, 2, 5 },
 	{ 3, 1, 6 },
@@ -40,7 +40,7 @@ static const unsigned int Box_Vertice_Indices_Adjacent[8][3] = {
 	{ 6, 4, 3 }
 };
 
-static const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
+static const unsigned int Box_Face_Edge_MeshVertexIds[6][8] = {
 	{ 1,2, 2,6, 6,5, 5,1 },
 	{ 0,3, 3,7, 7,4, 4,0 },
 	{ 3,2, 2,6, 6,7, 7,3 },
@@ -49,7 +49,7 @@ static const unsigned int Box_Face_Edge_VertexIndices[6][8] = {
 	{ 0,1, 1,2, 2,3, 3,0 }
 };
 
-static const unsigned int Box_Face_MeshEdge_Index[6][4] = {
+static const unsigned int Box_Face_MeshEdgeIds[6][4] = {
 	{ 1,9,5,8 },
 	{ 3,10,7,11 },
 	{ 2,9,4,10 },
@@ -58,7 +58,7 @@ static const unsigned int Box_Face_MeshEdge_Index[6][4] = {
 	{ 0,1,2,3 }
 };
 
-static const unsigned int Box_Edge_Adjacent_FaceIndex[24] = {
+static const unsigned int Box_Edge_Adjacent_FaceIds[24] = {
 	5,3,	5,0,	5,2,	5,1,	4,2,	4,0,
 	4,3,	4,1,	3,0,	2,0,	2,1,	3,1
 };
@@ -74,63 +74,63 @@ const unsigned int Box_Triangle_Vertices_Indices[36] = {
 };
 */
 
-const unsigned int* mathBoxEdgeVertexIndices(unsigned int edge_idx, unsigned int indices[2]) {
+const unsigned int* mathBoxEdgeVertexIds(unsigned int edge_id, unsigned int v_ids[2]) {
 	unsigned int idx;
-	if (edge_idx >= 12) {
+	if (edge_id >= 12) {
 		return NULL;
 	}
-	idx = edge_idx + edge_idx;
-	if (indices) {
-		indices[0] = Box_Edge_VertexIndices[idx];
-		indices[1] = Box_Edge_VertexIndices[idx + 1];
-		return indices;
+	idx = edge_id + edge_id;
+	if (v_ids) {
+		v_ids[0] = Box_Edge_VertexIds[idx];
+		v_ids[1] = Box_Edge_VertexIds[idx + 1];
+		return v_ids;
 	}
-	return Box_Edge_VertexIndices + idx;
+	return Box_Edge_VertexIds + idx;
 }
 
-const unsigned int* mathBoxVertexIndicesAdjacent(unsigned int indices, unsigned int adj_indices[3]) {
+const unsigned int* mathBoxVertexAdjacentVertexIds(unsigned int v_id, unsigned int adj_v_ids[3]) {
 	const unsigned int* pi;
-	if (indices >= 8) {
+	if (v_id >= 8) {
 		return NULL;
 	}
-	pi = Box_Vertice_Indices_Adjacent[indices];
-	if (adj_indices) {
-		adj_indices[0] = pi[0];
-		adj_indices[1] = pi[1];
-		adj_indices[2] = pi[2];
-		return adj_indices;
+	pi = Box_Vertex_Adjacent_VertexIds[v_id];
+	if (adj_v_ids) {
+		adj_v_ids[0] = pi[0];
+		adj_v_ids[1] = pi[1];
+		adj_v_ids[2] = pi[2];
+		return adj_v_ids;
 	}
 	return pi;
 }
 
-const unsigned int* mathBoxFaceVertexIndices(unsigned int face_idx, unsigned int indices[4]) {
+const unsigned int* mathBoxFaceMeshVertexIds(unsigned int face_id, unsigned int v_ids[4]) {
 	const unsigned int* pi;
-	if (face_idx >= 6) {
+	if (face_id >= 6) {
 		return NULL;
 	}
-	pi = Box_Face_Vertice_Indices[face_idx];
-	if (indices) {
-		indices[0] = pi[0];
-		indices[1] = pi[1];
-		indices[2] = pi[2];
-		indices[3] = pi[3];
-		return indices;
+	pi = Box_Face_MeshVerticeIds[face_id];
+	if (v_ids) {
+		v_ids[0] = pi[0];
+		v_ids[1] = pi[1];
+		v_ids[2] = pi[2];
+		v_ids[3] = pi[3];
+		return v_ids;
 	}
 	return pi;
 }
 
-const unsigned int* mathBoxEdgeAdjacentFaces(unsigned int edge_idx, unsigned int adjacent_face_idx[2]) {
+const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned int adjacent_face_ids[2]) {
 	unsigned int idx;
-	if (edge_idx >= 12) {
+	if (edge_id >= 12) {
 		return NULL;
 	}
-	idx = edge_idx + edge_idx;
-	if (adjacent_face_idx) {
-		adjacent_face_idx[0] = Box_Edge_Adjacent_FaceIndex[idx];
-		adjacent_face_idx[1] = Box_Edge_Adjacent_FaceIndex[idx + 1];
-		return adjacent_face_idx;
+	idx = edge_id + edge_id;
+	if (adjacent_face_ids) {
+		adjacent_face_ids[0] = Box_Edge_Adjacent_FaceIds[idx];
+		adjacent_face_ids[1] = Box_Edge_Adjacent_FaceIds[idx + 1];
+		return adjacent_face_ids;
 	}
-	return Box_Edge_Adjacent_FaceIndex + idx;
+	return Box_Edge_Adjacent_FaceIds + idx;
 }
 
 void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
@@ -180,16 +180,16 @@ void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t
 	mathVec3Add(v[7], v[7], AX[2]);
 }
 
-CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int idx, CCTNum_t v[3]) {
+CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]) {
 	CCTNum_t AX[3][3];
-	if (idx >= 8) {
+	if (v_id >= 8) {
 		return NULL;
 	}
 	mathVec3Copy(v, o);
 	mathVec3MultiplyScalar(AX[0], axis[0], half[0]);
 	mathVec3MultiplyScalar(AX[1], axis[1], half[1]);
 	mathVec3MultiplyScalar(AX[2], axis[2], half[2]);
-	switch (idx) {
+	switch (v_id) {
 		case 0:
 			mathVec3Sub(v, v, AX[0]);
 			mathVec3Sub(v, v, AX[1]);
@@ -267,16 +267,16 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	if (!mathBoxFaceNormal(axis, face_idx, polygon->normal)) {
 		return NULL;
 	}
-	mathVec3Add(polygon->center, v[Box_Face_Vertice_Indices[face_idx][0]], v[Box_Face_Vertice_Indices[face_idx][2]]);
+	mathVec3Add(polygon->center, v[Box_Face_MeshVerticeIds[face_idx][0]], v[Box_Face_MeshVerticeIds[face_idx][2]]);
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 	polygon->v = (CCTNum_t(*)[3])v;
-	polygon->v_indices = Box_Face_Vertice_Indices[face_idx];
-	polygon->v_indices_cnt = sizeof(Box_Face_Vertice_Indices[0]) / sizeof(Box_Face_Vertice_Indices[0][0]);
+	polygon->v_indices = Box_Face_MeshVerticeIds[face_idx];
+	polygon->v_indices_cnt = sizeof(Box_Face_MeshVerticeIds[0]) / sizeof(Box_Face_MeshVerticeIds[0][0]);
 	polygon->edge_v_ids = Box_Face_Edge_VertexIds;
-	polygon->edge_v_indices = Box_Face_Edge_VertexIndices[face_idx];
-	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_VertexIndices[0]) / sizeof(Box_Face_Edge_VertexIndices[0][0]);
-	polygon->mesh_v_ids = Box_Face_Vertice_Indices[face_idx];
-	polygon->mesh_edge_index = Box_Face_MeshEdge_Index[face_idx];
+	polygon->edge_v_indices = Box_Face_Edge_MeshVertexIds[face_idx];
+	polygon->edge_v_indices_cnt = sizeof(Box_Face_Edge_MeshVertexIds[0]) / sizeof(Box_Face_Edge_MeshVertexIds[0][0]);
+	polygon->mesh_v_ids = Box_Face_MeshVerticeIds[face_idx];
+	polygon->mesh_edge_ids = Box_Face_MeshEdgeIds[face_idx];
 	polygon->tri_v_indices = NULL;
 	polygon->tri_v_indices_cnt = 0;
 	polygon->is_convex = 1;
@@ -293,9 +293,9 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->v = bm->v;
 	mesh->v_indices = Box_Vertice_Indices_Default;
 	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
-	mesh->edge_v_ids = Box_Edge_VertexIndices;
-	mesh->edge_v_indices = Box_Edge_VertexIndices;
-	mesh->edge_v_indices_cnt = sizeof(Box_Edge_VertexIndices) / sizeof(Box_Edge_VertexIndices[0]);
+	mesh->edge_v_ids = Box_Edge_VertexIds;
+	mesh->edge_v_indices = Box_Edge_VertexIds;
+	mesh->edge_v_indices_cnt = sizeof(Box_Edge_VertexIds) / sizeof(Box_Edge_VertexIds[0]);
 	mesh->is_convex = 1;
 	mesh->is_closed = 1;
 	mesh->polygons = bm->faces;

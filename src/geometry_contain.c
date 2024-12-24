@@ -277,7 +277,7 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	return 1;
 }
 
-static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
+static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
 	unsigned int i;
 	for (i = 0; i < polygon->edge_v_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], v[3], test_dot, dot;
@@ -300,16 +300,16 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 			}
 			if (bi) {
 				if (mathVec3IsZero(l)) {
-					bi->v_idx = edge_v_idx[0];
-					bi->edge_idx = -1;
+					bi->v_id = polygon->edge_v_ids[i - 2];
+					bi->edge_id = -1;
 				}
 				else if (mathVec3IsZero(r)) {
-					bi->v_idx = edge_v_idx[1];
-					bi->edge_idx = -1;
+					bi->v_id = polygon->edge_v_ids[i - 1];
+					bi->edge_id = -1;
 				}
 				else {
-					bi->v_idx = -1;
-					bi->edge_idx = (i - 1) / 2;
+					bi->v_id = -1;
+					bi->edge_id = (i - 1) / 2;
 				}
 			}
 			return 1;
@@ -330,7 +330,7 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 		}
 	}
 	if (bi) {
-		bi->v_idx = bi->edge_idx = -1;
+		bi->v_id = bi->edge_id = -1;
 	}
 	return 1;
 }
@@ -397,9 +397,9 @@ int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], c
 	return 1;
 }
 
-int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi) {
-	if ((const void*)polygon->v_indices >= (const void*)Box_Face_Vertice_Indices &&
-		(const void*)polygon->v_indices < (const void*)(Box_Face_Vertice_Indices + 6))
+int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+	if ((const void*)polygon->v_indices >= (const void*)Box_Face_MeshVerticeIds &&
+		(const void*)polygon->v_indices < (const void*)(Box_Face_MeshVerticeIds + 6))
 	{
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
@@ -414,7 +414,7 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			return 0;
 		}
 		if (bi) {
-			mathFindBorderIndexByPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices, polygon->edge_v_indices_cnt, p, bi);
+			mathFindBorderIdByPoint((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->edge_v_ids, polygon->edge_v_indices_cnt, p, bi);
 		}
 		return 1;
 	}
@@ -430,7 +430,7 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			v_idx[2] = polygon->tri_v_indices[i++];
 			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
 				if (bi) {
-					bi->v_idx = bi->edge_idx = -1;
+					bi->v_id = bi->edge_id = -1;
 				}
 				return 1;
 			}

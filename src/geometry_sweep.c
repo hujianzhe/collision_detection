@@ -27,7 +27,7 @@ extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const Geom
 extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh);
 extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
 extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi);
 extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
 extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
 extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
@@ -46,9 +46,9 @@ static void set_intersect(CCTSweepResult_t* result) {
 	result->overlap = 1;
 	result->hit_unique_point = 0;
 	result->peer[0].hit_part = 0;
-	result->peer[0].idx = 0;
+	result->peer[0].id = 0;
 	result->peer[1].hit_part = 0;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 }
 
 static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
@@ -117,11 +117,11 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 		if (mathVec3LenSq(v0) > mathVec3LenSq(v1)) {
 			dot = mathVec3Dot(dir, v1);
 			mathVec3Copy(result->hit_plane_v, ls[1]);
-			result->peer[1].idx = 1;
+			result->peer[1].id = 1;
 		}
 		else {
 			mathVec3Copy(result->hit_plane_v, ls[0]);
-			result->peer[1].idx = 0;
+			result->peer[1].id = 0;
 		}
 		mathVec3Copy(result->hit_plane_n, dir);
 		result->distance = dot;
@@ -156,11 +156,11 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 
 		if (mathVec3Equal(ls[0], p)) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = 0;
+			result->peer[1].id = 0;
 		}
 		else if (mathVec3Equal(ls[1], p)) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = 1;
+			result->peer[1].id = 1;
 		}
 		else {
 			mathVec3Sub(v0, ls[0], p);
@@ -170,7 +170,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 				return NULL;
 			}
 			result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[1].idx = 0;
+			result->peer[1].id = 0;
 		}
 		mathVec3Copy(result->hit_plane_v, p);
 		mathVec3Copy(result->hit_plane_n, op);
@@ -179,7 +179,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 	result->hit_unique_point = 1;
 	result->overlap = 0;
 	result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-	result->peer[0].idx = 0;
+	result->peer[0].id = 0;
 	return result;
 }
 
@@ -212,10 +212,15 @@ static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum
 			continue;
 		}
 		if (result_temp.peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
-			result->peer[1].idx = v_idx[result_temp.peer[1].idx ? 1 : 0];
+			if (result_temp.peer[1].id) {
+				result->peer[1].id = mesh->edge_v_ids[i - 1];
+			}
+			else {
+				result->peer[1].id = mesh->edge_v_ids[i - 2];
+			}
 		}
 		else {
-			result->peer[1].idx = (i - 1) / 2;
+			result->peer[1].id = (i - 1) / 2;
 		}
 	}
 	return p_result;
@@ -245,16 +250,16 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	result->overlap = 0;
 	result->distance = d;
 	result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-	result->peer[0].idx = 0;
+	result->peer[0].id = 0;
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 	return result;
 }
 
 static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
 	CCTNum_t dot;
 	GeometryMesh_t mesh;
-	GeometryBorderIndex_t bi;
+	GeometryBorderId_t bi;
 	if (!Ray_Sweep_Plane(o, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 		return NULL;
 	}
@@ -262,13 +267,13 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 		if (result->overlap) {
 			return result;
 		}
-		if (bi.v_idx != -1) {
+		if (bi.v_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = bi.v_idx;
+			result->peer[1].id = bi.v_id;
 		}
-		else if (bi.edge_idx != -1) {
+		else if (bi.edge_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[1].idx = bi.edge_idx;
+			result->peer[1].id = bi.edge_id;
 		}
 		return result;
 	}
@@ -312,9 +317,9 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	mathVec3MultiplyScalar(result->hit_plane_n, result->hit_plane_n, CCTNum(1.0) / sp_radius);
 	result->distance = dir_d;
 	result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-	result->peer[0].idx = 0;
+	result->peer[0].id = 0;
 	result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 	return result;
 }
 
@@ -348,19 +353,19 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 		*result = result_temp;
 	}
 	if (p_result) {
-		GeometryBorderIndex_t bi;
-		mathFindBorderIndexByPoint((const CCTNum_t(*)[3])rface->v, rface->edge_v_indices, rface->edge_v_indices_cnt, result->hit_plane_v, &bi);
-		if (bi.v_idx != -1) {
+		GeometryBorderId_t bi;
+		mathFindBorderIdByPoint((const CCTNum_t(*)[3])rface->v, rface->v_indices, rface->edge_v_ids, rface->edge_v_indices_cnt, result->hit_plane_v, &bi);
+		if (bi.v_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = bi.v_idx;
+			result->peer[1].id = rface->mesh_v_ids[bi.v_id];
 		}
-		else if (bi.edge_idx != -1) {
+		else if (bi.edge_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[1].idx = rface->mesh_edge_index[bi.edge_idx];
+			result->peer[1].id = rface->mesh_edge_ids[bi.edge_id];
 		}
 		else {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-			result->peer[1].idx = rface - mesh->polygons;
+			result->peer[1].id = rface - mesh->polygons;
 		}
 		return result;
 	}
@@ -442,9 +447,9 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 				result->hit_unique_point = 1;
 				result->overlap = 0;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 				result->peer[1].hit_part = 0;
-				result->peer[1].idx = 0;
+				result->peer[1].id = 0;
 				return result;
 			}
 		}
@@ -459,7 +464,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 	if (!Ray_Sweep_Sphere(o, dir, v, capsule->radius, result)) {
 		return NULL;
 	}
-	result->peer[1].idx = (d > CCTNum(0.0) ? 1 : 0);
+	result->peer[1].id = (d > CCTNum(0.0) ? 1 : 0);
 	return result;
 }
 
@@ -527,9 +532,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			result->overlap = 0;
 			result->distance = d;
 			result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[0].idx = closest_ls1_indice;
+			result->peer[0].id = closest_ls1_indice;
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = closest_ls2_indice;
+			result->peer[1].id = closest_ls2_indice;
 			return result;
 		}
 		else {
@@ -577,16 +582,16 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					if (unique_point) {
 						result->hit_unique_point = 1;
 						result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[0].idx = i;
+						result->peer[0].id = i;
 						result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[1].idx = j;
+						result->peer[1].id = j;
 					}
 					else {
 						result->hit_unique_point = 0;
 						result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-						result->peer[0].idx = 0;
+						result->peer[0].id = 0;
 						result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-						result->peer[1].idx = 0;
+						result->peer[1].id = 0;
 					}
 					p_result = result;
 					mathVec3Copy(result->hit_plane_v, p);
@@ -605,9 +610,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3Copy(result->hit_plane_v, ls2[i]);
 				result->hit_unique_point = 0;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[1].idx = 0;
+				result->peer[1].id = 0;
 				break;
 			}
 			if (!p_result) {
@@ -625,9 +630,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					mathVec3Copy(result->hit_plane_v, ls2[i]);
 					result->hit_unique_point = 0;
 					result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-					result->peer[0].idx = 0;
+					result->peer[0].id = 0;
 					result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-					result->peer[1].idx = 0;
+					result->peer[1].id = 0;
 					break;
 				}
 			}
@@ -666,11 +671,11 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			mathVec3SubScalar(p, dir, d);
 			if (mathVec3Equal(ls1[0], p)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			}
 			else if (mathVec3Equal(ls1[1], p)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 1;
+				result->peer[0].id = 1;
 			}
 			else {
 				CCTNum_t vr[3];
@@ -681,7 +686,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					return NULL;
 				}
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			}
 			mathVec3Copy(result->hit_plane_v, v);
 			mathVec3Copy(result->hit_plane_n, N);
@@ -690,15 +695,15 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			result->distance = d;
 			if (mathVec3Equal(v, ls2[0])) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[1].idx = 0;
+				result->peer[1].id = 0;
 			}
 			else if (mathVec3Equal(v, ls2[1])) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[1].idx = 1;
+				result->peer[1].id = 1;
 			}
 			else {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[1].idx = 0;
+				result->peer[1].id = 0;
 			}
 			return result;
 		}
@@ -754,11 +759,11 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					if (d > cos_theta) {
 						d = cos_theta;
 						result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[0].idx = 0;
+						result->peer[0].id = 0;
 					}
 					else {
 						result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[0].idx = 1;
+						result->peer[0].id = 1;
 					}
 					mathVec3Copy(result->hit_plane_v, p);
 					mathVec3Copy(result->hit_plane_n, hn);
@@ -767,15 +772,15 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 					result->distance = d;
 					if (mathVec3Equal(p, ls2[0])) {
 						result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[1].idx = 0;
+						result->peer[1].id = 0;
 					}
 					else if (mathVec3Equal(p, ls2[1])) {
 						result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-						result->peer[1].idx = 1;
+						result->peer[1].id = 1;
 					}
 					else {
 						result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-						result->peer[1].idx = 0;
+						result->peer[1].id = 0;
 					}
 					return result;
 				}
@@ -813,7 +818,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			} while (0);
 			do {
 				mathPointProjectionLine(ls1[1], ls2[0], ls2_dir, p);
@@ -841,20 +846,20 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 1;
+				result->peer[0].id = 1;
 			} while (0);
 			if (p_result) {
 				if (mathVec3Equal(result->hit_plane_v, ls2[0])) {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-					result->peer[1].idx = 0;
+					result->peer[1].id = 0;
 				}
 				else if (mathVec3Equal(result->hit_plane_v, ls2[1])) {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-					result->peer[1].idx = 1;
+					result->peer[1].id = 1;
 				}
 				else {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-					result->peer[1].idx = 0;
+					result->peer[1].id = 0;
 				}
 			}
 			/* ls2 ray sweep ls1 */
@@ -875,11 +880,11 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				mathVec3SubScalar(p, dir, hn_len);
 				if (mathVec3Equal(ls1[0], p)) {
 					result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-					result->peer[0].idx = 0;
+					result->peer[0].id = 0;
 				}
 				else if (mathVec3Equal(ls1[1], p)) {
 					result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-					result->peer[0].idx = 1;
+					result->peer[0].id = 1;
 				}
 				else {
 					mathVec3Sub(v, ls1[0], p);
@@ -889,7 +894,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 						continue;
 					}
 					result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-					result->peer[0].idx = 0;
+					result->peer[0].id = 0;
 				}
 				p_result = result;
 				mathVec3Copy(result->hit_plane_v, ls2[i]);
@@ -897,7 +902,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[1].idx = i;
+				result->peer[1].id = i;
 			}
 			if (p_result) {
 				p_result->overlap = 0;
@@ -908,86 +913,86 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 }
 
 static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInfo_t* src_info, const GeometryMesh_t* mesh) {
-	unsigned int idx, v_idx[3];
+	unsigned int part_id, idx, v_idx[3];
 	if (dst_info->hit_part == CCT_SWEEP_HIT_POINT && src_info->hit_part == CCT_SWEEP_HIT_POINT) {
-		if (dst_info->idx == src_info->idx) {
+		if (dst_info->id == src_info->id) {
 			return 0;
 		}
-		idx = mathFindEdgeIndexByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, dst_info->idx, src_info->idx);
-		if (idx != -1) {
+		v_idx[0] = mesh->v_indices[dst_info->id];
+		v_idx[1] = mesh->v_indices[src_info->id];
+		part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, v_idx[0], v_idx[1]);
+		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_EDGE;
-			dst_info->idx = idx;
+			dst_info->id = part_id;
 			return 1;
 		}
-		v_idx[0] = dst_info->idx;
-		v_idx[1] = src_info->idx;
-		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 2);
-		if (idx != -1) {
+		part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 2);
+		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_FACE;
-			dst_info->idx = idx;
+			dst_info->id = part_id;
 			return 1;
 		}
 		dst_info->hit_part = 0;
-		dst_info->idx = 0;
+		dst_info->id = 0;
 		return 1;
 	}
 	if (dst_info->hit_part == CCT_SWEEP_HIT_EDGE && src_info->hit_part == CCT_SWEEP_HIT_EDGE) {
-		if (dst_info->idx == src_info->idx) {
+		if (dst_info->id == src_info->id) {
 			return 0;
 		}
-		idx = 2 * dst_info->idx;
+		idx = 2 * dst_info->id;
 		v_idx[0] = mesh->edge_v_indices[idx++];
 		v_idx[1] = mesh->edge_v_indices[idx];
-		idx = 2 * src_info->idx;
+		idx = 2 * src_info->id;
 		v_idx[2] = mesh->edge_v_indices[idx++];
 		if (v_idx[2] == v_idx[0] || v_idx[2] == v_idx[1]) {
 			v_idx[2] = mesh->edge_v_indices[idx];
 		}
-		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
-		if (idx != -1) {
+		part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_FACE;
-			dst_info->idx = idx;
+			dst_info->id = part_id;
 			return 1;
 		}
 		dst_info->hit_part = 0;
-		dst_info->idx = 0;
+		dst_info->id = 0;
 		return 1;
 	}
 	if (dst_info->hit_part == CCT_SWEEP_HIT_POINT && src_info->hit_part == CCT_SWEEP_HIT_EDGE) {
-		idx = 2 * src_info->idx;
+		idx = 2 * src_info->id;
 		v_idx[0] = mesh->edge_v_indices[idx++];
 		v_idx[1] = mesh->edge_v_indices[idx];
-		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[dst_info->idx])) {
+		v_idx[2] = mesh->v_indices[dst_info->id];
+		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[v_idx[2]])) {
 			*dst_info = *src_info;
 			return 1;
 		}
-		v_idx[2] = dst_info->idx;
-		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
-		if (idx != -1) {
+		part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_FACE;
-			dst_info->idx = idx;
+			dst_info->id = part_id;
 			return 1;
 		}
 		dst_info->hit_part = 0;
-		dst_info->idx = 0;
+		dst_info->id = 0;
 		return 1;
 	}
 	else if (dst_info->hit_part == CCT_SWEEP_HIT_EDGE && src_info->hit_part == CCT_SWEEP_HIT_POINT) {
-		idx = 2 * dst_info->idx;
+		idx = 2 * dst_info->id;
 		v_idx[0] = mesh->edge_v_indices[idx++];
 		v_idx[1] = mesh->edge_v_indices[idx];
-		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[src_info->idx])) {
+		v_idx[2] = mesh->v_indices[src_info->id];
+		if (Segment_Contain_Point(mesh->v[v_idx[0]], mesh->v[v_idx[1]], mesh->v[v_idx[2]])) {
 			return 0;
 		}
-		v_idx[2] = src_info->idx;
-		idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+		part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
 		if (idx != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_FACE;
-			dst_info->idx = idx;
+			dst_info->id = part_id;
 			return 1;
 		}
 		dst_info->hit_part = 0;
-		dst_info->idx = 0;
+		dst_info->id = 0;
 		return 1;
 	}
 	if (dst_info->hit_part != 0 && src_info->hit_part == CCT_SWEEP_HIT_FACE) {
@@ -997,12 +1002,12 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 		}
 		else if (dst_info->hit_part > src_info->hit_part) {
 			dst_info->hit_part = 0;
-			dst_info->idx = 0;
+			dst_info->id = 0;
 			return 1;
 		}
-		else if (dst_info->idx != src_info->idx) {
+		else if (dst_info->id != src_info->id) {
 			dst_info->hit_part = 0;
-			dst_info->idx = 0;
+			dst_info->id = 0;
 			return 1;
 		}
 		return 0;
@@ -1054,16 +1059,26 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 					result->distance = result_temp.distance;
 				}
 				if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-					result_temp.peer[0].idx = v_idx1[result_temp.peer[0].idx ? 1 : 0];
+					if (result_temp.peer[0].id) {
+						result_temp.peer[0].id = s1->edge_v_ids[i - 1];
+					}
+					else {
+						result_temp.peer[0].id = s1->edge_v_ids[i - 2];
+					}
 				}
 				else {
-					result_temp.peer[0].idx = (i - 1) / 2;
+					result_temp.peer[0].id = (i - 1) / 2;
 				}
 				if (result_temp.peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
-					result_temp.peer[1].idx = v_idx2[result_temp.peer[1].idx ? 1 : 0];
+					if (result_temp.peer[1].id) {
+						result_temp.peer[1].id = s2->edge_v_ids[j - 1];
+					}
+					else {
+						result_temp.peer[1].id = s2->edge_v_ids[j - 2];
+					}
 				}
 				else {
-					result_temp.peer[1].idx = (j - 1) / 2;
+					result_temp.peer[1].id = (j - 1) / 2;
 				}
 				merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], s1);
 				merge_mesh_hit_info(&result->peer[1], &result_temp.peer[1], s2);
@@ -1073,16 +1088,26 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 				continue;
 			}
 			if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-				result->peer[0].idx = v_idx1[result_temp.peer[0].idx ? 1 : 0];
+				if (result_temp.peer[0].id) {
+					result->peer[0].id = s1->edge_v_ids[i - 1];
+				}
+				else {
+					result->peer[0].id = s1->edge_v_ids[i - 2];
+				}
 			}
 			else {
-				result->peer[0].idx = (i - 1) / 2;
+				result->peer[0].id = (i - 1) / 2;
 			}
 			if (result_temp.peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
-				result->peer[1].idx = v_idx2[result_temp.peer[1].idx ? 1 : 0];
+				if (result_temp.peer[1].id) {
+					result->peer[1].id = s2->edge_v_ids[j - 1];
+				}
+				else {
+					result->peer[1].id = s2->edge_v_ids[j - 2];
+				}
 			}
 			else {
-				result->peer[1].idx = (j - 1) / 2;
+				result->peer[1].id = (j - 1) / 2;
 			}
 		}
 	}
@@ -1092,7 +1117,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
 	unsigned int i;
 	CCTNum_t neg_dir[3];
-	GeometryBorderIndex_t bi;
+	GeometryBorderId_t bi;
 	CCTSweepResult_t* p_result;
 	p_result = MeshSegment_Sweep_MeshSegment(mesh1, dir, mesh2, result);
 	for (i = 0; i < mesh2->polygons_cnt; ++i) {
@@ -1126,33 +1151,38 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (bi.v_idx != -1 || bi.edge_idx != -1) {
+				if (bi.v_id != -1 || bi.edge_id != -1) {
 					continue;
 				}
-				result_temp.peer[0].idx = mesh1->v_indices[j];
-				result_temp.peer[1].idx = i;
+				result_temp.peer[0].id = j;
+				result_temp.peer[1].id = i;
 				merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh1);
 				merge_mesh_hit_info(&result->peer[1], &result_temp.peer[1], mesh2);
 				result->hit_unique_point = 0;
 				continue;
 			}
 			*result = result_temp;
-			result->peer[0].idx = mesh1->v_indices[j];
-			if (bi.v_idx != -1) {
+			result->peer[0].id = j;
+			if (bi.v_id != -1) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[1].idx = bi.v_idx;
-			}
-			else if (bi.edge_idx != -1) {
-				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-				if (polygon2->mesh_edge_index && mesh2->polygons_cnt > 1) {
-					result->peer[1].idx = polygon2->mesh_edge_index[bi.edge_idx];
+				if (polygon2->mesh_v_ids && mesh2->polygons_cnt > 1) {
+					result->peer[1].id = polygon2->mesh_v_ids[bi.v_id];
 				}
 				else {
-					result->peer[1].idx = bi.edge_idx;
+					result->peer[1].id = bi.v_id;
+				}
+			}
+			else if (bi.edge_id != -1) {
+				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
+				if (polygon2->mesh_edge_ids && mesh2->polygons_cnt > 1) {
+					result->peer[1].id = polygon2->mesh_edge_ids[bi.edge_id];
+				}
+				else {
+					result->peer[1].id = bi.edge_id;
 				}
 			}
 			else {
-				result->peer[1].idx = i;
+				result->peer[1].id = i;
 			}
 		}
 	}
@@ -1188,14 +1218,14 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 				if (result_temp.distance < result->distance) {
 					result->distance = result_temp.distance;
 				}
-				if (bi.v_idx != -1 || bi.edge_idx != -1) {
+				if (bi.v_id != -1 || bi.edge_id != -1) {
 					continue;
 				}
 				mathVec3Copy(result_temp.hit_plane_v, mesh2_p);
 				result_temp.peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-				result_temp.peer[0].idx = i;
+				result_temp.peer[0].id = i;
 				result_temp.peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result_temp.peer[1].idx = mesh2->v_indices[j];
+				result_temp.peer[1].id = j;
 				merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh1);
 				merge_mesh_hit_info(&result->peer[1], &result_temp.peer[1], mesh2);
 				result->hit_unique_point = 0;
@@ -1203,20 +1233,30 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			*result = result_temp;
 			mathVec3Copy(result->hit_plane_v, mesh2_p);
-			if (bi.v_idx != -1) {
+			if (bi.v_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = bi.v_idx;
+				if (polygon1->mesh_v_ids && mesh1->polygons_cnt > 1) {
+					result->peer[0].id = polygon1->mesh_v_ids[bi.v_id];
+				}
+				else {
+					result->peer[0].id = bi.v_id;
+				}
 			}
-			else if (bi.edge_idx != -1) {
+			else if (bi.edge_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = bi.edge_idx;
+				if (polygon1->mesh_edge_ids && mesh1->polygons_cnt > 1) {
+					result->peer[0].id = polygon1->mesh_edge_ids[bi.edge_id];
+				}
+				else {
+					result->peer[0].id = bi.edge_id;
+				}
 			}
 			else {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-				result->peer[0].idx = i;
+				result->peer[0].id = i;
 			}
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = mesh2->v_indices[j];
+			result->peer[1].id = mesh2->v_indices[j];
 		}
 	}
 	if (!p_result) {
@@ -1254,7 +1294,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 			mathVec3Sub(v0, v0, p);
 			if (mathVec3IsZero(v0)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 				break;
 			}
 			mathVec3Copy(v1, ls[1]);
@@ -1262,13 +1302,13 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 			mathVec3Sub(v1, v1, p);
 			if (mathVec3IsZero(v1)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = 1;
+				result->peer[0].id = 1;
 				break;
 			}
 			dot = mathVec3Dot(v0, v1);
 			if (dot <= CCTNum(0.0)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 				break;
 			}
 			hit_ok = 0;
@@ -1280,7 +1320,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 			result->overlap = 0;
 			result->distance = d;
 			result->peer[1].hit_part = 0;
-			result->peer[1].idx = 0;
+			result->peer[1].id = 0;
 			return result;
 		}
 	}
@@ -1290,14 +1330,14 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 			result_temp.distance < result->distance)
 		{
 			*result = result_temp;
-			result->peer[0].idx = 1;
+			result->peer[0].id = 1;
 		}
 		return result;
 	}
 	if (!Ray_Sweep_Sphere(ls[1], dir, circle_o, circle_r, result)) {
 		return NULL;
 	}
-	result->peer[0].idx = 1;
+	result->peer[0].id = 1;
 	return result;
 }
 
@@ -1344,21 +1384,21 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 			mathVec3Copy(result->hit_plane_n, N);
 			if (dot < CCTNum(0.0)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			}
 			else {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[0].idx = (mathVec3IsZero(l) ? 0 : 1);
+				result->peer[0].id = (mathVec3IsZero(l) ? 0 : 1);
 			}
 			result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-			result->peer[1].idx = 0;
+			result->peer[1].id = 0;
 			return result;
 		}
 		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle_o, circle_r, result)) {
 			return NULL;
 		}
 		result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-		result->peer[1].idx = 0;
+		result->peer[1].id = 0;
 		return result;
 	}
 	if (Ray_Sweep_Sphere(ls[0], dir, center, radius, result)) {
@@ -1369,7 +1409,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		}
 		if (result_temp.distance < result->distance) {
 			*result = result_temp;
-			result->peer[0].idx = 1;
+			result->peer[0].id = 1;
 		}
 		return result;
 	}
@@ -1407,7 +1447,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!Ray_Sweep_Capsule(ls[1], dir, capsule, 0, result)) {
 				return NULL;
 			}
-			result->peer[0].idx = 1;
+			result->peer[0].id = 1;
 			return result;
 		}
 		return Ray_Sweep_Capsule(ls[0], dir, capsule, 0, result);
@@ -1426,8 +1466,8 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!Ray_Sweep_Sphere(ls[v_idx], dir, axis_edge[s_idx], capsule->radius, result)) {
 				return NULL;
 			}
-			result->peer[0].idx = v_idx;
-			result->peer[1].idx = s_idx;
+			result->peer[0].id = v_idx;
+			result->peer[1].id = s_idx;
 			return result;
 		}
 		d = mathPointProjectionPlane(axis_edge[0], ls[0], plane_n);
@@ -1501,7 +1541,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 				}
 				if (result->peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-					result->peer[1].idx = 0;
+					result->peer[1].id = 0;
 				}
 			}
 		}
@@ -1509,11 +1549,11 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!p_result) {
 				*result = result_temp;
 				p_result = result;
-				result->peer[1].idx = 1;
+				result->peer[1].id = 1;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
-				result->peer[1].idx = 1;
+				result->peer[1].id = 1;
 			}
 			else if (result_temp.distance <= result->distance + CCT_EPSILON) {
 				if (result_temp.distance < result->distance) {
@@ -1521,7 +1561,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 				}
 				if (result->peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-					result->peer[1].idx = 1;
+					result->peer[1].id = 1;
 				}
 			}
 		}
@@ -1573,12 +1613,12 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (Segment_Sweep_Sphere(ls, dir, axis_edge[1], capsule->radius, 0, &result_temp)) {
 				if (!p_result) {
 					*result = result_temp;
-					result->peer[1].idx = 1;
+					result->peer[1].id = 1;
 					p_result = result;
 				}
 				else if (result_temp.distance < result->distance) {
 					*result = result_temp;
-					result->peer[1].idx = 1;
+					result->peer[1].id = 1;
 				}
 			}
 		}
@@ -1597,12 +1637,12 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		if (Ray_Sweep_Capsule(ls[1], dir, capsule, 0, &result_temp)) {
 			if (!p_result) {
 				*result = result_temp;
-				result->peer[0].idx = 1;
+				result->peer[0].id = 1;
 				p_result = result;
 			}
 			else if (result_temp.distance < result->distance - CCT_EPSILON) {
 				*result = result_temp;
-				result->peer[0].idx = 1;
+				result->peer[0].id = 1;
 			}
 			else if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
@@ -1660,15 +1700,20 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 				result->distance = result_temp.distance;
 			}
 			if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-				result_temp.peer[0].idx = v_idx[result_temp.peer[0].idx ? 1 : 0];
+				if (result_temp.peer[0].id) {
+					result_temp.peer[0].id = mesh->edge_v_ids[i - 1];
+				}
+				else {
+					result_temp.peer[0].id = mesh->edge_v_ids[i - 2];
+				}
 			}
 			else {
 				result_temp.peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result_temp.peer[0].idx = (i - 1) / 2;
+				result_temp.peer[0].id = (i - 1) / 2;
 			}
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh);
 			if (result->peer[1].hit_part != result_temp.peer[1].hit_part ||
-				result->peer[1].idx != result_temp.peer[1].idx)
+				result->peer[1].id != result_temp.peer[1].id)
 			{
 				result->peer[1].hit_part = 0;
 				result->hit_unique_point = 0;
@@ -1676,11 +1721,16 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 			continue;
 		}
 		if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-			result->peer[0].idx = v_idx[result_temp.peer[0].idx ? 1 : 0];
+			if (result_temp.peer[0].id) {
+				result->peer[0].id = mesh->edge_v_ids[i - 1];
+			}
+			else {
+				result->peer[0].id = mesh->edge_v_ids[i - 2];
+			}
 		}
 		else {
-			result_temp.peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[0].idx = (i - 1) / 2;
+			result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
+			result->peer[0].id = (i - 1) / 2;
 		}
 	}
 	return p_result;
@@ -1719,21 +1769,31 @@ static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, co
 				result->distance = result_temp.distance;
 			}
 			if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-				result_temp.peer[0].idx = v_idx[result_temp.peer[0].idx ? 1 : 0];
+				if (result_temp.peer[0].id) {
+					result_temp.peer[0].id = mesh->edge_v_ids[i - 1];
+				}
+				else {
+					result_temp.peer[0].id = mesh->edge_v_ids[i - 2];
+				}
 			}
 			else {
 				result_temp.peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result_temp.peer[0].idx = (i - 1) / 2;
+				result_temp.peer[0].id = (i - 1) / 2;
 			}
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh);
 			continue;
 		}
 		if (result_temp.peer[0].hit_part == CCT_SWEEP_HIT_POINT) {
-			result->peer[0].idx = v_idx[result_temp.peer[0].idx ? 1 : 0];
+			if (result_temp.peer[0].id) {
+				result->peer[0].id = mesh->edge_v_ids[i - 1];
+			}
+			else {
+				result->peer[0].id = mesh->edge_v_ids[i - 2];
+			}
 		}
 		else {
-			result_temp.peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[0].idx = (i - 1) / 2;
+			result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
+			result->peer[0].id = (i - 1) / 2;
 		}
 	}
 	return p_result;
@@ -1741,7 +1801,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, co
 
 static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	int flag_sign = 0, flag_nohit;
-	unsigned int i, same_v_idx[3], same_v_cnt = 0;
+	unsigned int i, same_v_ids[3], same_v_cnt = 0;
 	CCTNum_t cos_theta = mathVec3Dot(dir, plane_n);
 	flag_nohit = (CCTNum(0.0) == cos_theta);
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
@@ -1786,11 +1846,11 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 				result->distance = d;
 			}
 			if (same_v_cnt < 3) {
-				same_v_idx[same_v_cnt++] = mesh->v_indices[i];
+				same_v_ids[same_v_cnt++] = i;
 			}
 			continue;
 		}
-		same_v_idx[0] = mesh->v_indices[i];
+		same_v_ids[0] = i;
 		same_v_cnt = 1;
 	}
 	if (flag_nohit) {
@@ -1799,41 +1859,44 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 	result->overlap = 0;
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	if (1 == same_v_cnt) {
-		mathVec3Copy(result->hit_plane_v, mesh->v[same_v_idx[0]]);
+		mathVec3Copy(result->hit_plane_v, mesh->v[mesh->v_indices[same_v_ids[0]]]);
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 		result->hit_unique_point = 1;
 		result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-		result->peer[0].idx = same_v_idx[0];
+		result->peer[0].id = same_v_ids[0];
 	}
 	else {
-		unsigned int idx;
+		unsigned int part_id, v_idx[3];
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_unique_point = 0;
+		v_idx[0] = mesh->v_indices[same_v_ids[0]];
+		v_idx[1] = mesh->v_indices[same_v_ids[1]];
 		if (2 == same_v_cnt) {
-			idx = mathFindEdgeIndexByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, same_v_idx[0], same_v_idx[1]);
-			if (idx != -1) {
+			part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, v_idx[0], v_idx[1]);
+			if (part_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[0].idx = idx;
+				result->peer[0].id = part_id;
 			}
 			else {
 				result->peer[0].hit_part = 0;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			}
 		}
 		else {
-			idx = mathFindFaceIndexByVertexIndices(mesh->polygons, mesh->polygons_cnt, same_v_idx, same_v_cnt);
-			if (idx != -1) {
+			v_idx[2] = mesh->v_indices[same_v_ids[2]];
+			part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
+			if (part_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-				result->peer[0].idx = idx;
+				result->peer[0].id = part_id;
 			}
 			else {
 				result->peer[0].hit_part = 0;
-				result->peer[0].idx = 0;
+				result->peer[0].id = 0;
 			}
 		}
 	}
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 	return result;
 }
 
@@ -1960,18 +2023,18 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 		mathVec3Copy(result->hit_plane_v, plane_v);
 		result->hit_unique_point = 0;
 		result->peer[0].hit_part = 0;
-		result->peer[0].idx = 0;
+		result->peer[0].id = 0;
 	}
 	else {
 		mathVec3AddScalar(result->hit_plane_v, dir, d[idx]);
 		result->hit_unique_point = 1;
 		result->peer[0].hit_part = CCT_SWEEP_HIT_SPHERE;
-		result->peer[0].idx = idx;
+		result->peer[0].id = idx;
 	}
 	mathVec3Copy(result->hit_plane_n, plane_n);
 	result->distance = d[idx];
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 	return result;
 }
 
@@ -2010,9 +2073,9 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	result->overlap = 0;
 	result->distance = dn;
 	result->peer[0].hit_part = CCT_SWEEP_HIT_SPHERE;
-	result->peer[0].idx = 0;
+	result->peer[0].id = 0;
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-	result->peer[1].idx = 0;
+	result->peer[1].id = 0;
 	return result;
 }
 
@@ -2024,7 +2087,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	p_result = MeshSegment_Sweep_Sphere(mesh, dir, o, radius, 0, result);
 	mathVec3Negate(neg_dir, dir);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		GeometryBorderIndex_t bi;
+		GeometryBorderId_t bi;
 		CCTSweepResult_t result_temp;
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
 		if (!Sphere_Sweep_Plane(o, radius, neg_dir, polygon->v[polygon->v_indices[0]], polygon->normal, &result_temp)) {
@@ -2056,42 +2119,47 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
-			if (bi.v_idx != -1 || bi.edge_idx != -1) {
+			if (bi.v_id != -1 || bi.edge_id != -1) {
 				continue;
 			}
 			result_temp.peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-			result_temp.peer[0].idx = i;
+			result_temp.peer[0].id = i;
 			result_temp.peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-			result_temp.peer[1].idx = 0;
+			result_temp.peer[1].id = 0;
 			merge_mesh_hit_info(&result->peer[0], &result_temp.peer[0], mesh);
 			continue;
 		}
-		if (bi.v_idx != -1) {
+		if (bi.v_id != -1) {
 			result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[0].idx = bi.v_idx;
-		}
-		else if (bi.edge_idx != -1) {
-			result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
-			if (polygon->mesh_edge_index && mesh->polygons_cnt > 1) {
-				result->peer[0].idx = polygon->mesh_edge_index[bi.edge_idx];
+			if (polygon->mesh_v_ids && mesh->polygons_cnt > 1) {
+				result->peer[0].id = polygon->mesh_v_ids[bi.v_id];
 			}
 			else {
-				result->peer[0].idx = bi.edge_idx;
+				result->peer[0].id = bi.v_id;
+			}
+		}
+		else if (bi.edge_id != -1) {
+			result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
+			if (polygon->mesh_edge_ids && mesh->polygons_cnt > 1) {
+				result->peer[0].id = polygon->mesh_edge_ids[bi.edge_id];
+			}
+			else {
+				result->peer[0].id = bi.edge_id;
 			}
 		}
 		else {
 			result->peer[0].hit_part = CCT_SWEEP_HIT_FACE;
-			result->peer[0].idx = i;
+			result->peer[0].id = i;
 		}
 		result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
-		result->peer[1].idx = 0;
+		result->peer[1].id = 0;
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 	}
 	return p_result;
 }
 
 static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	GeometryBorderIndex_t bi;
+	GeometryBorderId_t bi;
 	if (!result->hit_unique_point) {
 		const CCTNum_t* polygon_v0 = polygon->v[polygon->v_indices[0]];
 		int i;
@@ -2102,19 +2170,19 @@ static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t 
 			if (!Polygon_Contain_Point_SamePlane(polygon, p, &bi)) {
 				continue;
 			}
-			if (bi.v_idx == -1 && bi.edge_idx == -1) {
+			if (bi.v_id == -1 && bi.edge_id == -1) {
 				return 1;
 			}
 		}
 	}
 	else if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
-		if (bi.v_idx != -1) {
+		if (bi.v_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-			result->peer[1].idx = bi.v_idx;
+			result->peer[1].id = bi.v_id;
 		}
-		else if (bi.edge_idx != -1) {
+		else if (bi.edge_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-			result->peer[1].idx = bi.edge_idx;
+			result->peer[1].id = bi.edge_id;
 		}
 		return 1;
 	}
@@ -2200,7 +2268,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			continue;
 		}
 		if (result->peer[1].hit_part == CCT_SWEEP_HIT_FACE) {
-			result->peer[1].idx = i;
+			result->peer[1].id = i;
 		}
 	}
 	if (!p_result) {
@@ -2222,18 +2290,18 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 		return result;
 	}
 	if (plane_side) {
-		GeometryBorderIndex_t bi;
+		GeometryBorderId_t bi;
 		if (!Sphere_Sweep_Plane(o, radius, dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
 			return NULL;
 		}
 		if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
-			if (bi.v_idx != -1) {
+			if (bi.v_id != -1) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
-				result->peer[1].idx = bi.v_idx;
+				result->peer[1].id = bi.v_id;
 			}
-			else if (bi.edge_idx != -1) {
+			else if (bi.edge_id != -1) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
-				result->peer[1].idx = bi.edge_idx;
+				result->peer[1].id = bi.edge_id;
 			}
 			return result;
 		}

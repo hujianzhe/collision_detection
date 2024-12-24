@@ -22,11 +22,11 @@ __declspec_dll int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsi
 __declspec_dll void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]);
 __declspec_dll void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3], CCTNum_t center_p[3], CCTNum_t dir[3], CCTNum_t* half);
 
-__declspec_dll unsigned int mathFindVertexIndex(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]);
-__declspec_dll unsigned int mathFindEdgeIndexByVertexIndices(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
-__declspec_dll int mathFindBorderIndexByPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderIndex_t* bi);
-__declspec_dll unsigned int mathFindFaceIndexByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt);
-__declspec_dll unsigned int mathFindAdjacentFaceIndexByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1);
+__declspec_dll unsigned int mathFindVertexId(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]);
+__declspec_dll unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1);
+__declspec_dll int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices, const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderId_t* bi);
+__declspec_dll unsigned int mathFindFaceIdByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt);
+__declspec_dll unsigned int mathFindAdjacentFaceIdByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1);
 
 #ifdef	__cplusplus
 }

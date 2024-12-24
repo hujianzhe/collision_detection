@@ -45,8 +45,8 @@ void mathOBBVertices(const GeometryOBB_t* obb, CCTNum_t v[8][3]) {
 	mathBoxVertices(obb->o, obb->half, (const CCTNum_t(*)[3])obb->axis, v);
 }
 
-CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int idx, CCTNum_t v[3]) {
-	return mathBoxVertex(obb->o, obb->half, (const CCTNum_t(*)[3])obb->axis, idx, v);
+CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int v_id, CCTNum_t v[3]) {
+	return mathBoxVertex(obb->o, obb->half, (const CCTNum_t(*)[3])obb->axis, v_id, v);
 }
 
 #ifdef __cplusplus

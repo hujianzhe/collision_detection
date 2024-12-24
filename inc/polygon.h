@@ -19,7 +19,7 @@ __declspec_dll GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, co
 __declspec_dll void mathPolygonFreeData(GeometryPolygon_t* polygon);
 
 __declspec_dll int mathPolygonIsConvex(const GeometryPolygon_t* polygon);
-__declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_idx, CCTNum_t edge_normal[3]);
+__declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]);
 
 #ifdef	__cplusplus
 }

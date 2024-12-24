@@ -26,7 +26,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
-	unsigned int* dup_mesh_edge_index = NULL, *dup_mesh_v_ids = NULL;
+	unsigned int* dup_mesh_edge_ids = NULL, *dup_mesh_v_ids = NULL;
 	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * src->v_indices_cnt);
 	if (!dup_v_indices) {
 		goto err;
@@ -52,14 +52,14 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 			dup_mesh_v_ids[j] = src->mesh_v_ids[j];
 		}
 	}
-	if (src->mesh_edge_index) {
-		unsigned int src_mesh_edge_index_cnt = src->edge_v_indices_cnt / 2;
-		dup_mesh_edge_index = (unsigned int*)malloc(sizeof(dup_mesh_edge_index[0]) * src_mesh_edge_index_cnt);
-		if (!dup_mesh_edge_index) {
+	if (src->mesh_edge_ids) {
+		unsigned int src_mesh_edge_cnt = src->edge_v_indices_cnt / 2;
+		dup_mesh_edge_ids = (unsigned int*)malloc(sizeof(dup_mesh_edge_ids[0]) * src_mesh_edge_cnt);
+		if (!dup_mesh_edge_ids) {
 			goto err;
 		}
-		for (j = 0; j < src_mesh_edge_index_cnt; ++j) {
-			dup_mesh_edge_index[j] = src->mesh_edge_index[j];
+		for (j = 0; j < src_mesh_edge_cnt; ++j) {
+			dup_mesh_edge_ids[j] = src->mesh_edge_ids[j];
 		}
 	}
 	for (j = 0; j < src->v_indices_cnt; ++j) {
@@ -83,7 +83,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	dst->edge_v_ids = dup_edge_v_ids;
 	dst->edge_v_indices = dup_edge_v_indices;
 	dst->mesh_v_ids = dup_mesh_v_ids;
-	dst->mesh_edge_index = dup_mesh_edge_index;
+	dst->mesh_edge_ids = dup_mesh_edge_ids;
 	dst->is_convex = src->is_convex;
 	return 1;
 err:
@@ -92,7 +92,7 @@ err:
 	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
 	free(dup_mesh_v_ids);
-	free(dup_mesh_edge_index);
+	free(dup_mesh_edge_ids);
 	return 0;
 }
 
@@ -146,7 +146,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 			free((void*)dst_polygon->tri_v_indices);
 			free((void*)dst_polygon->edge_v_ids);
 			free((void*)dst_polygon->edge_v_indices);
-			free((void*)dst_polygon->mesh_edge_index);
+			free((void*)dst_polygon->mesh_edge_ids);
 		}
 		goto err_0;
 	}

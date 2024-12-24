@@ -9,7 +9,7 @@
 
 typedef struct CCTSweepHitInfo_t {
 	int hit_part;
-	unsigned int idx;
+	unsigned int id;
 } CCTSweepHitInfo_t;
 
 typedef struct CCTSweepResult_t {

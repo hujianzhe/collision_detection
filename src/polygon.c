@@ -171,7 +171,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->edge_v_ids = dup_edge_v_ids;
 	dst->edge_v_indices = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
-	dst->mesh_edge_index = NULL;
+	dst->mesh_edge_ids = NULL;
 	dst->is_convex = src->is_convex;
 	return dst;
 err_0:
@@ -211,9 +211,9 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 		free((void*)polygon->mesh_v_ids);
 		polygon->mesh_v_ids = NULL;
 	}
-	if (polygon->mesh_edge_index) {
-		free((void*)polygon->mesh_edge_index);
-		polygon->mesh_edge_index = NULL;
+	if (polygon->mesh_edge_ids) {
+		free((void*)polygon->mesh_edge_ids);
+		polygon->mesh_edge_ids = NULL;
 	}
 	if (polygon->v) {
 		free(polygon->v);
@@ -221,9 +221,9 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 	}
 }
 
-void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_idx, CCTNum_t edge_normal[3]) {
+void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]) {
 	CCTNum_t v[3];
-	unsigned int i = edge_idx * 2;
+	unsigned int i = edge_id * 2;
 	unsigned int v_idx[2];
 	v_idx[0] = polygon->edge_v_indices[i++];
 	v_idx[1] = polygon->edge_v_indices[i++];
