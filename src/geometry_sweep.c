@@ -68,6 +68,7 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->v = (CCTNum_t(*)[3])ls;
 	mesh->v_indices = Segment_Indices_Default;
 	mesh->v_indices_cnt = 2;
+	mesh->edge_v_ids = Segment_Indices_Default;
 	mesh->edge_v_indices = Segment_Indices_Default;
 	mesh->edge_v_indices_cnt = 2;
 	mesh->is_convex = 1;
@@ -80,6 +81,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->v = polygon->v;
 	mesh->v_indices = polygon->v_indices;
 	mesh->v_indices_cnt = polygon->v_indices_cnt;
+	mesh->edge_v_ids = polygon->edge_v_ids;
 	mesh->edge_v_indices = polygon->edge_v_indices;
 	mesh->edge_v_indices_cnt = polygon->edge_v_indices_cnt;
 	mesh->is_convex = polygon->is_convex;
