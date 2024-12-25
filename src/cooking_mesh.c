@@ -11,6 +11,8 @@
 #include "../inc/cooking.h"
 #include <stdlib.h>
 
+extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info);
+
 static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i;
 	for (i = 0; i < polygon->edge_v_indices_cnt; i += 2) {
@@ -93,8 +95,65 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 	}
 }
 
-static int Cooking_MeshVertexAdjacentInfo(const GeometryPolygon_t* polygons, unsigned int polygon_cnt, const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryMeshVertexAdjacentInfo_t* info) {
-	// TODO
+static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned int v_id, GeometryMeshVertexAdjacentInfo_t* info) {
+	unsigned int i, *tmp_p;
+	info->v_ids = info->edge_ids = info->face_ids = NULL;
+	/* find locate faces */
+	info->face_cnt = 0;
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		unsigned int offset = mathFindFaceIdByVertexIndices(mesh->polygons + i, mesh->polygons_cnt - i, &mesh->v_indices[v_id], 1);
+		if (-1 == offset) {
+			break;
+		}
+		++info->face_cnt;
+		tmp_p = (unsigned int*)realloc(info->face_ids, info->face_cnt * sizeof(info->face_ids[0]));
+		if (!tmp_p) {
+			goto err;
+		}
+		i += offset;
+		info->face_ids = tmp_p;
+		info->face_ids[info->face_cnt - 1] = i;
+	}
+	if (info->face_cnt <= 0) {
+		/* no possiable */
+		goto err;
+	}
+	/* find locate edge */
+	info->v_cnt = info->edge_cnt = 0;
+	for (i = 0; i < mesh->edge_v_indices_cnt; ++i) {
+		unsigned int adj_v_id;
+		if (mesh->edge_v_ids[i++] == v_id) {
+			adj_v_id = mesh->edge_v_ids[i];
+		}
+		else if (mesh->edge_v_ids[i] == v_id) {
+			adj_v_id = mesh->edge_v_ids[i - 1];
+		}
+		else {
+			continue;
+		}
+		++info->v_cnt;
+		tmp_p = (unsigned int*)realloc(info->v_ids, info->v_cnt * sizeof(info->v_ids[0]));
+		if (!tmp_p) {
+			goto err;
+		}
+		info->v_ids = tmp_p;
+		info->v_ids[info->v_cnt - 1] = adj_v_id;
+
+		++info->edge_cnt;
+		tmp_p = (unsigned int*)realloc(info->edge_ids, info->edge_cnt * sizeof(info->edge_ids[0]));
+		if (!tmp_p) {
+			goto err;
+		}
+		info->edge_ids = tmp_p;
+		info->edge_ids[info->edge_cnt - 1] = (i >> 1);
+	}
+	if (info->v_cnt != info->edge_cnt || info->v_cnt <= 0) {
+		/* no possiable */
+		goto err;
+	}
+	return 1;
+err:
+	free_data_mesh_vertex_adjacent_info(info);
 	return 0;
 }
 
@@ -163,7 +222,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		pg->edge_v_indices_cnt = edge_v_indices_cnt;
 		pg->mesh_v_ids = NULL;
 		pg->mesh_edge_ids = NULL;
-		pg->v_adjacent_infos = NULL;
+		pg->v_adjacent_infos = v_adjacent_infos;
 	}
 	/* merge face edge */
 	edge_v_indices = (unsigned int*)malloc(sizeof(edge_v_indices[0]) * total_edge_v_indices_cnt);
@@ -176,6 +235,11 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	}
 	/* cooking vertex indice */
 	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
+		goto err_1;
+	}
+	/* alloc vertex adjacent infos buffer */
+	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)malloc(sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+	if (!v_adjacent_infos) {
 		goto err_1;
 	}
 	/* cooking face map relationship data */
@@ -201,7 +265,18 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	mesh->edge_v_indices_cnt = total_edge_v_indices_cnt;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
-	mesh->v_adjacent_infos = NULL;
+	/* cooking vertex adjacent infos */
+	for (i = 0; i < v_indices_cnt; ++i) {
+		if (Cooking_MeshVertexAdjacentInfo(mesh, i, v_adjacent_infos + i)) {
+			continue;
+		}
+		while (i--) {
+			free_data_mesh_vertex_adjacent_info(v_adjacent_infos + i);
+		}
+		goto err_1;
+	}
+	mesh->v_adjacent_infos = v_adjacent_infos;
+	/* check mesh is convex and closed */
 	mesh->is_convex = mathMeshIsConvex(mesh);
 	if (mesh->is_convex) {
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -217,6 +292,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		}
 	}
 	mesh->is_closed = mathMeshIsClosed(mesh);
+	/* finish */
 	return mesh;
 err_1:
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
@@ -230,6 +306,7 @@ err_0:
 	free(edge_v_ids);
 	free(edge_v_indices);
 	free(dup_tri_v_indices);
+	free(v_adjacent_infos);
 	return NULL;
 }
 
