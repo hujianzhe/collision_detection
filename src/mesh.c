@@ -137,7 +137,7 @@ static int deep_copy_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* dst,
 	if (!edge_ids) {
 		goto err;
 	}
-	for (i = 0; i < dst->edge_cnt; ++i) {
+	for (i = 0; i < src->edge_cnt; ++i) {
 		edge_ids[i] = src->edge_ids[i];
 	}
 
@@ -145,7 +145,7 @@ static int deep_copy_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* dst,
 	if (!face_ids) {
 		goto err;
 	}
-	for (i = 0; i < dst->face_cnt; ++i) {
+	for (i = 0; i < src->face_cnt; ++i) {
 		face_ids[i] = src->face_ids[i];
 	}
 
