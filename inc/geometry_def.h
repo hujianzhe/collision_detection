@@ -16,7 +16,7 @@ typedef struct GeometryBorderId_t {
 
 typedef struct GeometryPolygonVertexAdjacentInfo_t {
 	unsigned int v_ids[2];
-	unsigned int* edge_ids[2];
+	unsigned int edge_ids[2];
 } GeometryPolygonVertexAdjacentInfo_t;
 
 typedef struct GeometryMeshVertexAdjacentInfo_t {
@@ -77,7 +77,7 @@ typedef struct GeometryPolygon_t {
 	const unsigned int* tri_v_indices; /* triangle vertices index */
 	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
 	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
-	const GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos;
+	const GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryPolygon_t;
 
 typedef struct GeometryMesh_t {
@@ -92,7 +92,7 @@ typedef struct GeometryMesh_t {
 	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	GeometryPolygon_t* polygons; /* array of polygens */
-	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos;
+	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryMesh_t;
 
 enum {

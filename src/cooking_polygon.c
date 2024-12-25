@@ -462,9 +462,10 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t N[3];
 	unsigned int* dup_tri_v_indices = NULL;
-	unsigned int* edge_v_indices = NULL, *edge_v = NULL;
+	unsigned int* edge_v_indices = NULL, *edge_v_ids = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
+	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
 		return NULL;
@@ -485,8 +486,18 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		goto err;
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v)) {
+	if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
 		goto err;
+	}
+	/* cooking vertex adjacent info */
+	v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)malloc(sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+	if (!v_adjacent_infos) {
+		goto err;
+	}
+	for (i = 0; i < v_indices_cnt; ++i) {
+		if (!mathPolygonVertexAdjacentInfo(edge_v_ids, edge_v_indices_cnt, i, v_adjacent_infos + i)) {
+			goto err;
+		}
 	}
 	/* save result */
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])dup_v, v_indices, v_indices_cnt, polygon->center);
@@ -494,22 +505,23 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->v = (CCTNum_t(*)[3])dup_v;
 	polygon->v_indices = v_indices;
 	polygon->v_indices_cnt = v_indices_cnt;
-	polygon->edge_v_ids = edge_v;
+	polygon->edge_v_ids = edge_v_ids;
 	polygon->edge_v_indices = edge_v_indices;
 	polygon->edge_v_indices_cnt = edge_v_indices_cnt;
 	polygon->tri_v_indices = dup_tri_v_indices;
 	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
 	polygon->mesh_v_ids = NULL;
 	polygon->mesh_edge_ids = NULL;
-	polygon->v_adjacent_infos = NULL;
+	polygon->v_adjacent_infos = v_adjacent_infos;
 	polygon->is_convex = mathPolygonIsConvex(polygon);
 	return polygon;
 err:
 	free(dup_v);
 	free(v_indices);
-	free(edge_v);
+	free(edge_v_ids);
 	free(edge_v_indices);
 	free(dup_tri_v_indices);
+	free(v_adjacent_infos);
 	return NULL;
 }
 

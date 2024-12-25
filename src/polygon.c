@@ -121,6 +121,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
+	GeometryPolygonVertexAdjacentInfo_t* dup_v_adjacent_infos = NULL;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
 		if (src->v_indices[i] >= dup_v_cnt) {
@@ -130,28 +131,33 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	/* deep copy */
 	dup_v = (CCTNum_t(*)[3])malloc(sizeof(dup_v[0]) * dup_v_cnt);
 	if (!dup_v) {
-		goto err_0;
+		goto err;
 	}
 	dup_v_indices = (unsigned int*)malloc(sizeof(dup_v_indices[0]) * dup_v_cnt);
 	if (!dup_v_indices) {
-		goto err_0;
+		goto err;
 	}
 	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_v_indices_cnt);
 	if (!dup_tri_indices) {
-		goto err_0;
+		goto err;
 	}
 	dup_edge_v_ids = (unsigned int*)malloc(sizeof(dup_edge_v_ids[0]) * src->edge_v_indices_cnt);
 	if (!dup_edge_v_ids) {
-		goto err_0;
+		goto err;
 	}
 	dup_edge_v_indices = (unsigned int*)malloc(sizeof(dup_edge_v_indices[0]) * src->edge_v_indices_cnt);
 	if (!dup_edge_v_indices) {
-		goto err_0;
+		goto err;
+	}
+	dup_v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)malloc(sizeof(dup_v_adjacent_infos[0]) * src->v_indices_cnt);
+	if (!dup_v_adjacent_infos) {
+		goto err;
 	}
 	for (i = 0; i < src->v_indices_cnt; ++i) {
 		unsigned int idx = src->v_indices[i];
 		dup_v_indices[i] = idx;
 		mathVec3Copy(dup_v[idx], src->v[idx]);
+		dup_v_adjacent_infos[i] = src->v_adjacent_infos[i];
 	}
 	for (i = 0; i < src->tri_v_indices_cnt; ++i) {
 		dup_tri_indices[i] = src->tri_v_indices[i];
@@ -172,14 +178,16 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->edge_v_indices = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
 	dst->mesh_edge_ids = NULL;
+	dst->v_adjacent_infos = dup_v_adjacent_infos;
 	dst->is_convex = src->is_convex;
 	return dst;
-err_0:
+err:
 	free(dup_v);
 	free(dup_v_indices);
 	free(dup_tri_indices);
 	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
+	free(dup_v_adjacent_infos);
 	return NULL;
 }
 
@@ -215,6 +223,10 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 		free((void*)polygon->mesh_edge_ids);
 		polygon->mesh_edge_ids = NULL;
 	}
+	if (polygon->v_adjacent_infos) {
+		free((void*)polygon->v_adjacent_infos);
+		polygon->v_adjacent_infos = NULL;
+	}
 	if (polygon->v) {
 		free(polygon->v);
 		polygon->v = NULL;
@@ -239,6 +251,29 @@ void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int e
 	if (mathVec3Dot(edge_normal, v) > CCTNum(0.0)) {
 		mathVec3Negate(edge_normal, edge_normal);
 	}
+}
+
+GeometryPolygonVertexAdjacentInfo_t* mathPolygonVertexAdjacentInfo(const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info) {
+	unsigned int i, j = 0;
+	for (i = 0; i < edge_v_indices_cnt; ++i) {
+		if (edge_v_ids[i++] == v_id) {
+			info->v_ids[j] = edge_v_ids[i];
+			info->edge_ids[j] = (i >> 1);
+			++j;
+			if (j >= 2) {
+				return info;
+			}
+		}
+		else if (edge_v_ids[i] == v_id) {
+			info->v_ids[j] = edge_v_ids[i - 1];
+			info->edge_ids[j] = (i >> 1);
+			++j;
+			if (j >= 2) {
+				return info;
+			}
+		}
+	}
+	return NULL;
 }
 
 #ifdef	__cplusplus

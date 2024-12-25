@@ -20,6 +20,7 @@ __declspec_dll void mathPolygonFreeData(GeometryPolygon_t* polygon);
 
 __declspec_dll int mathPolygonIsConvex(const GeometryPolygon_t* polygon);
 __declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]);
+__declspec_dll GeometryPolygonVertexAdjacentInfo_t* mathPolygonVertexAdjacentInfo(const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info);
 
 #ifdef	__cplusplus
 }

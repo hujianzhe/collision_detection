@@ -93,6 +93,11 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 	}
 }
 
+static int Cooking_MeshVertexAdjacentInfo(const GeometryPolygon_t* polygons, unsigned int polygon_cnt, const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryMeshVertexAdjacentInfo_t* info) {
+	// TODO
+	return 0;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,6 +113,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	unsigned int* edge_v_indices = NULL, *edge_v_ids = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
+	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
 		return NULL;
@@ -126,7 +132,8 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
 		unsigned int* edge_v_indices = NULL, *v_indices = NULL, *edge_v_ids = NULL;
-		unsigned int edge_v_indices_cnt, v_indices_cnt;
+		GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
+		unsigned int edge_v_indices_cnt, v_indices_cnt, j;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
 		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices, pg->tri_v_indices_cnt, pg->normal, &edge_v_indices, &edge_v_indices_cnt)) {
@@ -137,6 +144,16 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 		total_edge_v_indices_cnt += edge_v_indices_cnt;
+		/* cooking vertex adjacent infos */
+		v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)malloc(sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+		if (!v_adjacent_infos) {
+			goto err_1;
+		}
+		for (j = 0; j < v_indices_cnt; ++j) {
+			if (!mathPolygonVertexAdjacentInfo(edge_v_ids, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
+				goto err_1;
+			}
+		}
 		/* fill polygon other data */
 		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
 		pg->v_indices = v_indices;
@@ -161,7 +178,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
 		goto err_1;
 	}
-	/* save result */
+	/* cooking face map relationship data */
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		pg->mesh_v_ids = Polygon_Save_MeshVertexIds(pg, v_indices, v_indices_cnt);
@@ -173,6 +190,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 	}
+	/* save result */
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
 	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
 	mesh->v = dup_v;
