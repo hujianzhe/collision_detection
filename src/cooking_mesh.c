@@ -146,6 +146,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		pg->edge_v_indices_cnt = edge_v_indices_cnt;
 		pg->mesh_v_ids = NULL;
 		pg->mesh_edge_ids = NULL;
+		pg->v_adjacent_infos = NULL;
 	}
 	/* merge face edge */
 	edge_v_indices = (unsigned int*)malloc(sizeof(edge_v_indices[0]) * total_edge_v_indices_cnt);
@@ -182,6 +183,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	mesh->edge_v_indices_cnt = total_edge_v_indices_cnt;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
+	mesh->v_adjacent_infos = NULL;
 	mesh->is_convex = mathMeshIsConvex(mesh);
 	if (mesh->is_convex) {
 		for (i = 0; i < mesh->polygons_cnt; ++i) {

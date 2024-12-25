@@ -9,6 +9,29 @@
 
 /*********************************************************************/
 
+typedef struct GeometryBorderId_t {
+	unsigned int v_id;
+	unsigned int edge_id;
+} GeometryBorderId_t;
+
+typedef struct GeometryPolygonVertexAdjacentInfo_t {
+	unsigned int v_cnt;
+	unsigned int edge_cnt;
+	unsigned int* v_ids;
+	unsigned int* edge_ids;
+} GeometryPolygonVertexAdjacentInfo_t;
+
+typedef struct GeometryMeshVertexAdjacentInfo_t {
+	unsigned int v_cnt;
+	unsigned int edge_cnt;
+	unsigned int face_cnt;
+	unsigned int* v_ids;
+	unsigned int* edge_ids;
+	unsigned int* face_ids;
+} GeometryMeshVertexAdjacentInfo_t;
+
+/*********************************************************************/
+
 typedef struct GeometrySegment_t {
 	CCTNum_t v[2][3];
 	CCTNum_t o[3];
@@ -56,6 +79,7 @@ typedef struct GeometryPolygon_t {
 	const unsigned int* tri_v_indices; /* triangle vertices index */
 	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
 	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
+	const GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos;
 } GeometryPolygon_t;
 
 typedef struct GeometryMesh_t {
@@ -70,6 +94,7 @@ typedef struct GeometryMesh_t {
 	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	GeometryPolygon_t* polygons; /* array of polygens */
+	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos;
 } GeometryMesh_t;
 
 enum {
@@ -99,12 +124,5 @@ typedef struct GeometryBody_t {
 	};
 	int type;
 } GeometryBody_t;
-
-/*********************************************************************/
-
-typedef struct GeometryBorderId_t {
-	unsigned int v_id;
-	unsigned int edge_id;
-} GeometryBorderId_t;
 
 #endif
