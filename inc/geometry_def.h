@@ -64,11 +64,11 @@ typedef struct GeometryOBB_t {
 } GeometryOBB_t;
 
 typedef struct GeometryPolygon_t {
-	CCTNum_t (*v)[3]; /* vertices vec3 */
+	CCTNum_t (*v)[3]; /* vertices buffer */
 	CCTNum_t center[3]; /* center position */
 	CCTNum_t normal[3]; /* plane normal */
 	short is_convex;
-	unsigned int v_indices_cnt; /* number of vertices index, also number of verteices */
+	unsigned int v_indices_cnt; /* number of vertices index, also number of vertices */
 	unsigned int edge_cnt; /* number of edges */
 	unsigned int tri_v_indices_cnt;  /* number of triangle vertices index */
 	const unsigned int* v_indices; /* vertices index */
@@ -87,11 +87,11 @@ typedef struct GeometryPolygon_t {
 } GeometryPolygon_t;
 
 typedef struct GeometryMesh_t {
-	CCTNum_t (*v)[3]; /* vertices vec3 */
+	CCTNum_t (*v)[3]; /* vertices buffer */
 	GeometryAABB_t bound_box; /* AABB bound box, AABB.o is center position */
 	short is_convex;
 	short is_closed;
-	unsigned int v_indices_cnt; /* number of vertices index, also number of verteices */
+	unsigned int v_indices_cnt; /* number of vertices index, also number of vertices */
 	unsigned int edge_cnt; /* number of edges */
 	unsigned int polygons_cnt; /* number of polygen plane */
 	const unsigned int* v_indices; /* vertices index */

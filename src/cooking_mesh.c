@@ -160,6 +160,30 @@ err:
 	return 0;
 }
 
+static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int edge_id, unsigned int(*adjacent_faces_ids)[2]) {
+	unsigned int i, cnt = 0;
+	unsigned int v_idx[2] = {
+		mesh->edge_v_indices_flat[edge_id + edge_id],
+		mesh->edge_v_indices_flat[edge_id + edge_id + 1]
+	};
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		unsigned int offset = mathFindFaceIdByVertexIndices(mesh->polygons + i, mesh->polygons_cnt - i, v_idx, 2);
+		if (-1 == offset) {
+			break;
+		}
+		i += offset;
+		adjacent_faces_ids[edge_id][cnt++] = i;
+		if (cnt >= 2) {
+			return 1;
+		}
+	}
+	if (1 == cnt) {
+		adjacent_faces_ids[edge_id][1] = -1;
+		return 1;
+	}
+	return 0;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
