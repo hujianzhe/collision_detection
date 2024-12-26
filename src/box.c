@@ -272,8 +272,8 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_MeshVerticeIds[face_id];
 	polygon->v_indices_cnt = sizeof(Box_Face_MeshVerticeIds[0]) / sizeof(Box_Face_MeshVerticeIds[0][0]);
-	polygon->edge_v_ids = Box_Face_Edge_VertexIds;
-	polygon->edge_v_indices = Box_Face_Edge_MeshVertexIds[face_id];
+	polygon->edge_v_ids_flat = Box_Face_Edge_VertexIds;
+	polygon->edge_v_indices_flat = Box_Face_Edge_MeshVertexIds[face_id];
 	polygon->edge_cnt = 4;
 	polygon->mesh_v_ids = Box_Face_MeshVerticeIds[face_id];
 	polygon->mesh_edge_ids = Box_Face_MeshEdgeIds[face_id];
@@ -295,8 +295,8 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->v_indices = Box_Vertice_Indices_Default;
 	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
 	mesh->v_adjacent_infos = NULL;
-	mesh->edge_v_ids = Box_Edge_VertexIds;
-	mesh->edge_v_indices = Box_Edge_VertexIds;
+	mesh->edge_v_ids_flat = Box_Edge_VertexIds;
+	mesh->edge_v_indices_flat = Box_Edge_VertexIds;
 	mesh->edge_cnt = 12;
 	mesh->is_convex = 1;
 	mesh->is_closed = 1;

@@ -227,8 +227,8 @@ int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* 
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices[i++]]);
+		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices_flat[i++]]);
+		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices_flat[i++]]);
 		if (Segment_Intersect_Segment(ls, (const CCTNum_t(*)[3])edge)) {
 			return 2;
 		}
@@ -266,8 +266,8 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	for (i = 0; i < polygon1_edge_v_indices_cnt; i += 2) {
 		int ret_side;
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon1->v[polygon1->edge_v_indices[i]]);
-		mathVec3Copy(edge[1], polygon1->v[polygon1->edge_v_indices[i+1]]);
+		mathVec3Copy(edge[0], polygon1->v[polygon1->edge_v_indices_flat[i]]);
+		mathVec3Copy(edge[1], polygon1->v[polygon1->edge_v_indices_flat[i+1]]);
 		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon2, &ret_side)) {
 			if (ret_plane_side) {
 				*ret_plane_side = 0;
@@ -291,8 +291,8 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	polygon2_edge_v_indices_cnt = polygon2->edge_cnt + polygon2->edge_cnt;
 	for (i = 0; i < polygon2_edge_v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon2->v[polygon2->edge_v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon2->v[polygon2->edge_v_indices[i++]]);
+		mathVec3Copy(edge[0], polygon2->v[polygon2->edge_v_indices_flat[i++]]);
+		mathVec3Copy(edge[1], polygon2->v[polygon2->edge_v_indices_flat[i++]]);
 		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon1, NULL)) {
 			return 1;
 		}
@@ -307,8 +307,8 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 	for (i = 0; i < mesh_edge_v_indices_cnt; i += 2) {
 		int ret_side;
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], mesh->v[mesh->edge_v_indices[i]]);
-		mathVec3Copy(edge[1], mesh->v[mesh->edge_v_indices[i+1]]);
+		mathVec3Copy(edge[0], mesh->v[mesh->edge_v_indices_flat[i]]);
+		mathVec3Copy(edge[1], mesh->v[mesh->edge_v_indices_flat[i+1]]);
 		if (Segment_Intersect_Polygon((const CCTNum_t(*)[3])edge, polygon, &ret_side)) {
 			if (ret_plane_side) {
 				*ret_plane_side = 0;
@@ -332,8 +332,8 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		CCTNum_t edge[2][3];
-		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices[i++]]);
+		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices_flat[i++]]);
+		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices_flat[i++]]);
 		if (Segment_Intersect_ConvexMesh((const CCTNum_t(*)[3])edge, mesh)) {
 			return 1;
 		}
@@ -421,8 +421,8 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		CCTNum_t edge[2][3], lensq;
-		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices[i++]]);
-		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices[i++]]);
+		mathVec3Copy(edge[0], polygon->v[polygon->edge_v_indices_flat[i++]]);
+		mathVec3Copy(edge[1], polygon->v[polygon->edge_v_indices_flat[i++]]);
 		lensq = Segment_ClosestLenSq_Segment(
 			(const CCTNum_t(*)[3])edge, NULL, 0,
 			(const CCTNum_t(*)[3])capsule_extra->axis_edge, capsule->axis, capsule_extra->axis_len
@@ -550,8 +550,8 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		unsigned int v_idx[2];
-		v_idx[0] = polygon->edge_v_indices[i++];
-		v_idx[1] = polygon->edge_v_indices[i++];
+		v_idx[0] = polygon->edge_v_indices_flat[i++];
+		v_idx[1] = polygon->edge_v_indices_flat[i++];
 		res = Sphere_Intersect_Segment(o, radius, polygon->v[v_idx[0]], polygon->v[v_idx[1]]);
 		if (res) {
 			return res;

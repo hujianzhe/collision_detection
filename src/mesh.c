@@ -93,8 +93,8 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 		dup_tri_indices[j] = src->tri_v_indices[j];
 	}
 	for (j = 0; j < src_edge_v_indices_cnt; ++j) {
-		dup_edge_v_ids[j] = src->edge_v_ids[j];
-		dup_edge_v_indices[j] = src->edge_v_indices[j];
+		dup_edge_v_ids[j] = src->edge_v_ids_flat[j];
+		dup_edge_v_indices[j] = src->edge_v_indices_flat[j];
 	}
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
@@ -104,8 +104,8 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	dst->edge_cnt = src->edge_cnt;
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices = dup_tri_indices;
-	dst->edge_v_ids = dup_edge_v_ids;
-	dst->edge_v_indices = dup_edge_v_indices;
+	dst->edge_v_ids_flat = dup_edge_v_ids;
+	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = dup_mesh_v_ids;
 	dst->mesh_edge_ids = dup_mesh_edge_ids;
 	dst->v_adjacent_infos = dup_v_adjacent_infos;
@@ -215,8 +215,8 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 			GeometryPolygon_t* dst_polygon = dup_polygons + i;
 			free((void*)dst_polygon->v_indices);
 			free((void*)dst_polygon->tri_v_indices);
-			free((void*)dst_polygon->edge_v_ids);
-			free((void*)dst_polygon->edge_v_indices);
+			free((void*)dst_polygon->edge_v_ids_flat);
+			free((void*)dst_polygon->edge_v_indices_flat);
 			free((void*)dst_polygon->mesh_edge_ids);
 			free((void*)dst_polygon->v_adjacent_infos);
 		}
@@ -239,8 +239,8 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 		}
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
-		dup_edge_v_ids[i] = src->edge_v_ids[i];
-		dup_edge_v_indices[i] = src->edge_v_indices[i];
+		dup_edge_v_ids[i] = src->edge_v_ids_flat[i];
+		dup_edge_v_indices[i] = src->edge_v_indices_flat[i];
 	}
 	dst->v = dup_v;
 	dst->bound_box = src->bound_box;
@@ -250,8 +250,8 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	dst->is_closed = src->is_closed;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->polygons = dup_polygons;
-	dst->edge_v_ids = dup_edge_v_ids;
-	dst->edge_v_indices = dup_edge_v_indices;
+	dst->edge_v_ids_flat = dup_edge_v_ids;
+	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->v_indices = dup_v_indices;
 	dst->v_adjacent_infos = dup_v_adjacent_infos;
 	return dst;
@@ -271,13 +271,13 @@ void mathMeshFreeData(GeometryMesh_t* mesh) {
 	}
 	free_all_faces(mesh);
 	free_all_adjacent_infos(mesh);
-	if (mesh->edge_v_ids) {
-		free((void*)mesh->edge_v_ids);
-		mesh->edge_v_ids = NULL;
+	if (mesh->edge_v_ids_flat) {
+		free((void*)mesh->edge_v_ids_flat);
+		mesh->edge_v_ids_flat = NULL;
 	}
-	if (mesh->edge_v_indices) {
-		free((void*)mesh->edge_v_indices);
-		mesh->edge_v_indices = NULL;
+	if (mesh->edge_v_indices_flat) {
+		free((void*)mesh->edge_v_indices_flat);
+		mesh->edge_v_indices_flat = NULL;
 	}
 	mesh->edge_cnt = 0;
 	if (mesh->v_indices) {

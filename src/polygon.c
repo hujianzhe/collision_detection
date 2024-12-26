@@ -68,7 +68,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v = (CCTNum_t(*)[3])tri;
 	polygon->v_indices = Triangle_Vertice_Indices_Default;
 	polygon->v_indices_cnt = 3;
-	polygon->edge_v_indices = Triangle_Edge_Indices_Default;
+	polygon->edge_v_indices_flat = Triangle_Edge_Indices_Default;
 	polygon->edge_cnt = 3;
 	polygon->tri_v_indices = Triangle_Vertice_Indices_Default;
 	polygon->tri_v_indices_cnt = 3;
@@ -87,8 +87,8 @@ int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
 		CCTNum_t ls_v[3], N[3];
 		int flag_sign = 0;
 		unsigned int j, v_idx[2];
-		v_idx[0] = polygon->edge_v_indices[i++];
-		v_idx[1] = polygon->edge_v_indices[i++];
+		v_idx[0] = polygon->edge_v_indices_flat[i++];
+		v_idx[1] = polygon->edge_v_indices_flat[i++];
 		mathVec3Sub(ls_v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
 		mathVec3Cross(N, ls_v, polygon->normal);
 		for (j = 0; j < polygon->v_indices_cnt; ++j) {
@@ -166,8 +166,8 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		dup_tri_indices[i] = src->tri_v_indices[i];
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
-		dup_edge_v_ids[i] = src->edge_v_ids[i];
-		dup_edge_v_indices[i] = src->edge_v_indices[i];
+		dup_edge_v_ids[i] = src->edge_v_ids_flat[i];
+		dup_edge_v_indices[i] = src->edge_v_indices_flat[i];
 	}
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
@@ -177,8 +177,8 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices = dup_tri_indices;
-	dst->edge_v_ids = dup_edge_v_ids;
-	dst->edge_v_indices = dup_edge_v_indices;
+	dst->edge_v_ids_flat = dup_edge_v_ids;
+	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
 	dst->mesh_edge_ids = NULL;
 	dst->v_adjacent_infos = dup_v_adjacent_infos;
@@ -198,13 +198,13 @@ void mathPolygonFreeData(GeometryPolygon_t* polygon) {
 	if (!polygon) {
 		return;
 	}
-	if (polygon->edge_v_ids) {
-		free((void*)polygon->edge_v_ids);
-		polygon->edge_v_ids = NULL;
+	if (polygon->edge_v_ids_flat) {
+		free((void*)polygon->edge_v_ids_flat);
+		polygon->edge_v_ids_flat = NULL;
 	}
-	if (polygon->edge_v_indices) {
-		free((void*)polygon->edge_v_indices);
-		polygon->edge_v_indices = NULL;
+	if (polygon->edge_v_indices_flat) {
+		free((void*)polygon->edge_v_indices_flat);
+		polygon->edge_v_indices_flat = NULL;
 	}
 	polygon->edge_cnt = 0;
 	if (polygon->tri_v_indices) {
@@ -239,35 +239,35 @@ void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int e
 	CCTNum_t v[3];
 	unsigned int i = edge_id + edge_id;
 	unsigned int v_idx[2];
-	v_idx[0] = polygon->edge_v_indices[i++];
-	v_idx[1] = polygon->edge_v_indices[i++];
+	v_idx[0] = polygon->edge_v_indices_flat[i++];
+	v_idx[1] = polygon->edge_v_indices_flat[i++];
 	if (i >= polygon->edge_cnt + polygon->edge_cnt) {
 		i = 0;
 	}
-	if (polygon->edge_v_indices[i] == v_idx[0] || polygon->edge_v_indices[i] == v_idx[1]) {
+	if (polygon->edge_v_indices_flat[i] == v_idx[0] || polygon->edge_v_indices_flat[i] == v_idx[1]) {
 		++i;
 	}
 	mathVec3Sub(v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
 	mathVec3Cross(edge_normal, v, polygon->normal);
-	mathVec3Sub(v, polygon->v[polygon->edge_v_indices[i]], polygon->v[v_idx[0]]);
+	mathVec3Sub(v, polygon->v[polygon->edge_v_indices_flat[i]], polygon->v[v_idx[0]]);
 	if (mathVec3Dot(edge_normal, v) > CCTNum(0.0)) {
 		mathVec3Negate(edge_normal, edge_normal);
 	}
 }
 
-GeometryPolygonVertexAdjacentInfo_t* mathPolygonVertexAdjacentInfo(const unsigned int* edge_v_ids, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info) {
+GeometryPolygonVertexAdjacentInfo_t* mathPolygonVertexAdjacentInfo(const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info) {
 	unsigned int i, j = 0;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
-		if (edge_v_ids[i++] == v_id) {
-			info->v_ids[j] = edge_v_ids[i];
+		if (edge_v_ids_flat[i++] == v_id) {
+			info->v_ids[j] = edge_v_ids_flat[i];
 			info->edge_ids[j] = (i >> 1);
 			++j;
 			if (j >= 2) {
 				return info;
 			}
 		}
-		else if (edge_v_ids[i] == v_id) {
-			info->v_ids[j] = edge_v_ids[i - 1];
+		else if (edge_v_ids_flat[i] == v_id) {
+			info->v_ids[j] = edge_v_ids_flat[i - 1];
 			info->edge_ids[j] = (i >> 1);
 			++j;
 			if (j >= 2) {

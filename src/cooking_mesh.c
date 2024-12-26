@@ -13,23 +13,23 @@
 
 extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info);
 
-static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
+static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; i += 2) {
 		unsigned int j;
 		for (j = 0; j < edge_v_indices_cnt; j += 2) {
-			if (edge_v_indices[j] == polygon->edge_v_indices[i] && edge_v_indices[j + 1] == polygon->edge_v_indices[i + 1]) {
+			if (edge_v_indices_flat[j] == polygon->edge_v_indices_flat[i] && edge_v_indices_flat[j + 1] == polygon->edge_v_indices_flat[i + 1]) {
 				break;
 			}
-			if (edge_v_indices[j] == polygon->edge_v_indices[i + 1] && edge_v_indices[j + 1] == polygon->edge_v_indices[i]) {
+			if (edge_v_indices_flat[j] == polygon->edge_v_indices_flat[i + 1] && edge_v_indices_flat[j + 1] == polygon->edge_v_indices_flat[i]) {
 				break;
 			}
 		}
 		if (j < edge_v_indices_cnt) {
 			continue;
 		}
-		edge_v_indices[edge_v_indices_cnt++] = polygon->edge_v_indices[i];
-		edge_v_indices[edge_v_indices_cnt++] = polygon->edge_v_indices[i + 1];
+		edge_v_indices_flat[edge_v_indices_cnt++] = polygon->edge_v_indices_flat[i];
+		edge_v_indices_flat[edge_v_indices_cnt++] = polygon->edge_v_indices_flat[i + 1];
 	}
 	return edge_v_indices_cnt;
 }
@@ -43,8 +43,8 @@ static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, 
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ++i) {
 		unsigned int v_idx[2], edge_id;
-		v_idx[0] = polygon->edge_v_indices[i++];
-		v_idx[1] = polygon->edge_v_indices[i];
+		v_idx[0] = polygon->edge_v_indices_flat[i++];
+		v_idx[1] = polygon->edge_v_indices_flat[i];
 		edge_id = mathFindEdgeIdByVertexIndices(mesh_edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
 		if (-1 == edge_id) {
 			free(mesh_edge_ids);
@@ -125,11 +125,11 @@ static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned i
 	mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	for (i = 0; i < mesh_edge_v_indices_cnt; ++i) {
 		unsigned int adj_v_id;
-		if (mesh->edge_v_ids[i++] == v_id) {
-			adj_v_id = mesh->edge_v_ids[i];
+		if (mesh->edge_v_ids_flat[i++] == v_id) {
+			adj_v_id = mesh->edge_v_ids_flat[i];
 		}
-		else if (mesh->edge_v_ids[i] == v_id) {
-			adj_v_id = mesh->edge_v_ids[i - 1];
+		else if (mesh->edge_v_ids_flat[i] == v_id) {
+			adj_v_id = mesh->edge_v_ids_flat[i - 1];
 		}
 		else {
 			continue;
@@ -172,7 +172,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	GeometryPolygon_t* tmp_polygons = NULL;
 	unsigned int tmp_polygons_cnt = 0;
 	unsigned int total_edge_v_indices_cnt;
-	unsigned int* edge_v_indices = NULL, *edge_v_ids = NULL;
+	unsigned int* edge_v_indices_flat = NULL, *edge_v_ids_flat = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
 	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos = NULL;
@@ -193,16 +193,16 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	/* cooking every face */
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		unsigned int* edge_v_indices = NULL, *v_indices = NULL, *edge_v_ids = NULL;
+		unsigned int* edge_v_indices_flat = NULL, *v_indices = NULL, *edge_v_ids_flat = NULL;
 		GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 		unsigned int edge_v_indices_cnt, v_indices_cnt, j;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
-		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices, pg->tri_v_indices_cnt, pg->normal, &edge_v_indices, &edge_v_indices_cnt)) {
+		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices, pg->tri_v_indices_cnt, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt)) {
 			goto err_1;
 		}
 		/* cooking vertex indice */
-		if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
+		if (!mathCookingStage4(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 			goto err_1;
 		}
 		total_edge_v_indices_cnt += edge_v_indices_cnt;
@@ -212,7 +212,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 		for (j = 0; j < v_indices_cnt; ++j) {
-			if (!mathPolygonVertexAdjacentInfo(edge_v_ids, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
+			if (!mathPolygonVertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
 				goto err_1;
 			}
 		}
@@ -220,24 +220,24 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
 		pg->v_indices = v_indices;
 		pg->v_indices_cnt = v_indices_cnt;
-		pg->edge_v_ids = edge_v_ids;
-		pg->edge_v_indices = edge_v_indices;
+		pg->edge_v_ids_flat = edge_v_ids_flat;
+		pg->edge_v_indices_flat = edge_v_indices_flat;
 		pg->edge_cnt = edge_v_indices_cnt / 2;
 		pg->mesh_v_ids = NULL;
 		pg->mesh_edge_ids = NULL;
 		pg->v_adjacent_infos = v_adjacent_infos;
 	}
 	/* merge face edge */
-	edge_v_indices = (unsigned int*)malloc(sizeof(edge_v_indices[0]) * total_edge_v_indices_cnt);
-	if (!edge_v_indices) {
+	edge_v_indices_flat = (unsigned int*)malloc(sizeof(edge_v_indices_flat[0]) * total_edge_v_indices_cnt);
+	if (!edge_v_indices_flat) {
 		goto err_1;
 	}
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		total_edge_v_indices_cnt = Merge_Face_Edge(edge_v_indices, total_edge_v_indices_cnt, tmp_polygons + i);
+		total_edge_v_indices_cnt = Merge_Face_Edge(edge_v_indices_flat, total_edge_v_indices_cnt, tmp_polygons + i);
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
+	if (!mathCookingStage4(edge_v_indices_flat, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 		goto err_1;
 	}
 	/* alloc vertex adjacent infos buffer */
@@ -252,7 +252,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		if (!pg->mesh_v_ids) {
 			goto err_1;
 		}
-		pg->mesh_edge_ids = Polygon_Save_MeshEdgeIds(pg, edge_v_indices, total_edge_v_indices_cnt);
+		pg->mesh_edge_ids = Polygon_Save_MeshEdgeIds(pg, edge_v_indices_flat, total_edge_v_indices_cnt);
 		if (!pg->mesh_edge_ids) {
 			goto err_1;
 		}
@@ -263,8 +263,8 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	mesh->v = dup_v;
 	mesh->v_indices = v_indices;
 	mesh->v_indices_cnt = v_indices_cnt;
-	mesh->edge_v_ids = edge_v_ids;
-	mesh->edge_v_indices = edge_v_indices;
+	mesh->edge_v_ids_flat = edge_v_ids_flat;
+	mesh->edge_v_indices_flat = edge_v_indices_flat;
 	mesh->edge_cnt = total_edge_v_indices_cnt / 2;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
@@ -306,8 +306,8 @@ err_1:
 err_0:
 	free(dup_v);
 	free(v_indices);
-	free(edge_v_ids);
-	free(edge_v_indices);
+	free(edge_v_ids_flat);
+	free(edge_v_indices_flat);
 	free(dup_tri_v_indices);
 	free(v_adjacent_infos);
 	return NULL;

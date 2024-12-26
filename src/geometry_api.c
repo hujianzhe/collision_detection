@@ -326,8 +326,8 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			}
 			for (i = 0; i < mesh->edge_cnt + mesh->edge_cnt; ) {
 				GeometrySegment_t segment;
-				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_v_indices[i++]]);
-				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_v_indices[i++]]);
+				mathVec3Copy(segment.v[0], mesh->v[mesh->edge_v_indices_flat[i++]]);
+				mathVec3Copy(segment.v[1], mesh->v[mesh->edge_v_indices_flat[i++]]);
 				/* avoid polygon edge is different from mesh edge... */
 				if (!mathGeometryCheckParametersValid(&segment, GEOMETRY_BODY_SEGMENT)) {
 					return 0;

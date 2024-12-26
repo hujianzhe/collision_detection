@@ -200,8 +200,8 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		}
 		new_pg->v_indices = NULL;
 		new_pg->v_indices_cnt = 0;
-		new_pg->edge_v_ids = NULL;
-		new_pg->edge_v_indices = NULL;
+		new_pg->edge_v_ids_flat = NULL;
+		new_pg->edge_v_indices_flat = NULL;
 		new_pg->edge_cnt = 0;
 		new_pg->is_convex = 0;
 		new_pg->v = (CCTNum_t(*)[3])v;
@@ -412,33 +412,33 @@ err:
 	return 0;
 }
 
-int mathCookingStage4(const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids) {
-	unsigned int* tmp_edge_v_ids;
+int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat) {
+	unsigned int* tmp_edge_v_ids_flat;
 	unsigned int* tmp_v_indices;
 	unsigned int tmp_v_indices_cnt, i;
-	tmp_edge_v_ids = (unsigned int*)malloc(sizeof(tmp_edge_v_ids[0]) * edge_v_indices_cnt);
-	if (!tmp_edge_v_ids) {
+	tmp_edge_v_ids_flat = (unsigned int*)malloc(sizeof(tmp_edge_v_ids_flat[0]) * edge_v_indices_cnt);
+	if (!tmp_edge_v_ids_flat) {
 		return 0;
 	}
 	tmp_v_indices = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * edge_v_indices_cnt);
 	if (!tmp_v_indices) {
-		free(tmp_edge_v_ids);
+		free(tmp_edge_v_ids_flat);
 		return 0;
 	}
 	tmp_v_indices_cnt = 0;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		unsigned int j;
 		for (j = 0; j < tmp_v_indices_cnt; ++j) {
-			if (edge_v_indices[i] == tmp_v_indices[j]) {
-				tmp_edge_v_ids[i] = j;
+			if (edge_v_indices_flat[i] == tmp_v_indices[j]) {
+				tmp_edge_v_ids_flat[i] = j;
 				break;
 			}
 		}
 		if (j < tmp_v_indices_cnt) {
 			continue;
 		}
-		tmp_edge_v_ids[i] = tmp_v_indices_cnt;
-		tmp_v_indices[tmp_v_indices_cnt++] = edge_v_indices[i];
+		tmp_edge_v_ids_flat[i] = tmp_v_indices_cnt;
+		tmp_v_indices[tmp_v_indices_cnt++] = edge_v_indices_flat[i];
 	}
 	if (tmp_v_indices_cnt < edge_v_indices_cnt) {
 		unsigned int* buf = (unsigned int*)malloc(sizeof(tmp_v_indices[0]) * tmp_v_indices_cnt);
@@ -454,7 +454,7 @@ int mathCookingStage4(const unsigned int* edge_v_indices, unsigned int edge_v_in
 	}
 	*ret_v_indices = tmp_v_indices;
 	*ret_v_indices_cnt = tmp_v_indices_cnt;
-	*ret_edge_v_ids = tmp_edge_v_ids;
+	*ret_edge_v_ids_flat = tmp_edge_v_ids_flat;
 	return 1;
 }
 
@@ -462,7 +462,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t N[3];
 	unsigned int* dup_tri_v_indices = NULL;
-	unsigned int* edge_v_indices = NULL, *edge_v_ids = NULL;
+	unsigned int* edge_v_indices_flat = NULL, *edge_v_ids_flat = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
 	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
@@ -482,11 +482,11 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		}
 	}
 	/* cooking edge */
-	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, N, &edge_v_indices, &edge_v_indices_cnt)) {
+	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, N, &edge_v_indices_flat, &edge_v_indices_cnt)) {
 		goto err;
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids)) {
+	if (!mathCookingStage4(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 		goto err;
 	}
 	/* cooking vertex adjacent info */
@@ -495,7 +495,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		goto err;
 	}
 	for (i = 0; i < v_indices_cnt; ++i) {
-		if (!mathPolygonVertexAdjacentInfo(edge_v_ids, edge_v_indices_cnt, i, v_adjacent_infos + i)) {
+		if (!mathPolygonVertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, i, v_adjacent_infos + i)) {
 			goto err;
 		}
 	}
@@ -505,8 +505,8 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->v = (CCTNum_t(*)[3])dup_v;
 	polygon->v_indices = v_indices;
 	polygon->v_indices_cnt = v_indices_cnt;
-	polygon->edge_v_ids = edge_v_ids;
-	polygon->edge_v_indices = edge_v_indices;
+	polygon->edge_v_ids_flat = edge_v_ids_flat;
+	polygon->edge_v_indices_flat = edge_v_indices_flat;
 	polygon->edge_cnt = edge_v_indices_cnt / 2;
 	polygon->tri_v_indices = dup_tri_v_indices;
 	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
@@ -518,8 +518,8 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 err:
 	free(dup_v);
 	free(v_indices);
-	free(edge_v_ids);
-	free(edge_v_indices);
+	free(edge_v_ids_flat);
+	free(edge_v_indices_flat);
 	free(dup_tri_v_indices);
 	free(v_adjacent_infos);
 	return NULL;

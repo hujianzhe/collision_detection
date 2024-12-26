@@ -293,11 +293,11 @@ void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3],
 	}
 }
 
-void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
 	CCTNum_t min_d;
 	unsigned int i, v_idx[2];
-	v_idx[0] = edge_v_indices[0];
-	v_idx[1] = edge_v_indices[1];
+	v_idx[0] = edge_v_indices_flat[0];
+	v_idx[1] = edge_v_indices_flat[1];
 	mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, closest_p);
 	min_d = mathVec3DistanceSq(p, closest_p);
 	if (CCTNum(0.0) == min_d) {
@@ -305,8 +305,8 @@ void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* e
 	}
 	for (i = 2; i < edge_v_indices_cnt; ) {
 		CCTNum_t cp[3], d;
-		v_idx[0] = edge_v_indices[i++];
-		v_idx[1] = edge_v_indices[i++];
+		v_idx[0] = edge_v_indices_flat[i++];
+		v_idx[1] = edge_v_indices_flat[i++];
 		mathSegmentClosestPoint(v[v_idx[0]], v[v_idx[1]], p, cp);
 		d = mathVec3DistanceSq(p, cp);
 		if (min_d <= d) {
@@ -381,7 +381,7 @@ void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[
 		return;
 	}
 	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
-	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices, polygon_edge_v_indices_cnt, p, closest_p);
+	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, p, closest_p);
 }
 
 void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
@@ -409,7 +409,7 @@ void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNu
 		return;
 	}
 	mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
-	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])mesh->v, mesh->edge_v_indices, mesh_edge_v_indices_cnt, p, closest_p);
+	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])mesh->v, mesh->edge_v_indices_flat, mesh_edge_v_indices_cnt, p, closest_p);
 }
 
 #ifdef	__cplusplus

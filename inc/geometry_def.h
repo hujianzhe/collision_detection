@@ -72,8 +72,14 @@ typedef struct GeometryPolygon_t {
 	unsigned int edge_cnt; /* number of edges */
 	unsigned int tri_v_indices_cnt;  /* number of triangle vertices index */
 	const unsigned int* v_indices; /* vertices index */
-	const unsigned int* edge_v_indices; /* edge vertices index */
-	const unsigned int* edge_v_ids; /* edge vertices logic id */
+	union {
+		const unsigned int* edge_v_indices_flat; /* edge vertices index */
+		const unsigned int(*edge_v_indices)[2];
+	};
+	union {
+		const unsigned int* edge_v_ids_flat; /* edge vertices logic id */
+		const unsigned int(*edge_v_ids)[2];
+	};
 	const unsigned int* tri_v_indices; /* triangle vertices index */
 	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
 	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
@@ -89,8 +95,14 @@ typedef struct GeometryMesh_t {
 	unsigned int edge_cnt; /* number of edges */
 	unsigned int polygons_cnt; /* number of polygen plane */
 	const unsigned int* v_indices; /* vertices index */
-	const unsigned int* edge_v_indices; /* edge vertices index */
-	const unsigned int* edge_v_ids; /* edge vertices logic id */
+	union {
+		const unsigned int* edge_v_indices_flat; /* edge vertices index */
+		const unsigned int(*edge_v_indices)[2];
+	};
+	union {
+		const unsigned int* edge_v_ids_flat; /* edge vertices logic id */
+		const unsigned int(*edge_v_ids)[2];
+	};
 	GeometryPolygon_t* polygons; /* array of polygens */
 	const GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryMesh_t;
