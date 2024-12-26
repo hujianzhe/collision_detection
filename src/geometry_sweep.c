@@ -65,12 +65,13 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 ///////////////////////////////////////////////////////////////////////////////
 
 static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) {
+	static const unsigned int Segment_Indices_Default[2] = { 0, 1 };
 	mesh->v = (CCTNum_t(*)[3])ls;
 	mesh->v_indices = Segment_Indices_Default;
 	mesh->v_indices_cnt = 2;
 	mesh->edge_v_ids = Segment_Indices_Default;
 	mesh->edge_v_indices = Segment_Indices_Default;
-	mesh->edge_v_indices_cnt = 2;
+	mesh->edge_cnt = 1;
 	mesh->is_convex = 1;
 	mesh->is_closed = 0;
 	mesh->polygons = NULL;
@@ -83,7 +84,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->v_indices_cnt = polygon->v_indices_cnt;
 	mesh->edge_v_ids = polygon->edge_v_ids;
 	mesh->edge_v_indices = polygon->edge_v_indices;
-	mesh->edge_v_indices_cnt = polygon->edge_v_indices_cnt;
+	mesh->edge_cnt = polygon->edge_cnt;
 	mesh->is_convex = polygon->is_convex;
 	mesh->is_closed = 0;
 	mesh->polygons = (GeometryPolygon_t*)polygon;
@@ -184,9 +185,9 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 }
 
 static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
-	unsigned int i;
+	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < mesh->edge_v_indices_cnt; ) {
+	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
@@ -354,7 +355,8 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	}
 	if (p_result) {
 		GeometryBorderId_t bi;
-		mathFindBorderIdByPoint((const CCTNum_t(*)[3])rface->v, rface->v_indices, rface->edge_v_ids, rface->edge_v_indices_cnt, result->hit_plane_v, &bi);
+		unsigned int rface_edge_v_indices_cnt = rface->edge_cnt + rface->edge_cnt;
+		mathFindBorderIdByPoint((const CCTNum_t(*)[3])rface->v, rface->v_indices, rface->edge_v_ids, rface_edge_v_indices_cnt, result->hit_plane_v, &bi);
 		if (bi.v_id != -1) {
 			result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
 			result->peer[1].id = rface->mesh_v_ids[bi.v_id];
@@ -915,12 +917,14 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInfo_t* src_info, const GeometryMesh_t* mesh) {
 	unsigned int part_id, idx, v_idx[3];
 	if (dst_info->hit_part == CCT_SWEEP_HIT_POINT && src_info->hit_part == CCT_SWEEP_HIT_POINT) {
+		unsigned int mesh_edge_v_indices_cnt;
 		if (dst_info->id == src_info->id) {
 			return 0;
 		}
 		v_idx[0] = mesh->v_indices[dst_info->id];
 		v_idx[1] = mesh->v_indices[src_info->id];
-		part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, v_idx[0], v_idx[1]);
+		mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
+		part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
 		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_EDGE;
 			dst_info->id = part_id;
@@ -1017,20 +1021,22 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 
 static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1, const CCTNum_t dir[3], const GeometryMesh_t* s2, CCTSweepResult_t* result) {
 	unsigned int i, j;
+	unsigned int s1_edge_v_indices_cnt, s2_edge_v_indices_cnt = s2->edge_cnt + s2->edge_cnt;
 	CCTSweepResult_t result_temp;
 	CCTSweepResult_t* p_result;
-	if (s2->edge_v_indices_cnt < 2) {
+	if (s2_edge_v_indices_cnt < 2) {
 		return NULL;
 	}
 	p_result = NULL;
-	for (i = 0; i < s1->edge_v_indices_cnt; ) {
+	s1_edge_v_indices_cnt = s1->edge_cnt + s1->edge_cnt;
+	for (i = 0; i < s1_edge_v_indices_cnt; ) {
 		CCTNum_t edge1[2][3];
 		unsigned int v_idx1[2];
 		v_idx1[0] = s1->edge_v_indices[i++];
 		v_idx1[1] = s1->edge_v_indices[i++];
 		mathVec3Copy(edge1[0], s1->v[v_idx1[0]]);
 		mathVec3Copy(edge1[1], s1->v[v_idx1[1]]);
-		for (j = 0; j < s2->edge_v_indices_cnt; ) {
+		for (j = 0; j < s2_edge_v_indices_cnt; ) {
 			CCTNum_t edge2[2][3];
 			unsigned int v_idx2[2];
 			v_idx2[0] = s2->edge_v_indices[j++];
@@ -1668,9 +1674,9 @@ static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1
 }
 
 static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
-	unsigned int i;
+	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < mesh->edge_v_indices_cnt; ) {
+	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
@@ -1737,9 +1743,9 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 }
 
 static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
-	unsigned int i;
+	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
-	for (i = 0; i < mesh->edge_v_indices_cnt; ) {
+	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
 		CCTSweepResult_t result_temp;
 		CCTNum_t edge[2][3];
 		unsigned int v_idx[2];
@@ -1872,7 +1878,8 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 		v_idx[0] = mesh->v_indices[same_v_ids[0]];
 		v_idx[1] = mesh->v_indices[same_v_ids[1]];
 		if (2 == same_v_cnt) {
-			part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh->edge_v_indices_cnt, v_idx[0], v_idx[1]);
+			unsigned int mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
+			part_id = mathFindEdgeIdByVertexIndices(mesh->edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
 			if (part_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
 				result->peer[0].id = part_id;

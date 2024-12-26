@@ -69,7 +69,7 @@ typedef struct GeometryPolygon_t {
 	CCTNum_t normal[3]; /* plane normal */
 	short is_convex;
 	unsigned int v_indices_cnt; /* number of vertices index */
-	unsigned int edge_v_indices_cnt; /* number of edge vertices index */
+	unsigned int edge_cnt; /* number of edge vertices index */
 	unsigned int tri_v_indices_cnt;  /* number of triangle vertices index */
 	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* edge_v_indices; /* edge vertices index */
@@ -86,7 +86,7 @@ typedef struct GeometryMesh_t {
 	short is_convex;
 	short is_closed;
 	unsigned int v_indices_cnt; /* number of vertices index */
-	unsigned int edge_v_indices_cnt; /* number of edge vertices index */
+	unsigned int edge_cnt; /* number of edge vertices index */
 	unsigned int polygons_cnt; /* number of polygen plane */
 	const unsigned int* v_indices; /* vertices index */
 	const unsigned int* edge_v_indices; /* edge vertices index */

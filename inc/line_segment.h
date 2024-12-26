@@ -11,8 +11,6 @@
 extern "C" {
 #endif
 
-extern const unsigned int Segment_Indices_Default[2];
-
 __declspec_dll CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]);
 __declspec_dll void mathPointProjectionLine_v2(const CCTNum_t p[3], const CCTNum_t ls_v0[3], const CCTNum_t ls_v1[3], CCTNum_t np[3]);
 __declspec_dll CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]);

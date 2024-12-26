@@ -278,8 +278,8 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 }
 
 static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
-	unsigned int i;
-	for (i = 0; i < polygon->edge_v_indices_cnt; ) {
+	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
+	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], v[3], test_dot, dot;
 		unsigned int edge_v_idx[2], other_i;
 		/* test edge */
@@ -315,7 +315,7 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 			return 1;
 		}
 		/* get test_point */
-		other_i = (i < polygon->edge_v_indices_cnt ? i : 0);
+		other_i = (i < polygon_edge_v_indices_cnt ? i : 0);
 		if (polygon->edge_v_indices[other_i] == edge_v_idx[0] || polygon->edge_v_indices[other_i] == edge_v_idx[1]) {
 			++other_i;
 		}
@@ -414,7 +414,8 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			return 0;
 		}
 		if (bi) {
-			mathFindBorderIdByPoint((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->edge_v_ids, polygon->edge_v_indices_cnt, p, bi);
+			unsigned int polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
+			mathFindBorderIdByPoint((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->edge_v_ids, polygon_edge_v_indices_cnt, p, bi);
 		}
 		return 1;
 	}
@@ -471,9 +472,9 @@ static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNu
 		return 0;
 	}
 	if (!polygon->is_convex) {
-		unsigned int i;
+		unsigned int i, polygon_edge_v_indics_cnt = polygon->edge_cnt + polygon->edge_cnt;
 		CCTNum_t ls_len = mathVec3Normalized(ls_dir, ls_dir);
-		for (i = 0; i < polygon->edge_v_indices_cnt; ) {
+		for (i = 0; i < polygon_edge_v_indics_cnt; ) {
 			const CCTNum_t* ep0 = polygon->v[polygon->edge_v_indices[i++]];
 			const CCTNum_t* ep1 = polygon->v[polygon->edge_v_indices[i++]];
 			CCTNum_t e_dir[3], N[3], d;
@@ -493,7 +494,7 @@ static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNu
 }
 
 static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
-	unsigned int i;
+	unsigned int i, polygon1_edge_v_indices_cnt, polygon2_edge_v_indices_cnt;
 	CCTNum_t(*polygon1_ls_dir_caches)[3];
 	if (!mathPlaneEqual(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
 		return 0;
@@ -507,22 +508,24 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	if (polygon1->is_convex) {
 		return 1;
 	}
-	polygon1_ls_dir_caches = (CCTNum_t(*)[3])malloc(sizeof(*polygon1_ls_dir_caches) * polygon1->edge_v_indices_cnt / 2);
+	polygon2_edge_v_indices_cnt = polygon2->edge_cnt + polygon2->edge_cnt;
+	polygon1_edge_v_indices_cnt = polygon1->edge_cnt + polygon1->edge_cnt;
+	polygon1_ls_dir_caches = (CCTNum_t(*)[3])malloc(sizeof(*polygon1_ls_dir_caches) * polygon1->edge_cnt);
 	if (polygon1_ls_dir_caches) {
-		for (i = 0; i < polygon1->edge_v_indices_cnt; ++i) {
+		for (i = 0; i < polygon1_edge_v_indices_cnt; ++i) {
 			const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_v_indices[i++]];
 			const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_v_indices[i]];
 			mathVec3Sub(polygon1_ls_dir_caches[i / 2], ls1_v2, ls1_v1);
 			mathVec3Normalized(polygon1_ls_dir_caches[i / 2], polygon1_ls_dir_caches[i / 2]);
 		}
-		for (i = 0; i < polygon2->edge_v_indices_cnt; ) {
+		for (i = 0; i < polygon2_edge_v_indices_cnt; ) {
 			unsigned int j;
 			CCTNum_t ls2_dir[3], ls2_len;
 			const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_v_indices[i++]];
 			const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_v_indices[i++]];
 			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
 			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
-			for (j = 0; j < polygon1->edge_v_indices_cnt; j += 2) {
+			for (j = 0; j < polygon1_edge_v_indices_cnt; j += 2) {
 				CCTNum_t d, N[3];
 				const CCTNum_t* ls1_dir = polygon1_ls_dir_caches[j / 2];
 				mathVec3Cross(N, ls2_dir, ls1_dir);
@@ -539,14 +542,14 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 		free(polygon1_ls_dir_caches);
 	}
 	else {
-		for (i = 0; i < polygon2->edge_v_indices_cnt; ) {
+		for (i = 0; i < polygon2_edge_v_indices_cnt; ) {
 			unsigned int j;
 			CCTNum_t ls2_dir[3], ls2_len;
 			const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_v_indices[i++]];
 			const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_v_indices[i++]];
 			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
 			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
-			for (j = 0; j < polygon1->edge_v_indices_cnt; ) {
+			for (j = 0; j < polygon1_edge_v_indices_cnt; ) {
 				CCTNum_t ls1_dir[3], N[3], d;
 				const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_v_indices[j++]];
 				const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_v_indices[j++]];

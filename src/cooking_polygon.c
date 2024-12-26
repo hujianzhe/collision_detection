@@ -202,7 +202,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		new_pg->v_indices_cnt = 0;
 		new_pg->edge_v_ids = NULL;
 		new_pg->edge_v_indices = NULL;
-		new_pg->edge_v_indices_cnt = 0;
+		new_pg->edge_cnt = 0;
 		new_pg->is_convex = 0;
 		new_pg->v = (CCTNum_t(*)[3])v;
 		mathVec3Copy(new_pg->normal, N);
@@ -507,7 +507,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->v_indices_cnt = v_indices_cnt;
 	polygon->edge_v_ids = edge_v_ids;
 	polygon->edge_v_indices = edge_v_indices;
-	polygon->edge_v_indices_cnt = edge_v_indices_cnt;
+	polygon->edge_cnt = edge_v_indices_cnt / 2;
 	polygon->tri_v_indices = dup_tri_v_indices;
 	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
 	polygon->mesh_v_ids = NULL;

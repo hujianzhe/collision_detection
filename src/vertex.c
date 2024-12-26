@@ -305,7 +305,8 @@ unsigned int mathFindAdjacentFaceIdByEdgeVertexIndices(const GeometryPolygon_t* 
 	*face_idx0 = *face_idx1 = -1;
 	for (i = 0; i < faces_cnt; ++i) {
 		const GeometryPolygon_t* face = faces + i;
-		if (mathFindEdgeIdByVertexIndices(face->edge_v_indices, face->edge_v_indices_cnt, edge_v_idx0, edge_v_idx1) == -1) {
+		unsigned int face_edge_v_indices_cnt = face->edge_cnt + face->edge_cnt;
+		if (mathFindEdgeIdByVertexIndices(face->edge_v_indices, face_edge_v_indices_cnt, edge_v_idx0, edge_v_idx1) == -1) {
 			continue;
 		}
 		if (-1 == *face_idx0) {

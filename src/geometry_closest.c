@@ -373,18 +373,20 @@ void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[
 }
 
 void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+	unsigned int polygon_edge_v_indices_cnt;
 	CCTNum_t d = mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal);
 	mathVec3Copy(closest_p, p);
 	mathVec3AddScalar(closest_p, polygon->normal, d);
 	if (Polygon_Contain_Point_SamePlane(polygon, closest_p, NULL)) {
 		return;
 	}
-	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices, polygon->edge_v_indices_cnt, p, closest_p);
+	polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
+	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices, polygon_edge_v_indices_cnt, p, closest_p);
 }
 
 void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
 	CCTNum_t min_d;
-	unsigned int i, flag = 0;
+	unsigned int i, flag = 0, mesh_edge_v_indices_cnt;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTNum_t cp[3];
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -406,7 +408,8 @@ void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNu
 	if (mesh->is_convex && flag) {
 		return;
 	}
-	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])mesh->v, mesh->edge_v_indices, mesh->edge_v_indices_cnt, p, closest_p);
+	mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
+	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])mesh->v, mesh->edge_v_indices, mesh_edge_v_indices_cnt, p, closest_p);
 }
 
 #ifdef	__cplusplus
