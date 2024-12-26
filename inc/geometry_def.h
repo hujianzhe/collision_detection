@@ -92,7 +92,7 @@ typedef struct GeometryMesh_t {
 	const unsigned int* edge_v_indices; /* edge vertices index */
 	const unsigned int* edge_v_ids; /* edge vertices logic id */
 	GeometryPolygon_t* polygons; /* array of polygens */
-	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
+	const GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryMesh_t;
 
 enum {

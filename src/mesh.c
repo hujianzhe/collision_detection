@@ -31,9 +31,9 @@ static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (mesh->v_adjacent_infos) {
 		for (i = 0; i < mesh->v_indices_cnt; ++i) {
-			free_data_mesh_vertex_adjacent_info(mesh->v_adjacent_infos + i);
+			free_data_mesh_vertex_adjacent_info((GeometryMeshVertexAdjacentInfo_t*)(mesh->v_adjacent_infos + i));
 		}
-		free(mesh->v_adjacent_infos);
+		free((void*)mesh->v_adjacent_infos);
 		mesh->v_adjacent_infos = NULL;
 	}
 }
