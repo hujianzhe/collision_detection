@@ -295,6 +295,13 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	static const unsigned int Box_Face_Edge_VertexIds[8] = {
 		0,1, 1,2, 2,3, 3,0
 	};
+	static const GeometryPolygonVertexAdjacentInfo_t Box_Face_VertexAdjacentInfos[4] = {
+		{ {1,3}, {0,3} },
+		{ {2,0}, {1,0} },
+		{ {3,1}, {2,1} },
+		{ {0,2}, {0,3} },
+	};
+
 	if (!mathBoxFaceNormal(axis, face_id, polygon->normal)) {
 		return NULL;
 	}
@@ -308,7 +315,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->edge_cnt = 4;
 	polygon->mesh_v_ids = Box_Face_MeshVerticeIds[face_id];
 	polygon->mesh_edge_ids = Box_Face_MeshEdgeIds[face_id];
-	polygon->v_adjacent_infos = NULL;
+	polygon->v_adjacent_infos = Box_Face_VertexAdjacentInfos;
 	polygon->tri_v_indices = NULL;
 	polygon->tri_v_indices_cnt = 0;
 	polygon->is_convex = 1;
