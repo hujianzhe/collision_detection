@@ -319,7 +319,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 	}
-	mesh->edge_adjacent_face_ids = edge_adjacent_face_ids;
+	mesh->edge_adjacent_face_ids = (const unsigned int(*)[2])edge_adjacent_face_ids;
 	/* check mesh is convex and closed */
 	mesh->is_convex = mathMeshIsConvex(mesh);
 	if (mesh->is_convex) {
