@@ -268,7 +268,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src)
 	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->v_indices = dup_v_indices;
 	dst->v_adjacent_infos = dup_v_adjacent_infos;
-	dst->edge_adjacent_face_ids = dup_edge_adjacent_face_ids;
+	dst->edge_adjacent_face_ids = (const unsigned int(*)[2])dup_edge_adjacent_face_ids;
 	return dst;
 err_0:
 	free(dup_v);
