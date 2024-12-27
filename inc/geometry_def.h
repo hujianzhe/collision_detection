@@ -15,11 +15,16 @@ typedef struct GeometryBorderId_t {
 } GeometryBorderId_t;
 
 typedef struct GeometryPolygonVertexAdjacentInfo_t {
+	/* v_ids[i] must locate in edge_ids[i] */
+
 	unsigned int v_ids[2];
 	unsigned int edge_ids[2];
 } GeometryPolygonVertexAdjacentInfo_t;
 
 typedef struct GeometryMeshVertexAdjacentInfo_t {
+	/* v_ids[i] must locate in edge_ids[i] */
+	/* v_cnt must equal edge_cnt */
+
 	unsigned int v_cnt;
 	unsigned int edge_cnt;
 	unsigned int face_cnt;

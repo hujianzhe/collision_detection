@@ -299,7 +299,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 		{ {1,3}, {0,3} },
 		{ {2,0}, {1,0} },
 		{ {3,1}, {2,1} },
-		{ {0,2}, {0,3} },
+		{ {0,2}, {3,2} },
 	};
 
 	if (!mathBoxFaceNormal(axis, face_id, polygon->normal)) {
@@ -309,7 +309,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	mathVec3MultiplyScalar(polygon->center, polygon->center, CCTNum(0.5));
 	polygon->v = (CCTNum_t(*)[3])v;
 	polygon->v_indices = Box_Face_MeshVerticeIds[face_id];
-	polygon->v_indices_cnt = sizeof(Box_Face_MeshVerticeIds[0]) / sizeof(Box_Face_MeshVerticeIds[0][0]);
+	polygon->v_indices_cnt = 4;
 	polygon->edge_v_ids_flat = Box_Face_Edge_VertexIds;
 	polygon->edge_v_indices_flat = Box_Face_Edge_MeshVertexIds[face_id];
 	polygon->edge_cnt = 4;
