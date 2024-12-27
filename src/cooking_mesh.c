@@ -160,9 +160,9 @@ err:
 	return 0;
 }
 
-static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int edge_id, unsigned int(*adjacent_faces_ids)[2]) {
+static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) {
 	unsigned int i, cnt = 0;
-	unsigned int v_idx[2] = {
+	const unsigned int v_idx[2] = {
 		mesh->edge_v_indices_flat[edge_id + edge_id],
 		mesh->edge_v_indices_flat[edge_id + edge_id + 1]
 	};
@@ -172,13 +172,13 @@ static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int
 			break;
 		}
 		i += offset;
-		adjacent_faces_ids[edge_id][cnt++] = i;
+		adjacent_faces_ids[cnt++] = i;
 		if (cnt >= 2) {
 			return 1;
 		}
 	}
 	if (1 == cnt) {
-		adjacent_faces_ids[edge_id][1] = -1;
+		adjacent_faces_ids[1] = -1;
 		return 1;
 	}
 	return 0;
@@ -200,6 +200,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
 	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos = NULL;
+	unsigned int(*edge_adjacent_face_ids)[2] = NULL;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
 		return NULL;
@@ -264,9 +265,13 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	if (!mathCookingStage4(edge_v_indices_flat, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 		goto err_1;
 	}
-	/* alloc vertex adjacent infos buffer */
+	/* alloc adjacent infos buffer */
 	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)malloc(sizeof(v_adjacent_infos[0]) * v_indices_cnt);
 	if (!v_adjacent_infos) {
+		goto err_1;
+	}
+	edge_adjacent_face_ids = (unsigned int(*)[2])malloc(sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt / 2);
+	if (!edge_adjacent_face_ids) {
 		goto err_1;
 	}
 	/* cooking face map relationship data */
@@ -281,7 +286,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 			goto err_1;
 		}
 	}
-	/* save result */
+	/* save basic data result */
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
 	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
 	mesh->v = dup_v;
@@ -303,6 +308,13 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		goto err_1;
 	}
 	mesh->v_adjacent_infos = v_adjacent_infos;
+	/* cooking edge adjacent infos */
+	for (i = 0; i < mesh->edge_cnt; ++i) {
+		if (!Cooking_MeshEdgeAdjacentFace(mesh, i, edge_adjacent_face_ids[i])) {
+			goto err_1;
+		}
+	}
+	mesh->edge_adjacent_face_ids = edge_adjacent_face_ids;
 	/* check mesh is convex and closed */
 	mesh->is_convex = mathMeshIsConvex(mesh);
 	if (mesh->is_convex) {
@@ -334,6 +346,7 @@ err_0:
 	free(edge_v_indices_flat);
 	free(dup_tri_v_indices);
 	free(v_adjacent_infos);
+	free(edge_adjacent_face_ids);
 	return NULL;
 }
 

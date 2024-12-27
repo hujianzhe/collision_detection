@@ -295,6 +295,7 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->v_indices = Box_Vertice_Indices_Default;
 	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
 	mesh->v_adjacent_infos = NULL;
+	mesh->edge_adjacent_face_ids = NULL;
 	mesh->edge_v_ids_flat = Box_Edge_VertexIds;
 	mesh->edge_v_indices_flat = Box_Edge_VertexIds;
 	mesh->edge_cnt = 12;
