@@ -23,9 +23,9 @@ typedef struct GeometryMeshVertexAdjacentInfo_t {
 	unsigned int v_cnt;
 	unsigned int edge_cnt;
 	unsigned int face_cnt;
-	unsigned int* v_ids;
-	unsigned int* edge_ids;
-	unsigned int* face_ids;
+	const unsigned int* v_ids;
+	const unsigned int* edge_ids;
+	const unsigned int* face_ids;
 } GeometryMeshVertexAdjacentInfo_t;
 
 /*********************************************************************/

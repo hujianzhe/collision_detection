@@ -40,6 +40,39 @@ static const unsigned int Box_Vertex_Adjacent_VertexIds[8][3] = {
 	{ 6, 4, 3 }
 };
 
+static const unsigned int Box_Vertex_Adjacent_EdgeIds[8][3] = {
+	{ 0, 3, 11 },
+	{ 0, 1, 8 },
+	{ 2, 1, 9 },
+	{ 2, 3, 10 },
+	{ 6, 7, 11 },
+	{ 6, 5, 8 },
+	{ 4, 5, 9 },
+	{ 4, 7, 10 }
+};
+
+static const unsigned int Box_Vertex_Adjacent_FaceIds[8][3] = {
+	{ 5, 1, 3 },
+	{ 5, 0, 3 },
+	{ 2, 0, 5 },
+	{ 1, 2, 5 },
+	{ 1, 3, 4 },
+	{ 0, 3, 4 },
+	{ 0, 2, 4 },
+	{ 1, 2, 4 }
+};
+
+static const GeometryMeshVertexAdjacentInfo_t Box_Vertex_AdjacentInfos[8] = {
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[0], Box_Vertex_Adjacent_EdgeIds[0], Box_Vertex_Adjacent_FaceIds[0] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[1], Box_Vertex_Adjacent_EdgeIds[1], Box_Vertex_Adjacent_FaceIds[1] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[2], Box_Vertex_Adjacent_EdgeIds[2], Box_Vertex_Adjacent_FaceIds[2] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[3], Box_Vertex_Adjacent_EdgeIds[3], Box_Vertex_Adjacent_FaceIds[3] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[4], Box_Vertex_Adjacent_EdgeIds[4], Box_Vertex_Adjacent_FaceIds[4] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[5], Box_Vertex_Adjacent_EdgeIds[5], Box_Vertex_Adjacent_FaceIds[5] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[6], Box_Vertex_Adjacent_EdgeIds[6], Box_Vertex_Adjacent_FaceIds[6] },
+	{ 3,3,3, Box_Vertex_Adjacent_VertexIds[7], Box_Vertex_Adjacent_EdgeIds[7], Box_Vertex_Adjacent_FaceIds[7] }
+};
+
 static const unsigned int Box_Face_Edge_MeshVertexIds[6][8] = {
 	{ 1,2, 2,6, 6,5, 5,1 },
 	{ 0,3, 3,7, 7,4, 4,0 },
@@ -293,9 +326,9 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mathBoxVertices(center, half, axis, bm->v);
 	mesh->v = bm->v;
 	mesh->v_indices = Box_Vertice_Indices_Default;
-	mesh->v_indices_cnt = sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]);
-	mesh->v_adjacent_infos = NULL;
-	mesh->edge_adjacent_face_ids = NULL;
+	mesh->v_indices_cnt = 8;
+	mesh->v_adjacent_infos = Box_Vertex_AdjacentInfos;
+	mesh->edge_adjacent_face_ids = (const unsigned int(*)[2])Box_Edge_Adjacent_FaceIds;
 	mesh->edge_v_ids_flat = Box_Edge_VertexIds;
 	mesh->edge_v_indices_flat = Box_Edge_VertexIds;
 	mesh->edge_cnt = 12;

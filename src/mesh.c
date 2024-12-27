@@ -22,9 +22,9 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 }
 
 void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info) {
-	free(info->v_ids);
-	free(info->edge_ids);
-	free(info->face_ids);
+	free((void*)info->v_ids);
+	free((void*)info->edge_ids);
+	free((void*)info->face_ids);
 }
 
 static void free_all_adjacent_infos(GeometryMesh_t* mesh) {

@@ -99,7 +99,7 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned int v_id, GeometryMeshVertexAdjacentInfo_t* info) {
 	unsigned int i, *tmp_p;
 	unsigned int mesh_edge_v_indices_cnt;
-	info->v_ids = info->edge_ids = info->face_ids = NULL;
+	unsigned int *v_ids = NULL, *edge_ids = NULL, *face_ids = NULL;
 	/* find locate faces */
 	info->face_cnt = 0;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -108,13 +108,13 @@ static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned i
 			break;
 		}
 		++info->face_cnt;
-		tmp_p = (unsigned int*)realloc(info->face_ids, info->face_cnt * sizeof(info->face_ids[0]));
+		tmp_p = (unsigned int*)realloc(face_ids, info->face_cnt * sizeof(face_ids[0]));
 		if (!tmp_p) {
 			goto err;
 		}
 		i += offset;
-		info->face_ids = tmp_p;
-		info->face_ids[info->face_cnt - 1] = i;
+		face_ids = tmp_p;
+		face_ids[info->face_cnt - 1] = i;
 	}
 	if (info->face_cnt <= 0) {
 		/* no possiable */
@@ -135,28 +135,33 @@ static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned i
 			continue;
 		}
 		++info->v_cnt;
-		tmp_p = (unsigned int*)realloc(info->v_ids, info->v_cnt * sizeof(info->v_ids[0]));
+		tmp_p = (unsigned int*)realloc(v_ids, info->v_cnt * sizeof(v_ids[0]));
 		if (!tmp_p) {
 			goto err;
 		}
-		info->v_ids = tmp_p;
-		info->v_ids[info->v_cnt - 1] = adj_v_id;
+		v_ids = tmp_p;
+		v_ids[info->v_cnt - 1] = adj_v_id;
 
 		++info->edge_cnt;
-		tmp_p = (unsigned int*)realloc(info->edge_ids, info->edge_cnt * sizeof(info->edge_ids[0]));
+		tmp_p = (unsigned int*)realloc(edge_ids, info->edge_cnt * sizeof(edge_ids[0]));
 		if (!tmp_p) {
 			goto err;
 		}
-		info->edge_ids = tmp_p;
-		info->edge_ids[info->edge_cnt - 1] = (i >> 1);
+		edge_ids = tmp_p;
+		edge_ids[info->edge_cnt - 1] = (i >> 1);
 	}
 	if (info->v_cnt != info->edge_cnt || info->v_cnt <= 0) {
 		/* no possiable */
 		goto err;
 	}
+	info->v_ids = v_ids;
+	info->edge_ids = edge_ids;
+	info->face_ids = face_ids;
 	return 1;
 err:
-	free_data_mesh_vertex_adjacent_info(info);
+	free(v_ids);
+	free(edge_ids);
+	free(face_ids);
 	return 0;
 }
 
