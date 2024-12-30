@@ -83,6 +83,32 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 extern "C" {
 #endif
 
+unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size) {
+	unsigned int max_deep_num;
+	CCTNum_t min_half_value, log_r;
+	if (half_size[0] < half_size[1]) {
+		if (half_size[0] < half_size[2]) {
+			min_half_value = half_size[0];
+		}
+		else {
+			min_half_value = half_size[2];
+		}
+	}
+	else if (half_size[1] < half_size[2]) {
+		min_half_value = half_size[1];
+	}
+	else {
+		min_half_value = half_size[2];
+	}
+	for (max_deep_num = 1; ; ++max_deep_num) {
+		min_half_value *= CCTNum(0.5);
+		if (min_half_value < cell_size) {
+			break;
+		}
+	}
+	return max_deep_num;
+}
+
 Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) {
 	OctreeNode_t* nodes;
 	size_t nodes_cnt;
