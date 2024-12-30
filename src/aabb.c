@@ -205,11 +205,6 @@ void mathAABBStretch(CCTNum_t o[3], CCTNum_t half[3], const CCTNum_t delta[3]) {
 	}
 }
 
-void mathAABBSplit(const CCTNum_t o[3], const CCTNum_t half[3], CCTNum_t new_o[8][3], CCTNum_t new_half[3]) {
-	mathVec3MultiplyScalar(new_half, half, CCTNum(0.5));
-	mathAABBVertices(o, new_half, new_o);
-}
-
 int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	int i;
 	for (i = 0; i < 3; ++i) {

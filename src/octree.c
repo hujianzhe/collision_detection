@@ -2,15 +2,12 @@
 // Created by hujianzhe on 21-12-29
 //
 
+#include "../inc/math_vec3.h"
 #include "../inc/aabb.h"
 #include "../inc/octree.h"
 #include <stdlib.h>
 
 #define pod_container_of(address, type, field)		((type *)((char*)(address) - (char*)(&((type *)0)->field)))
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static size_t octree_level_nodes_cnt(unsigned int deep_num) {
 	size_t cnt = 1;
@@ -56,7 +53,8 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 		return;
 	}
 	root->childs = &tree->nodes[1 + ((root - tree->nodes) << 3)];
-	mathAABBSplit(root->pos, root->half, o, half);
+	mathVec3MultiplyScalar(half, root->half, CCTNum(0.5));
+	mathAABBVertices(root->pos, half, o);
 	for (i = 0; i < 8; ++i) {
 		OctreeNode_t* child = root->childs + i;
 		octree_node_init(child, o[i], half);
@@ -80,6 +78,10 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 		}
 	}
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) {
 	OctreeNode_t* nodes;
