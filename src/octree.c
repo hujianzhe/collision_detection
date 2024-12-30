@@ -84,8 +84,7 @@ extern "C" {
 #endif
 
 unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size) {
-	unsigned int max_deep_num;
-	CCTNum_t min_half_value, log_r;
+	CCTNum_t min_half_value;
 	if (half_size[0] < half_size[1]) {
 		if (half_size[0] < half_size[2]) {
 			min_half_value = half_size[0];
@@ -100,13 +99,10 @@ unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNu
 	else {
 		min_half_value = half_size[2];
 	}
-	for (max_deep_num = 1; ; ++max_deep_num) {
-		min_half_value *= CCTNum(0.5);
-		if (min_half_value < cell_size) {
-			break;
-		}
+	if (min_half_value <= cell_size) {
+		return 1;
 	}
-	return max_deep_num;
+	return CCTNum_floor(CCTNum_log(min_half_value / cell_size, CCTNum(2.0)) + CCTNum(1.0));
 }
 
 Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) {

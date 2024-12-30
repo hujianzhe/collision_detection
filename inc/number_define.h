@@ -33,6 +33,9 @@
 	#define	CCTNum_cos(n)			cosf(n)
 	#define	CCTNum_sin(n)			sinf(n)
 	#define	CCTNum_atan2(y, x)		atan2f(y, x)
+	#define	CCTNum_log(n,base)		(logf(n) / logf(base))
+	#define	CCTNum_ceil(n)			ceilf(n)
+	#define	CCTNum_floor(n)			floorf(n)
 	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
 	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
@@ -59,6 +62,9 @@
 	#define	CCTNum_cos(n)			cos(n)
 	#define	CCTNum_sin(n)			sin(n)
 	#define	CCTNum_atan2(y, x)		atan2(y, x)
+	#define	CCTNum_log(n,base)		(log(n) / log(base))
+	#define	CCTNum_ceil(n)			ceil(n)
+	#define	CCTNum_floor(n)			floor(n)
 	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
 	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
@@ -85,6 +91,9 @@
 	#define	CCTNum_cos(n)			cosl(n)
 	#define	CCTNum_sin(n)			sinl(n)
 	#define	CCTNum_atan2(y, x)		atan2l(y, x)
+	#define	CCTNum_log(n,base)		(logl(n) / logl(base))
+	#define	CCTNum_ceil(n)			ceill(n)
+	#define	CCTNum_floor(n)			floorl(n)
 	#define	CCTNum_degree_to_radian(deg)	(CCT_RADIAN_PER_DEGREE*(deg))
 	#define	CCTNum_radian_to_degree(rad)	(CCT_DEGREE_PER_RADIAN*(rad))
 
