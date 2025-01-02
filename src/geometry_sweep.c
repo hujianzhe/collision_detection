@@ -2390,6 +2390,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 	CCTNum_t neg_dir[3];
 	int flag_neg_dir;
 	GeometryBoxMesh_t box_data;
+	const GeometryMesh_t* mesh2;
 	if (geo_data1 == geo_data2 || mathVec3IsZero(dir)) {
 		return NULL;
 	}
@@ -2434,9 +2435,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Ray_Sweep_Polygon(point1, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
-				result = Ray_Sweep_ConvexMesh(point1, dir, (const GeometryMesh_t*)geo_data2, result);
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
+				result = Ray_Sweep_ConvexMesh(point1, dir, mesh2, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2493,9 +2498,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Segment_Sweep_Polygon(segment1_v, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
-				result = Segment_Sweep_ConvexMesh(segment1_v, dir, (const GeometryMesh_t*)geo_data2, result);
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
+				result = Segment_Sweep_ConvexMesh(segment1_v, dir, mesh2, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2559,10 +2568,14 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = ConvexMesh_Sweep_Polygon(&box_data.mesh, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
 				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
-				result = ConvexMesh_Sweep_ConvexMesh(&box_data.mesh, dir, (const GeometryMesh_t*)geo_data2, result);
+				result = ConvexMesh_Sweep_ConvexMesh(&box_data.mesh, dir, mesh2, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2621,10 +2634,14 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = ConvexMesh_Sweep_Polygon(&box_data.mesh, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
 				mathBoxMesh(&box_data, obb1->o, obb1->half, (const CCTNum_t(*)[3])obb1->axis);
-				result = ConvexMesh_Sweep_ConvexMesh(&box_data.mesh, dir, (const GeometryMesh_t*)geo_data2, result);
+				result = ConvexMesh_Sweep_ConvexMesh(&box_data.mesh, dir, mesh2, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2684,11 +2701,15 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Sphere_Sweep_Polygon(sphere1->o, sphere1->radius, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = ConvexMesh_Sweep_Sphere((const GeometryMesh_t*)geo_data2, neg_dir, sphere1->o, sphere1->radius, result);
+				result = ConvexMesh_Sweep_Sphere(mesh2, neg_dir, sphere1->o, sphere1->radius, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2752,11 +2773,15 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Polygon_Sweep_Polygon(polygon1, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = ConvexMesh_Sweep_Polygon((const GeometryMesh_t*)geo_data2, neg_dir, polygon1, result);
+				result = ConvexMesh_Sweep_Polygon(mesh2, neg_dir, polygon1, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
@@ -2772,62 +2797,75 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_CONVEX_MESH == geo_type1) {
+	else if (GEOMETRY_BODY_MESH == geo_type1) {
 		const GeometryMesh_t* mesh1 = (const GeometryMesh_t*)geo_data1;
-		switch (geo_type2) {
-			case GEOMETRY_BODY_SEGMENT:
-			{
-				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				mathVec3Negate(neg_dir, dir);
-				flag_neg_dir = 1;
-				result = Segment_Sweep_ConvexMesh((const CCTNum_t(*)[3])segment2->v, neg_dir, mesh1, result);
-				break;
+		if (mesh1->is_convex && mesh1->is_closed) {
+			switch (geo_type2) {
+				case GEOMETRY_BODY_SEGMENT:
+				{
+					const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
+					mathVec3Negate(neg_dir, dir);
+					flag_neg_dir = 1;
+					result = Segment_Sweep_ConvexMesh((const CCTNum_t(*)[3])segment2->v, neg_dir, mesh1, result);
+					break;
+				}
+				case GEOMETRY_BODY_PLANE:
+				{
+					const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
+					result = Mesh_Sweep_Plane(mesh1, dir, plane2->v, plane2->normal, result);
+					break;
+				}
+				case GEOMETRY_BODY_SPHERE:
+				{
+					const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
+					result = ConvexMesh_Sweep_Sphere(mesh1, dir, sphere2->o, sphere2->radius, result);
+					break;
+				}
+				case GEOMETRY_BODY_OBB:
+				{
+					const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
+					mathBoxMesh(&box_data, obb2->o, obb2->half, (const CCTNum_t(*)[3])obb2->axis);
+					result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, &box_data.mesh, result);
+					break;
+				}
+				case GEOMETRY_BODY_AABB:
+				{
+					const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
+					mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+					result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, &box_data.mesh, result);
+					break;
+				}
+				case GEOMETRY_BODY_POLYGON:
+				{
+					result = ConvexMesh_Sweep_Polygon(mesh1, dir, (const GeometryPolygon_t*)geo_data2, result);
+					break;
+				}
+				case GEOMETRY_BODY_MESH:
+				{
+					mesh2 = (const GeometryMesh_t*)geo_data2;
+					if (!mesh2->is_convex || !mesh2->is_closed) {
+						return NULL;
+					}
+					result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, mesh2, result);
+					break;
+				}
+				case GEOMETRY_BODY_CAPSULE:
+				{
+					result = ConvexMesh_Sweep_Capsule(mesh1, dir, (const GeometryCapsule_t*)geo_data2, result);
+					break;
+				}
+				default:
+				{
+					return NULL;
+				}
 			}
-			case GEOMETRY_BODY_PLANE:
-			{
-				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
-				result = Mesh_Sweep_Plane(mesh1, dir, plane2->v, plane2->normal, result);
-				break;
-			}
-			case GEOMETRY_BODY_SPHERE:
-			{
-				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
-				result = ConvexMesh_Sweep_Sphere(mesh1, dir, sphere2->o, sphere2->radius, result);
-				break;
-			}
-			case GEOMETRY_BODY_OBB:
-			{
-				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
-				mathBoxMesh(&box_data, obb2->o, obb2->half, (const CCTNum_t(*)[3])obb2->axis);
-				result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, &box_data.mesh, result);
-				break;
-			}
-			case GEOMETRY_BODY_AABB:
-			{
-				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
-				result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, &box_data.mesh, result);
-				break;
-			}
-			case GEOMETRY_BODY_POLYGON:
-			{
-				result = ConvexMesh_Sweep_Polygon(mesh1, dir, (const GeometryPolygon_t*)geo_data2, result);
-				break;
-			}
-			case GEOMETRY_BODY_CONVEX_MESH:
-			{
-				result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, (const GeometryMesh_t*)geo_data2, result);
-				break;
-			}
-			case GEOMETRY_BODY_CAPSULE:
-			{
-				result = ConvexMesh_Sweep_Capsule(mesh1, dir, (const GeometryCapsule_t*)geo_data2, result);
-				break;
-			}
-			default:
-			{
-				return NULL;
-			}
+		}
+		else if (GEOMETRY_BODY_PLANE == geo_type2) {
+			const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
+			result = Mesh_Sweep_Plane(mesh1, dir, plane2->v, plane2->normal, result);
+		}
+		else {
+			return NULL;
 		}
 	}
 	else if (GEOMETRY_BODY_CAPSULE == geo_type1) {
@@ -2852,11 +2890,15 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Capsule_Sweep_Polygon(capsule1, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
+				mesh2 = (const GeometryMesh_t*)geo_data2;
+				if (!mesh2->is_convex || !mesh2->is_closed) {
+					return NULL;
+				}
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				result = ConvexMesh_Sweep_Capsule((const GeometryMesh_t*)geo_data2, neg_dir, capsule1, result);
+				result = ConvexMesh_Sweep_Capsule(mesh2, neg_dir, capsule1, result);
 				break;
 			}
 			case GEOMETRY_BODY_OBB:

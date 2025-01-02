@@ -597,7 +597,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
 }
 
-static int ConvexMesh_Contain_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
 	unsigned int i;
 	if (!AABB_Intersect_AABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
 		return 0;
@@ -766,7 +766,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
 				return OBB_Contain_VerticeIndices(&obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
 				return AABB_Contain_Mesh(aabb1->o, aabb1->half, (const GeometryMesh_t*)geo_data2);
 			}
@@ -815,7 +815,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
 				return OBB_Contain_VerticeIndices(obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
 				return OBB_Contain_Mesh(obb1, (const GeometryMesh_t*)geo_data2);
 			}
@@ -866,7 +866,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius,
 						(const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
 				const GeometryMesh_t* mesh2 = (const GeometryMesh_t*)geo_data2;
 				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius,
@@ -884,8 +884,11 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			}
 		}
 	}
-	else if (GEOMETRY_BODY_CONVEX_MESH == geo_type1) {
+	else if (GEOMETRY_BODY_MESH == geo_type1) {
 		const GeometryMesh_t* mesh1 = (const GeometryMesh_t*)geo_data1;
+		if (!mesh1->is_convex || !mesh1->is_closed) {
+			return 0;
+		}
 		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
@@ -912,9 +915,9 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
 				return ConvexMesh_Contain_VerticeIndices(mesh1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
-				return ConvexMesh_Contain_ConvexMesh(mesh1, (const GeometryMesh_t*)geo_data2);
+				return ConvexMesh_Contain_Mesh(mesh1, (const GeometryMesh_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -961,7 +964,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
 				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
-			case GEOMETRY_BODY_CONVEX_MESH:
+			case GEOMETRY_BODY_MESH:
 			{
 				const GeometryMesh_t* mesh2 = (const GeometryMesh_t*)geo_data2;
 				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])mesh2->v, mesh2->v_indices, mesh2->v_indices_cnt);

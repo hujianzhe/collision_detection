@@ -139,7 +139,7 @@ CCTNum_t* physInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia
 			}
 			return mathMat33Diagonal(inertia, v[0], v[1], v[2]);
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			/* temp code */
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;

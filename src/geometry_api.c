@@ -295,7 +295,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			}
 			return 1;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
 			unsigned int i;
@@ -309,12 +309,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				return 0;
 			}
 			if (!mesh->is_convex || !mesh->is_closed) {
-				return 0;
-			}
-			if (!mathMeshIsConvex(mesh)) {
-				return 0;
-			}
-			if (!mathMeshIsClosed(mesh)) {
 				return 0;
 			}
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -381,7 +375,7 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 			}
 			break;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			if (!mathMeshDeepCopy((GeometryMesh_t*)dst, (const GeometryMesh_t*)src_geo_data)) {
 				return NULL;
@@ -405,7 +399,7 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 }
 
 void mathGeometryFree(void* geo_data, int geo_type) {
-	if (GEOMETRY_BODY_CONVEX_MESH == geo_type) {
+	if (GEOMETRY_BODY_MESH == geo_type) {
 		mathMeshFreeData((GeometryMesh_t*)geo_data);
 	}
 	else if (GEOMETRY_BODY_POLYGON == geo_type) {
@@ -459,7 +453,7 @@ const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTN
 			ptr_v = ((const GeometryPolygon_t*)geo_data)->center;
 			break;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			ptr_v = ((const GeometryMesh_t*)geo_data)->bound_box.o;
 			break;
@@ -532,7 +526,7 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 			mathVec3Copy(polygon->center, v);
 			return;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			unsigned int i;
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
@@ -598,7 +592,7 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 			mathAABBFromTwoVertice(min_v, max_v, aabb->o, aabb->half);
 			break;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			*aabb = ((const GeometryMesh_t*)geo_data)->bound_box;
 			break;
@@ -796,7 +790,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], c
 			point_rotate(polygon->center, base_p, q);
 			break;
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			CCTNum_t min_xyz[3], max_xyz[3];
@@ -888,7 +882,7 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
 			return indices_separate_distance((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, plane_v, separate_dir);
 		}
-		case GEOMETRY_BODY_CONVEX_MESH:
+		case GEOMETRY_BODY_MESH:
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
 			return indices_separate_distance((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, plane_v, separate_dir);
