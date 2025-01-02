@@ -97,9 +97,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mathVec3Equal(segment->v[0], segment->v[1])) {
 				return 0;
 			}
-			if (!CCTNum_chkvals(segment->o, 3)) {
-				return 0;
-			}
 			return CCTNum_chkval(mathVec3DistanceSq(segment->v[0], segment->v[1]));
 		}
 		case GEOMETRY_BODY_PLANE:
@@ -425,7 +422,7 @@ const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTN
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
-			ptr_v = ((const GeometrySegment_t*)geo_data)->o;
+			ptr_v = ((const GeometrySegment_t*)geo_data)->v[0];
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
@@ -483,9 +480,8 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 		{
 			CCTNum_t delta[3];
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
-			mathVec3Sub(delta, v, segment->o);
-			mathVec3Copy(segment->o, v);
-			mathVec3Add(segment->v[0], segment->v[0], delta);
+			mathVec3Sub(delta, v, segment->v[0]);
+			mathVec3Copy(segment->v[0], v);
 			mathVec3Add(segment->v[1], segment->v[1], delta);
 			return;
 		}
@@ -663,7 +659,6 @@ GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t
 			CCTNum_t new_radius = capsule->radius + inflate;
 			if (new_radius <= CCTNum(0.0)) {
 				geo_inflate->type = GEOMETRY_BODY_SEGMENT;
-				mathVec3Copy(geo_inflate->segment.o, capsule->o);
 				mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, geo_inflate->segment.v[0], geo_inflate->segment.v[1]);
 			}
 			else {
@@ -692,8 +687,6 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], c
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
 			point_rotate(segment->v[0], base_p, q);
 			point_rotate(segment->v[1], base_p, q);
-			mathVec3Add(segment->o, segment->v[0], segment->v[1]);
-			mathVec3MultiplyScalar(segment->o, segment->o, CCTNum(0.5));
 			break;
 		}
 		case GEOMETRY_BODY_PLANE:
