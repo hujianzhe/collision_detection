@@ -341,7 +341,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 err_1:
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
 		tmp_polygons[i].v = NULL;
-		mathPolygonFreeData(tmp_polygons + i);
+		mathPolygonClear(tmp_polygons + i);
 	}
 	free(tmp_polygons);
 err_0:

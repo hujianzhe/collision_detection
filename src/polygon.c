@@ -194,7 +194,7 @@ err:
 	return NULL;
 }
 
-void mathPolygonFreeData(GeometryPolygon_t* polygon) {
+void mathPolygonClear(GeometryPolygon_t* polygon) {
 	if (!polygon) {
 		return;
 	}

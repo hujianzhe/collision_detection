@@ -395,20 +395,20 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 	return dst;
 }
 
-void mathGeometryFree(void* geo_data, int geo_type) {
+void mathGeometryClear(void* geo_data, int geo_type) {
 	if (GEOMETRY_BODY_MESH == geo_type) {
-		mathMeshFreeData((GeometryMesh_t*)geo_data);
+		mathMeshClear((GeometryMesh_t*)geo_data);
 	}
 	else if (GEOMETRY_BODY_POLYGON == geo_type) {
-		mathPolygonFreeData((GeometryPolygon_t*)geo_data);
+		mathPolygonClear((GeometryPolygon_t*)geo_data);
 	}
 }
 
-void mathGeometryFreeBody(GeometryBody_t* b) {
+void mathGeometryClearBody(GeometryBody_t* b) {
 	if (!b) {
 		return;
 	}
-	mathGeometryFree(&b->data, b->type);
+	mathGeometryClear(&b->data, b->type);
 	b->type = 0;
 }
 

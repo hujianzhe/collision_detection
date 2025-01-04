@@ -16,7 +16,7 @@ __declspec_dll int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t 
 __declspec_dll void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon);
 
 __declspec_dll GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPolygon_t* src);
-__declspec_dll void mathPolygonFreeData(GeometryPolygon_t* polygon);
+__declspec_dll void mathPolygonClear(GeometryPolygon_t* polygon);
 
 __declspec_dll int mathPolygonIsConvex(const GeometryPolygon_t* polygon);
 __declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]);

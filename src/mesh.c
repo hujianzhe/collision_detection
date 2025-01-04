@@ -14,7 +14,7 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mesh->polygons[i].v = NULL;
-		mathPolygonFreeData(mesh->polygons + i);
+		mathPolygonClear(mesh->polygons + i);
 	}
 	mesh->polygons_cnt = 0;
 	free(mesh->polygons);
@@ -281,7 +281,7 @@ err_0:
 	return NULL;
 }
 
-void mathMeshFreeData(GeometryMesh_t* mesh) {
+void mathMeshClear(GeometryMesh_t* mesh) {
 	if (!mesh) {
 		return;
 	}
