@@ -231,16 +231,22 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices, pg->tri_v_indices_cnt, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt)) {
 			goto err_1;
 		}
+		pg->edge_cnt = edge_v_indices_cnt / 2;
+		pg->edge_v_indices_flat = edge_v_indices_flat;
 		/* cooking vertex indice */
 		if (!mathCookingStage4(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 			goto err_1;
 		}
 		total_edge_v_indices_cnt += edge_v_indices_cnt;
+		pg->v_indices = v_indices;
+		pg->v_indices_cnt = v_indices_cnt;
+		pg->edge_v_ids_flat = edge_v_ids_flat;
 		/* cooking vertex adjacent infos */
 		v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)malloc(sizeof(v_adjacent_infos[0]) * v_indices_cnt);
 		if (!v_adjacent_infos) {
 			goto err_1;
 		}
+		pg->v_adjacent_infos = v_adjacent_infos;
 		for (j = 0; j < v_indices_cnt; ++j) {
 			if (!mathPolygonVertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
 				goto err_1;
@@ -248,14 +254,6 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		}
 		/* fill polygon other data */
 		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
-		pg->v_indices = v_indices;
-		pg->v_indices_cnt = v_indices_cnt;
-		pg->edge_v_ids_flat = edge_v_ids_flat;
-		pg->edge_v_indices_flat = edge_v_indices_flat;
-		pg->edge_cnt = edge_v_indices_cnt / 2;
-		pg->mesh_v_ids = NULL;
-		pg->mesh_edge_ids = NULL;
-		pg->v_adjacent_infos = v_adjacent_infos;
 	}
 	/* merge face edge */
 	edge_v_indices_flat = (unsigned int*)malloc(sizeof(edge_v_indices_flat[0]) * total_edge_v_indices_cnt);
