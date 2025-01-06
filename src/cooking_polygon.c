@@ -205,6 +205,9 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		new_pg->edge_cnt = 0;
 		new_pg->is_convex = 0;
 		new_pg->v = (CCTNum_t(*)[3])v;
+		new_pg->mesh_v_ids = NULL;
+		new_pg->mesh_edge_ids = NULL;
+		new_pg->v_adjacent_infos = NULL;
 		mathVec3Copy(new_pg->normal, N);
 		mathVec3Set(new_pg->center, CCTNums_3(0.0, 0.0, 0.0));
 
