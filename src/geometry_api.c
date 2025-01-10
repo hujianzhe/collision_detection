@@ -673,6 +673,9 @@ GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t
 }
 
 int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) {
+	if (mathQuatIsZeroOrIdentity(q)) {
+		return 1;
+	}
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{

@@ -155,6 +155,33 @@ int mathQuatIsZero(const CCTNum_t q[4]) {
 			q[0] >= CCT_EPSILON_NEGATE && q[1] >= CCT_EPSILON_NEGATE && q[2] >= CCT_EPSILON_NEGATE && q[3] >= CCT_EPSILON_NEGATE;
 }
 
+int mathQuatIsIdentity(CCTNum_t q[4]) {
+	return	q[0] <= CCT_EPSILON && q[1] <= CCT_EPSILON && q[2] <= CCT_EPSILON && q[3] <= CCTNum(1.0) + CCT_EPSILON &&
+			q[0] >= CCT_EPSILON_NEGATE && q[1] >= CCT_EPSILON_NEGATE && q[2] >= CCT_EPSILON_NEGATE && q[3] >= CCTNum(1.0) - CCT_EPSILON;
+}
+
+int mathQuatIsZeroOrIdentity(const CCTNum_t q[4]) {
+	if (q[0] > CCT_EPSILON || q[0] < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	if (q[1] > CCT_EPSILON || q[1] < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	if (q[2] > CCT_EPSILON || q[2] < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	if (q[3] > CCTNum(1.0) + CCT_EPSILON) {
+		return 0;
+	}
+	if (q[3] >= CCTNum(1.0) - CCT_EPSILON) {
+		return 2; /* identity */
+	}
+	if (q[3] <= CCT_EPSILON && q[3] >= CCT_EPSILON_NEGATE) {
+		return 1; /* zero */
+	}
+	return 0;
+}
+
 int mathQuatEqual(const CCTNum_t q1[4], const CCTNum_t q2[4]) {
 	CCTNum_t delta;
 

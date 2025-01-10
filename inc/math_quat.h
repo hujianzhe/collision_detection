@@ -19,6 +19,8 @@ __declspec_dll CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from
 __declspec_dll CCTNum_t* mathQuatFromAxisRadian(CCTNum_t q[4], const CCTNum_t axis[3], CCTNum_t radian);
 __declspec_dll void mathQuatToAxisRadian(const CCTNum_t q[4], CCTNum_t axis[3], CCTNum_t* radian);
 __declspec_dll int mathQuatIsZero(const CCTNum_t q[4]);
+__declspec_dll int mathQuatIsIdentity(CCTNum_t q[4]);
+__declspec_dll int mathQuatIsZeroOrIdentity(const CCTNum_t q[4]);
 __declspec_dll int mathQuatEqual(const CCTNum_t q1[4], const CCTNum_t q2[4]);
 __declspec_dll CCTNum_t* mathQuatIdentity(CCTNum_t q[4]);
 __declspec_dll CCTNum_t mathQuatDot(const CCTNum_t q1[4], const CCTNum_t q2[4]);
