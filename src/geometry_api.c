@@ -802,6 +802,14 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], c
 			mathAABBFromTwoVertice(min_xyz, max_xyz, mesh->bound_box.o, mesh->bound_box.half);
 			break;
 		}
+		case GEOMETRY_BODY_SPHERE:
+		{
+			GeometrySphere_t* sphere = (GeometrySphere_t*)geo_data;
+			if (sphere->o != base_p && !mathVec3Equal(sphere->o, base_p)) {
+				point_rotate(sphere->o, base_p, q);
+			}
+			break;
+		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
@@ -819,19 +827,24 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], c
 
 int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian) {
 	CCTNum_t q[4];
-	if (GEOMETRY_BODY_SPHERE == geo_type) {
+	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
 		return 1;
 	}
-	if (GEOMETRY_BODY_CAPSULE == geo_type) {
-		CCTNum_t v[3];
-		GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
-		mathVec3Cross(v, capsule->axis, axis);
-		if (mathVec3IsZero(v)) {
+	if (GEOMETRY_BODY_SPHERE == geo_type) {
+		GeometrySphere_t* sphere = (GeometrySphere_t*)geo_data;
+		if (sphere->o == base_p || mathVec3Equal(sphere->o, base_p)) {
 			return 1;
 		}
 	}
-	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
-		return 1;
+	else if (GEOMETRY_BODY_CAPSULE == geo_type) {
+		const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+		if (capsule->o == base_p || mathVec3Equal(capsule->o, base_p)) {
+			CCTNum_t v[3];
+			mathVec3Cross(v, capsule->axis, axis);
+			if (mathVec3IsZero(v)) {
+				return 1;
+			}
+		}
 	}
 	mathQuatFromAxisRadian(q, axis, radian);
 	return mathGeometryRotate(geo_data, geo_type, base_p, q);
