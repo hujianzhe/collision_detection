@@ -816,7 +816,11 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], c
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			GeometryCapsule_t* capsule = (GeometryCapsule_t*)geo_data;
-			mathQuatMulVec3(capsule->axis, q, capsule->axis);
+			CCTNum_t axis[3];
+			mathQuatMulVec3(axis, q, capsule->axis);
+			if (!mathVec3Equal(axis, capsule->axis)) {
+				mathVec3Copy(capsule->axis, axis);
+			}
 			if (capsule->o != base_p && !mathVec3Equal(capsule->o, base_p)) {
 				point_rotate(capsule->o, base_p, q);
 			}
