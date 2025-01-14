@@ -316,7 +316,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->mesh_v_ids = Box_Face_MeshVerticeIds[face_id];
 	polygon->mesh_edge_ids = Box_Face_MeshEdgeIds[face_id];
 	polygon->v_adjacent_infos = Box_Face_VertexAdjacentInfos;
-	polygon->tri_v_indices = NULL;
+	polygon->tri_v_indices_flat = NULL;
 	polygon->tri_v_indices_cnt = 0;
 	polygon->is_convex = 1;
 	return polygon;

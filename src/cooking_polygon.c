@@ -12,14 +12,14 @@ extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_n
 
 static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_v_indices) {
 	unsigned int cnt = polygon->tri_v_indices_cnt;
-	unsigned int* new_p = (unsigned int*)realloc((void*)polygon->tri_v_indices, sizeof(polygon->tri_v_indices[0]) * (cnt + 3));
+	unsigned int* new_p = (unsigned int*)realloc((void*)polygon->tri_v_indices_flat, sizeof(polygon->tri_v_indices_flat[0]) * (cnt + 3));
 	if (!new_p) {
 		return NULL;
 	}
 	new_p[cnt++] = tri_v_indices[0];
 	new_p[cnt++] = tri_v_indices[1];
 	new_p[cnt++] = tri_v_indices[2];
-	polygon->tri_v_indices = new_p;
+	polygon->tri_v_indices_flat = new_p;
 	polygon->tri_v_indices_cnt = cnt;
 	return polygon;
 }
@@ -28,7 +28,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	unsigned int i;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
-		if (!Plane_Contain_Point(polygon->v[polygon->tri_v_indices[0]], polygon->normal, tri_p[i])) {
+		if (!Plane_Contain_Point(polygon->v[polygon->tri_v_indices_flat[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
 	}
@@ -36,9 +36,9 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
 		const CCTNum_t* triangle[3] = {
-			polygon->v[polygon->tri_v_indices[i]],
-			polygon->v[polygon->tri_v_indices[i + 1]],
-			polygon->v[polygon->tri_v_indices[i + 2]]
+			polygon->v[polygon->tri_v_indices_flat[i]],
+			polygon->v[polygon->tri_v_indices_flat[i + 1]],
+			polygon->v[polygon->tri_v_indices_flat[i + 2]]
 		};
 		const CCTNum_t* triangle_diff_point;
 		CCTNum_t v[3], N[3], dot;
@@ -193,7 +193,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		new_pg = tmp_polygons + tmp_polygons_cnt;
 		tmp_polygons_cnt++;
 
-		new_pg->tri_v_indices = NULL;
+		new_pg->tri_v_indices_flat = NULL;
 		new_pg->tri_v_indices_cnt = 0;
 		if (!_insert_tri_indices(new_pg, tri_v_indices + i)) {
 			goto err;
@@ -242,7 +242,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 err:
 	if (tmp_polygons) {
 		for (i = 0; i < tmp_polygons_cnt; ++i) {
-			free((void*)tmp_polygons[i].tri_v_indices);
+			free((void*)tmp_polygons[i].tri_v_indices_flat);
 		}
 		free(tmp_polygons);
 	}
@@ -511,7 +511,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->edge_v_ids_flat = edge_v_ids_flat;
 	polygon->edge_v_indices_flat = edge_v_indices_flat;
 	polygon->edge_cnt = edge_v_indices_cnt / 2;
-	polygon->tri_v_indices = dup_tri_v_indices;
+	polygon->tri_v_indices_flat = dup_tri_v_indices;
 	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
 	polygon->mesh_v_ids = NULL;
 	polygon->mesh_edge_ids = NULL;

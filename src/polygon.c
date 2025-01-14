@@ -70,7 +70,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v_indices_cnt = 3;
 	polygon->edge_v_indices_flat = Triangle_Edge_Indices_Default;
 	polygon->edge_cnt = 3;
-	polygon->tri_v_indices = Triangle_Vertice_Indices_Default;
+	polygon->tri_v_indices_flat = Triangle_Vertice_Indices_Default;
 	polygon->tri_v_indices_cnt = 3;
 	polygon->is_convex = 1;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
@@ -163,7 +163,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		dup_v_adjacent_infos[i] = src->v_adjacent_infos[i];
 	}
 	for (i = 0; i < src->tri_v_indices_cnt; ++i) {
-		dup_tri_indices[i] = src->tri_v_indices[i];
+		dup_tri_indices[i] = src->tri_v_indices_flat[i];
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
 		dup_edge_v_ids[i] = src->edge_v_ids_flat[i];
@@ -176,7 +176,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->edge_cnt = src->edge_cnt;
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
-	dst->tri_v_indices = dup_tri_indices;
+	dst->tri_v_indices_flat = dup_tri_indices;
 	dst->edge_v_ids_flat = dup_edge_v_ids;
 	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
@@ -207,9 +207,9 @@ void mathPolygonClear(GeometryPolygon_t* polygon) {
 		polygon->edge_v_indices_flat = NULL;
 	}
 	polygon->edge_cnt = 0;
-	if (polygon->tri_v_indices) {
-		free((void*)polygon->tri_v_indices);
-		polygon->tri_v_indices = NULL;
+	if (polygon->tri_v_indices_flat) {
+		free((void*)polygon->tri_v_indices_flat);
+		polygon->tri_v_indices_flat = NULL;
 		polygon->tri_v_indices_cnt = 0;
 	}
 	if (polygon->v_indices) {
