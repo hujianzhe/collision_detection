@@ -85,7 +85,8 @@ typedef struct GeometryPolygon_t {
 		const unsigned int(*edge_v_ids)[2]; /* edge vertices logic id */
 	};
 	union {
-		const unsigned int* tri_v_indices_flat; /* triangle vertices index */
+		const unsigned int* tri_v_indices_flat;
+		const unsigned int(*tri_v_indices)[3]; /* triangle vertices index */
 	};
 	union {
 		const unsigned int* concave_tri_edge_ids_flat;
