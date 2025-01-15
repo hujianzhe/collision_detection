@@ -397,6 +397,44 @@ int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], c
 	return 1;
 }
 
+static void concave_polygon_point_Locate_proc(const GeometryPolygon_t* polygon, unsigned int tri_v_flat_idx, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+	CCTNum_t l[3], r[3], N[3];
+	unsigned int j;
+	for (j = tri_v_flat_idx; j < tri_v_flat_idx + 3; ) {
+		const CCTNum_t* v0, *v1;
+		unsigned int v_id0, v_id1, edge_v_idx;
+		unsigned int edge_id = polygon->concave_tri_edge_ids_flat[j++];
+		if (-1 == edge_id) {
+			bi->v_id = bi->edge_id = -1;
+			return;
+		}
+		edge_v_idx = edge_id + edge_id;
+
+		v_id0 = polygon->edge_v_ids_flat[edge_v_idx];
+		v0 = polygon->v[polygon->v_indices[v_id0]];
+		if (mathVec3Equal(v0, p)) {
+			bi->v_id = v_id0;
+			bi->edge_id = -1;
+			return;
+		}
+		v_id1 = polygon->edge_v_ids_flat[edge_v_idx + 1];
+		v1 = polygon->v[polygon->v_indices[v_id1]];
+		if (mathVec3Equal(v1, p)) {
+			bi->v_id = v_id1;
+			bi->edge_id = -1;
+			return;
+		}
+		mathVec3Sub(l, v0, p);
+		mathVec3Sub(r, v1, p);
+		mathVec3Cross(N, l, r);
+		if (mathVec3IsZero(N)) {
+			bi->v_id = -1;
+			bi->edge_id = edge_id;
+			return;
+		}
+	}
+}
+
 int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
 	if ((const void*)polygon->v_indices >= (const void*)Box_Face_MeshVerticeIds &&
 		(const void*)polygon->v_indices < (const void*)(Box_Face_MeshVerticeIds + 6))
@@ -429,12 +467,13 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 			v_idx[0] = polygon->tri_v_indices_flat[i++];
 			v_idx[1] = polygon->tri_v_indices_flat[i++];
 			v_idx[2] = polygon->tri_v_indices_flat[i++];
-			if (Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
-				if (bi) {
-					bi->v_id = bi->edge_id = -1;
-				}
-				return 1;
+			if (!Triangle_Contain_Point_SamePlane(polygon->v[v_idx[0]], polygon->v[v_idx[1]], polygon->v[v_idx[2]], polygon->normal, p)) {
+				continue;
 			}
+			if (bi) {
+				concave_polygon_point_Locate_proc(polygon, i - 3, p, bi);
+			}
+			return 1;
 		}
 	}
 	return 0;
