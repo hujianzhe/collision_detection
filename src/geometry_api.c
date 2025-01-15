@@ -274,14 +274,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
 				return 0;
 			}
-			if (polygon->is_convex) {
-				if (!mathPolygonIsConvex(polygon)) {
-					return 0;
-				}
-			}
-			else if (mathPolygonIsConvex(polygon)) {
-				return 0;
-			}
 			for (i = 0; i < polygon->v_indices_cnt; ) {
 				GeometrySegment_t segment;
 				mathVec3Copy(segment.v[0], polygon->v[polygon->v_indices[i++]]);

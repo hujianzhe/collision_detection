@@ -77,27 +77,26 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center);
 }
 
-int mathPolygonIsConvex(const GeometryPolygon_t* polygon) {
-	unsigned int i, edge_v_indices_cnt;
-	if (polygon->v_indices_cnt < 3) {
+int mathPolygonIsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt) {
+	unsigned int i;
+	if (v_indices_cnt < 3) {
 		return 0;
 	}
-	edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < edge_v_indices_cnt; ) {
 		CCTNum_t ls_v[3], N[3];
 		int flag_sign = 0;
 		unsigned int j, v_idx[2];
-		v_idx[0] = polygon->edge_v_indices_flat[i++];
-		v_idx[1] = polygon->edge_v_indices_flat[i++];
-		mathVec3Sub(ls_v, polygon->v[v_idx[1]], polygon->v[v_idx[0]]);
-		mathVec3Cross(N, ls_v, polygon->normal);
-		for (j = 0; j < polygon->v_indices_cnt; ++j) {
-			CCTNum_t v[3], dot;
-			if (polygon->v_indices[j] == v_idx[0] || polygon->v_indices[j] == v_idx[1]) {
+		v_idx[0] = edge_v_indices_flat[i++];
+		v_idx[1] = edge_v_indices_flat[i++];
+		mathVec3Sub(ls_v, v[v_idx[1]], v[v_idx[0]]);
+		mathVec3Cross(N, ls_v, normal);
+		for (j = 0; j < v_indices_cnt; ++j) {
+			CCTNum_t test_v[3], dot;
+			if (v_indices[j] == v_idx[0] || v_indices[j] == v_idx[1]) {
 				continue;
 			}
-			mathVec3Sub(v, polygon->v[polygon->v_indices[j]], polygon->v[v_idx[0]]);
-			dot = mathVec3Dot(v, N);
+			mathVec3Sub(test_v, v[v_indices[j]], v[v_idx[0]]);
+			dot = mathVec3Dot(test_v, N);
 			/* some module needed epsilon */
 			if (dot > CCT_EPSILON) {
 				if (flag_sign < 0) {
@@ -123,6 +122,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* dup_v_adjacent_infos = NULL;
+	unsigned int* dup_concave_tri_edge_ids = NULL;
 	unsigned int src_edge_v_indices_cnt;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
@@ -142,6 +142,12 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_cnt * 3);
 	if (!dup_tri_indices) {
 		goto err;
+	}
+	if (src->concave_tri_edge_ids_flat) {
+		dup_concave_tri_edge_ids = (unsigned int*)malloc(sizeof(dup_concave_tri_edge_ids[0]) * src->tri_cnt * 3);
+		if (!dup_concave_tri_edge_ids) {
+			goto err;
+		}
 	}
 	src_edge_v_indices_cnt = src->edge_cnt + src->edge_cnt;
 	dup_edge_v_ids = (unsigned int*)malloc(sizeof(dup_edge_v_ids[0]) * src_edge_v_indices_cnt);
@@ -164,6 +170,9 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	}
 	for (i = 0; i < src->tri_cnt * 3; ++i) {
 		dup_tri_indices[i] = src->tri_v_indices_flat[i];
+		if (src->concave_tri_edge_ids_flat) {
+			dup_concave_tri_edge_ids[i] = src->concave_tri_edge_ids_flat[i];
+		}
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
 		dup_edge_v_ids[i] = src->edge_v_ids_flat[i];
@@ -177,6 +186,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->v = dup_v;
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices_flat = dup_tri_indices;
+	dst->concave_tri_edge_ids_flat = dup_concave_tri_edge_ids;
 	dst->edge_v_ids_flat = dup_edge_v_ids;
 	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
@@ -188,6 +198,7 @@ err:
 	free(dup_v);
 	free(dup_v_indices);
 	free(dup_tri_indices);
+	free(dup_concave_tri_edge_ids);
 	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
 	free(dup_v_adjacent_infos);
@@ -210,6 +221,10 @@ void mathPolygonClear(GeometryPolygon_t* polygon) {
 	if (polygon->tri_v_indices_flat) {
 		free((void*)polygon->tri_v_indices_flat);
 		polygon->tri_v_indices_flat = NULL;
+	}
+	if (polygon->concave_tri_edge_ids_flat) {
+		free((void*)polygon->concave_tri_edge_ids_flat);
+		polygon->concave_tri_edge_ids_flat = NULL;
 	}
 	polygon->tri_cnt = 0;
 	if (polygon->v_indices) {

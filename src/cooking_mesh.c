@@ -12,6 +12,12 @@
 #include <stdlib.h>
 
 extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info);
+extern int mathPolygonIsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
+extern int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices);
+extern int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt);
+extern int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt);
+extern int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat);
+extern unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt);
 
 static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
@@ -205,7 +211,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	unsigned int* v_indices = NULL;
 	unsigned int v_indices_cnt;
 	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos = NULL;
-	unsigned int(*edge_adjacent_face_ids)[2] = NULL;
+	unsigned int* edge_adjacent_face_ids = NULL;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
 		return NULL;
@@ -273,7 +279,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	if (!v_adjacent_infos) {
 		goto err_1;
 	}
-	edge_adjacent_face_ids = (unsigned int(*)[2])malloc(sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt / 2);
+	edge_adjacent_face_ids = (unsigned int*)malloc(sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt);
 	if (!edge_adjacent_face_ids) {
 		goto err_1;
 	}
@@ -313,11 +319,11 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	mesh->v_adjacent_infos = v_adjacent_infos;
 	/* cooking edge adjacent infos */
 	for (i = 0; i < mesh->edge_cnt; ++i) {
-		if (!Cooking_MeshEdgeAdjacentFace(mesh, i, edge_adjacent_face_ids[i])) {
+		if (!Cooking_MeshEdgeAdjacentFace(mesh, i, edge_adjacent_face_ids + i + i)) {
 			goto err_1;
 		}
 	}
-	mesh->edge_adjacent_face_ids = (const unsigned int(*)[2])edge_adjacent_face_ids;
+	mesh->edge_adjacent_face_ids_flat = edge_adjacent_face_ids;
 	/* check mesh is convex and closed */
 	mesh->is_convex = mathMeshIsConvex(mesh);
 	if (mesh->is_convex) {
@@ -330,7 +336,18 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	else {
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
 			GeometryPolygon_t* polygon = mesh->polygons + i;
-			polygon->is_convex = mathPolygonIsConvex(polygon);
+			unsigned int polygon_edge_v_indices_cnt = polygon->edge_cnt * 2;
+			polygon->is_convex = mathPolygonIsConvex((const CCTNum_t(*)[3])polygon->v, polygon->normal, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, polygon->v_indices, polygon->v_indices_cnt);
+			/* if concave, save triangle edge ids */
+			if (!polygon->is_convex) {
+				unsigned int* concave_tri_edge_ids = mathCookingConcavePolygonTriangleEdge(
+					(const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, polygon->tri_v_indices_flat, polygon->tri_cnt * 3
+				);
+				if (!concave_tri_edge_ids) {
+					goto err_1;
+				}
+				polygon->concave_tri_edge_ids_flat = concave_tri_edge_ids;
+			}
 		}
 	}
 	mesh->is_closed = mathMeshIsClosed(mesh);

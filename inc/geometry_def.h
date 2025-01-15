@@ -87,9 +87,12 @@ typedef struct GeometryPolygon_t {
 	union {
 		const unsigned int* tri_v_indices_flat; /* triangle vertices index */
 	};
+	union {
+		const unsigned int* concave_tri_edge_ids_flat;
+		const unsigned int(*concave_tri_edge_ids)[3]; /* if the polygon is concave, thid variable stores the edge id of the current face corresponding to each inner triangle */
+	};
 	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
 	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge id of the corresponding mesh object */
-	const unsigned int(*concave_tri_edge_ids)[3]; /* if the polygon is concave, thid variable stores the edge id of the current face corresponding to each inner triangle */
 	const GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryPolygon_t;
 
@@ -112,7 +115,10 @@ typedef struct GeometryMesh_t {
 	};
 	GeometryPolygon_t* polygons; /* array of polygens */
 	const GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
-	const unsigned int(*edge_adjacent_face_ids)[2]; /* edge adjacent face logic id */
+	union {
+		const unsigned int* edge_adjacent_face_ids_flat;
+		const unsigned int(*edge_adjacent_face_ids)[2]; /* edge adjacent face logic id */
+	};
 } GeometryMesh_t;
 
 enum {

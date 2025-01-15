@@ -218,6 +218,26 @@ unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices_fl
 	return -1;
 }
 
+unsigned int mathFindEdgeIdByVertices(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) {
+	unsigned int i;
+	for (i = 0; i < edge_v_indices_cnt; ++i) {
+		const CCTNum_t* pv = v[edge_v_indices_flat[i++]];
+		if (mathVec3Equal(pv, p0)) {
+			if (mathVec3Equal(v[edge_v_indices_flat[i]], p1)) {
+				return i >> 1;
+			}
+			continue;
+		}
+		if (mathVec3Equal(pv, p1)) {
+			if (mathVec3Equal(v[edge_v_indices_flat[i]], p0)) {
+				return i >> 1;
+			}
+			continue;
+		}
+	}
+	return -1;
+}
+
 int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices, const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderId_t* bi) {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {

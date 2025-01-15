@@ -91,9 +91,9 @@ static const unsigned int Box_Face_MeshEdgeIds[6][4] = {
 	{ 0,1,2,3 }
 };
 
-static const unsigned int Box_Edge_Adjacent_FaceIds[12][2] = {
-	{5,3},	{5,0},	{5,2},	{5,1},	{4,2},	{4,0},
-	{4,3},	{4,1},	{3,0},	{2,0},	{2,1},	{3,1}
+static const unsigned int Box_Edge_Adjacent_FaceIds[24] = {
+	5,3,	5,0,	5,2,	5,1,	4,2,	4,0,
+	4,3,	4,1,	3,0,	2,0,	2,1,	3,1
 };
 
 /*
@@ -153,15 +153,16 @@ const unsigned int* mathBoxFaceMeshVertexIds(unsigned int face_id, unsigned int 
 }
 
 const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned int adjacent_face_ids[2]) {
+	unsigned int idx = edge_id + edge_id;
 	if (edge_id >= 12) {
 		return NULL;
 	}
 	if (adjacent_face_ids) {
-		adjacent_face_ids[0] = Box_Edge_Adjacent_FaceIds[edge_id][0];
-		adjacent_face_ids[1] = Box_Edge_Adjacent_FaceIds[edge_id][1];
+		adjacent_face_ids[0] = Box_Edge_Adjacent_FaceIds[idx];
+		adjacent_face_ids[1] = Box_Edge_Adjacent_FaceIds[idx + 1];
 		return adjacent_face_ids;
 	}
-	return Box_Edge_Adjacent_FaceIds[edge_id];
+	return Box_Edge_Adjacent_FaceIds + idx;
 }
 
 void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
@@ -317,6 +318,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	polygon->mesh_edge_ids = Box_Face_MeshEdgeIds[face_id];
 	polygon->v_adjacent_infos = Box_Face_VertexAdjacentInfos;
 	polygon->tri_v_indices_flat = NULL;
+	polygon->concave_tri_edge_ids_flat = NULL;
 	polygon->tri_cnt = 0;
 	polygon->is_convex = 1;
 	return polygon;
@@ -333,7 +335,7 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->v_indices = Box_Vertice_Indices_Default;
 	mesh->v_indices_cnt = 8;
 	mesh->v_adjacent_infos = Box_Vertex_AdjacentInfos;
-	mesh->edge_adjacent_face_ids = Box_Edge_Adjacent_FaceIds;
+	mesh->edge_adjacent_face_ids_flat = (const unsigned int*)Box_Edge_Adjacent_FaceIds;
 	mesh->edge_v_ids_flat = Box_Edge_VertexIds;
 	mesh->edge_v_indices_flat = Box_Edge_VertexIds;
 	mesh->edge_cnt = 12;
