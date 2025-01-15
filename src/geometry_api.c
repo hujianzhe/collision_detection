@@ -258,7 +258,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (polygon->v_indices_cnt < 3) {
 				return 0;
 			}
-			if (polygon->tri_v_indices_cnt % 3) {
+			if (polygon->tri_cnt < 1) {
 				return 0;
 			}
 			if (polygon->edge_cnt < 3) {

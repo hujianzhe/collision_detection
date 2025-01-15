@@ -423,8 +423,8 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 		return ConvexPolygon_Contain_Point_SamePlane(polygon, p, bi);
 	}
 	if (polygon->tri_v_indices_flat) {
-		unsigned int i;
-		for (i = 0; i < polygon->tri_v_indices_cnt; ) {
+		unsigned int i, polygon_tri_v_indices_cnt = polygon->tri_cnt * 3;
+		for (i = 0; i < polygon_tri_v_indices_cnt; ) {
 			unsigned int v_idx[3];
 			v_idx[0] = polygon->tri_v_indices_flat[i++];
 			v_idx[1] = polygon->tri_v_indices_flat[i++];

@@ -55,7 +55,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	if (!dup_v_indices) {
 		goto err;
 	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_v_indices_cnt);
+	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_cnt * 3);
 	if (!dup_tri_indices) {
 		goto err;
 	}
@@ -94,7 +94,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 		dup_v_indices[j] = src->v_indices[j];
 		dup_v_adjacent_infos[j] = src->v_adjacent_infos[j];
 	}
-	for (j = 0; j < src->tri_v_indices_cnt; ++j) {
+	for (j = 0; j < src->tri_cnt * 3; ++j) {
 		dup_tri_indices[j] = src->tri_v_indices_flat[j];
 	}
 	for (j = 0; j < src_edge_v_indices_cnt; ++j) {
@@ -106,7 +106,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	dst->is_convex = src->is_convex;
 	dst->v = NULL;
 	dst->v_indices_cnt = src->v_indices_cnt;
-	dst->tri_v_indices_cnt = src->tri_v_indices_cnt;
+	dst->tri_cnt = src->tri_cnt;
 	dst->edge_cnt = src->edge_cnt;
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices_flat = dup_tri_indices;

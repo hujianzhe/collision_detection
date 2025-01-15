@@ -74,7 +74,7 @@ typedef struct GeometryPolygon_t {
 	short is_convex;
 	unsigned int v_indices_cnt; /* number of vertices index, also number of vertices */
 	unsigned int edge_cnt; /* number of edges */
-	unsigned int tri_v_indices_cnt;  /* number of triangle vertices index */
+	unsigned int tri_cnt;  /* number of triangle */
 	const unsigned int* v_indices; /* vertices index */
 	union {
 		const unsigned int* edge_v_indices_flat;
@@ -88,7 +88,8 @@ typedef struct GeometryPolygon_t {
 		const unsigned int* tri_v_indices_flat; /* triangle vertices index */
 	};
 	const unsigned int* mesh_v_ids; /* if the polygon is a face of the mesh object, this variable stores the vertex id of the corresponding mesh object */
-	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge index of the corresponding mesh object */
+	const unsigned int* mesh_edge_ids; /* if the polygon is a face of the mesh object, this variable stores the edge id of the corresponding mesh object */
+	const unsigned int(*concave_tri_edge_ids)[3]; /* if the polygon is concave, thid variable stores the edge id of the current face corresponding to each inner triangle */
 	const GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos; /* vertex adjacent infos */
 } GeometryPolygon_t;
 

@@ -11,7 +11,7 @@
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 
 static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int* tri_v_indices) {
-	unsigned int cnt = polygon->tri_v_indices_cnt;
+	unsigned int cnt = polygon->tri_cnt * 3;
 	unsigned int* new_p = (unsigned int*)realloc((void*)polygon->tri_v_indices_flat, sizeof(polygon->tri_v_indices_flat[0]) * (cnt + 3));
 	if (!new_p) {
 		return NULL;
@@ -20,19 +20,19 @@ static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const 
 	new_p[cnt++] = tri_v_indices[1];
 	new_p[cnt++] = tri_v_indices[2];
 	polygon->tri_v_indices_flat = new_p;
-	polygon->tri_v_indices_cnt = cnt;
+	++polygon->tri_cnt;
 	return polygon;
 }
 
 static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
-	unsigned int i;
+	unsigned int i, polygon_tri_v_indices_cnt = polygon->tri_cnt * 3;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
 		if (!Plane_Contain_Point(polygon->v[polygon->tri_v_indices_flat[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
 	}
-	for (i = 0; i < polygon->tri_v_indices_cnt; i += 3) {
+	for (i = 0; i < polygon_tri_v_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
 		const CCTNum_t* triangle[3] = {
@@ -194,7 +194,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		tmp_polygons_cnt++;
 
 		new_pg->tri_v_indices_flat = NULL;
-		new_pg->tri_v_indices_cnt = 0;
+		new_pg->tri_cnt = 0;
 		if (!_insert_tri_indices(new_pg, tri_v_indices + i)) {
 			goto err;
 		}
@@ -512,7 +512,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->edge_v_indices_flat = edge_v_indices_flat;
 	polygon->edge_cnt = edge_v_indices_cnt / 2;
 	polygon->tri_v_indices_flat = dup_tri_v_indices;
-	polygon->tri_v_indices_cnt = tri_v_indices_cnt;
+	polygon->tri_cnt = tri_v_indices_cnt / 3;
 	polygon->mesh_v_ids = NULL;
 	polygon->mesh_edge_ids = NULL;
 	polygon->v_adjacent_infos = v_adjacent_infos;

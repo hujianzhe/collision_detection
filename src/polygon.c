@@ -71,7 +71,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->edge_v_indices_flat = Triangle_Edge_Indices_Default;
 	polygon->edge_cnt = 3;
 	polygon->tri_v_indices_flat = Triangle_Vertice_Indices_Default;
-	polygon->tri_v_indices_cnt = 3;
+	polygon->tri_cnt = 1;
 	polygon->is_convex = 1;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center);
@@ -139,7 +139,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	if (!dup_v_indices) {
 		goto err;
 	}
-	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_v_indices_cnt);
+	dup_tri_indices = (unsigned int*)malloc(sizeof(dup_tri_indices[0]) * src->tri_cnt * 3);
 	if (!dup_tri_indices) {
 		goto err;
 	}
@@ -162,7 +162,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		mathVec3Copy(dup_v[idx], src->v[idx]);
 		dup_v_adjacent_infos[i] = src->v_adjacent_infos[i];
 	}
-	for (i = 0; i < src->tri_v_indices_cnt; ++i) {
+	for (i = 0; i < src->tri_cnt * 3; ++i) {
 		dup_tri_indices[i] = src->tri_v_indices_flat[i];
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
@@ -171,7 +171,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	}
 	mathVec3Copy(dst->center, src->center);
 	mathVec3Copy(dst->normal, src->normal);
-	dst->tri_v_indices_cnt = src->tri_v_indices_cnt;
+	dst->tri_cnt = src->tri_cnt;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->edge_cnt = src->edge_cnt;
 	dst->v = dup_v;
@@ -210,8 +210,8 @@ void mathPolygonClear(GeometryPolygon_t* polygon) {
 	if (polygon->tri_v_indices_flat) {
 		free((void*)polygon->tri_v_indices_flat);
 		polygon->tri_v_indices_flat = NULL;
-		polygon->tri_v_indices_cnt = 0;
 	}
+	polygon->tri_cnt = 0;
 	if (polygon->v_indices) {
 		free((void*)polygon->v_indices);
 		polygon->v_indices = NULL;
