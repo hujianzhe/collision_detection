@@ -25,13 +25,14 @@ static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const 
 }
 
 static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
-	unsigned int i, polygon_tri_v_indices_cnt = polygon->tri_cnt * 3;
+	unsigned int i, polygon_tri_v_indices_cnt;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
 		if (!Plane_Contain_Point(polygon->v[polygon->tri_v_indices_flat[0]], polygon->normal, tri_p[i])) {
 			return 0;
 		}
 	}
+	polygon_tri_v_indices_cnt = polygon->tri_cnt * 3;
 	for (i = 0; i < polygon_tri_v_indices_cnt; i += 3) {
 		unsigned int j, n = 0;
 		const CCTNum_t* arg_diff_point = NULL, *same_edge_v[2];
