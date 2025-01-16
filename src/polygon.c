@@ -122,7 +122,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	unsigned int* dup_tri_indices = NULL;
 	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* dup_v_adjacent_infos = NULL;
-	unsigned int* dup_concave_tri_edge_ids = NULL;
+	unsigned int* dup_concave_tri_edge_ids = NULL, *dup_concave_tri_v_ids = NULL;
 	unsigned int src_edge_v_indices_cnt;
 	/* find max vertex index, dup_v_cnt */
 	for (i = 0; i < src->v_indices_cnt; ++i) {
@@ -146,6 +146,12 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	if (src->concave_tri_edge_ids_flat) {
 		dup_concave_tri_edge_ids = (unsigned int*)malloc(sizeof(dup_concave_tri_edge_ids[0]) * src->tri_cnt * 3);
 		if (!dup_concave_tri_edge_ids) {
+			goto err;
+		}
+	}
+	if (src->concave_tri_v_ids_flat) {
+		dup_concave_tri_v_ids = (unsigned int*)malloc(sizeof(dup_concave_tri_v_ids[0]) * src->tri_cnt * 3);
+		if (!dup_concave_tri_v_ids) {
 			goto err;
 		}
 	}
@@ -173,6 +179,9 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 		if (src->concave_tri_edge_ids_flat) {
 			dup_concave_tri_edge_ids[i] = src->concave_tri_edge_ids_flat[i];
 		}
+		if (src->concave_tri_v_ids_flat) {
+			dup_concave_tri_v_ids[i] = src->concave_tri_v_ids_flat[i];
+		}
 	}
 	for (i = 0; i < src_edge_v_indices_cnt; ++i) {
 		dup_edge_v_ids[i] = src->edge_v_ids_flat[i];
@@ -187,6 +196,7 @@ GeometryPolygon_t* mathPolygonDeepCopy(GeometryPolygon_t* dst, const GeometryPol
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices_flat = dup_tri_indices;
 	dst->concave_tri_edge_ids_flat = dup_concave_tri_edge_ids;
+	dst->concave_tri_v_ids_flat = dup_concave_tri_v_ids;
 	dst->edge_v_ids_flat = dup_edge_v_ids;
 	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = NULL;
@@ -199,6 +209,7 @@ err:
 	free(dup_v_indices);
 	free(dup_tri_indices);
 	free(dup_concave_tri_edge_ids);
+	free(dup_concave_tri_v_ids);
 	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
 	free(dup_v_adjacent_infos);
@@ -221,6 +232,10 @@ void mathPolygonClear(GeometryPolygon_t* polygon) {
 	if (polygon->tri_v_indices_flat) {
 		free((void*)polygon->tri_v_indices_flat);
 		polygon->tri_v_indices_flat = NULL;
+	}
+	if (polygon->concave_tri_v_ids_flat) {
+		free((void*)polygon->concave_tri_v_ids_flat);
+		polygon->concave_tri_v_ids_flat = NULL;
 	}
 	if (polygon->concave_tri_edge_ids_flat) {
 		free((void*)polygon->concave_tri_edge_ids_flat);

@@ -18,6 +18,7 @@ extern int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_in
 extern int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt);
 extern int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat);
 extern unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt);
+extern unsigned int* mathCookingConcavePolygonTriangleVertex(const unsigned int* v_indices, unsigned int v_indices_cnt, const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt);
 
 static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
@@ -337,16 +338,33 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
 			GeometryPolygon_t* polygon = mesh->polygons + i;
 			unsigned int polygon_edge_v_indices_cnt = polygon->edge_cnt * 2;
-			polygon->is_convex = mathPolygonIsConvex((const CCTNum_t(*)[3])polygon->v, polygon->normal, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, polygon->v_indices, polygon->v_indices_cnt);
+			polygon->is_convex = mathPolygonIsConvex(
+				(const CCTNum_t(*)[3])polygon->v, polygon->normal,
+				polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt,
+				polygon->v_indices, polygon->v_indices_cnt
+			);
 			/* if concave, save triangle edge ids */
 			if (!polygon->is_convex) {
-				unsigned int* concave_tri_edge_ids = mathCookingConcavePolygonTriangleEdge(
-					(const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, polygon->tri_v_indices_flat, polygon->tri_cnt * 3
+				unsigned int* concave_tri_edge_ids, *concave_tri_v_ids;
+
+				concave_tri_edge_ids = mathCookingConcavePolygonTriangleEdge(
+					(const CCTNum_t(*)[3])polygon->v,
+					polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt,
+					polygon->tri_v_indices_flat, polygon->tri_cnt * 3
 				);
 				if (!concave_tri_edge_ids) {
 					goto err_1;
 				}
 				polygon->concave_tri_edge_ids_flat = concave_tri_edge_ids;
+
+				concave_tri_v_ids = mathCookingConcavePolygonTriangleVertex(
+					polygon->v_indices, polygon->v_indices_cnt,
+					polygon->tri_v_indices_flat, polygon->tri_cnt * 3
+				);
+				if (!concave_tri_v_ids) {
+					goto err_1;
+				}
+				polygon->concave_tri_v_ids_flat = concave_tri_v_ids;
 			}
 		}
 	}

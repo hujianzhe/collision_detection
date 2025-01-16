@@ -45,7 +45,7 @@ static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
 static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon_t* src) {
 	unsigned int j;
 	unsigned int* dup_v_indices = NULL;
-	unsigned int* dup_tri_indices = NULL, *dup_concave_tri_edge_ids = NULL;
+	unsigned int* dup_tri_indices = NULL, *dup_concave_tri_edge_ids = NULL, *dup_concave_tri_v_ids = NULL;
 	unsigned int* dup_edge_v_indices = NULL, *dup_edge_v_ids = NULL;
 	unsigned int* dup_mesh_edge_ids = NULL, *dup_mesh_v_ids = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* dup_v_adjacent_infos = NULL;
@@ -62,6 +62,12 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	if (src->concave_tri_edge_ids_flat) {
 		dup_concave_tri_edge_ids = (unsigned int*)malloc(sizeof(dup_concave_tri_edge_ids[0]) * src->tri_cnt * 3);
 		if (!dup_concave_tri_edge_ids) {
+			goto err;
+		}
+	}
+	if (src->concave_tri_v_ids_flat) {
+		dup_concave_tri_v_ids = (unsigned int*)malloc(sizeof(dup_concave_tri_v_ids[0]) * src->tri_cnt * 3);
+		if (!dup_concave_tri_v_ids) {
 			goto err;
 		}
 	}
@@ -105,6 +111,9 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 		if (src->concave_tri_edge_ids_flat) {
 			dup_concave_tri_edge_ids[j] = src->concave_tri_edge_ids_flat[j];
 		}
+		if (src->concave_tri_v_ids_flat) {
+			dup_concave_tri_v_ids[j] = src->concave_tri_v_ids_flat[j];
+		}
 	}
 	for (j = 0; j < src_edge_v_indices_cnt; ++j) {
 		dup_edge_v_ids[j] = src->edge_v_ids_flat[j];
@@ -120,6 +129,7 @@ static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon
 	dst->v_indices = dup_v_indices;
 	dst->tri_v_indices_flat = dup_tri_indices;
 	dst->concave_tri_edge_ids_flat = dup_concave_tri_edge_ids;
+	dst->concave_tri_v_ids_flat = dup_concave_tri_v_ids;
 	dst->edge_v_ids_flat = dup_edge_v_ids;
 	dst->edge_v_indices_flat = dup_edge_v_indices;
 	dst->mesh_v_ids = dup_mesh_v_ids;
@@ -130,6 +140,7 @@ err:
 	free(dup_v_indices);
 	free(dup_tri_indices);
 	free(dup_concave_tri_edge_ids);
+	free(dup_concave_tri_v_ids);
 	free(dup_edge_v_ids);
 	free(dup_edge_v_indices);
 	free(dup_mesh_v_ids);

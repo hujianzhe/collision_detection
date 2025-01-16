@@ -89,6 +89,9 @@ typedef struct GeometryPolygon_t {
 		const unsigned int(*tri_v_indices)[3]; /* triangle vertices index */
 	};
 	union {
+		const unsigned int* concave_tri_v_ids_flat;
+	};
+	union {
 		const unsigned int* concave_tri_edge_ids_flat;
 		const unsigned int(*concave_tri_edge_ids)[3]; /* if the polygon is concave, thid variable stores the edge id of the current face corresponding to each inner triangle */
 	};

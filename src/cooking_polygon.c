@@ -196,6 +196,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		if (!_insert_tri_indices(new_pg, tri_v_indices + i)) {
 			goto err;
 		}
+		new_pg->concave_tri_v_ids_flat = NULL;
 		new_pg->concave_tri_edge_ids_flat = NULL;
 		new_pg->v_indices = NULL;
 		new_pg->v_indices_cnt = 0;
@@ -490,6 +491,26 @@ unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const
 	return tri_edge_ids;
 }
 
+unsigned int* mathCookingConcavePolygonTriangleVertex(const unsigned int* v_indices, unsigned int v_indices_cnt, const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt) {
+	unsigned int i, j;
+	unsigned int* tri_v_ids = (unsigned int*)malloc(sizeof(tri_v_ids[0]) * tri_v_indices_cnt);
+	if (!tri_v_ids) {
+		return NULL;
+	}
+	for (i = 0; i < tri_v_indices_cnt; ++i) {
+		for (j = 0; j < v_indices_cnt; ++j) {
+			if (tri_v_indices[i] == v_indices[j]) {
+				tri_v_ids[i] = -1;
+				break;
+			}
+		}
+		if (j >= v_indices_cnt) {
+			tri_v_ids[i] = -1;
+		}
+	}
+	return tri_v_ids;
+}
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -501,7 +522,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	unsigned int* edge_v_indices_flat = NULL, *edge_v_ids_flat = NULL;
 	unsigned int* v_indices = NULL;
 	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
-	unsigned int* concave_tri_edge_ids = NULL;
+	unsigned int* concave_tri_edge_ids = NULL, *concave_tri_v_ids = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
@@ -536,15 +557,20 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 			goto err;
 		}
 	}
-	/* if concave, save triangle edge ids */
+	/* if concave, save triangle edge ids, v ids */
 	polygon->is_convex = mathPolygonIsConvex((const CCTNum_t(*)[3])dup_v, N, edge_v_indices_flat, edge_v_indices_cnt, v_indices, v_indices_cnt);
 	if (!polygon->is_convex) {
 		concave_tri_edge_ids = mathCookingConcavePolygonTriangleEdge((const CCTNum_t(*)[3])dup_v, edge_v_indices_flat, edge_v_indices_cnt, dup_tri_v_indices, tri_v_indices_cnt);
 		if (!concave_tri_edge_ids) {
 			goto err;
 		}
+		concave_tri_v_ids = mathCookingConcavePolygonTriangleVertex(v_indices, v_indices_cnt, dup_tri_v_indices, tri_v_indices_cnt);
+		if (!concave_tri_v_ids) {
+			goto err;
+		}
 	}
 	polygon->concave_tri_edge_ids_flat = concave_tri_edge_ids;
+	polygon->concave_tri_v_ids_flat = concave_tri_v_ids;
 	/* save result */
 	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])dup_v, v_indices, v_indices_cnt, polygon->center);
 	mathVec3Copy(polygon->normal, N);
@@ -565,6 +591,7 @@ err:
 	free(v_indices);
 	free(edge_v_ids_flat);
 	free(edge_v_indices_flat);
+	free(concave_tri_v_ids);
 	free(concave_tri_edge_ids);
 	free(dup_tri_v_indices);
 	free(v_adjacent_infos);
