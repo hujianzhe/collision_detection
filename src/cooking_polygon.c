@@ -500,7 +500,7 @@ unsigned int* mathCookingConcavePolygonTriangleVertex(const unsigned int* v_indi
 	for (i = 0; i < tri_v_indices_cnt; ++i) {
 		for (j = 0; j < v_indices_cnt; ++j) {
 			if (tri_v_indices[i] == v_indices[j]) {
-				tri_v_ids[i] = -1;
+				tri_v_ids[i] = j;
 				break;
 			}
 		}
