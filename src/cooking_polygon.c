@@ -8,6 +8,7 @@
 #include "../inc/cooking.h"
 #include <stdlib.h>
 
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int mathPolygonIsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
 
@@ -461,6 +462,18 @@ int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge
 	return 1;
 }
 
+static unsigned int find_edge_id(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) {
+	unsigned int i;
+	for (i = 0; i < edge_v_indices_cnt; ++i) {
+		const CCTNum_t* edge_v0 = v[edge_v_indices_flat[i++]];
+		const CCTNum_t* edge_v1 = v[edge_v_indices_flat[i]];
+		if (Segment_Contain_Point(edge_v0, edge_v1, p0) && Segment_Contain_Point(edge_v0, edge_v1, p1)) {
+			return i >> 1;
+		}
+	}
+	return -1;
+}
+
 unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt) {
 	unsigned int i, j;
 	unsigned int* tri_edge_ids = (unsigned int*)malloc(sizeof(tri_edge_ids[0]) * tri_v_indices_cnt);
@@ -472,15 +485,15 @@ unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const
 		const CCTNum_t* p0 = v[tri_v_indices_flat[i++]];
 		const CCTNum_t* p1 = v[tri_v_indices_flat[i++]];
 		const CCTNum_t* p2 = v[tri_v_indices_flat[i++]];
-		edge_id = mathFindEdgeIdByVertices(v, edge_v_indices_flat, edge_v_indices_cnt, p0, p1);
+		edge_id = find_edge_id(v, edge_v_indices_flat, edge_v_indices_cnt, p0, p1);
 		if (edge_id != -1) {
 			tri_edge_ids[j++] = edge_id;
 		}
-		edge_id = mathFindEdgeIdByVertices(v, edge_v_indices_flat, edge_v_indices_cnt, p0, p2);
+		edge_id = find_edge_id(v, edge_v_indices_flat, edge_v_indices_cnt, p0, p2);
 		if (edge_id != -1) {
 			tri_edge_ids[j++] = edge_id;
 		}
-		edge_id = mathFindEdgeIdByVertices(v, edge_v_indices_flat, edge_v_indices_cnt, p1, p2);
+		edge_id = find_edge_id(v, edge_v_indices_flat, edge_v_indices_cnt, p1, p2);
 		if (edge_id != -1) {
 			tri_edge_ids[j++] = edge_id;
 		}
