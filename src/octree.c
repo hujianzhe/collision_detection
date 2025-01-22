@@ -185,6 +185,9 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 		oct = oct->parent;
 	}
 	if (!oct) {
+		if (obj_oct == root) {
+			return;
+		}
 		if (obj_oct) {
 			listRemoveNode(&obj_oct->obj_list, &obj->_node);
 			obj_oct->obj_cnt--;
