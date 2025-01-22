@@ -184,7 +184,11 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 		}
 		oct = oct->parent;
 	}
-	if (!obj->oct) {
+	if (!oct) {
+		if (obj_oct) {
+			listRemoveNode(&obj_oct->obj_list, &obj->_node);
+			obj_oct->obj_cnt--;
+		}
 		listPushNodeBack(&root->obj_list, &obj->_node);
 		root->obj_cnt++;
 		obj->oct = root;
