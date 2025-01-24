@@ -124,7 +124,6 @@ namespace obj3d
 	{
 		Material()
 		{
-			name;
 			Ns = 0.0;
 			Ni = 0.0;
 			d = 0.0;
