@@ -850,6 +850,7 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ba
 }
 
 CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+	CCTNum_t v[8][3];
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -865,7 +866,7 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 		{
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
 			CCTNum_t p[3], half_v[3], d0, d1;
-			mathVec3MultiplyScalar(half_v, separate_dir, capsule->half);
+			mathVec3MultiplyScalar(half_v, capsule->axis, capsule->half);
 			mathVec3Sub(p, capsule->o, half_v);
 			d0 = mathPointProjectionPlane(p, plane_v, separate_dir);
 			mathVec3Add(p, capsule->o, half_v);
@@ -895,14 +896,12 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			CCTNum_t v[8][3];
 			mathAABBVertices(aabb->o, aabb->half, v);
 			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
-			CCTNum_t v[8][3];
 			mathOBBVertices(obb, v);
 			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
 		}
