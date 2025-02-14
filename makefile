@@ -14,9 +14,9 @@ ifeq ($(COMPILER), gcc)
 SOURCE_CPP_FILE :=
 endif
 
-DEBUG_TARGET := $(TARGET_PATH)/libCollisionDectetionDebug.so
-ASAN_TARGET := $(TARGET_PATH)/libCollisionDectetionAsan.so
-RELEASE_TARGET := $(TARGET_PATH)/libCollisionDectetion.so
+DEBUG_TARGET := $(TARGET_PATH)/libCollisionDetectionDebug.so
+ASAN_TARGET := $(TARGET_PATH)/libCollisionDetectionAsan.so
+RELEASE_TARGET := $(TARGET_PATH)/libCollisionDetection.so
 
 all:
 
