@@ -456,7 +456,7 @@ size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer) {
 	return off;
 }
 
-GeometryMesh_t* mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) {
+size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int i, v_cnt;
@@ -597,10 +597,10 @@ GeometryMesh_t* mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_
 	}
 
 	*mesh = tmp;
-	return mesh;
+	return off;
 err:
 	mathMeshClear(&tmp);
-	return NULL;
+	return 0;
 }
 
 #ifdef __cplusplus

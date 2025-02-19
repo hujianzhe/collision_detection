@@ -19,7 +19,7 @@ __declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh);
 
 __declspec_dll size_t mathMeshBinarySize(const GeometryMesh_t* mesh);
 __declspec_dll size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer);
-__declspec_dll GeometryMesh_t* mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh);
+__declspec_dll size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh);
 
 #ifdef	__cplusplus
 }
