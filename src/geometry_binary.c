@@ -390,7 +390,6 @@ size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer) {
 	size_t off = 0;
 	char* p = (char*)buffer;
 	unsigned int i, v_cnt = 0;
-	CCTNum_t nan_value = CCTNum(0.0) / CCTNum(0.0);
 
 	*(GeometryAABB_t*)&p[off] = mesh->bound_box;
 	off += sizeof(GeometryAABB_t);
@@ -409,9 +408,9 @@ size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer) {
 	if (v_cnt > mesh->v_indices_cnt) {
 		for (i = 0; i < v_cnt; ++i) {
 			CCTNum_t(*pv)[3] = (CCTNum_t(*)[3])&p[off];
-			pv[i][0] = nan_value;
-			pv[i][1] = nan_value;
-			pv[i][2] = nan_value;
+			pv[i][0] = NAN;
+			pv[i][1] = NAN;
+			pv[i][2] = NAN;
 		}
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
