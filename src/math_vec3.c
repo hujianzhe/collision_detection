@@ -38,6 +38,20 @@ int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	return 1;
 }
 
+CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+	r[0] = (v1[0] < v2[0] ? v1[0] : v2[0]);
+	r[1] = (v1[1] < v2[1] ? v1[1] : v2[1]);
+	r[2] = (v1[2] < v2[2] ? v1[2] : v2[2]);
+	return r;
+}
+
+CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+	r[0] = (v1[0] > v2[0] ? v1[0] : v2[0]);
+	r[1] = (v1[1] > v2[1] ? v1[1] : v2[1]);
+	r[2] = (v1[2] > v2[2] ? v1[2] : v2[2]);
+	return r;
+}
+
 CCTNum_t mathVec3MinElement(const CCTNum_t v[3]) {
 	if (v[0] < v[1]) {
 		return v[0] < v[2] ? v[0] : v[2];

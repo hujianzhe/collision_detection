@@ -15,6 +15,8 @@ __declspec_dll int mathVec3IsZero(const CCTNum_t v[3]);
 __declspec_dll int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll CCTNum_t mathVec3MinElement(const CCTNum_t v[3]);
 __declspec_dll CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
+__declspec_dll CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z);
 __declspec_dll CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]);
 __declspec_dll CCTNum_t mathVec3LenSq(const CCTNum_t v[3]);
