@@ -247,6 +247,23 @@ CCTNum_t* mathVec3DelComponent(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_
 	return mathVec3Sub(r, v, va);
 }
 
+static const CCTNum_t Axis_X[3] = { CCTNums_3(1.0, 0.0, 0.0) };
+static const CCTNum_t Axis_Y[3] = { CCTNums_3(0.0, 1.0, 0.0) };
+static const CCTNum_t Axis_Z[3] = { CCTNums_3(0.0, 0.0, 1.0) };
+static const CCTNum_t Vec3_Zero[3] = { CCTNums_3(0.0, 0.0, 0.0) };
+
+CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]) {
+	CCTNum_t temp_v[3], len;
+	mathVec3Cross(temp_v, exist_axis, Axis_X);
+	if (!mathVec3EqualEps(temp_v, Vec3_Zero, CCTNum(1e-2))) {
+		len = mathVec3Len(temp_v);
+		return mathVec3MultiplyScalar(r, temp_v, CCTNum(1.0) / len);
+	}
+	mathVec3Cross(r, exist_axis, Axis_Y);
+	len = mathVec3Len(r);
+	return mathVec3MultiplyScalar(r, r, CCTNum(1.0) / len);
+}
+
 #ifdef	__cplusplus
 }
 #endif
