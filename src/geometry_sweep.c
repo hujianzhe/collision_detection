@@ -652,19 +652,19 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 		d = mathVec3Dot(v, N);
 		if (d < CCT_EPSILON_NEGATE || d > CCT_EPSILON) {
 			/* opposite */
-			mathVec3Cross(N, ls1_dir, dir);
-			if (mathVec3IsZero(N)) {
+			mathVec3Cross(p, ls1_dir, dir);
+			if (mathVec3IsZero(p)) {
 				return NULL;
 			}
-			mathVec3Normalized(N, N);
-			if (Segment_Intersect_Plane(ls2, ls1[0], N, v, NULL) != 1) {
+			mathVec3Normalized(p, p);
+			if (Segment_Intersect_Plane(ls2, ls1[0], p, v, NULL) != 1) {
 				return NULL;
 			}
 			mathVec3Normalized(ls1_dir, ls1_dir);
 			mathPointProjectionLine(v, ls1[0], ls1_dir, p);
-			mathVec3Sub(N, v, p);
-			d = mathVec3Normalized(N, N);
-			cos_theta = mathVec3Dot(N, dir);
+			mathVec3Sub(p, v, p);
+			d = mathVec3Normalized(p, p);
+			cos_theta = mathVec3Dot(p, dir);
 			if (cos_theta <= CCTNum(0.0)) {
 				return NULL;
 			}
@@ -691,7 +691,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				result->peer[0].id = 0;
 			}
 			mathVec3Copy(result->hit_plane_v, v);
-			mathVec3Copy(result->hit_plane_n, N);
+			mathVec3Normalized(result->hit_plane_n, N);
 			result->hit_unique_point = 1;
 			result->overlap = 0;
 			result->distance = d;
