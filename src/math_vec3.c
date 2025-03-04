@@ -38,6 +38,24 @@ int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	return 1;
 }
 
+int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
+	CCTNum_t delta;
+
+	delta = CCTNum_abs(v1[0] - v2[0]);
+	if (delta > eps) {
+		return 0;
+	}
+	delta = CCTNum_abs(v1[1] - v2[1]);
+	if (delta > eps) {
+		return 0;
+	}
+	delta = CCTNum_abs(v1[2] - v2[2]);
+	if (delta > eps) {
+		return 0;
+	}
+	return 1;
+}
+
 CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	r[0] = (v1[0] < v2[0] ? v1[0] : v2[0]);
 	r[1] = (v1[1] < v2[1] ? v1[1] : v2[1]);
