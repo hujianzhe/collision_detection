@@ -240,13 +240,6 @@ CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3])
 	return mathVec3Sub(r, v, temp_v);
 }
 
-CCTNum_t* mathVec3DelComponent(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t dir[3]) {
-	CCTNum_t va[3];
-	CCTNum_t d = mathVec3Dot(v, dir);
-	mathVec3MultiplyScalar(va, dir, d);
-	return mathVec3Sub(r, v, va);
-}
-
 static const CCTNum_t Axis_X[3] = { CCTNums_3(1.0, 0.0, 0.0) };
 static const CCTNum_t Axis_Y[3] = { CCTNums_3(0.0, 1.0, 0.0) };
 static const CCTNum_t Axis_Z[3] = { CCTNums_3(0.0, 0.0, 1.0) };
