@@ -44,8 +44,11 @@ __declspec_dll void mathGeometrySetPosition(void* geo_data, int geo_type, const 
 
 __declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb);
 __declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate);
-__declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]);
-__declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
+
+__declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]);
+__declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian);
+__declspec_dll int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]);
+__declspec_dll int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
 
 __declspec_dll CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]);
 
