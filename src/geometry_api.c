@@ -788,10 +788,10 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ax
 	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
 		return 1;
 	}
-	if (GEOMETRY_BODY_SPHERE == geo_type) {
+	if (GEOMETRY_BODY_SPHERE == geo_type || GEOMETRY_BODY_POINT == geo_type) {
 		return 1;
 	}
-	else if (GEOMETRY_BODY_CAPSULE == geo_type) {
+	if (GEOMETRY_BODY_CAPSULE == geo_type) {
 		const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
 		CCTNum_t v[3];
 		mathVec3Cross(v, capsule->axis, axis);
