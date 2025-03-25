@@ -2272,6 +2272,10 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			if (result_temp.distance < result->distance) {
 				result->distance = result_temp.distance;
 			}
+			if (result_temp.peer[1].hit_part == CCT_SWEEP_HIT_FACE) {
+				result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
+				result->peer[1].id = i;
+			}
 			continue;
 		}
 		if (result->peer[1].hit_part == CCT_SWEEP_HIT_FACE) {
