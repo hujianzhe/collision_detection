@@ -1403,6 +1403,8 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 		if (!Segment_Sweep_Circle_InSamePlane(ls, dir, circle_o, circle_r, result)) {
 			return NULL;
 		}
+		mathVec3Sub(result->hit_plane_n, result->hit_plane_v, center);
+		mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
 		result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
 		result->peer[1].id = 0;
 		return result;
