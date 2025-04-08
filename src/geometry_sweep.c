@@ -2954,6 +2954,9 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 	if (flag_neg_dir) {
 		reverse_result(result, dir);
 	}
+	if (mathVec3Dot(dir, result->hit_plane_n) > CCTNum(0.0)) {
+		mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
+	}
 	return result;
 }
 
