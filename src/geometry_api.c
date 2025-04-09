@@ -144,6 +144,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			CCTNum_t dot;
 			unsigned int i;
 			if (!CCTNum_chkvals(obb->o, 3)) {
 				return 0;
@@ -167,6 +168,18 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 				if (lensq > CCTNum(1.0) + CCT_EPSILON || lensq < CCTNum(1.0) - CCT_EPSILON) {
 					return 0;
 				}
+			}
+			dot = mathVec3Dot(obb->axis[0], obb->axis[1]);
+			if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+				return 0;
+			}
+			dot = mathVec3Dot(obb->axis[0], obb->axis[2]);
+			if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+				return 0;
+			}
+			dot = mathVec3Dot(obb->axis[1], obb->axis[2]);
+			if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
+				return 0;
 			}
 			for (i = 0; i < 8; ++i) {
 				CCTNum_t v[3];
