@@ -108,24 +108,43 @@ CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
 	if (len_sq > CCTNum(0.0)) {
 		CCTNum_t len = CCTNum_sqrt(len_sq);
 		CCTNum_t inv_len = CCTNum(1.0) / len;
+
 		r[0] = v[0] * inv_len;
 		if (CCTNum(1.0) - CCT_EPSILON <= r[0] && r[0] <= CCTNum(1.0) + CCT_EPSILON) {
 			r[0] = CCTNum(1.0);
 			r[1] = r[2] = CCTNum(0.0);
 			return len;
 		}
+		if (CCTNum(-1.0) - CCT_EPSILON <= r[0] && r[0] <= CCTNum(-1.0) + CCT_EPSILON) {
+			r[0] = CCTNum(-1.0);
+			r[1] = r[2] = CCTNum(0.0);
+			return len;
+		}
+
 		r[1] = v[1] * inv_len;
 		if (CCTNum(1.0) - CCT_EPSILON <= r[1] && r[1] <= CCTNum(1.0) + CCT_EPSILON) {
 			r[1] = CCTNum(1.0);
 			r[0] = r[2] = CCTNum(0.0);
 			return len;
 		}
+		if (CCTNum(-1.0) - CCT_EPSILON <= r[1] && r[1] <= CCTNum(-1.0) + CCT_EPSILON) {
+			r[1] = CCTNum(-1.0);
+			r[0] = r[2] = CCTNum(0.0);
+			return len;
+		}
+
 		r[2] = v[2] * inv_len;
 		if (CCTNum(1.0) - CCT_EPSILON <= r[2] && r[2] <= CCTNum(1.0) + CCT_EPSILON) {
 			r[2] = CCTNum(1.0);
 			r[0] = r[1] = CCTNum(0.0);
 			return len;
 		}
+		if (CCTNum(-1.0) - CCT_EPSILON <= r[2] && r[2] <= CCTNum(-1.0) + CCT_EPSILON) {
+			r[2] = CCTNum(-1.0);
+			r[0] = r[1] = CCTNum(0.0);
+			return len;
+		}
+
 		return len;
 	}
 	else {
