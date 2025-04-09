@@ -165,6 +165,21 @@ const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned in
 	return Box_Edge_Adjacent_FaceIds + idx;
 }
 
+void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) {
+	CCTNum_t new_axis1[3], new_axis2[3];
+	mathVec3Normalized(axis0, axis0);
+	mathVec3Cross(new_axis2, axis0, axis1);
+	if (mathVec3Dot(new_axis2, axis2) < CCTNum(0.0)) {
+		mathVec3Negate(new_axis2, new_axis2);
+	}
+	mathVec3Normalized(axis2, new_axis2);
+	mathVec3Cross(new_axis1, axis0, axis2);
+	if (mathVec3Dot(new_axis1, axis1) < CCTNum(0.0)) {
+		mathVec3Negate(new_axis1, new_axis1);
+	}
+	mathVec3Normalized(axis1, new_axis1);
+}
+
 void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
 	CCTNum_t AX[3][3];
 	mathVec3MultiplyScalar(AX[0], axis[0], half[0]);

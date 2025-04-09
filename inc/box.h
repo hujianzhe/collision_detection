@@ -63,6 +63,7 @@ __declspec_dll const unsigned int* mathBoxVertexAdjacentVertexIds(unsigned int v
 __declspec_dll const unsigned int* mathBoxFaceMeshVertexIds(unsigned int face_id, unsigned int v_ids[4]);
 __declspec_dll const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned int adjacent_face_ids[2]);
 
+__declspec_dll void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]);
 __declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]);
 __declspec_dll CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_id, CCTNum_t normal[3]);
