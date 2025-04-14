@@ -485,13 +485,10 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 		{
 			CCTNum_t delta[3];
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
-			if (v == segment->v[0]) {
+			if (mathVec3EqualEps(v, segment->v[0], CCTNum(0.0))) {
 				return;
 			}
 			mathVec3Sub(delta, v, segment->v[0]);
-			if (mathVec3IsZero(delta)) {
-				return;
-			}
 			mathVec3Copy(segment->v[0], v);
 			mathVec3Add(segment->v[1], segment->v[1], delta);
 			return;
@@ -525,13 +522,10 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 			unsigned int i;
 			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
 			CCTNum_t delta[3];
-			if (v == polygon->center) {
+			if (mathVec3EqualEps(v, polygon->center, CCTNum(0.0))) {
 				return;
 			}
 			mathVec3Sub(delta, v, polygon->center);
-			if (mathVec3IsZero(delta)) {
-				return;
-			}
 			for (i = 0; i < polygon->v_indices_cnt; ++i) {
 				CCTNum_t* p = polygon->v[polygon->v_indices[i]];
 				mathVec3Add(p, p, delta);
@@ -544,13 +538,10 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 			unsigned int i;
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			CCTNum_t delta[3];
-			if (v == mesh->bound_box.o) {
+			if (mathVec3EqualEps(v, mesh->bound_box.o, CCTNum(0.0))) {
 				return;
 			}
 			mathVec3Sub(delta, v, mesh->bound_box.o);
-			if (mathVec3IsZero(delta)) {
-				return;
-			}
 			for (i = 0; i < mesh->v_indices_cnt; ++i) {
 				CCTNum_t* p = mesh->v[mesh->v_indices[i]];
 				mathVec3Add(p, p, delta);
