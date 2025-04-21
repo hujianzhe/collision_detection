@@ -621,7 +621,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 		if (dot < CCTNum(0.0)) {
 			continue;
 		}
-		if (dot > CCTNum(0.0)) {
+		if (dot > CCT_EPSILON) {
 			return 0;
 		}
 		return ConvexPolygon_Contain_Point_SamePlane(polygon, p, NULL);
