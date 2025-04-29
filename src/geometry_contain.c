@@ -684,12 +684,17 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		CCTNum_t d = mathPointProjectionPlane(o, polygon->v[polygon->v_indices[0]], polygon->normal);
-		if (CCTNum_abs(d) < radius) {
+		CCTNum_t v[3], d;
+		mathVec3Sub(v, polygon->v[polygon->v_indices[0]], o);
+		d = mathVec3Dot(v, polygon->normal);
+		if (d <= CCTNum(0.0)) {
+			return 0;
+		}
+		if (d < radius) {
 			return 0;
 		}
 	}
-	return ConvexMesh_Contain_Point(mesh, o);
+	return 1;
 }
 
 static int ConvexMesh_Contain_Capsule(const GeometryMesh_t* mesh, const GeometryCapsule_t* capsule) {
