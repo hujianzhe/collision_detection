@@ -687,9 +687,6 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 		CCTNum_t v[3], d;
 		mathVec3Sub(v, polygon->v[polygon->v_indices[0]], o);
 		d = mathVec3Dot(v, polygon->normal);
-		if (d <= CCTNum(0.0)) {
-			return 0;
-		}
 		if (d < radius) {
 			return 0;
 		}
