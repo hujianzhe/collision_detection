@@ -310,9 +310,6 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 			if (mesh->edge_cnt < 3) {
 				return 0;
 			}
-			if (!mesh->is_convex || !mesh->is_closed) {
-				return 0;
-			}
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
 				const GeometryPolygon_t* polygon = mesh->polygons + i;
 				/* avoid polygon edge is different from mesh edge... */
