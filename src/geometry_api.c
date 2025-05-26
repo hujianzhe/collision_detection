@@ -370,6 +370,9 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 		case GEOMETRY_BODY_POLYGON:
 		{
 			if (!mathPolygonDeepCopy((GeometryPolygon_t*)dst, (const GeometryPolygon_t*)src_geo_data)) {
+				if (dst_type) {
+					*dst_type = 0;
+				}
 				return NULL;
 			}
 			break;
@@ -377,6 +380,9 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 		case GEOMETRY_BODY_MESH:
 		{
 			if (!mathMeshDeepCopy((GeometryMesh_t*)dst, (const GeometryMesh_t*)src_geo_data)) {
+				if (dst_type) {
+					*dst_type = 0;
+				}
 				return NULL;
 			}
 			break;
@@ -388,6 +394,9 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 		}
 		default:
 		{
+			if (dst_type) {
+				*dst_type = 0;
+			}
 			return NULL;
 		}
 	}
