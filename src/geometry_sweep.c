@@ -55,9 +55,7 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 	CCTSweepHitInfo_t hit_info_0 = result->peer[0];
 	result->peer[0] = result->peer[1];
 	result->peer[1] = hit_info_0;
-	if (result->hit_unique_point) {
-		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
-	}
+	mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1364,13 +1362,13 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 			return NULL;
 		}
 		if (1 == res) {
-			CCTNum_t v[3], l[3], p[3];
+			CCTNum_t v[3], l[3], p[3], pco[3];
 			CCTNum_t d, dot;
 			mathVec3Normalized(lsdir, lsdir);
 			mathPointProjectionLine(circle_o, ls[0], lsdir, p);
-			mathVec3Sub(N, circle_o, p);
-			d = mathVec3Normalized(N, N);
-			dot = mathVec3Dot(N, dir);
+			mathVec3Sub(pco, circle_o, p);
+			d = mathVec3Normalized(pco, pco);
+			dot = mathVec3Dot(pco, dir);
 			if (dot <= CCTNum(0.0)) {
 				return NULL;
 			}
@@ -2229,16 +2227,13 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 }
 
 static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
-	unsigned int i;
+	unsigned int i, plane_flag = 0;
 	CCTNum_t neg_dir[3];
 	GeometryCapsuleExtra_t extra;
 	CCTSweepResult_t* p_result;
 
 	p_result = MeshSegment_Sweep_Capsule(mesh, dir, capsule, 0, result);
 	mathVec3Negate(neg_dir, dir);
-	if (p_result) {
-		reverse_result(result, neg_dir);
-	}
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, extra.axis_edge[0], extra.axis_edge[1]);
 	extra.axis_len = capsule->half + capsule->half;
 	extra.radius_sq = CCTNum_sq(capsule->radius);
@@ -2268,26 +2263,27 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 			*result = result_temp;
 		}
 		else {
+			CCTNum_t d;
 			if (!Capsule_MoveTo_Polygon(&extra, capsule->radius, neg_dir, polygon, &result_temp)) {
 				continue;
 			}
-			if (result_temp.distance < result->distance) {
-				result->distance = result_temp.distance;
+			d = result->distance;
+			*result = result_temp;
+			if (d < result_temp.distance) {
+				result->distance = d;
 			}
-			if (result_temp.peer[1].hit_part == CCT_SWEEP_HIT_FACE) {
-				result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
-				result->peer[1].id = i;
-			}
-			continue;
 		}
 		if (result->peer[1].hit_part == CCT_SWEEP_HIT_FACE) {
 			result->peer[1].id = i;
 		}
+		plane_flag = 1;
 	}
 	if (!p_result) {
 		return NULL;
 	}
-	reverse_result(result, dir);
+	if (plane_flag) {
+		reverse_result(result, dir);
+	}
 	if (result->peer[1].hit_part != CCT_SWEEP_HIT_SPHERE) {
 		result->hit_unique_point = 0;
 	}
