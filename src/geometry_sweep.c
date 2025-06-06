@@ -1494,6 +1494,13 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, result)) {
 				return NULL;
 			}
+			mathVec3Sub(v, ls[0], capsule->o);
+			if (mathVec3Dot(v, plane_n) > CCTNum(0.0)) {
+				mathVec3Copy(result->hit_plane_n, plane_n);
+			}
+			else {
+				mathVec3Negate(result->hit_plane_n, plane_n);
+			}
 			if (result->peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
 			}
@@ -1512,6 +1519,9 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 		if (Segment_Sweep_Segment(ls, dir, (const CCTNum_t(*)[3])temp_ls, &result_temp)) {
 			*result = result_temp;
 			p_result = result;
+			mathPointProjectionLine_v2(capsule->o, temp_ls[0], temp_ls[1], v);
+			mathVec3Sub(result->hit_plane_n, v, capsule->o);
+			mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
 			if (result->peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
 				result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
 			}
@@ -1525,6 +1535,9 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 			if (!p_result || result_temp.distance < result->distance) {
 				*result = result_temp;
 				p_result = result;
+				mathPointProjectionLine_v2(capsule->o, temp_ls[0], temp_ls[1], v);
+				mathVec3Sub(result->hit_plane_n, v, capsule->o);
+				mathVec3Normalized(result->hit_plane_n, result->hit_plane_n);
 				if (result->peer[1].hit_part == CCT_SWEEP_HIT_POINT) {
 					result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
 				}
