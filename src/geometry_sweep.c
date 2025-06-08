@@ -122,7 +122,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 			mathVec3Copy(result->hit_plane_v, ls[0]);
 			result->peer[1].id = 0;
 		}
-		mathVec3Copy(result->hit_plane_n, dir);
+		mathVec3Negate(result->hit_plane_n, dir);
 		result->distance = dot;
 	}
 	else {
@@ -172,7 +172,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 			result->peer[1].id = 0;
 		}
 		mathVec3Copy(result->hit_plane_v, p);
-		mathVec3Copy(result->hit_plane_n, op);
+		mathVec3Negate(result->hit_plane_n, op);
 		result->distance = d;
 	}
 	result->hit_unique_point = 1;
@@ -244,7 +244,12 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	}
 	mathVec3Copy(result->hit_plane_v, o);
 	mathVec3AddScalar(result->hit_plane_v, dir, d);
-	mathVec3Copy(result->hit_plane_n, plane_n);
+	if (cos_theta > CCTNum(0.0)) {
+		mathVec3Negate(result->hit_plane_n, plane_n);
+	}
+	else {
+		mathVec3Copy(result->hit_plane_n, plane_n);
+	}
 	result->hit_unique_point = 1;
 	result->overlap = 0;
 	result->distance = d;
@@ -527,7 +532,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				return NULL;
 			}
 			mathVec3Copy(result->hit_plane_v, ls2[closest_ls2_indice]);
-			mathVec3Copy(result->hit_plane_n, dir);
+			mathVec3Negate(result->hit_plane_n, dir);
 			result->hit_unique_point = 1;
 			result->overlap = 0;
 			result->distance = d;
@@ -639,7 +644,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			if (!p_result) {
 				return NULL;
 			}
-			mathVec3Copy(result->hit_plane_n, N);
+			mathVec3Negate(result->hit_plane_n, N);
 			result->distance = d;
 			result->overlap = 0;
 			return result;
@@ -690,6 +695,9 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			}
 			mathVec3Copy(result->hit_plane_v, v);
 			mathVec3Normalized(result->hit_plane_n, N);
+			if (mathVec3Dot(result->hit_plane_n, dir) > CCTNum(0.0)) {
+				mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
+			}
 			result->hit_unique_point = 1;
 			result->overlap = 0;
 			result->distance = d;
@@ -721,7 +729,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 			if (mathVec3Equal(p, ls1[0])) {
 				/* ls1[0] is cross point */
 				hn_len = d = CCTNum(0.0);
-				mathVec3Set(hn, CCTNums_3(0.0, 0.0, 0.0));
+				mathVec3Copy(hn, dir);
 				mathVec3Copy(p, ls1[0]);
 			}
 			else {
@@ -766,7 +774,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 						result->peer[0].id = 1;
 					}
 					mathVec3Copy(result->hit_plane_v, p);
-					mathVec3Copy(result->hit_plane_n, hn);
+					mathVec3Negate(result->hit_plane_n, hn);
 					result->hit_unique_point = 1;
 					result->overlap = 0;
 					result->distance = d;
@@ -814,7 +822,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				p_result = result;
 				mathVec3Copy(result->hit_plane_v, p);
-				mathVec3Copy(result->hit_plane_n, hn);
+				mathVec3Negate(result->hit_plane_n, hn);
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
@@ -842,7 +850,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				p_result = result;
 				mathVec3Copy(result->hit_plane_v, p);
-				mathVec3Copy(result->hit_plane_n, hn);
+				mathVec3Negate(result->hit_plane_n, hn);
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
@@ -898,7 +906,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 				}
 				p_result = result;
 				mathVec3Copy(result->hit_plane_v, ls2[i]);
-				mathVec3Copy(result->hit_plane_n, hn);
+				mathVec3Negate(result->hit_plane_n, hn);
 				result->hit_unique_point = 1;
 				result->distance = hn_len;
 				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
@@ -1319,7 +1327,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 		} while (0);
 		if (hit_ok) {
 			mathVec3Copy(result->hit_plane_v, p);
-			mathVec3Copy(result->hit_plane_n, pco);
+			mathVec3Negate(result->hit_plane_n, pco);
 			result->hit_unique_point = 1;
 			result->overlap = 0;
 			result->distance = d;
@@ -1385,7 +1393,13 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 			result->overlap = 0;
 			result->hit_unique_point = 1;
 			mathVec3Copy(result->hit_plane_v, circle_o);
-			mathVec3Copy(result->hit_plane_n, N);
+			mathVec3Sub(v, center, circle_o);
+			if (mathVec3Dot(v, N) > CCTNum(0.0)) {
+				mathVec3Negate(result->hit_plane_n, N);
+			}
+			else {
+				mathVec3Copy(result->hit_plane_n, N);
+			}
 			if (dot < CCTNum(0.0)) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_EDGE;
 				result->peer[0].id = 0;
@@ -1876,7 +1890,12 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 		return NULL;
 	}
 	result->overlap = 0;
-	mathVec3Copy(result->hit_plane_n, plane_n);
+	if (cos_theta > CCTNum(0.0)) {
+		mathVec3Negate(result->hit_plane_n, plane_n);
+	}
+	else {
+		mathVec3Copy(result->hit_plane_n, plane_n);
+	}
 	if (1 == same_v_cnt) {
 		mathVec3Copy(result->hit_plane_v, mesh->v[mesh->v_indices[same_v_ids[0]]]);
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
@@ -2051,7 +2070,12 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 		result->peer[0].hit_part = CCT_SWEEP_HIT_SPHERE;
 		result->peer[0].id = idx;
 	}
-	mathVec3Copy(result->hit_plane_n, plane_n);
+	if (cos_theta > CCTNum(0.0)) {
+		mathVec3Negate(result->hit_plane_n, plane_n);
+	}
+	else {
+		mathVec3Copy(result->hit_plane_n, plane_n);
+	}
 	result->distance = d[idx];
 	result->peer[1].hit_part = CCT_SWEEP_HIT_FACE;
 	result->peer[1].id = 0;
@@ -2087,7 +2111,12 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	if (dn < CCTNum(0.0)) {
 		return NULL;
 	}
-	mathVec3Copy(result->hit_plane_n, plane_n);
+	if (cos_theta > CCTNum(0.0)) {
+		mathVec3Negate(result->hit_plane_n, plane_n);
+	}
+	else {
+		mathVec3Copy(result->hit_plane_n, plane_n);
+	}
 	mathVec3AddScalar(result->hit_plane_v, dir, dn);
 	result->hit_unique_point = 1;
 	result->overlap = 0;
@@ -2962,9 +2991,6 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 	}
 	if (flag_neg_dir) {
 		reverse_result(result, dir);
-	}
-	if (mathVec3Dot(dir, result->hit_plane_n) > CCTNum(0.0)) {
-		mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
 	}
 	return result;
 }
