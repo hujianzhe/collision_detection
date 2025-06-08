@@ -1246,6 +1246,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 			}
 			*result = result_temp;
 			mathVec3Copy(result->hit_plane_v, mesh2_p);
+			mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
 			if (bi.v_id != -1) {
 				result->peer[0].hit_part = CCT_SWEEP_HIT_POINT;
 				if (polygon1->mesh_v_ids && mesh1->polygons_cnt > 1) {
@@ -2204,6 +2205,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 		result->peer[1].hit_part = CCT_SWEEP_HIT_SPHERE;
 		result->peer[1].id = 0;
 		mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
+		mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
 	}
 	return p_result;
 }
