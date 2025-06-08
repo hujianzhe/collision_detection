@@ -56,6 +56,7 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 	result->peer[0] = result->peer[1];
 	result->peer[1] = hit_info_0;
 	mathVec3AddScalar(result->hit_plane_v, dir, result->distance);
+	mathVec3Negate(result->hit_plane_n, result->hit_plane_n);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
