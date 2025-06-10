@@ -203,7 +203,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 }
 
 OctreeFinder_t* octreeFinderInit(const Octree_t* tree, OctreeFinder_t* finder) {
-	finder->nodes = (OctreeNode_t**)malloc(sizeof(OctreeNode_t*) * tree->nodes_cnt);
+	finder->nodes = (const OctreeNode_t**)malloc(sizeof(OctreeNode_t*) * tree->nodes_cnt);
 	if (!finder->nodes) {
 		return NULL;
 	}
@@ -219,7 +219,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	finder->cnt = 0;
 }
 
-void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
+void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
 	finder->cnt = 0;
 	if (!AABB_Intersect_AABB(root->pos, root->half, pos, half)) {
@@ -229,12 +229,12 @@ void octreeFindNodes(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t h
 	pop_idx = 0;
 	while (pop_idx < finder->cnt) {
 		int i;
-		OctreeNode_t* oct = finder->nodes[pop_idx++];
+		const OctreeNode_t* oct = finder->nodes[pop_idx++];
 		if (!oct->childs) {
 			continue;
 		}
 		for (i = 0; i < 8; ++i) {
-			OctreeNode_t* child = oct->childs + i;
+			const OctreeNode_t* child = oct->childs + i;
 			if (!AABB_Intersect_AABB(child->pos, child->half, pos, half)) {
 				continue;
 			}
