@@ -301,10 +301,10 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
 			unsigned int i;
-			if (mesh->polygons_cnt <= 0) {
+			if (mesh->polygons_cnt < 1) {
 				return 0;
 			}
-			if (mesh->v_indices_cnt < 4) {
+			if (mesh->v_indices_cnt < 3) {
 				return 0;
 			}
 			if (mesh->edge_cnt < 3) {
