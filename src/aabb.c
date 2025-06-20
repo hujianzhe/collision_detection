@@ -206,13 +206,16 @@ void mathAABBStretch(CCTNum_t o[3], CCTNum_t half[3], const CCTNum_t delta[3]) {
 }
 
 int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
-	CCTNum_t h = half1[0] + half2[0];
+	CCTNum_t h;
+	h = half1[0] + half2[0];
 	if (o2[0] - o1[0] > h || o1[0] - o2[0] > h) {
 		return 0;
 	}
+	h = half1[1] + half2[1];
 	if (o2[1] - o1[1] > h || o1[1] - o2[1] > h) {
 		return 0;
 	}
+	h = half1[2] + half2[2];
 	if (o2[2] - o1[2] > h || o1[2] - o2[2] > h) {
 		return 0;
 	}
