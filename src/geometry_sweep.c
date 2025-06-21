@@ -2559,6 +2559,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Segment_Sweep_Capsule(segment1_v, NULL, 0, dir, (const GeometryCapsule_t*)geo_data2, 1, result);
 				break;
 			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Ray_Sweep_Segment((const CCTNum_t*)geo_data2, neg_dir, segment1_v, result);
+				break;
+			}
 			default:
 			{
 				return NULL;
@@ -2631,6 +2638,14 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = ConvexMesh_Sweep_Capsule(&box_data.mesh, dir, (const GeometryCapsule_t*)geo_data2, result);
 				break;
 			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				result = Ray_Sweep_ConvexMesh((const CCTNum_t*)geo_data2, neg_dir, &box_data.mesh, result);
+				break;
+			}
 			default:
 			{
 				return NULL;
@@ -2695,6 +2710,14 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				mathBoxMesh(&box_data, obb1->o, obb1->half, (const CCTNum_t(*)[3])obb1->axis);
 				result = ConvexMesh_Sweep_Capsule(&box_data.mesh, dir, (const GeometryCapsule_t*)geo_data2, result);
+				break;
+			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				mathBoxMesh(&box_data, obb1->o, obb1->half, (const CCTNum_t(*)[3])obb1->axis);
+				result = Ray_Sweep_ConvexMesh((const CCTNum_t*)geo_data2, neg_dir, &box_data.mesh, result);
 				break;
 			}
 			default:
@@ -2762,6 +2785,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_CAPSULE:
 			{
 				result = Sphere_Sweep_Capsule(sphere1->o, sphere1->radius, dir, (const GeometryCapsule_t*)geo_data2, 1, result);
+				break;
+			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Ray_Sweep_Sphere((const CCTNum_t*)geo_data2, neg_dir, sphere1->o, sphere1->radius, result);
 				break;
 			}
 			default:
@@ -2838,6 +2868,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				result = Capsule_Sweep_Polygon((const GeometryCapsule_t*)geo_data2, neg_dir, polygon1, result);
 				break;
 			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Ray_Sweep_Polygon((const CCTNum_t*)geo_data2, neg_dir, polygon1, result);
+				break;
+			}
 			default:
 			{
 				return NULL;
@@ -2899,6 +2936,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				case GEOMETRY_BODY_CAPSULE:
 				{
 					result = ConvexMesh_Sweep_Capsule(mesh1, dir, (const GeometryCapsule_t*)geo_data2, result);
+					break;
+				}
+				case GEOMETRY_BODY_POINT:
+				{
+					mathVec3Negate(neg_dir, dir);
+					flag_neg_dir = 1;
+					result = Ray_Sweep_ConvexMesh((const CCTNum_t*)geo_data2, neg_dir, mesh1, result);
 					break;
 				}
 				default:
@@ -2977,6 +3021,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_CAPSULE:
 			{
 				result = Capsule_Sweep_Capsule(capsule1, dir, (const GeometryCapsule_t*)geo_data2, 1, result);
+				break;
+			}
+			case GEOMETRY_BODY_POINT:
+			{
+				mathVec3Negate(neg_dir, dir);
+				flag_neg_dir = 1;
+				result = Ray_Sweep_Capsule((const CCTNum_t*)geo_data2, neg_dir, capsule1, 1, result);
 				break;
 			}
 			default:
