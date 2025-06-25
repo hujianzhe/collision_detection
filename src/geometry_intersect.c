@@ -894,7 +894,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Intersect_AABB(aabb1->o, aabb1->half, aabb2->o, aabb2->half);
+				return mathAABBIntersectAABB(aabb1->o, aabb1->half, aabb2->o, aabb2->half);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{

@@ -205,7 +205,7 @@ void mathAABBStretch(CCTNum_t o[3], CCTNum_t half[3], const CCTNum_t delta[3]) {
 	}
 }
 
-int AABB_Intersect_AABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
+int mathAABBIntersectAABB(const CCTNum_t o1[3], const CCTNum_t half1[3], const CCTNum_t o2[3], const CCTNum_t half2[3]) {
 	CCTNum_t h;
 	h = half1[0] + half2[0];
 	if (o2[0] - o1[0] > h || o1[0] - o2[0] > h) {

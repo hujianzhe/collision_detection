@@ -222,7 +222,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
 	finder->cnt = 0;
-	if (!AABB_Intersect_AABB(root->pos, root->half, pos, half)) {
+	if (!mathAABBIntersectAABB(root->pos, root->half, pos, half)) {
 		return;
 	}
 	finder->nodes[finder->cnt++] = root;
@@ -235,7 +235,7 @@ void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTN
 		}
 		for (i = 0; i < 8; ++i) {
 			const OctreeNode_t* child = oct->childs + i;
-			if (!AABB_Intersect_AABB(child->pos, child->half, pos, half)) {
+			if (!mathAABBIntersectAABB(child->pos, child->half, pos, half)) {
 				continue;
 			}
 			finder->nodes[finder->cnt++] = child;
