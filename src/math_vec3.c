@@ -248,6 +248,23 @@ CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTN
 	return mathVec3Normalized(r, r);
 }
 
+int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+	CCTNum_t x, y, z;
+	x = v1[1] * v2[2] - v1[2] * v2[1];
+	if (x > CCT_EPSILON || x < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	y = v1[2] * v2[0] - v1[0] * v2[2];
+	if (y > CCT_EPSILON || y < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	z = v1[0] * v2[1] - v1[1] * v2[0];
+	if (z > CCT_EPSILON || z < CCT_EPSILON_NEGATE) {
+		return 0;
+	}
+	return 1;
+}
+
 CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
 	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
