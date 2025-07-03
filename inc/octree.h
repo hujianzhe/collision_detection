@@ -39,6 +39,7 @@ typedef struct Octree_t {
 typedef struct OctreeFinder_t {
 	const OctreeNode_t** nodes;
 	unsigned int cnt;
+	unsigned int cap;
 } OctreeFinder_t;
 
 #ifdef __cplusplus
@@ -51,7 +52,7 @@ __declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const
 __declspec_dll void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj);
 __declspec_dll void octreeRemoveObject(OctreeObject_t* obj);
 
-__declspec_dll OctreeFinder_t* octreeFinderInit(const Octree_t* tree, OctreeFinder_t* finder);
+__declspec_dll OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder);
 __declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder);
 
 __declspec_dll void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder);

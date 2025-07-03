@@ -202,10 +202,14 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 	}
 }
 
-OctreeFinder_t* octreeFinderInit(const Octree_t* tree, OctreeFinder_t* finder) {
-	finder->nodes = (const OctreeNode_t**)malloc(sizeof(OctreeNode_t*) * tree->nodes_cnt);
-	if (!finder->nodes) {
-		return NULL;
+OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder) {
+	if (finder->cap < tree->nodes_cnt) {
+		const OctreeNode_t** p = (const OctreeNode_t**)realloc(finder->nodes, sizeof(OctreeNode_t*) * tree->nodes_cnt);
+		if (!p) {
+			return NULL;
+		}
+		finder->nodes = p;
+		finder->cap = tree->nodes_cnt;
 	}
 	finder->cnt = 0;
 	return finder;
