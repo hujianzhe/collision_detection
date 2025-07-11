@@ -27,11 +27,11 @@ static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigne
 	}
 }
 
-static CCTNum_t indices_separate_distance(const CCTNum_t(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+static CCTNum_t indices_separate_distance(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
 	unsigned int i;
-	CCTNum_t d = mathPointProjectionPlane(p[indices[0]], plane_v, separate_dir);
+	CCTNum_t d = mathPointProjectionPlane(v[indices[0]], plane_v, separate_dir);
 	for (i = 1; i < indices_cnt; ++i) {
-		CCTNum_t test_d = mathPointProjectionPlane(p[indices[i]], plane_v, separate_dir);
+		CCTNum_t test_d = mathPointProjectionPlane(v[indices[i]], plane_v, separate_dir);
 		if (d < test_d) {
 			d = test_d;
 		}
@@ -39,7 +39,7 @@ static CCTNum_t indices_separate_distance(const CCTNum_t(*p)[3], const unsigned 
 	return d;
 }
 
-static CCTNum_t vertex_separate_distance(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+static CCTNum_t vertices_separate_distance(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
 	unsigned int i;
 	CCTNum_t d = mathPointProjectionPlane(v[0], plane_v, separate_dir);
 	for (i = 1; i < v_cnt; ++i) {
@@ -49,6 +49,38 @@ static CCTNum_t vertex_separate_distance(const CCTNum_t(*v)[3], unsigned int v_c
 		}
 	}
 	return d;
+}
+
+static CCTNum_t indices_dir_projection_length(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t dir[3]) {
+	CCTNum_t max_d, min_d;
+	unsigned int i;
+	min_d = max_d = mathVec3Dot(v[indices[0]], dir);
+	for (i = 1; i < indices_cnt; ++i) {
+		CCTNum_t d = mathVec3Dot(v[indices[i]], dir);
+		if (d < min_d) {
+			min_d = d;
+		}
+		else if (d > max_d) {
+			max_d = d;
+		}
+	}
+	return max_d - min_d;
+}
+
+static CCTNum_t vertices_dir_projection_length(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t dir[3]) {
+	CCTNum_t max_d, min_d;
+	unsigned int i;
+	min_d = max_d = mathVec3Dot(v[0], dir);
+	for (i = 1; i < v_cnt; ++i) {
+		CCTNum_t d = mathVec3Dot(v[i], dir);
+		if (d < min_d) {
+			min_d = d;
+		}
+		else if (d > max_d) {
+			max_d = d;
+		}
+	}
+	return max_d - min_d;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1059,13 +1091,66 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
 			mathAABBVertices(aabb->o, aabb->half, v);
-			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
+			return vertices_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
 			mathOBBVertices(obb, v);
-			return vertex_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
+			return vertices_separate_distance((const CCTNum_t(*)[3])v, 8, plane_v, separate_dir);
+		}
+	}
+	return CCTNum(0.0);
+}
+
+CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]) {
+	CCTNum_t v[8][3];
+	switch (geo_type) {
+		case GEOMETRY_BODY_SPHERE:
+		{
+			const GeometrySphere_t* sphere = (const GeometrySphere_t*)geo_data;
+			return sphere->radius + sphere->radius;
+		}
+		case GEOMETRY_BODY_CAPSULE:
+		{
+			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
+			CCTNum_t p0[3], p1[3], d0, d1;
+			mathVec3Copy(p0, capsule->o);
+			mathVec3AddScalar(p0, capsule->axis, capsule->half);
+			mathVec3Copy(p1, capsule->o);
+			mathVec3SubScalar(p1, capsule->axis, capsule->half);
+			d0 = mathVec3Dot(p0, dir);
+			d1 = mathVec3Dot(p1, dir);
+			return CCTNum_abs(d1 - d0) + capsule->radius + capsule->radius;
+		}
+		case GEOMETRY_BODY_OBB:
+		{
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			mathOBBVertices(obb, v);
+			return vertices_dir_projection_length((const CCTNum_t(*)[3])v, 8, dir);
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
+			mathAABBVertices(aabb->o, aabb->half, v);
+			return vertices_dir_projection_length((const CCTNum_t(*)[3])v, 8, dir);
+		}
+		case GEOMETRY_BODY_SEGMENT:
+		{
+			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			CCTNum_t d0 = mathVec3Dot(segment->v[0], dir);
+			CCTNum_t d1 = mathVec3Dot(segment->v[1], dir);
+			return CCTNum_abs(d0 - d1);
+		}
+		case GEOMETRY_BODY_POLYGON:
+		{
+			const GeometryPolygon_t* polygon = (const GeometryPolygon_t*)geo_data;
+			return indices_dir_projection_length((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, dir);
+		}
+		case GEOMETRY_BODY_MESH:
+		{
+			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
+			return indices_dir_projection_length((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, dir);
 		}
 	}
 	return CCTNum(0.0);

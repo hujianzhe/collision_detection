@@ -52,6 +52,7 @@ __declspec_dll int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNu
 __declspec_dll int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
 
 __declspec_dll CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]);
+__declspec_dll CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]);
 
 __declspec_dll int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
 __declspec_dll int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
