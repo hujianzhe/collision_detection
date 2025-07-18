@@ -15,7 +15,7 @@ __declspec_dll CCTNum_t* mathQuatSet(CCTNum_t q[4], CCTNum_t x, CCTNum_t y, CCTN
 __declspec_dll CCTNum_t* mathQuatCopy(CCTNum_t r[4], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathQuatNormalized(CCTNum_t r[4], const CCTNum_t q[4]);
 __declspec_dll CCTNum_t* mathQuatFromEuler(CCTNum_t q[4], const CCTNum_t e[3], const char order[3]);
-__declspec_dll CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTNum_t to[3]);
+__declspec_dll CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTNum_t to[3], const CCTNum_t axis_180_degree[3]);
 __declspec_dll CCTNum_t* mathQuatFromAxisRadian(CCTNum_t q[4], const CCTNum_t axis[3], CCTNum_t radian);
 __declspec_dll void mathQuatToAxisRadian(const CCTNum_t q[4], CCTNum_t axis[3], CCTNum_t* radian);
 __declspec_dll int mathQuatIsZero(const CCTNum_t q[4]);

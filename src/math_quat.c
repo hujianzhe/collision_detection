@@ -95,13 +95,18 @@ CCTNum_t* mathQuatFromEuler(CCTNum_t q[4], const CCTNum_t e[3], const char order
 	return q;
 }
 
-CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTNum_t to[3]) {
+CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTNum_t to[3], const CCTNum_t axis_180_degree[3]) {
 	CCTNum_t v[3];
 	CCTNum_t w = mathVec3Dot(from, to) + CCTNum(1.0);
 	if (w < CCTNum(1E-7)) {
-		CCTNum_t from_abs_x = CCTNum_abs(from[0]);
-		CCTNum_t from_abs_z = CCTNum_abs(from[2]);
-		if (from_abs_x > from_abs_z) {
+		if (axis_180_degree) {
+			q[0] = axis_180_degree[0];
+			q[1] = axis_180_degree[1];
+			q[2] = axis_180_degree[2];
+			q[3] = CCTNum(0.0);
+			return q;
+		}
+		if (CCTNum_abs(from[0]) > CCTNum_abs(from[2])) {
 			v[0] = -from[1];
 			v[1] = from[0];
 			v[2] = CCTNum(0.0);
@@ -116,7 +121,6 @@ CCTNum_t* mathQuatFromUnitVec3(CCTNum_t q[4], const CCTNum_t from[3], const CCTN
 	else {
 		mathVec3Cross(v, from, to);
 	}
-
 	q[0] = v[0];
 	q[1] = v[1];
 	q[2] = v[2];
