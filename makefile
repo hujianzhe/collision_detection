@@ -18,7 +18,7 @@ DEBUG_TARGET := $(TARGET_PATH)/libCollisionDetectionDebug.so
 ASAN_TARGET := $(TARGET_PATH)/libCollisionDetectionAsan.so
 RELEASE_TARGET := $(TARGET_PATH)/libCollisionDetection.so
 
-all:
+all: debug asan release
 
 debug:
 	$(COMPILER) $(MACRO) -D_DEBUG -g $(COMPILE_OPTION) $(SOURCE_C_FILE) $(SOURCE_CPP_FILE) -o $(DEBUG_TARGET) $(DEFAULT_LINK)
