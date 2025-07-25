@@ -348,10 +348,10 @@ static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNu
 		return 2;
 	}
 	abs_d = CCTNum_abs(d[2]);
-	if (abs_d > capsule->radius) {
+	if (abs_d > capsule->radius + CCT_EPSILON) {
 		return 0;
 	}
-	if (abs_d < capsule->radius) {
+	if (abs_d < capsule->radius - CCT_EPSILON) {
 		return 2;
 	}
 	return 1;
@@ -467,7 +467,7 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 		(const CCTNum_t(*)[3])c2_edge, c2->axis, c2->half + c2->half
 	);
 	radius_sum = c1->radius + c2->radius;
-	return min_lensq <= CCTNum_sq(radius_sum);
+	return min_lensq <= CCTNum_sq(radius_sum) + CCT_EPSILON;
 }
 
 int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) {
@@ -476,10 +476,10 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 	mathSegmentClosestPoint(ls0, ls1, o, closest_p);
 	lensq = mathVec3DistanceSq(closest_p, o);
 	radius_sq = CCTNum_sq(radius);
-	if (lensq > radius_sq) {
+	if (lensq > radius_sq + CCT_EPSILON) {
 		return 0;
 	}
-	if (lensq < radius_sq) {
+	if (lensq < radius_sq - CCT_EPSILON) {
 		return 2;
 	}
 	return 1;
@@ -491,10 +491,10 @@ static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const 
 	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 	lensq = mathVec3DistanceSq(o, closest_p);
 	radius_sq = CCTNum_sq(radius + capsule->radius);
-	if (lensq > radius_sq) {
+	if (lensq > radius_sq + CCT_EPSILON) {
 		return 0;
 	}
-	if (lensq < radius_sq) {
+	if (lensq < radius_sq - CCT_EPSILON) {
 		return 2;
 	}
 	return 1;
@@ -508,13 +508,13 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 		mathVec3AddScalar(new_o, plane_normal, d);
 	}
 	abs_d = CCTNum_abs(d);
-	if (abs_d > radius) {
+	if (abs_d > radius + CCT_EPSILON) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
 		return 0;
 	}
-	if (abs_d == radius) {
+	if (abs_d >= radius - CCT_EPSILON) {
 		if (new_r) {
 			*new_r = CCTNum(0.0);
 		}
@@ -586,10 +586,10 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 	CCTNum_t o1o2_lensq, radius_sum_sq = CCTNum_sq(r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
 	o1o2_lensq = mathVec3LenSq(o1o2);
-	if (o1o2_lensq > radius_sum_sq) {
+	if (o1o2_lensq > radius_sum_sq + CCT_EPSILON) {
 		return 0;
 	}
-	else if (o1o2_lensq < radius_sum_sq) {
+	if (o1o2_lensq < radius_sum_sq - CCT_EPSILON) {
 		return 2;
 	}
 	if (p) {

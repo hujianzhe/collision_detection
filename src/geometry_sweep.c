@@ -229,7 +229,7 @@ static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum
 static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
 	CCTNum_t d, cos_theta;
 	d = mathPointProjectionPlane(o, plane_v, plane_n);
-	if (CCTNum(0.0) == d) {
+	if (CCT_EPSILON_NEGATE <= d && d <= CCT_EPSILON) {
 		set_intersect(result);
 		result->hit_unique_point = 1;
 		mathVec3Copy(result->hit_plane_v, o);
@@ -2038,7 +2038,7 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 	abs_d[0] = CCTNum_abs(d[0]);
 	abs_d[1] = CCTNum_abs(d[1]);
 	idx = (abs_d[0] < abs_d[1] ? 0 : 1);
-	if (abs_d[idx] <= capsule->radius) {
+	if (abs_d[idx] <= capsule->radius + CCT_EPSILON) {
 		set_intersect(result);
 		return result;
 	}
@@ -2088,11 +2088,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	CCTNum_t dn, dn_abs, cos_theta;
 	dn = mathPointProjectionPlane(o, plane_v, plane_n);
 	dn_abs = CCTNum_abs(dn);
-	if (dn_abs < radius) {
-		set_intersect(result);
-		return result;
-	}
-	if (dn_abs == radius) {
+	if (dn_abs <= radius + CCT_EPSILON) {
 		set_intersect(result);
 		return result;
 	}
