@@ -39,7 +39,7 @@ __declspec_dll void* mathGeometryClone(void* dst_data, int* dst_type, const void
 __declspec_dll void mathGeometryClear(void* geo_data, int geo_type);
 __declspec_dll void mathGeometryClearBody(GeometryBody_t* b);
 
-__declspec_dll const CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]);
 __declspec_dll void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]);
 
 __declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb);

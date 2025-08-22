@@ -9,18 +9,20 @@
 extern "C" {
 #endif
 
-GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t o[3], const CCTNum_t half[3]) {
-	mathVec3Copy(obb->o, o);
-	mathVec3Copy(obb->half, half);
+GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+	mathVec3Add(obb->o, min_v, max_v);
+	mathVec3MultiplyScalar(obb->o, obb->o, CCTNum(0.5));
+	mathVec3Sub(obb->half, max_v, min_v);
+	mathVec3MultiplyScalar(obb->half, obb->half, CCTNum(0.5));
 	mathVec3Set(obb->axis[0], CCTNums_3(1.0, 0.0, 0.0));
 	mathVec3Set(obb->axis[1], CCTNums_3(0.0, 1.0, 0.0));
 	mathVec3Set(obb->axis[2], CCTNums_3(0.0, 0.0, 1.0));
 	return obb;
 }
 
-void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t o[3], CCTNum_t half[3]) {
+void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t min_v[3], CCTNum_t max_v[3]) {
 	int i;
-	CCTNum_t v[8][3], min_v[3], max_v[3];
+	CCTNum_t v[8][3];
 	mathOBBVertices(obb, v);
 	mathVec3Copy(min_v, v[0]);
 	mathVec3Copy(max_v, v[0]);
@@ -34,10 +36,6 @@ void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t o[3], CCTNum_t half[3]) {
 				max_v[j] = v[i][j];
 			}
 		}
-	}
-	mathVec3Copy(o, obb->o);
-	for (i = 0; i < 3; ++i) {
-		half[i] = CCTNum(0.5) * (max_v[i] - min_v[i]);
 	}
 }
 

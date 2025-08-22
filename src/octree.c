@@ -31,12 +31,8 @@ static size_t octree_total_nodes_cnt(unsigned int max_deep_num) {
 }
 
 static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3]) {
-	root->pos[0] = pos[0];
-	root->pos[1] = pos[1];
-	root->pos[2] = pos[2];
-	root->half[0] = half[0];
-	root->half[1] = half[1];
-	root->half[2] = half[2];
+	mathVec3Sub(root->min_v, pos, half);
+	mathVec3Add(root->max_v, pos, half);
 	listInit(&root->obj_list);
 	root->obj_cnt = 0;
 	root->deep_num = 0;
@@ -47,17 +43,24 @@ static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CC
 static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	int i;
 	ListNode_t* cur, *next;
-	CCTNum_t o[8][3], half[3];
+	CCTNum_t new_o[8][3], new_min_v[3], new_max_v[3], root_pos[3], new_half[3];
 
 	if (root->childs) {
 		return;
 	}
 	root->childs = &tree->nodes[1 + ((root - tree->nodes) << 3)];
-	mathVec3MultiplyScalar(half, root->half, CCTNum(0.5));
-	mathAABBVertices(root->pos, half, o);
+
+	mathVec3Add(root_pos, root->min_v, root->max_v);
+	mathVec3MultiplyScalar(root_pos, root_pos, CCTNum(0.5));
+	mathVec3Sub(new_half, root->max_v, root->min_v);
+	mathVec3MultiplyScalar(new_half, new_half, CCTNum(0.25));
+	mathVec3Sub(new_min_v, root_pos, new_half);
+	mathVec3Add(new_max_v, root_pos, new_half);
+
+	mathAABBVertices(new_min_v, new_max_v, new_o);
 	for (i = 0; i < 8; ++i) {
 		OctreeNode_t* child = root->childs + i;
-		octree_node_init(child, o[i], half);
+		octree_node_init(child, new_o[i], new_half);
 		child->parent = root;
 		child->deep_num = root->deep_num + 1;
 	}
@@ -66,7 +69,7 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 		next = cur->next;
 		for (i = 0; i < 8; ++i) {
 			OctreeNode_t* child = root->childs + i;
-			if (!AABB_Contain_AABB(child->pos, child->half, obj->pos, obj->half)) {
+			if (!AABB_Contain_AABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
 				continue;
 			}
 			listRemoveNode(&root->obj_list, cur);
@@ -145,7 +148,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 			int i, find = 0;
 			for (i = 0; i < 8; ++i) {
 				OctreeNode_t* child = oct->childs + i;
-				if (!AABB_Contain_AABB(child->pos, child->half, obj->pos, obj->half)) {
+				if (!AABB_Contain_AABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
 					continue;
 				}
 				if (child->childs) {
@@ -169,7 +172,7 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 				continue;
 			}
 		}
-		if (AABB_Contain_AABB(oct->pos, oct->half, obj->pos, obj->half)) {
+		if (AABB_Contain_AABB(oct->min_v, oct->max_v, obj->min_v, obj->max_v)) {
 			if (oct == obj_oct) {
 				return;
 			}
@@ -223,10 +226,10 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	finder->cnt = 0;
 }
 
-void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3], OctreeFinder_t* finder) {
+void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
 	finder->cnt = 0;
-	if (!mathAABBIntersectAABB(root->pos, root->half, pos, half)) {
+	if (!mathAABBIntersectAABB(root->min_v, root->max_v, min_v, max_v)) {
 		return;
 	}
 	finder->nodes[finder->cnt++] = root;
@@ -239,7 +242,7 @@ void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t pos[3], const CCTN
 		}
 		for (i = 0; i < 8; ++i) {
 			const OctreeNode_t* child = oct->childs + i;
-			if (!mathAABBIntersectAABB(child->pos, child->half, pos, half)) {
+			if (!mathAABBIntersectAABB(child->min_v, child->max_v, min_v, max_v)) {
 				continue;
 			}
 			finder->nodes[finder->cnt++] = child;

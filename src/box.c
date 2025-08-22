@@ -342,7 +342,6 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 
 void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]) {
 	unsigned int i;
-	CCTNum_t min_v[3], max_v[3];
 	GeometryMesh_t* mesh = &bm->mesh;
 	const CCTNum_t(*v)[3] = (const CCTNum_t(*)[3])bm->v;
 
@@ -359,11 +358,19 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	mesh->is_closed = 1;
 	mesh->polygons = bm->faces;
 	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
-	mathVerticesFindMinMaxXYZ(v, 8, min_v, max_v);
-	mathAABBFromTwoVertice(min_v, max_v, mesh->bound_box.o, mesh->bound_box.half);
+	mathVerticesFindMinMaxXYZ(v, 8, mesh->bound_box.min_v, mesh->bound_box.max_v);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mathBoxFace(v, axis, i, mesh->polygons + i);
 	}
+}
+
+void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+	CCTNum_t o[3], half[3];
+	mathVec3Add(o, min_v, max_v);
+	mathVec3MultiplyScalar(o, o, CCTNum(0.5));
+	mathVec3Sub(half, max_v, min_v);
+	mathVec3MultiplyScalar(half, half, CCTNum(0.5));
+	mathBoxMesh(bm, o, half, AABB_Axis);
 }
 
 #ifdef __cplusplus

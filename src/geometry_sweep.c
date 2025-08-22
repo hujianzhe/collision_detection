@@ -2444,7 +2444,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				result = Ray_Sweep_ConvexMesh(point1, dir, &box_data.mesh, result);
 				break;
 			}
@@ -2526,7 +2526,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				result = Segment_Sweep_ConvexMesh(segment1_v, dir, &box_data.mesh, result);
 				break;
 			}
@@ -2575,8 +2575,8 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				GeometryOBB_t obb1, obb2;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
-				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
+				mathOBBFromAABB(&obb2, aabb2->min_v, aabb2->max_v);
 				result = OBB_Sweep_OBB(&obb1, dir, &obb2, result);
 				break;
 			}
@@ -2584,7 +2584,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				result = OBB_Sweep_OBB(&obb1, dir, obb2, result);
 				break;
 			}
@@ -2592,14 +2592,14 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				result = OBB_Sweep_Sphere(&obb1, dir, sphere2->o, sphere2->radius, result);
 				break;
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
 				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = Mesh_Sweep_Plane(&box_data.mesh, dir, plane2->v, plane2->normal, result);
 				break;
 			}
@@ -2608,13 +2608,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = Segment_Sweep_ConvexMesh((const CCTNum_t(*)[3])segment2->v, neg_dir, &box_data.mesh, result);
 				break;
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = ConvexMesh_Sweep_Polygon(&box_data.mesh, dir, (const GeometryPolygon_t*)geo_data2, result);
 				break;
 			}
@@ -2624,13 +2624,13 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				if (!mesh2->is_convex || !mesh2->is_closed) {
 					return NULL;
 				}
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = ConvexMesh_Sweep_ConvexMesh(&box_data.mesh, dir, mesh2, result);
 				break;
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = ConvexMesh_Sweep_Capsule(&box_data.mesh, dir, (const GeometryCapsule_t*)geo_data2, result);
 				break;
 			}
@@ -2638,7 +2638,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				result = Ray_Sweep_ConvexMesh((const CCTNum_t*)geo_data2, neg_dir, &box_data.mesh, result);
 				break;
 			}
@@ -2682,7 +2682,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				GeometryOBB_t obb2;
-				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				mathOBBFromAABB(&obb2, aabb2->min_v, aabb2->max_v);
 				result = OBB_Sweep_OBB(obb1, dir, &obb2, result);
 				break;
 			}
@@ -2738,7 +2738,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				GeometryOBB_t obb2;
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
-				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				mathOBBFromAABB(&obb2, aabb2->min_v, aabb2->max_v);
 				result = OBB_Sweep_Sphere(&obb2, neg_dir, sphere1->o, sphere1->radius, result);
 				break;
 			}
@@ -2835,7 +2835,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
 				result = ConvexMesh_Sweep_Polygon(&box_data.mesh, neg_dir, polygon1, result);
@@ -2911,7 +2911,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 				case GEOMETRY_BODY_AABB:
 				{
 					const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-					mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+					mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 					result = ConvexMesh_Sweep_ConvexMesh(mesh1, dir, &box_data.mesh, result);
 					break;
 				}
@@ -3000,7 +3000,7 @@ CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const 
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				mathVec3Negate(neg_dir, dir);
 				flag_neg_dir = 1;
 				result = ConvexMesh_Sweep_Capsule(&box_data.mesh, neg_dir, capsule1, result);

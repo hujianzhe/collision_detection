@@ -143,7 +143,10 @@ CCTNum_t* physInertiaTensor(const void* geo_data, int geo_type, CCTNum_t inertia
 		{
 			/* temp code */
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
-			return box_inertia_tensor(mesh->bound_box.half, inertia);
+			CCTNum_t half[3];
+			mathVec3Sub(half, mesh->bound_box.max_v, mesh->bound_box.min_v);
+			mathVec3MultiplyScalar(half, half, CCTNum(0.5));
+			return box_inertia_tensor(half, inertia);
 		}
 	}
 	return NULL;

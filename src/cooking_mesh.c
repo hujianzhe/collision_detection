@@ -202,7 +202,6 @@ extern "C" {
 
 GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryMesh_t* mesh) {
 	CCTNum_t(*dup_v)[3] = NULL;
-	CCTNum_t v1[3], v2[3];
 	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt = 0, i;
 	GeometryPolygon_t* tmp_polygons = NULL;
@@ -297,8 +296,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		}
 	}
 	/* save basic data result */
-	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, v1, v2);
-	mathAABBFromTwoVertice(v1, v2, mesh->bound_box.o, mesh->bound_box.half);
+	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, mesh->bound_box.min_v, mesh->bound_box.max_v);
 	mesh->v = dup_v;
 	mesh->v_indices = v_indices;
 	mesh->v_indices_cnt = v_indices_cnt;

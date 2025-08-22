@@ -320,11 +320,8 @@ void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* e
 	}
 }
 
-void mathAABBClosestPoint(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathAABBClosestPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
 	int i;
-	CCTNum_t min_v[3], max_v[3];
-	mathAABBMinVertice(o, half, min_v);
-	mathAABBMaxVertice(o, half, max_v);
 	for (i = 0; i < 3; ++i) {
 		if (p[i] < min_v[i]) {
 			closest_p[i] = min_v[i];

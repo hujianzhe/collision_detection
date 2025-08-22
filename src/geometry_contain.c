@@ -231,14 +231,14 @@ int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3])
 	return lensq <= radius_sq;
 }
 
-static int AABB_Contain_Mesh(const CCTNum_t o[3], const CCTNum_t half[3], const GeometryMesh_t* mesh) {
+static int AABB_Contain_Mesh(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const GeometryMesh_t* mesh) {
 	unsigned int i;
-	if (AABB_Contain_AABB(o, half, mesh->bound_box.o, mesh->bound_box.half)) {
+	if (AABB_Contain_AABB(min_v, max_v, mesh->bound_box.min_v, mesh->bound_box.max_v)) {
 		return 1;
 	}
 	for (i = 0; i < mesh->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!AABB_Contain_Point(o, half, p)) {
+		if (!AABB_Contain_Point(min_v, max_v, p)) {
 			return 0;
 		}
 	}
@@ -259,7 +259,7 @@ static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t
 static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
 	CCTNum_t p[8][3];
 	unsigned int i;
-	mathAABBVertices(mesh->bound_box.o, mesh->bound_box.half, p);
+	mathAABBVertices(mesh->bound_box.min_v, mesh->bound_box.max_v, p);
 	for (i = 0; i < 8; ++i) {
 		if (!OBB_Contain_Point(obb, p[i])) {
 			break;
@@ -633,7 +633,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	if (Box_Vertice_Indices_Default == mesh->v_indices) {
 		return Box_Contain_Point((const CCTNum_t(*)[3])mesh->v, p);
 	}
-	if (!AABB_Contain_Point(mesh->bound_box.o, mesh->bound_box.half, p)) {
+	if (!AABB_Contain_Point(mesh->bound_box.min_v, mesh->bound_box.max_v, p)) {
 		return 0;
 	}
 	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
@@ -641,7 +641,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 
 static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
 	unsigned int i;
-	if (!mathAABBIntersectAABB(mesh1->bound_box.o, mesh1->bound_box.half, mesh2->bound_box.o, mesh2->bound_box.half)) {
+	if (!mathAABBIntersectAABB(mesh1->bound_box.min_v, mesh1->bound_box.max_v, mesh2->bound_box.min_v, mesh2->bound_box.max_v)) {
 		return 0;
 	}
 	for (i = 0; i < mesh2->v_indices_cnt; ++i) {
@@ -653,13 +653,13 @@ static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMe
 	return 1;
 }
 
-static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t o[3], const CCTNum_t half[3]) {
+static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
 	CCTNum_t p[8][3];
 	unsigned int i;
-	if (!AABB_Contain_AABB(mesh->bound_box.o, mesh->bound_box.half, o, half)) {
+	if (!AABB_Contain_AABB(mesh->bound_box.min_v, mesh->bound_box.max_v, min_v, max_v)) {
 		return 0;
 	}
-	mathAABBVertices(o, half, p);
+	mathAABBVertices(min_v, max_v, p);
 	for (i = 0; i < 8; ++i) {
 		if (!ConvexMesh_Contain_Point(mesh, p[i])) {
 			return 0;
@@ -784,48 +784,48 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_POINT:
 			{
 				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
-				return AABB_Contain_Point(aabb1->o, aabb1->half, point2);
+				return AABB_Contain_Point(aabb1->min_v, aabb1->max_v, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return	AABB_Contain_Point(aabb1->o, aabb1->half, segment2->v[0]) &&
-					AABB_Contain_Point(aabb1->o, aabb1->half, segment2->v[1]);
+				return	AABB_Contain_Point(aabb1->min_v, aabb1->max_v, segment2->v[0]) &&
+					AABB_Contain_Point(aabb1->min_v, aabb1->max_v, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Contain_AABB(aabb1->o, aabb1->half, aabb2->o, aabb2->half);
+				return AABB_Contain_AABB(aabb1->min_v, aabb1->max_v, aabb2->min_v, aabb2->max_v);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				return OBB_Contain_OBB(&obb1, (const GeometryOBB_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				return OBB_Contain_VerticeIndices(&obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_MESH:
 			{
-				return AABB_Contain_Mesh(aabb1->o, aabb1->half, (const GeometryMesh_t*)geo_data2);
+				return AABB_Contain_Mesh(aabb1->min_v, aabb1->max_v, (const GeometryMesh_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
 				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				return OBB_Contain_Sphere(&obb1, sphere2->o, sphere2->radius);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
 				const GeometryCapsule_t* capsule2 = (const GeometryCapsule_t*)geo_data2;
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				return OBB_Contain_Capsule(&obb1, capsule2);
 			}
 		}
@@ -847,7 +847,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				GeometryOBB_t obb2;
-				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				mathOBBFromAABB(&obb2, aabb2->min_v, aabb2->max_v);
 				return OBB_Contain_OBB(obb1, &obb2);
 			}
 			case GEOMETRY_BODY_OBB:
@@ -892,7 +892,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(aabb2->o, aabb2->half, v);
+				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
 				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}
@@ -947,7 +947,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return ConvexMesh_Contain_AABB(mesh1, aabb2->o, aabb2->half);
+				return ConvexMesh_Contain_AABB(mesh1, aabb2->min_v, aabb2->max_v);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -991,7 +991,7 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(aabb2->o, aabb2->half, v);
+				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
 				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v,
 					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
 			}

@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-__declspec_dll GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t o[3], const CCTNum_t half[3]);
-__declspec_dll void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t o[3], CCTNum_t half[3]);
+__declspec_dll GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
+__declspec_dll void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t min_v[3], CCTNum_t max_v[3]);
 
 __declspec_dll void mathOBBVertices(const GeometryOBB_t* obb, CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int idx, CCTNum_t v[3]);

@@ -58,8 +58,8 @@ typedef struct GeometryCapsule_t {
 } GeometryCapsule_t;
 
 typedef struct GeometryAABB_t {
-	CCTNum_t o[3];
-	CCTNum_t half[3];
+	CCTNum_t min_v[3];
+	CCTNum_t max_v[3];
 } GeometryAABB_t;
 
 typedef struct GeometryOBB_t {

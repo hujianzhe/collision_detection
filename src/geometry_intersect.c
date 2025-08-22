@@ -599,20 +599,20 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 	return 1;
 }
 
-static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_o[3], const CCTNum_t aabb_half[3]) {
+static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3]) {
 	CCTNum_t closest_v[3];
-	mathAABBClosestPoint(aabb_o, aabb_half, sp_o, closest_v);
+	mathAABBClosestPoint(aabb_min_v, aabb_max_v, sp_o, closest_v);
 	mathVec3Sub(closest_v, closest_v, sp_o);
 	return mathVec3LenSq(closest_v) <= CCTNum_sq(sp_radius);
 }
 
-static int AABB_Intersect_Segment(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t ls[2][3]) {
+static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls[2][3]) {
 	int i;
 	CCTNum_t v[8][3];
-	if (AABB_Contain_Point(o, half, ls[0]) || AABB_Contain_Point(o, half, ls[1])) {
+	if (AABB_Contain_Point(min_v, max_v, ls[0]) || AABB_Contain_Point(min_v, max_v, ls[1])) {
 		return 1;
 	}
-	mathAABBVertices(o, half, v);
+	mathAABBVertices(min_v, max_v, v);
 	for (i = 0; i < 6; ++i) {
 		GeometryPolygon_t polygon;
 		mathBoxFace((const CCTNum_t(*)[3])v, AABB_Axis, i, &polygon);
@@ -805,7 +805,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Contain_Point(aabb2->o, aabb2->half, point1);
+				return AABB_Contain_Point(aabb2->min_v, aabb2->max_v, point1);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -855,7 +855,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Intersect_Segment(aabb2->o, aabb2->half, segment1_v);
+				return AABB_Intersect_Segment(aabb2->min_v, aabb2->max_v, segment1_v);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -889,39 +889,39 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return AABB_Contain_Point(aabb1->o, aabb1->half, (const CCTNum_t*)geo_data2);
+				return AABB_Contain_Point(aabb1->min_v, aabb1->max_v, (const CCTNum_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return mathAABBIntersectAABB(aabb1->o, aabb1->half, aabb2->o, aabb2->half);
+				return mathAABBIntersectAABB(aabb1->min_v, aabb1->max_v, aabb2->min_v, aabb2->max_v);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
 				const GeometrySphere_t* sphere2 = (const GeometrySphere_t*)geo_data2;
-				return Sphere_Intersect_AABB(sphere2->o, sphere2->radius, aabb1->o, aabb1->half);
+				return Sphere_Intersect_AABB(sphere2->o, sphere2->radius, aabb1->min_v, aabb1->max_v);
 			}
 			case GEOMETRY_BODY_PLANE:
 			{
 				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(aabb1->o, aabb1->half, v);
+				mathAABBVertices(aabb1->min_v, aabb1->max_v, v);
 				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane2->v, plane2->normal);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return AABB_Intersect_Segment(aabb1->o, aabb1->half, (const CCTNum_t(*)[3])segment2->v);
+				return AABB_Intersect_Segment(aabb1->min_v, aabb1->max_v, (const CCTNum_t(*)[3])segment2->v);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				return ConvexMesh_Intersect_Polygon(&box_data.mesh, (const GeometryPolygon_t*)geo_data2, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->o, aabb1->half);
+				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
 				return OBB_Intersect_OBB(&obb1, (const GeometryOBB_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_MESH:
@@ -930,12 +930,12 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 				if (!mesh2->is_convex || !mesh2->is_closed) {
 					return 0;
 				}
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				return ConvexMesh_Intersect_ConvexMesh(&box_data.mesh, mesh2);
 			}
 			case GEOMETRY_BODY_CAPSULE:
 			{
-				mathBoxMesh(&box_data, aabb1->o, aabb1->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb1->min_v, aabb1->max_v);
 				return Capsule_Intersect_ConvexMesh((const GeometryCapsule_t*)geo_data2, &box_data.mesh);
 			}
 		}
@@ -950,7 +950,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return Sphere_Intersect_AABB(sphere1->o, sphere1->radius, aabb2->o, aabb2->half);
+				return Sphere_Intersect_AABB(sphere1->o, sphere1->radius, aabb2->min_v, aabb2->max_v);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -1000,7 +1000,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
-				mathAABBVertices(aabb2->o, aabb2->half, v);
+				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
 				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, Box_Vertice_Indices_Default, 8, plane1->v, plane1->normal);
 			}
 			case GEOMETRY_BODY_OBB:
@@ -1066,7 +1066,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				return ConvexMesh_Intersect_Polygon(&box_data.mesh, polygon1, NULL);
 			}
 			case GEOMETRY_BODY_OBB:
@@ -1123,7 +1123,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				GeometryOBB_t obb2;
-				mathOBBFromAABB(&obb2, aabb2->o, aabb2->half);
+				mathOBBFromAABB(&obb2, aabb2->min_v, aabb2->max_v);
 				return OBB_Intersect_OBB(obb1, &obb2);
 			}
 			case GEOMETRY_BODY_SPHERE:
@@ -1178,7 +1178,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 				case GEOMETRY_BODY_AABB:
 				{
 					const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-					mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+					mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 					return ConvexMesh_Intersect_ConvexMesh(&box_data.mesh, mesh1);
 				}
 				case GEOMETRY_BODY_OBB:
@@ -1235,7 +1235,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				mathBoxMesh(&box_data, aabb2->o, aabb2->half, AABB_Axis);
+				mathAABBMesh(&box_data, aabb2->min_v, aabb2->max_v);
 				return Capsule_Intersect_ConvexMesh(capsule1, &box_data.mesh);
 			}
 			case GEOMETRY_BODY_OBB:
