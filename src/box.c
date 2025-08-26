@@ -165,6 +165,22 @@ const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned in
 	return Box_Edge_Adjacent_FaceIds + idx;
 }
 
+void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]) {
+	const CCTNum_t min_sz = GEOMETRY_BODY_BOX_MIN_HALF + GEOMETRY_BODY_BOX_MIN_HALF;
+	if (max_v[0] - min_v[0] < min_sz) {
+		max_v[0] += GEOMETRY_BODY_BOX_MIN_HALF;
+		min_v[0] -= GEOMETRY_BODY_BOX_MIN_HALF;
+	}
+	if (max_v[1] - min_v[1] < min_sz) {
+		max_v[1] += GEOMETRY_BODY_BOX_MIN_HALF;
+		min_v[1] -= GEOMETRY_BODY_BOX_MIN_HALF;
+	}
+	if (max_v[2] - min_v[2] < min_sz) {
+		max_v[2] += GEOMETRY_BODY_BOX_MIN_HALF;
+		min_v[2] -= GEOMETRY_BODY_BOX_MIN_HALF;
+	}
+}
+
 void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) {
 	CCTNum_t new_axis1[3], new_axis2[3];
 	mathVec3Normalized(axis0, axis0);

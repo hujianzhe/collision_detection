@@ -297,6 +297,7 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	}
 	/* save basic data result */
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, mesh->bound_box.min_v, mesh->bound_box.max_v);
+	mathAABBFixSize(mesh->bound_box.min_v, mesh->bound_box.max_v);
 	mesh->v = dup_v;
 	mesh->v_indices = v_indices;
 	mesh->v_indices_cnt = v_indices_cnt;

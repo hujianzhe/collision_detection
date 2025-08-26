@@ -148,11 +148,16 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
 			unsigned int i;
-			if (!CCTNum_chkvals(aabb->min_v, 3)) {
-				return 0;
-			}
-			if (!CCTNum_chkvals(aabb->max_v, 3)) {
-				return 0;
+			for (i = 0; i < 3; ++i) {
+				if (!CCTNum_chkval(aabb->min_v[i])) {
+					return 0;
+				}
+				if (!CCTNum_chkval(aabb->max_v[i])) {
+					return 0;
+				}
+				if (aabb->max_v[i] - aabb->min_v[i] < GEOMETRY_BODY_BOX_MIN_HALF) {
+					return 0;
+				}
 			}
 			return 1;
 		}
@@ -607,7 +612,9 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
+			const CCTNum_t min_sz = GEOMETRY_BODY_BOX_MIN_HALF + GEOMETRY_BODY_BOX_MIN_HALF;
 			mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])segment->v, 2, aabb->min_v, aabb->max_v);
+			mathAABBFixSize(aabb->min_v, aabb->max_v);
 			break;
 		}
 		case GEOMETRY_BODY_AABB:
@@ -645,6 +652,7 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 			if (!mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, aabb->min_v, aabb->max_v)) {
 				return NULL;
 			}
+			mathAABBFixSize(aabb->min_v, aabb->max_v);
 			break;
 		}
 		case GEOMETRY_BODY_MESH:
@@ -868,6 +876,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 				point_rotate(polygon->center, o, q);
 			}
 			mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, mesh->bound_box.min_v, mesh->bound_box.max_v);
+			mathAABBFixSize(mesh->bound_box.min_v, mesh->bound_box.max_v);
 			return 1;
 		}
 		case GEOMETRY_BODY_SPHERE:
@@ -983,7 +992,8 @@ int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], 
 				CCTNum_t* v = mesh->v[mesh->v_indices[i]];
 				mathVec3Add(v, v, delta);
 			}
-			mathVertexIndicesFindMinMaxXYZ((const CCTNum_t(*)[3])mesh->v, mesh->v_indices, mesh->v_indices_cnt, mesh->bound_box.min_v, mesh->bound_box.max_v);
+			mathVec3Add(mesh->bound_box.min_v, mesh->bound_box.min_v, delta);
+			mathVec3Add(mesh->bound_box.max_v, mesh->bound_box.max_v, delta);
 			return 1;
 		}
 		case GEOMETRY_BODY_SPHERE:
