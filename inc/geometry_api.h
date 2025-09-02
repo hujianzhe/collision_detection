@@ -48,6 +48,8 @@ __declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo
 
 __declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]);
 __declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian);
+__declspec_dll CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]);
+
 __declspec_dll int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]);
 __declspec_dll int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
 

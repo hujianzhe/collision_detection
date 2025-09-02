@@ -917,6 +917,35 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ax
 	return mathGeometryRotate(geo_data, geo_type, q);
 }
 
+CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]) {
+	if (!mathVec3Equal(from_up, to_up)) {
+		CCTNum_t front_q[4];
+		CCTNum_t to_right[3], up_in_plane[3], temp_front[3];
+		mathVec3Cross(to_right, to_up, to_front);
+		mathVec3Glide(up_in_plane, from_up, to_right);
+		if (!mathVec3Equal(up_in_plane, from_up)) {
+			CCTNum_t q1[4], q2[4];
+			mathVec3Normalized(up_in_plane, up_in_plane);
+			mathQuatFromUnitVec3(q1, from_up, up_in_plane, NULL);
+			mathQuatFromUnitVec3(q2, up_in_plane, to_up, to_right);
+			mathQuatMulQuat(q, q2, q1);
+		}
+		else {
+			mathQuatFromUnitVec3(q, from_up, to_up, to_right);
+		}
+		mathQuatMulVec3(temp_front, q, from_front);
+		mathQuatFromUnitVec3(front_q, temp_front, to_front, to_up);
+		mathQuatMulQuat(q, front_q, q);
+	}
+	else if (!mathVec3Equal(from_front, to_front)) {
+		mathQuatFromUnitVec3(q, from_front, to_front, from_up);
+	}
+	else {
+		mathQuatIdentity(q);
+	}
+	return q;
+}
+
 int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) {
 	if (mathQuatIsZeroOrIdentity(q)) {
 		return 1;
