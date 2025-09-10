@@ -160,6 +160,13 @@ CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]) {
 	return dx * dx + dy * dy + dz * dz;
 }
 
+CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
+	mp[0] = p1[0] + (p2[0] - p1[0]) * CCTNum(0.5);
+	mp[1] = p1[1] + (p2[1] - p1[1]) * CCTNum(0.5);
+	mp[2] = p1[2] + (p2[2] - p1[2]) * CCTNum(0.5);
+	return mp;
+}
+
 /* r = -v */
 CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]) {
 	r[0] = -v[0];
