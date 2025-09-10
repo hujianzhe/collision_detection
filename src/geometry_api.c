@@ -668,54 +668,40 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 	return aabb;
 }
 
-GeometrySphere_t* mathGeometryBoundingSphere(const void* geo_data, int geo_type, GeometrySphere_t* sphere) {
+CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
+	CCTNum_t l[3];
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
 			const CCTNum_t* point = (const CCTNum_t*)geo_data;
-			mathVec3Copy(sphere->o, point);
-			sphere->radius = GEOMETRY_BODY_BOX_MIN_HALF;
-			break;
+			return CCT_GAP_DISTANCE;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
-			CCTNum_t axis[3];
-			mathVec3Sub(axis, segment->v[1], segment->v[0]);
-			sphere->radius = mathVec3Normalized(axis, axis) * CCTNum(0.5);
-			mathVec3Copy(sphere->o, segment->v[0]);
-			mathVec3AddScalar(sphere->o, axis, sphere->radius);
-			break;
+			mathVec3Sub(l, segment->v[1], segment->v[0]);
+			return mathVec3Normalized(l, l) * CCTNum(0.5);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			CCTNum_t l[3];
 			mathVec3Sub(l, aabb->max_v, aabb->min_v);
-			mathVec3MultiplyScalar(l, l, CCTNum(0.5));
-			mathVec3Add(sphere->o, aabb->min_v, l);
-			sphere->radius = mathVec3Len(l);
-			break;
+			return mathVec3Len(l) * CCTNum(0.5);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			*sphere = *(const GeometrySphere_t*)geo_data;
-			break;
+			return ((const GeometrySphere_t*)geo_data)->radius;
 		}
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
 			CCTNum_t radius_sq = CCTNum_sq(obb->half[0]) + CCTNum_sq(obb->half[1]) + CCTNum_sq(obb->half[2]);
-			mathVec3Copy(sphere->o, obb->o);
-			sphere->radius = CCTNum_sqrt(radius_sq);
-			break;
+			return CCTNum_sqrt(radius_sq);
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
-			mathVec3Copy(sphere->o, capsule->o);
-			sphere->radius = capsule->half + capsule->radius;
-			break;
+			return capsule->half + capsule->radius;
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
@@ -729,27 +715,16 @@ GeometrySphere_t* mathGeometryBoundingSphere(const void* geo_data, int geo_type,
 					max_distance_sq = d;
 				}
 			}
-			mathVec3Copy(sphere->o, polygon->center);
-			sphere->radius = CCTNum_sqrt(max_distance_sq);
-			break;
+			return CCTNum_sqrt(max_distance_sq);
 		}
 		case GEOMETRY_BODY_MESH:
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
-			const GeometryAABB_t* aabb = &mesh->bound_box;
-			CCTNum_t l[3];
 			mathVec3Sub(l, mesh->bound_box.max_v, mesh->bound_box.min_v);
-			mathVec3MultiplyScalar(l, l, CCTNum(0.5));
-			mathVec3Add(sphere->o, mesh->bound_box.min_v, l);
-			sphere->radius = mathVec3Len(l);
-			break;
-		}
-		default:
-		{
-			return NULL;
+			return mathVec3Len(l) * CCTNum(0.5);
 		}
 	}
-	return sphere;
+	return CCTNum(0.0);
 }
 
 GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate) {

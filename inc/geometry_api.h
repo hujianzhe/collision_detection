@@ -43,7 +43,7 @@ __declspec_dll CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_t
 __declspec_dll void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]);
 
 __declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb);
-__declspec_dll GeometrySphere_t* mathGeometryBoundingSphere(const void* geo_data, int geo_type, GeometrySphere_t* sphere);
+__declspec_dll CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type);
 __declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate);
 
 __declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]);
