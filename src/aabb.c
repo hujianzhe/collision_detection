@@ -137,6 +137,27 @@ void mathAABBCenterHalf(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum
 	mathVec3MultiplyScalar(half, half, CCTNum(0.5));
 }
 
+void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]) {
+	if (dst_min_v[0] > p[0]) {
+		dst_min_v[0] = p[0];
+	}
+	else if (dst_max_v[0] < p[0]) {
+		dst_max_v[0] = p[0];
+	}
+	if (dst_min_v[1] > p[1]) {
+		dst_min_v[1] = p[1];
+	}
+	else if (dst_max_v[1] < p[1]) {
+		dst_max_v[1] = p[1];
+	}
+	if (dst_min_v[2] > p[2]) {
+		dst_min_v[2] = p[2];
+	}
+	else if (dst_max_v[2] < p[2]) {
+		dst_max_v[2] = p[2];
+	}
+}
+
 void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]) {
 	if (dst_min_v[0] > src_min_v[0]) {
 		dst_min_v[0] = src_min_v[0];

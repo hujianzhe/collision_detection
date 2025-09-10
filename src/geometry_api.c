@@ -673,14 +673,13 @@ CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			const CCTNum_t* point = (const CCTNum_t*)geo_data;
 			return CCT_GAP_DISTANCE;
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
 			mathVec3Sub(l, segment->v[1], segment->v[0]);
-			return mathVec3Normalized(l, l) * CCTNum(0.5);
+			return mathVec3Len(l) * CCTNum(0.5);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
