@@ -130,13 +130,6 @@ CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsig
 	return NULL;
 }
 
-void mathAABBCenterHalf(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t center[3], CCTNum_t half[3]) {
-	mathVec3Add(center, min_v, max_v);
-	mathVec3MultiplyScalar(center, center, CCTNum(0.5));
-	mathVec3Sub(half, max_v, min_v);
-	mathVec3MultiplyScalar(half, half, CCTNum(0.5));
-}
-
 void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]) {
 	if (dst_min_v[0] > p[0]) {
 		dst_min_v[0] = p[0];

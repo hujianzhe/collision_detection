@@ -22,7 +22,6 @@ __declspec_dll void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_
 __declspec_dll void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int v_id, CCTNum_t v[3]);
 
-__declspec_dll void mathAABBCenterHalf(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t center[3], CCTNum_t half[3]);
 __declspec_dll void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]);
 __declspec_dll void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]);
 

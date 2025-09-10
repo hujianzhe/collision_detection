@@ -246,15 +246,6 @@ CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3
 	return r;
 }
 
-CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
-	mathVec3Cross(r, v1, v2);
-	if (mathVec3IsZero(r)) {
-		r[0] = r[1] = r[2] = CCTNum(0.0);
-		return CCTNum(0.0);
-	}
-	return mathVec3Normalized(r, r);
-}
-
 int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	CCTNum_t x, y, z;
 	x = v1[1] * v2[2] - v1[2] * v2[1];

@@ -447,59 +447,45 @@ CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
-			mathVec3Copy(v, (const CCTNum_t*)geo_data);
-			break;
+			return mathVec3Copy(v, (const CCTNum_t*)geo_data);
 		}
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
-			mathVec3Add(v, segment->v[0], segment->v[1]);
-			mathVec3MultiplyScalar(v, v, CCTNum(0.5));
-			break;
+			return mathVec3Midpoint(v, segment->v[0], segment->v[1]);
 		}
 		case GEOMETRY_BODY_PLANE:
 		{
-			mathVec3Copy(v, ((const GeometryPlane_t*)geo_data)->v);
-			break;
+			return mathVec3Copy(v, ((const GeometryPlane_t*)geo_data)->v);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
-			mathVec3Copy(v, ((const GeometrySphere_t*)geo_data)->o);
-			break;
+			return mathVec3Copy(v, ((const GeometrySphere_t*)geo_data)->o);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
-			mathVec3Add(v, aabb->min_v, aabb->max_v);
-			mathVec3MultiplyScalar(v, v, CCTNum(0.5));
-			break;
+			return mathVec3Midpoint(v, aabb->min_v, aabb->max_v);
 		}
 		case GEOMETRY_BODY_OBB:
 		{
-			mathVec3Copy(v, ((const GeometryOBB_t*)geo_data)->o);
-			break;
+			return mathVec3Copy(v, ((const GeometryOBB_t*)geo_data)->o);
 		}
 		case GEOMETRY_BODY_POLYGON:
 		{
-			mathVec3Copy(v, ((const GeometryPolygon_t*)geo_data)->center);
-			break;
+			return mathVec3Copy(v, ((const GeometryPolygon_t*)geo_data)->center);
 		}
 		case GEOMETRY_BODY_MESH:
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
-			mathVec3Add(v, mesh->bound_box.min_v, mesh->bound_box.max_v);
-			mathVec3MultiplyScalar(v, v, CCTNum(0.5));
-			break;
+			return mathVec3Midpoint(v, mesh->bound_box.min_v, mesh->bound_box.max_v);
 		}
 		case GEOMETRY_BODY_CAPSULE:
 		{
-			mathVec3Copy(v, ((const GeometryCapsule_t*)geo_data)->o);
-			break;
+			return mathVec3Copy(v, ((const GeometryCapsule_t*)geo_data)->o);
 		}
-		default:
-			return NULL;
 	}
-	return v;
+	return NULL;
 }
 
 void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) {
@@ -513,8 +499,7 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 		{
 			CCTNum_t delta[3], o[3];
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
-			mathVec3Add(o, segment->v[0], segment->v[1]);
-			mathVec3MultiplyScalar(o, o, CCTNum(0.5));
+			mathVec3Midpoint(o, segment->v[0], segment->v[1]);
 			mathVec3Sub(delta, v, o);
 			mathVec3Add(segment->v[0], segment->v[0], delta);
 			mathVec3Add(segment->v[1], segment->v[1], delta);
@@ -569,8 +554,7 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 			unsigned int i;
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			CCTNum_t delta[3], o[3], l[3];
-			mathVec3Add(o, mesh->bound_box.min_v, mesh->bound_box.max_v);
-			mathVec3MultiplyScalar(o, o, CCTNum(0.5));
+			mathVec3Midpoint(o, mesh->bound_box.min_v, mesh->bound_box.max_v);
 			if (mathVec3EqualEps(v, o, CCTNum(0.0))) {
 				return;
 			}
@@ -612,7 +596,6 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 		case GEOMETRY_BODY_SEGMENT:
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
-			const CCTNum_t min_sz = GEOMETRY_BODY_BOX_MIN_HALF + GEOMETRY_BODY_BOX_MIN_HALF;
 			mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])segment->v, 2, aabb->min_v, aabb->max_v);
 			mathAABBFixSize(aabb->min_v, aabb->max_v);
 			break;
@@ -679,13 +662,15 @@ CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
 		{
 			const GeometrySegment_t* segment = (const GeometrySegment_t*)geo_data;
 			mathVec3Sub(l, segment->v[1], segment->v[0]);
-			return mathVec3Len(l) * CCTNum(0.5);
+			mathVec3MultiplyScalar(l, l, CCTNum(0.5));
+			return mathVec3Len(l);
 		}
 		case GEOMETRY_BODY_AABB:
 		{
 			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
 			mathVec3Sub(l, aabb->max_v, aabb->min_v);
-			return mathVec3Len(l) * CCTNum(0.5);
+			mathVec3MultiplyScalar(l, l, CCTNum(0.5));
+			return mathVec3Len(l);
 		}
 		case GEOMETRY_BODY_SPHERE:
 		{
@@ -720,7 +705,8 @@ CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
 		{
 			const GeometryMesh_t* mesh = (const GeometryMesh_t*)geo_data;
 			mathVec3Sub(l, mesh->bound_box.max_v, mesh->bound_box.min_v);
-			return mathVec3Len(l) * CCTNum(0.5);
+			mathVec3MultiplyScalar(l, l, CCTNum(0.5));
+			return mathVec3Len(l);
 		}
 	}
 	return CCTNum(0.0);
@@ -802,8 +788,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 		{
 			GeometrySegment_t* segment = (GeometrySegment_t*)geo_data;
 			CCTNum_t o[3];
-			mathVec3Add(o, segment->v[0], segment->v[1]);
-			mathVec3MultiplyScalar(o, o, CCTNum(0.5));
+			mathVec3Midpoint(o, segment->v[0], segment->v[1]);
 			point_rotate(segment->v[0], o, q);
 			point_rotate(segment->v[1], o, q);
 			return 1;
@@ -838,8 +823,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			unsigned int i;
 			CCTNum_t o[3];
-			mathVec3Add(o, mesh->bound_box.min_v, mesh->bound_box.max_v);
-			mathVec3MultiplyScalar(o, o, CCTNum(0.5));
+			mathVec3Midpoint(o, mesh->bound_box.min_v, mesh->bound_box.max_v);
 			indices_rotate(mesh->v, mesh->v_indices, mesh->v_indices_cnt, o, q);
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
 				GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -980,8 +964,7 @@ int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], 
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
 			unsigned int i;
 			CCTNum_t delta[3], new_center[3], center[3];
-			mathVec3Add(center, mesh->bound_box.min_v, mesh->bound_box.max_v);
-			mathVec3MultiplyScalar(center, center, CCTNum(0.5));
+			mathVec3Midpoint(center, mesh->bound_box.min_v, mesh->bound_box.max_v);
 			point_rotate(new_center, base_p, q);
 			mathVec3Sub(delta, new_center, center);
 			if (mathVec3IsZero(delta)) {

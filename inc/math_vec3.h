@@ -36,7 +36,6 @@ __declspec_dll CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[
 __declspec_dll CCTNum_t mathVec3Dot(const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll CCTNum_t mathVec3Radian(const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t mathVec3CrossNormalized(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]);
 __declspec_dll CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]);
