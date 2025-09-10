@@ -50,10 +50,10 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	}
 	root->childs = &tree->nodes[1 + ((root - tree->nodes) << 3)];
 
-	mathVec3Add(root_pos, root->min_v, root->max_v);
-	mathVec3MultiplyScalar(root_pos, root_pos, CCTNum(0.5));
 	mathVec3Sub(new_half, root->max_v, root->min_v);
-	mathVec3MultiplyScalar(new_half, new_half, CCTNum(0.25));
+	mathVec3MultiplyScalar(new_half, new_half, CCTNum(0.5));
+	mathVec3Add(root_pos, root->min_v, new_half);
+	mathVec3MultiplyScalar(new_half, new_half, CCTNum(0.5));
 	mathVec3Sub(new_min_v, root_pos, new_half);
 	mathVec3Add(new_max_v, root_pos, new_half);
 
