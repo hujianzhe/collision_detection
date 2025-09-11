@@ -771,6 +771,46 @@ GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t
 			}
 			return geo_inflate;
 		}
+		case GEOMETRY_BODY_OBB:
+		{
+			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
+			if (inflate < CCTNum(0.0)) {
+				CCTNum_t inflate_abs = CCTNum_abs(inflate);
+				if (inflate_abs >= obb->half[0] || inflate_abs >= obb->half[1] || inflate_abs >= obb->half[2]) {
+					geo_inflate->type = GEOMETRY_BODY_POINT;
+					mathVec3Copy(geo_inflate->point, obb->o);
+					return geo_inflate;
+				}
+			}
+			geo_inflate->type = GEOMETRY_BODY_OBB;
+			geo_inflate->obb = *obb;
+			geo_inflate->obb.half[0] += inflate;
+			geo_inflate->obb.half[1] += inflate;
+			geo_inflate->obb.half[2] += inflate;
+			return geo_inflate;
+		}
+		case GEOMETRY_BODY_AABB:
+		{
+			const GeometryAABB_t* aabb = (const GeometryAABB_t*)geo_data;
+			CCTNum_t o[3], half[3];
+			mathVec3Midpoint(o, aabb->min_v, aabb->max_v);
+			mathVec3Sub(half, o, aabb->min_v);
+			if (inflate < CCTNum(0.0)) {
+				CCTNum_t inflate_abs = CCTNum_abs(inflate);
+				if (inflate_abs >= half[0] || inflate_abs >= half[1] || inflate_abs >= half[2]) {
+					geo_inflate->type = GEOMETRY_BODY_POINT;
+					mathVec3Copy(geo_inflate->point, o);
+					return geo_inflate;
+				}
+			}
+			half[0] += inflate;
+			half[1] += inflate;
+			half[2] += inflate;
+			geo_inflate->type = GEOMETRY_BODY_AABB;
+			mathVec3Sub(geo_inflate->aabb.min_v, o, half);
+			mathVec3Add(geo_inflate->aabb.max_v, o, half);
+			return geo_inflate;
+		}
 	}
 	return NULL;
 }
