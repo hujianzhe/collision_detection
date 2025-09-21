@@ -40,7 +40,7 @@ int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 
 int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
 	CCTNum_t delta;
-	if (0.0 == eps) {
+	if (CCTNum(0.0) == eps) {
 		return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
 	}
 
@@ -57,6 +57,21 @@ int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
 		return 0;
 	}
 	return 1;
+}
+
+int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+	return	CCTNum_abs(v1[0] + v2[0]) <= CCT_EPSILON &&
+			CCTNum_abs(v1[1] + v2[1]) <= CCT_EPSILON &&
+			CCTNum_abs(v1[2] + v2[2]) <= CCT_EPSILON;
+}
+
+int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
+	if (CCTNum(0.0) == eps) {
+		return v1[0] == -v2[0] && v1[1] == -v2[1] && v1[2] == -v2[2];
+	}
+	return	CCTNum_abs(v1[0] + v2[0]) <= eps &&
+			CCTNum_abs(v1[1] + v2[1]) <= eps &&
+			CCTNum_abs(v1[2] + v2[2]) <= eps;
 }
 
 CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
