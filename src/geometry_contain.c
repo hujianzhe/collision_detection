@@ -527,8 +527,15 @@ static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNu
 			}
 			mathVec3Normalized(e_dir, e_dir);
 			d = mathLineCrossLine(ls_p0, ls_dir, ep0, e_dir);
-			if (d < ls_len) {
-				return 0;
+			if (d > CCTNum(0.0) && d < ls_len) {
+				CCTNum_t p[3], l[3], r[3];
+				mathVec3Copy(p, ls_p0);
+				mathVec3AddScalar(p, ls_dir, d);
+				mathVec3Sub(l, ep0, p);
+				mathVec3Sub(r, ep1, p);
+				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
+					return 0;
+				}
 			}
 		}
 	}
@@ -568,15 +575,21 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
 			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
 			for (j = 0; j < polygon1_edge_v_indices_cnt; j += 2) {
-				CCTNum_t d, N[3];
+				CCTNum_t d, N[3], p[3], l[3], r[3];
 				const CCTNum_t* ls1_dir = polygon1_ls_dir_caches[j / 2];
 				mathVec3Cross(N, ls2_dir, ls1_dir);
 				if (mathVec3IsZero(N)) {
 					continue;
 				}
 				d = mathLineCrossLine(ls2_v1, ls2_dir, polygon1->v[polygon1->edge_v_indices_flat[j]], ls1_dir);
-				if (d < ls2_len) {
-					free(polygon1_ls_dir_caches);
+				if (d <= CCTNum(0.0) || d >= ls2_len) {
+					continue;
+				}
+				mathVec3Copy(p, ls2_v1);
+				mathVec3AddScalar(p, ls2_dir, d);
+				mathVec3Sub(l, polygon1->v[polygon1->edge_v_indices_flat[j]], p);
+				mathVec3Sub(r, polygon1->v[polygon1->edge_v_indices_flat[j + 1]], p);
+				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
 					return 0;
 				}
 			}
@@ -592,7 +605,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
 			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
 			for (j = 0; j < polygon1_edge_v_indices_cnt; ) {
-				CCTNum_t ls1_dir[3], N[3], d;
+				CCTNum_t ls1_dir[3], N[3], p[3], l[3], r[3], d;
 				const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
 				const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
 				mathVec3Sub(ls1_dir, ls1_v2, ls1_v1);
@@ -602,7 +615,14 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 				}
 				mathVec3Normalized(ls1_dir, ls1_dir);
 				d = mathLineCrossLine(ls2_v1, ls2_dir, ls1_v1, ls1_dir);
-				if (d < ls2_len) {
+				if (d <= CCTNum(0.0) || d >= ls2_len) {
+					continue;
+				}
+				mathVec3Copy(p, ls2_v1);
+				mathVec3AddScalar(p, ls2_dir, d);
+				mathVec3Sub(l, ls1_v1, p);
+				mathVec3Sub(r, ls1_v2, p);
+				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
 					return 0;
 				}
 			}
