@@ -6,12 +6,12 @@
 #define	UTIL_C_CRT_OCTREE_H
 
 #include "number_define.h"
-#include "list.h"
 
+struct OctreeObject_t;
 typedef struct OctreeNode_t {
 	CCTNum_t min_v[3];
 	CCTNum_t max_v[3];
-	List_t obj_list;
+	struct OctreeObject_t* obj_list_head;
 	unsigned int obj_cnt;
 	unsigned int deep_num; /* from 1,2,3... */
 	struct OctreeNode_t* parent;
@@ -19,7 +19,8 @@ typedef struct OctreeNode_t {
 } OctreeNode_t;
 
 typedef struct OctreeObject_t {
-	ListNode_t _node;
+	struct OctreeObject_t* prev;
+	struct OctreeObject_t* next;
 	const CCTNum_t* min_v; /* point to your CCTNum_t[3] */
 	const CCTNum_t* max_v;	/* point to your CCTNum_t[3] */
 	OctreeNode_t* oct;

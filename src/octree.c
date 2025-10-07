@@ -7,7 +7,30 @@
 #include "../inc/octree.h"
 #include <stdlib.h>
 
-#define pod_container_of(address, type, field)		((type *)((char*)(address) - (char*)(&((type *)0)->field)))
+static void insert_obj_to_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) {
+	if (oct_node->obj_list_head) {
+		oct_node->obj_list_head->prev = oct_obj;
+	}
+	oct_obj->next = oct_node->obj_list_head;
+	oct_obj->prev = NULL;
+	oct_node->obj_list_head = oct_obj;
+	++oct_node->obj_cnt;
+	oct_obj->oct = oct_node;
+}
+
+static void del_obj_from_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) {
+	if (oct_node->obj_list_head == oct_obj) {
+		oct_node->obj_list_head = oct_obj->next;
+	}
+	if (oct_obj->prev) {
+		oct_obj->prev->next = oct_obj->next;
+	}
+	if (oct_obj->next) {
+		oct_obj->next->prev = oct_obj->prev;
+	}
+	--oct_node->obj_cnt;
+	oct_obj->oct = NULL;
+}
 
 static size_t octree_level_nodes_cnt(unsigned int deep_num) {
 	size_t cnt = 1;
@@ -33,7 +56,7 @@ static size_t octree_total_nodes_cnt(unsigned int max_deep_num) {
 static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3]) {
 	mathVec3Sub(root->min_v, pos, half);
 	mathVec3Add(root->max_v, pos, half);
-	listInit(&root->obj_list);
+	root->obj_list_head = NULL;
 	root->obj_cnt = 0;
 	root->deep_num = 0;
 	root->parent = NULL;
@@ -42,7 +65,7 @@ static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CC
 
 static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 	int i;
-	ListNode_t* cur, *next;
+	OctreeObject_t* obj, *obj_next;
 	CCTNum_t new_o[8][3], new_min_v[3], new_max_v[3], root_pos[3], new_half[3];
 
 	if (root->childs) {
@@ -64,19 +87,15 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 		child->parent = root;
 		child->deep_num = root->deep_num + 1;
 	}
-	for (cur = root->obj_list.head; cur; cur = next) {
-		OctreeObject_t* obj = pod_container_of(cur, OctreeObject_t, _node);
-		next = cur->next;
+	for (obj = root->obj_list_head; obj; obj = obj_next) {
+		obj_next = obj->next;
 		for (i = 0; i < 8; ++i) {
 			OctreeNode_t* child = root->childs + i;
 			if (!AABB_Contain_AABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
 				continue;
 			}
-			listRemoveNode(&root->obj_list, cur);
-			root->obj_cnt--;
-			listPushNodeBack(&child->obj_list, cur);
-			child->obj_cnt++;
-			obj->oct = child;
+			del_obj_from_list(root, obj);
+			insert_obj_to_list(child, obj);
 			break;
 		}
 	}
@@ -134,9 +153,7 @@ void octreeRemoveObject(OctreeObject_t* obj) {
 	if (!oct) {
 		return;
 	}
-	listRemoveNode(&oct->obj_list, &obj->_node);
-	oct->obj_cnt--;
-	obj->oct = NULL;
+	del_obj_from_list(oct, obj);
 }
 
 void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
@@ -156,12 +173,9 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 					break;
 				}
 				if (obj_oct) {
-					listRemoveNode(&obj_oct->obj_list, &obj->_node);
-					obj_oct->obj_cnt--;
+					del_obj_from_list(obj_oct, obj);
 				}
-				listPushNodeBack(&child->obj_list, &obj->_node);
-				child->obj_cnt++;
-				obj->oct = child;
+				insert_obj_to_list(child, obj);
 				find = 1;
 				break;
 			}
@@ -176,13 +190,10 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 			if (oct == obj_oct) {
 				return;
 			}
-			else if (obj_oct) {
-				listRemoveNode(&obj_oct->obj_list, &obj->_node);
-				obj_oct->obj_cnt--;
+			if (obj_oct) {
+				del_obj_from_list(obj_oct, obj);
 			}
-			listPushNodeBack(&oct->obj_list, &obj->_node);
-			oct->obj_cnt++;
-			obj->oct = oct;
+			insert_obj_to_list(oct, obj);
 			break;
 		}
 		oct = oct->parent;
@@ -192,12 +203,9 @@ void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
 			return;
 		}
 		if (obj_oct) {
-			listRemoveNode(&obj_oct->obj_list, &obj->_node);
-			obj_oct->obj_cnt--;
+			del_obj_from_list(obj_oct, obj);
 		}
-		listPushNodeBack(&root->obj_list, &obj->_node);
-		root->obj_cnt++;
-		obj->oct = root;
+		insert_obj_to_list(root, obj);
 		return;
 	}
 	if (obj->oct->obj_cnt > tree->split_cnt_per_node && obj->oct->deep_num < tree->max_deep_num) {
@@ -254,12 +262,11 @@ void octreeClear(Octree_t* tree) {
 	size_t i;
 	for (i = 0; i < tree->nodes_cnt; ++i) {
 		OctreeNode_t* node = tree->nodes + i;
-		ListNode_t* cur;
-		for (cur = node->obj_list.head; cur; cur = cur->next) {
-			OctreeObject_t* obj = pod_container_of(cur, OctreeObject_t, _node);
+		OctreeObject_t* obj;
+		for (obj = node->obj_list_head; obj; obj = obj->next) {
 			obj->oct = NULL;
 		}
-		listInit(&node->obj_list);
+		node->obj_list_head = NULL;
 		node->obj_cnt = 0;
 		node->parent = node->childs = NULL;
 	}
@@ -269,9 +276,8 @@ void octreeDestroy(Octree_t* tree) {
 	size_t i;
 	for (i = 0; i < tree->nodes_cnt; ++i) {
 		OctreeNode_t* node = tree->nodes + i;
-		ListNode_t* cur;
-		for (cur = node->obj_list.head; cur; cur = cur->next) {
-			OctreeObject_t* obj = pod_container_of(cur, OctreeObject_t, _node);
+		OctreeObject_t* obj;
+		for (obj = node->obj_list_head; obj; obj = obj->next) {
 			obj->oct = NULL;
 		}
 	}

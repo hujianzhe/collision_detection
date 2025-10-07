@@ -53,8 +53,7 @@ int mathPlaneEqual(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2
 	if (dot < CCT_EPSILON_NEGATE || dot > CCT_EPSILON) {
 		return 0;
 	}
-	mathVec3Cross(v, n1, n2);
-	return mathVec3IsZero(v);
+	return mathVec3IsParallel(n1, n2);
 }
 
 #ifdef __cplusplus

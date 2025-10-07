@@ -12,7 +12,6 @@
 #include "geometry_closest.h"
 #include "gjk.h"
 #include "line_segment.h"
-#include "list.h"
 #include "math_matrix3.h"
 #include "math_quat.h"
 #include "math_vec3.h"
