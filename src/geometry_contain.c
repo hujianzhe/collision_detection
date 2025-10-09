@@ -590,41 +590,41 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 				mathVec3Sub(l, polygon1->v[polygon1->edge_v_indices_flat[j]], p);
 				mathVec3Sub(r, polygon1->v[polygon1->edge_v_indices_flat[j + 1]], p);
 				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
+					free(polygon1_ls_dir_caches);
 					return 0;
 				}
 			}
 		}
 		free(polygon1_ls_dir_caches);
+		return 1;
 	}
-	else {
-		for (i = 0; i < polygon2_edge_v_indices_cnt; ) {
-			unsigned int j;
-			CCTNum_t ls2_dir[3], ls2_len;
-			const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_v_indices_flat[i++]];
-			const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_v_indices_flat[i++]];
-			mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
-			ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
-			for (j = 0; j < polygon1_edge_v_indices_cnt; ) {
-				CCTNum_t ls1_dir[3], N[3], p[3], l[3], r[3], d;
-				const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
-				const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
-				mathVec3Sub(ls1_dir, ls1_v2, ls1_v1);
-				mathVec3Cross(N, ls2_dir, ls1_dir);
-				if (mathVec3IsZero(N)) {
-					continue;
-				}
-				mathVec3Normalized(ls1_dir, ls1_dir);
-				d = mathLineCrossLine(ls2_v1, ls2_dir, ls1_v1, ls1_dir);
-				if (d <= CCTNum(0.0) || d >= ls2_len) {
-					continue;
-				}
-				mathVec3Copy(p, ls2_v1);
-				mathVec3AddScalar(p, ls2_dir, d);
-				mathVec3Sub(l, ls1_v1, p);
-				mathVec3Sub(r, ls1_v2, p);
-				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
-					return 0;
-				}
+	for (i = 0; i < polygon2_edge_v_indices_cnt; ) {
+		unsigned int j;
+		CCTNum_t ls2_dir[3], ls2_len;
+		const CCTNum_t* ls2_v1 = polygon2->v[polygon2->edge_v_indices_flat[i++]];
+		const CCTNum_t* ls2_v2 = polygon2->v[polygon2->edge_v_indices_flat[i++]];
+		mathVec3Sub(ls2_dir, ls2_v2, ls2_v1);
+		ls2_len = mathVec3Normalized(ls2_dir, ls2_dir);
+		for (j = 0; j < polygon1_edge_v_indices_cnt; ) {
+			CCTNum_t ls1_dir[3], N[3], p[3], l[3], r[3], d;
+			const CCTNum_t* ls1_v1 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
+			const CCTNum_t* ls1_v2 = polygon1->v[polygon1->edge_v_indices_flat[j++]];
+			mathVec3Sub(ls1_dir, ls1_v2, ls1_v1);
+			mathVec3Cross(N, ls2_dir, ls1_dir);
+			if (mathVec3IsZero(N)) {
+				continue;
+			}
+			mathVec3Normalized(ls1_dir, ls1_dir);
+			d = mathLineCrossLine(ls2_v1, ls2_dir, ls1_v1, ls1_dir);
+			if (d <= CCTNum(0.0) || d >= ls2_len) {
+				continue;
+			}
+			mathVec3Copy(p, ls2_v1);
+			mathVec3AddScalar(p, ls2_dir, d);
+			mathVec3Sub(l, ls1_v1, p);
+			mathVec3Sub(r, ls1_v2, p);
+			if (mathVec3Dot(l, r) < CCTNum(0.0)) {
+				return 0;
 			}
 		}
 	}
