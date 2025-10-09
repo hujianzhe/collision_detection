@@ -230,6 +230,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	if (finder->nodes) {
 		free(finder->nodes);
 		finder->nodes = NULL;
+		finder->cap = 0;
 	}
 	finder->cnt = 0;
 }
