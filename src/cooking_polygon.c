@@ -26,6 +26,29 @@ static GeometryPolygon_t* _insert_tri_indices(GeometryPolygon_t* polygon, const 
 	return polygon;
 }
 
+static GeometryPolygon_t* _init_new_polygon(GeometryPolygon_t* new_pg, const CCTNum_t(*v)[3], const CCTNum_t N[3], const unsigned int* tri_v_indices) {
+	new_pg->tri_v_indices_flat = NULL;
+	new_pg->tri_cnt = 0;
+	if (!_insert_tri_indices(new_pg, tri_v_indices)) {
+		return NULL;
+	}
+	new_pg->concave_tri_v_ids_flat = NULL;
+	new_pg->concave_tri_edge_ids_flat = NULL;
+	new_pg->v_indices = NULL;
+	new_pg->v_indices_cnt = 0;
+	new_pg->edge_v_ids_flat = NULL;
+	new_pg->edge_v_indices_flat = NULL;
+	new_pg->edge_cnt = 0;
+	new_pg->is_convex = 0;
+	new_pg->v = (CCTNum_t(*)[3])v;
+	new_pg->mesh_v_ids = NULL;
+	new_pg->mesh_edge_ids = NULL;
+	new_pg->v_adjacent_infos = NULL;
+	mathVec3Copy(new_pg->normal, N);
+	mathVec3Set(new_pg->center, CCTNums_3(0.0, 0.0, 0.0));
+	return new_pg;
+}
+
 static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
 	unsigned int i, polygon_tri_v_indices_cnt;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
@@ -157,7 +180,7 @@ err:
 	return 0;
 }
 
-int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt) {
+int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged) {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
@@ -166,77 +189,83 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 	if (tri_cnt < 1) {
 		goto err;
 	}
-	tri_merge_bits = (char*)calloc(1, tri_cnt / 8 + (tri_cnt % 8 ? 1 : 0));
-	if (!tri_merge_bits) {
-		goto err;
-	}
-	/* Merge triangles on the same plane */
-	for (i = 0; i < tri_v_indices_cnt; i += 3) {
-		unsigned int j, tri_idx;
-		CCTNum_t N[3];
-		GeometryPolygon_t* tmp_parr, * new_pg;
-
-		tri_idx = i / 3;
-		if (tri_merge_bits[tri_idx / 8] & (1 << (tri_idx % 8))) {
-			continue;
-		}
-		mathPlaneNormalByVertices3(v[tri_v_indices[i]], v[tri_v_indices[i + 1]], v[tri_v_indices[i + 2]], N);
-		if (mathVec3IsZero(N)) {
+	if (merged) {
+		tri_merge_bits = (char*)calloc(1, tri_cnt / 8 + (tri_cnt % 8 ? 1 : 0));
+		if (!tri_merge_bits) {
 			goto err;
 		}
-		tmp_parr = (GeometryPolygon_t*)realloc(tmp_polygons, (tmp_polygons_cnt + 1) * sizeof(GeometryPolygon_t));
-		if (!tmp_parr) {
-			goto err;
-		}
-		tmp_polygons = tmp_parr;
-		new_pg = tmp_polygons + tmp_polygons_cnt;
-		tmp_polygons_cnt++;
+		/* Merge triangles on the same plane */
+		for (i = 0; i < tri_v_indices_cnt; i += 3) {
+			unsigned int j, tri_idx;
+			CCTNum_t N[3];
+			GeometryPolygon_t* tmp_parr, * new_pg;
 
-		new_pg->tri_v_indices_flat = NULL;
-		new_pg->tri_cnt = 0;
-		if (!_insert_tri_indices(new_pg, tri_v_indices + i)) {
-			goto err;
-		}
-		new_pg->concave_tri_v_ids_flat = NULL;
-		new_pg->concave_tri_edge_ids_flat = NULL;
-		new_pg->v_indices = NULL;
-		new_pg->v_indices_cnt = 0;
-		new_pg->edge_v_ids_flat = NULL;
-		new_pg->edge_v_indices_flat = NULL;
-		new_pg->edge_cnt = 0;
-		new_pg->is_convex = 0;
-		new_pg->v = (CCTNum_t(*)[3])v;
-		new_pg->mesh_v_ids = NULL;
-		new_pg->mesh_edge_ids = NULL;
-		new_pg->v_adjacent_infos = NULL;
-		mathVec3Copy(new_pg->normal, N);
-		mathVec3Set(new_pg->center, CCTNums_3(0.0, 0.0, 0.0));
-
-		tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
-		for (j = 0; j < tri_v_indices_cnt; j += 3) {
-			int ret;
-			tri_idx = j / 3;
-			if (tri_merge_bits[tri_idx / 8] & (1 << tri_idx % 8)) {
+			tri_idx = i / 3;
+			if (tri_merge_bits[tri_idx / 8] & (1 << (tri_idx % 8))) {
 				continue;
 			}
-			ret = _polygon_can_merge_triangle(new_pg, v[tri_v_indices[j]], v[tri_v_indices[j + 1]], v[tri_v_indices[j + 2]]);
-			if (-1 == ret) {
+			mathPlaneNormalByVertices3(v[tri_v_indices[i]], v[tri_v_indices[i + 1]], v[tri_v_indices[i + 2]], N);
+			if (mathVec3IsZero(N)) {
 				goto err;
 			}
-			if (0 == ret) {
-				continue;
+			tmp_parr = (GeometryPolygon_t*)realloc(tmp_polygons, (tmp_polygons_cnt + 1) * sizeof(GeometryPolygon_t));
+			if (!tmp_parr) {
+				goto err;
 			}
+			tmp_polygons = tmp_parr;
+			new_pg = tmp_polygons + tmp_polygons_cnt;
+			if (!_init_new_polygon(new_pg, v, N, tri_v_indices + i)) {
+				goto err;
+			}
+			tmp_polygons_cnt++;
+
 			tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
-			if (2 == ret) {
-				continue;
+			for (j = 0; j < tri_v_indices_cnt; j += 3) {
+				int ret;
+				tri_idx = j / 3;
+				if (tri_merge_bits[tri_idx / 8] & (1 << tri_idx % 8)) {
+					continue;
+				}
+				ret = _polygon_can_merge_triangle(new_pg, v[tri_v_indices[j]], v[tri_v_indices[j + 1]], v[tri_v_indices[j + 2]]);
+				if (-1 == ret) {
+					goto err;
+				}
+				if (0 == ret) {
+					continue;
+				}
+				tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
+				if (2 == ret) {
+					continue;
+				}
+				if (!_insert_tri_indices(new_pg, tri_v_indices + j)) {
+					goto err;
+				}
+				j = 0;
 			}
-			if (!_insert_tri_indices(new_pg, tri_v_indices + j)) {
+		}
+		free(tri_merge_bits);
+	}
+	else {
+		for (i = 0; i < tri_v_indices_cnt; i += 3) {
+			CCTNum_t N[3];
+			GeometryPolygon_t* tmp_parr, * new_pg;
+
+			mathPlaneNormalByVertices3(v[tri_v_indices[i]], v[tri_v_indices[i + 1]], v[tri_v_indices[i + 2]], N);
+			if (mathVec3IsZero(N)) {
 				goto err;
 			}
-			j = 0;
+			tmp_parr = (GeometryPolygon_t*)realloc(tmp_polygons, (tmp_polygons_cnt + 1) * sizeof(GeometryPolygon_t));
+			if (!tmp_parr) {
+				goto err;
+			}
+			tmp_polygons = tmp_parr;
+			new_pg = tmp_polygons + tmp_polygons_cnt;
+			if (!_init_new_polygon(new_pg, v, N, tri_v_indices + i)) {
+				goto err;
+			}
+			tmp_polygons_cnt++;
 		}
 	}
-	free(tri_merge_bits);
 	*ret_polygons = tmp_polygons;
 	*ret_polygons_cnt = tmp_polygons_cnt;
 	return 1;
