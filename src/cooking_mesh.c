@@ -13,14 +13,14 @@
 
 extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info);
 extern int mathPolygonIsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
-extern int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices);
-extern int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged);
-extern int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt);
-extern int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat);
+extern int MathCookingStage_DistinctVertices(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices);
+extern int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged);
+extern int MeshCookingStage_GenerateFaceEdges(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt);
+extern int MeshCookingStage_GenerateIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat);
 extern unsigned int* mathCookingConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt);
 extern unsigned int* mathCookingConcavePolygonTriangleVertex(const unsigned int* v_indices, unsigned int v_indices_cnt, const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt);
 
-static unsigned int Merge_Face_Edge(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
+static unsigned int MeshCookingStage_MergeFaceEdges(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; i += 2) {
 		unsigned int j;
@@ -217,11 +217,11 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		return NULL;
 	}
 	/* merge distinct vertices, rewrite indices */
-	if (!mathCookingStage1(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
+	if (!MathCookingStage_DistinctVertices(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
 		goto err_0;
 	}
 	/* split all face */
-	if (!mathCookingStage2((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, &tmp_polygons, &tmp_polygons_cnt, 1)) {
+	if (!MeshCookingStage_SplitFaces((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, &tmp_polygons, &tmp_polygons_cnt, 1)) {
 		goto err_0;
 	}
 	free(dup_tri_v_indices);
@@ -234,13 +234,13 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 		unsigned int edge_v_indices_cnt, v_indices_cnt, j;
 		GeometryPolygon_t* pg = tmp_polygons + i;
 		/* cooking edge */
-		if (!mathCookingStage3((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices_flat, pg->tri_cnt * 3, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt)) {
+		if (!MeshCookingStage_GenerateFaceEdges((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices_flat, pg->tri_cnt * 3, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt)) {
 			goto err_1;
 		}
 		pg->edge_cnt = edge_v_indices_cnt / 2;
 		pg->edge_v_indices_flat = edge_v_indices_flat;
 		/* cooking vertex indice */
-		if (!mathCookingStage4(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
+		if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 			goto err_1;
 		}
 		total_edge_v_indices_cnt += edge_v_indices_cnt;
@@ -268,10 +268,10 @@ GeometryMesh_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	}
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		total_edge_v_indices_cnt = Merge_Face_Edge(edge_v_indices_flat, total_edge_v_indices_cnt, tmp_polygons + i);
+		total_edge_v_indices_cnt = MeshCookingStage_MergeFaceEdges(edge_v_indices_flat, total_edge_v_indices_cnt, tmp_polygons + i);
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices_flat, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
+	if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 		goto err_1;
 	}
 	/* alloc adjacent infos buffer */

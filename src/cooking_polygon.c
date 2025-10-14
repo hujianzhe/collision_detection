@@ -145,7 +145,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	return 0;
 }
 
-int mathCookingStage1(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices) {
+int MathCookingStage_DistinctVertices(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices) {
 	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt, i;
 	CCTNum_t(*dup_v)[3] = NULL, (*tmp_v)[3] = NULL;
@@ -180,7 +180,7 @@ err:
 	return 0;
 }
 
-int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged) {
+int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged) {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
@@ -217,7 +217,7 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 			if (!_init_new_polygon(new_pg, v, N, tri_v_indices + i)) {
 				goto err;
 			}
-			tmp_polygons_cnt++;
+			++tmp_polygons_cnt;
 
 			tri_merge_bits[tri_idx / 8] |= (1 << (tri_idx % 8));
 			for (j = 0; j < tri_v_indices_cnt; j += 3) {
@@ -246,24 +246,23 @@ int mathCookingStage2(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, 
 		free(tri_merge_bits);
 	}
 	else {
+		tmp_polygons = (GeometryPolygon_t*)malloc(tri_cnt * sizeof(GeometryPolygon_t));
+		if (!tmp_polygons) {
+			goto err;
+		}
 		for (i = 0; i < tri_v_indices_cnt; i += 3) {
 			CCTNum_t N[3];
-			GeometryPolygon_t* tmp_parr, * new_pg;
+			GeometryPolygon_t* new_pg;
 
 			mathPlaneNormalByVertices3(v[tri_v_indices[i]], v[tri_v_indices[i + 1]], v[tri_v_indices[i + 2]], N);
 			if (mathVec3IsZero(N)) {
 				goto err;
 			}
-			tmp_parr = (GeometryPolygon_t*)realloc(tmp_polygons, (tmp_polygons_cnt + 1) * sizeof(GeometryPolygon_t));
-			if (!tmp_parr) {
-				goto err;
-			}
-			tmp_polygons = tmp_parr;
 			new_pg = tmp_polygons + tmp_polygons_cnt;
 			if (!_init_new_polygon(new_pg, v, N, tri_v_indices + i)) {
 				goto err;
 			}
-			tmp_polygons_cnt++;
+			++tmp_polygons_cnt;
 		}
 	}
 	*ret_polygons = tmp_polygons;
@@ -280,7 +279,7 @@ err:
 	return 0;
 }
 
-int mathCookingStage3(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt) {
+int MeshCookingStage_GenerateFaceEdges(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt) {
 	unsigned int i, j;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
@@ -445,7 +444,7 @@ err:
 	return 0;
 }
 
-int mathCookingStage4(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat) {
+int MeshCookingStage_GenerateIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat) {
 	unsigned int* tmp_edge_v_ids_flat;
 	unsigned int* tmp_v_indices;
 	unsigned int tmp_v_indices_cnt, i;
@@ -571,7 +570,7 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		return NULL;
 	}
 	/* merge distinct vertices, rewrite indices */
-	if (!mathCookingStage1(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
+	if (!MathCookingStage_DistinctVertices(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
 		goto err;
 	}
 	/* check all triangle in same plane */
@@ -582,11 +581,11 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 		}
 	}
 	/* cooking edge */
-	if (!mathCookingStage3((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, N, &edge_v_indices_flat, &edge_v_indices_cnt)) {
+	if (!MeshCookingStage_GenerateFaceEdges((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices, tri_v_indices_cnt, N, &edge_v_indices_flat, &edge_v_indices_cnt)) {
 		goto err;
 	}
 	/* cooking vertex indice */
-	if (!mathCookingStage4(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
+	if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat)) {
 		goto err;
 	}
 	/* cooking vertex adjacent info */
