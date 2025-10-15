@@ -56,7 +56,7 @@ __declspec_dll void octreeRemoveObject(OctreeObject_t* obj);
 __declspec_dll OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder);
 __declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder);
 
-__declspec_dll void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder);
+__declspec_dll void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder);
 __declspec_dll void octreeClear(Octree_t* tree);
 __declspec_dll void octreeDestroy(Octree_t* tree);
 

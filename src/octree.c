@@ -235,8 +235,9 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	finder->cnt = 0;
 }
 
-void octreeFindNodes(const OctreeNode_t* root, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) {
+void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) {
 	size_t pop_idx;
+	const OctreeNode_t* root = tree->nodes;
 	finder->cnt = 0;
 	if (!mathAABBIntersectAABB(root->min_v, root->max_v, min_v, max_v)) {
 		return;
