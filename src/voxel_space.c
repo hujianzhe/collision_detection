@@ -158,38 +158,38 @@ void voxelspaceRemoveObject(VoxelSpaceObject_t* obj) {
 }
 
 const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) {
-	node_indices_floor(vs, min_v, finder->start_idx);
-	node_indices_ceil(vs, max_v, finder->end_idx);
-	if (finder->start_idx[0] >= finder->end_idx[0]) {
+	node_indices_floor(vs, min_v, finder->_start_idx);
+	node_indices_ceil(vs, max_v, finder->_end_idx);
+	if (finder->_start_idx[0] >= finder->_end_idx[0]) {
 		return NULL;
 	}
-	if (finder->start_idx[1] >= finder->end_idx[1]) {
+	if (finder->_start_idx[1] >= finder->_end_idx[1]) {
 		return NULL;
 	}
-	if (finder->start_idx[2] >= finder->end_idx[2]) {
+	if (finder->_start_idx[2] >= finder->_end_idx[2]) {
 		return NULL;
 	}
-	finder->vs = vs;
-	finder->cur_idx[0] = finder->start_idx[0];
-	finder->cur_idx[1] = finder->start_idx[1];
-	finder->cur_idx[2] = finder->start_idx[2];
-	return get_node(vs, finder->cur_idx[0], finder->cur_idx[1], finder->cur_idx[2]);
+	finder->_vs = vs;
+	finder->_cur_idx[0] = finder->_start_idx[0];
+	finder->_cur_idx[1] = finder->_start_idx[1];
+	finder->_cur_idx[2] = finder->_start_idx[2];
+	return get_node(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
 }
 
 const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
-	++finder->cur_idx[2];
-	if (finder->cur_idx[2] < finder->end_idx[2]) {
-		return get_node(finder->vs, finder->cur_idx[0], finder->cur_idx[1], finder->cur_idx[2]);
+	++finder->_cur_idx[2];
+	if (finder->_cur_idx[2] < finder->_end_idx[2]) {
+		return get_node(finder->_vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
 	}
-	finder->cur_idx[2] = finder->start_idx[2];
-	++finder->cur_idx[1];
-	if (finder->cur_idx[1] < finder->end_idx[1]) {
-		return get_node(finder->vs, finder->cur_idx[0], finder->cur_idx[1], finder->cur_idx[2]);
+	finder->_cur_idx[2] = finder->_start_idx[2];
+	++finder->_cur_idx[1];
+	if (finder->_cur_idx[1] < finder->_end_idx[1]) {
+		return get_node(finder->_vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
 	}
-	finder->cur_idx[1] = finder->start_idx[1];
-	++finder->cur_idx[0];
-	if (finder->cur_idx[0] < finder->end_idx[0]) {
-		return get_node(finder->vs, finder->cur_idx[0], finder->cur_idx[1], finder->cur_idx[2]);
+	finder->_cur_idx[1] = finder->_start_idx[1];
+	++finder->_cur_idx[0];
+	if (finder->_cur_idx[0] < finder->_end_idx[0]) {
+		return get_node(finder->_vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
 	}
 	return NULL;
 }

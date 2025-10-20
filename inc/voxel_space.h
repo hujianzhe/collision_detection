@@ -37,10 +37,10 @@ typedef struct VoxelSpace_t {
 } VoxelSpace_t;
 
 typedef struct VoxelSpaceFinder_t {
-	const VoxelSpace_t* vs;
-	unsigned int start_idx[3];
-	unsigned int end_idx[3];
-	unsigned int cur_idx[3];
+	const VoxelSpace_t* _vs;
+	unsigned int _start_idx[3];
+	unsigned int _end_idx[3];
+	unsigned int _cur_idx[3];
 } VoxelSpaceFinder_t;
 
 #ifdef __cplusplus
