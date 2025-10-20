@@ -48,10 +48,15 @@ extern "C" {
 #endif
 
 __declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]);
+
 __declspec_dll VoxelSpaceObject_t* voxelspaceUpdateObject(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
 __declspec_dll void voxelspaceRemoveObject(VoxelSpaceObject_t* obj);
+
 __declspec_dll const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder);
 __declspec_dll const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder);
+
+__declspec_dll void voxelspaceClear(VoxelSpace_t* vs);
+__declspec_dll void voxelspaceDestroy(VoxelSpace_t* vs);
 
 #ifdef __cplusplus
 }

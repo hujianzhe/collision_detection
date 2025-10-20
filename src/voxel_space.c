@@ -194,6 +194,43 @@ const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
 	return NULL;
 }
 
+void voxelspaceClear(VoxelSpace_t* vs) {
+	size_t i, j;
+	for (i = 0; i < vs->nodes_cnt; ++i) {
+		VoxelSpaceNode_t* node = vs->nodes + i;
+		for (j = 0; j < node->objs_cnt; ++j) {
+			VoxelSpaceObject_t* obj = node->objs[j];
+			if (obj->locate_nodes) {
+				free(obj->locate_nodes);
+				obj->locate_nodes = NULL;
+				obj->locate_nodes_cnt = 0;
+			}
+		}
+		free(node->objs);
+		node->objs = NULL;
+		node->objs_cnt = 0;
+	}
+}
+
+void voxelspaceDestroy(VoxelSpace_t* vs) {
+	size_t i, j;
+	for (i = 0; i < vs->nodes_cnt; ++i) {
+		VoxelSpaceNode_t* node = vs->nodes + i;
+		for (j = 0; j < node->objs_cnt; ++j) {
+			VoxelSpaceObject_t* obj = node->objs[j];
+			if (obj->locate_nodes) {
+				free(obj->locate_nodes);
+				obj->locate_nodes = NULL;
+				obj->locate_nodes_cnt = 0;
+			}
+		}
+		free(node->objs);
+	}
+	free(vs->nodes);
+	vs->nodes = NULL;
+	vs->nodes_cnt = 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
