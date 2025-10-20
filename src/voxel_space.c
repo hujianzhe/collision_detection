@@ -2,8 +2,6 @@
 // Created by hujianzhe on 25-10-16
 //
 
-#include "../inc/math_vec3.h"
-#include "../inc/aabb.h"
 #include "../inc/voxel_space.h"
 #include <stdlib.h>
 
@@ -79,9 +77,15 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CC
 	vs->nodes_cnt = nodes_cnt;
 	vs->nodes = nodes;
 	vs->epsilon = CCT_EPSILON;
-	mathVec3Copy(vs->min_v, min_v);
-	mathVec3Copy(vs->max_v, max_v);
-	mathVec3Copy(vs->split_size, split_size);
+	vs->min_v[0] = min_v[0];
+	vs->min_v[1] = min_v[1];
+	vs->min_v[2] = min_v[2];
+	vs->max_v[0] = max_v[0];
+	vs->max_v[1] = max_v[1];
+	vs->max_v[2] = max_v[2];
+	vs->split_size[0] = split_size[0];
+	vs->split_size[1] = split_size[1];
+	vs->split_size[2] = split_size[2];
 	vs->_dimension_node_max_sz[0] = cnt[0];
 	vs->_dimension_node_max_sz[1] = cnt[1];
 	vs->_dimension_node_max_sz[2] = cnt[2];
