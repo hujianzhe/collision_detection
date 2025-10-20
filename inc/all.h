@@ -23,5 +23,6 @@
 #include "cooking.h"
 #include "vertex.h"
 #include "capsule.h"
+#include "voxel_space.h"
 
 #endif
