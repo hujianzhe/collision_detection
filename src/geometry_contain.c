@@ -231,20 +231,6 @@ int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3])
 	return lensq <= radius_sq;
 }
 
-static int AABB_Contain_Mesh(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const GeometryMesh_t* mesh) {
-	unsigned int i;
-	if (AABB_Contain_AABB(min_v, max_v, mesh->bound_box.min_v, mesh->bound_box.max_v)) {
-		return 1;
-	}
-	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		const CCTNum_t* p = mesh->v[mesh->v_indices[i]];
-		if (!AABB_Contain_Point(min_v, max_v, p)) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
 static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t* capsule) {
 	CCTNum_t sp_o[3];
 	mathVec3Copy(sp_o, capsule->o);
@@ -737,10 +723,21 @@ static int ConvexMesh_Contain_VerticeIndices(const GeometryMesh_t* mesh, const C
 }
 
 static int OBB_Contain_VerticeIndices(const GeometryOBB_t* obb, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
 		if (!OBB_Contain_Point(obb, p)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int AABB_Contain_VerticeIndices(const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3], const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+	size_t i;
+	for (i = 0; i < v_indices_cnt; ++i) {
+		const CCTNum_t* p = v[v_indices[i]];
+		if (!AABB_Contain_Point(aabb_min_v, aabb_max_v, p)) {
 			return 0;
 		}
 	}
@@ -826,13 +823,12 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_POLYGON:
 			{
 				const GeometryPolygon_t* polygon2 = (const GeometryPolygon_t*)geo_data2;
-				GeometryOBB_t obb1;
-				mathOBBFromAABB(&obb1, aabb1->min_v, aabb1->max_v);
-				return OBB_Contain_VerticeIndices(&obb1, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
+				return AABB_Contain_VerticeIndices(aabb1->min_v, aabb1->max_v, (const CCTNum_t(*)[3])polygon2->v, polygon2->v_indices, polygon2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_MESH:
 			{
-				return AABB_Contain_Mesh(aabb1->min_v, aabb1->max_v, (const GeometryMesh_t*)geo_data2);
+				const GeometryMesh_t* mesh2 = (const GeometryMesh_t*)geo_data2;
+				return AABB_Contain_VerticeIndices(aabb1->min_v, aabb1->max_v, (const CCTNum_t(*)[3])mesh2->v, mesh2->v_indices, mesh2->v_indices_cnt);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
