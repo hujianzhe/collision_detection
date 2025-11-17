@@ -10,10 +10,8 @@ extern "C" {
 #endif
 
 GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
-	mathVec3Add(obb->o, min_v, max_v);
-	mathVec3MultiplyScalar(obb->o, obb->o, CCTNum(0.5));
-	mathVec3Sub(obb->half, max_v, min_v);
-	mathVec3MultiplyScalar(obb->half, obb->half, CCTNum(0.5));
+	mathVec3Midpoint(obb->o, min_v, max_v);
+	mathVec3Sub(obb->half, obb->o, min_v);
 	mathVec3Set(obb->axis[0], CCTNums_3(1.0, 0.0, 0.0));
 	mathVec3Set(obb->axis[1], CCTNums_3(0.0, 1.0, 0.0));
 	mathVec3Set(obb->axis[2], CCTNums_3(0.0, 0.0, 1.0));
