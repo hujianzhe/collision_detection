@@ -381,12 +381,28 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 }
 
 void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
-	CCTNum_t o[3], half[3];
-	mathVec3Add(o, min_v, max_v);
-	mathVec3MultiplyScalar(o, o, CCTNum(0.5));
-	mathVec3Sub(half, max_v, min_v);
-	mathVec3MultiplyScalar(half, half, CCTNum(0.5));
-	mathBoxMesh(bm, o, half, AABB_Axis);
+	unsigned int i;
+	GeometryMesh_t* mesh = &bm->mesh;
+	const CCTNum_t(*v)[3] = (const CCTNum_t(*)[3])bm->v;
+
+	mathAABBVertices(min_v, max_v, bm->v);
+	mesh->v = bm->v;
+	mesh->v_indices = Box_Vertice_Indices_Default;
+	mesh->v_indices_cnt = 8;
+	mesh->v_adjacent_infos = Box_Vertex_AdjacentInfos;
+	mesh->edge_adjacent_face_ids_flat = (const unsigned int*)Box_Edge_Adjacent_FaceIds;
+	mesh->edge_v_ids_flat = Box_Edge_VertexIds;
+	mesh->edge_v_indices_flat = Box_Edge_VertexIds;
+	mesh->edge_cnt = 12;
+	mesh->is_convex = 1;
+	mesh->is_closed = 1;
+	mesh->polygons = bm->faces;
+	mesh->polygons_cnt = sizeof(bm->faces) / sizeof(bm->faces[0]);
+	mathVec3Copy(mesh->bound_box.min_v, min_v);
+	mathVec3Copy(mesh->bound_box.max_v, max_v);
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		mathBoxFace(v, AABB_Axis, i, mesh->polygons + i);
+	}
 }
 
 #ifdef __cplusplus
