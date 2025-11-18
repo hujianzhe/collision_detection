@@ -148,7 +148,7 @@ Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[
 	return tree;
 }
 
-void octreeRemoveObject(OctreeObject_t* obj) {
+void octreeRemove(OctreeObject_t* obj) {
 	OctreeNode_t* oct = obj->oct;
 	if (!oct) {
 		return;
@@ -156,7 +156,7 @@ void octreeRemoveObject(OctreeObject_t* obj) {
 	del_obj_from_list(oct, obj);
 }
 
-void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj) {
+void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) {
 	OctreeNode_t* root = &tree->nodes[0];
 	OctreeNode_t* obj_oct = obj->oct;
 	OctreeNode_t* oct = obj_oct ? obj_oct : root;

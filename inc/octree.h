@@ -50,8 +50,8 @@ extern "C" {
 __declspec_dll unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size);
 
 __declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node);
-__declspec_dll void octreeUpdateObject(Octree_t* tree, OctreeObject_t* obj);
-__declspec_dll void octreeRemoveObject(OctreeObject_t* obj);
+__declspec_dll void octreeUpdate(Octree_t* tree, OctreeObject_t* obj);
+__declspec_dll void octreeRemove(OctreeObject_t* obj);
 
 __declspec_dll OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder);
 __declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder);
