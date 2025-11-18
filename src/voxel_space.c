@@ -103,7 +103,7 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	vs->split_size[2] = CCTNum_ceil(split_size_[2]);
 	for (i = 0; i < 3; ++i) {
 		long long delta = vs->max_v[i] - vs->min_v[i];
-		if (delta <= 0) {
+		if (delta <= 0 || vs->split_size[i] <= 0) {
 			return NULL;
 		}
 		cnt[i] = delta / vs->split_size[i];
