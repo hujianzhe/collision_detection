@@ -126,7 +126,7 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CC
 	return vs;
 }
 
-VoxelSpaceObject_t* voxelspaceUpdateObject(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
 	size_t i, x, y, z;
 	unsigned int start_idx[3], end_idx[3];
 
@@ -152,7 +152,7 @@ VoxelSpaceObject_t* voxelspaceUpdateObject(VoxelSpace_t* vs, VoxelSpaceObject_t*
 	return obj;
 }
 
-void voxelspaceRemoveObject(VoxelSpaceObject_t* obj) {
+void voxelspaceRemove(VoxelSpaceObject_t* obj) {
 	size_t i;
 	for (i = 0; i < obj->locate_nodes_cnt; ++i) {
 		node_remove_obj(obj->locate_nodes[i], obj);
