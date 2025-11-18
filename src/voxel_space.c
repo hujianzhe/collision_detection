@@ -5,31 +5,34 @@
 #include "../inc/voxel_space.h"
 #include <stdlib.h>
 
-static void node_indices_floor(const VoxelSpace_t* vs, const CCTNum_t p[3], unsigned int index_values[3]) {
-	unsigned int i;
+static void node_indices_floor(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
+	size_t i;
 	for (i = 0; i < 3; ++i) {
-		CCTNum_t delta = p[i] - vs->min_v[i] - vs->epsilon;
-		if (delta <= CCTNum(0.0)) {
+		long long pi = CCTNum_floor(p[i] - vs->epsilon);
+		if (pi < vs->min_v[i]) {
 			index_values[i] = 0;
 			continue;
 		}
-		index_values[i] = (unsigned int)CCTNum_floor(delta / vs->split_size[i]);
+		index_values[i] = (pi - vs->min_v[i]) / vs->split_size[i];
 		if (index_values[i] > vs->_dimension_node_max_sz[i]) {
 			index_values[i] = vs->_dimension_node_max_sz[i];
 		}
 	}
 }
 
-static void node_indices_ceil(const VoxelSpace_t* vs, const CCTNum_t p[3], unsigned int index_values[3]) {
-	unsigned int i;
+static void node_indices_ceil(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
+	size_t i;
 	for (i = 0; i < 3; ++i) {
-		CCTNum_t delta = p[i] - vs->min_v[i] + vs->epsilon;
-		if (delta <= CCTNum(0.0)) {
+		long long pi = CCTNum_ceil(p[i]);
+		if (pi < vs->min_v[i]) {
 			index_values[i] = 0;
 			continue;
 		}
-		index_values[i] = (unsigned int)CCTNum_ceil(delta / vs->split_size[i]);
-		if (index_values[i] > vs->_dimension_node_max_sz[i]) {
+		index_values[i] = (pi - vs->min_v[i]) / vs->split_size[i];
+		if (index_values[i] < vs->_dimension_node_max_sz[i]) {
+			++index_values[i];
+		}
+		else {
 			index_values[i] = vs->_dimension_node_max_sz[i];
 		}
 	}
@@ -50,11 +53,11 @@ static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) {
 	}
 }
 
-static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const unsigned int start_idx[3], const unsigned int end_idx[3]) {
+static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const size_t start_idx[3], const size_t end_idx[3]) {
 	size_t x, y, z;
 	size_t cnt = (end_idx[0] - start_idx[0]) * (end_idx[1] - start_idx[1]) * (end_idx[2] - start_idx[2]);
 	if (cnt > obj->_locate_nodes_arr_cap) {
-		unsigned int cap = cnt + vs->_cap_expand;
+		size_t cap = cnt + vs->_cap_expand;
 		VoxelSpaceNode_t** p = (VoxelSpaceNode_t**)realloc(obj->locate_nodes, sizeof(VoxelSpaceNode_t*) * cap);
 		if (!p) {
 			return 0;
@@ -68,7 +71,7 @@ static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t
 				VoxelSpaceNode_t* node = get_node(vs, x, y, z);
 				cnt = node->objs_cnt + 1;
 				if (cnt > node->_objs_arr_cap) {
-					unsigned int cap = cnt + vs->_cap_expand;
+					size_t cap = cnt + vs->_cap_expand;
 					VoxelSpaceObject_t** p = (VoxelSpaceObject_t**)realloc(node->objs, sizeof(VoxelSpaceObject_t*) * cap);
 					if (!p) {
 						return 0;
@@ -86,19 +89,26 @@ static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t
 extern "C" {
 #endif
 
-VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]) {
+VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const CCTNum_t max_v_[3], const CCTNum_t split_size_[3]) {
 	size_t i, cnt[3], nodes_cnt;
 	VoxelSpaceNode_t* nodes;
+	vs->min_v[0] = CCTNum_floor(min_v_[0]);
+	vs->min_v[1] = CCTNum_floor(min_v_[1]);
+	vs->min_v[2] = CCTNum_floor(min_v_[2]);
+	vs->max_v[0] = CCTNum_ceil(max_v_[0]);
+	vs->max_v[1] = CCTNum_ceil(max_v_[1]);
+	vs->max_v[2] = CCTNum_ceil(max_v_[2]);
+	vs->split_size[0] = CCTNum_ceil(split_size_[0]);
+	vs->split_size[1] = CCTNum_ceil(split_size_[1]);
+	vs->split_size[2] = CCTNum_ceil(split_size_[2]);
 	for (i = 0; i < 3; ++i) {
-		CCTNum_t delta = max_v[i] - min_v[i];
-		if (delta <= CCTNum(0.0)) {
+		long long delta = vs->max_v[i] - vs->min_v[i];
+		if (delta <= 0) {
 			return NULL;
 		}
-		if (delta <= split_size[i]) {
-			cnt[i] = 1;
-		}
-		else {
-			cnt[i] = (size_t)CCTNum_ceil(delta / split_size[i]);
+		cnt[i] = delta / vs->split_size[i];
+		if (cnt[i] * vs->split_size[i] < delta) {
+			++cnt[i];
 		}
 	}
 	nodes_cnt = cnt[0] * cnt[1] * cnt[2];
@@ -108,16 +118,7 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CC
 	}
 	vs->nodes_cnt = nodes_cnt;
 	vs->nodes = nodes;
-	vs->epsilon = CCT_EPSILON;
-	vs->min_v[0] = min_v[0];
-	vs->min_v[1] = min_v[1];
-	vs->min_v[2] = min_v[2];
-	vs->max_v[0] = max_v[0];
-	vs->max_v[1] = max_v[1];
-	vs->max_v[2] = max_v[2];
-	vs->split_size[0] = split_size[0];
-	vs->split_size[1] = split_size[1];
-	vs->split_size[2] = split_size[2];
+	vs->epsilon = CCTNum(0.001);
 	vs->_dimension_node_max_sz[0] = cnt[0];
 	vs->_dimension_node_max_sz[1] = cnt[1];
 	vs->_dimension_node_max_sz[2] = cnt[2];
@@ -128,7 +129,7 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CC
 
 VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
 	size_t i, x, y, z;
-	unsigned int start_idx[3], end_idx[3];
+	size_t start_idx[3], end_idx[3];
 
 	node_indices_floor(vs, min_v, start_idx);
 	node_indices_ceil(vs, max_v, end_idx);
@@ -144,6 +145,43 @@ VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, 
 		for (y = start_idx[1]; y < end_idx[1]; ++y) {
 			for (z = start_idx[2]; z < end_idx[2]; ++z) {
 				VoxelSpaceNode_t* node = get_node(vs, x, y, z);
+				node->objs[node->objs_cnt++] = obj;
+				obj->locate_nodes[obj->locate_nodes_cnt++] = node;
+			}
+		}
+	}
+	return obj;
+}
+
+VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3])) {
+	size_t i, x, y, z;
+	size_t start_idx[3], end_idx[3];
+
+	node_indices_floor(vs, boundbox_min_v, start_idx);
+	node_indices_ceil(vs, boundbox_max_v, end_idx);
+	if (!voxelspace_update_prepare_memory(vs, obj, start_idx, end_idx)) {
+		return NULL;
+	}
+
+	for (i = 0; i < obj->locate_nodes_cnt; ++i) {
+		node_remove_obj(obj->locate_nodes[i], obj);
+	}
+	obj->locate_nodes_cnt = 0;
+	for (x = start_idx[0]; x < end_idx[0]; ++x) {
+		for (y = start_idx[1]; y < end_idx[1]; ++y) {
+			for (z = start_idx[2]; z < end_idx[2]; ++z) {
+				VoxelSpaceNode_t* node;
+				CCTNum_t voxel_min_v[3], voxel_max_v[3];
+				voxel_min_v[0] = vs->min_v[0] + x * vs->split_size[0];
+				voxel_min_v[1] = vs->min_v[1] + y * vs->split_size[1];
+				voxel_min_v[2] = vs->min_v[2] + z * vs->split_size[2];
+				voxel_max_v[0] = voxel_min_v[0] + vs->split_size[0];
+				voxel_max_v[1] = voxel_min_v[1] + vs->split_size[1];
+				voxel_max_v[2] = voxel_min_v[2] + vs->split_size[2];
+				if (!fn_check_intersect(geo_data, geo_type, voxel_min_v, voxel_max_v)) {
+					continue;
+				}
+				node = get_node(vs, x, y, z);
 				node->objs[node->objs_cnt++] = obj;
 				obj->locate_nodes[obj->locate_nodes_cnt++] = node;
 			}

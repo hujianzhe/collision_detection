@@ -10,8 +10,8 @@
 struct VoxelSpaceObject_t;
 typedef struct VoxelSpaceNode_t {
 	struct VoxelSpaceObject_t** objs;
-	unsigned int objs_cnt;
-	unsigned int _objs_arr_cap;
+	size_t objs_cnt;
+	size_t _objs_arr_cap;
 } VoxelSpaceNode_t;
 
 typedef struct VoxelSpaceObject_t {
@@ -20,27 +20,27 @@ typedef struct VoxelSpaceObject_t {
 		unsigned long long u64;
 	} udata;
 	struct VoxelSpaceNode_t** locate_nodes;
-	unsigned int locate_nodes_cnt;
-	unsigned int _locate_nodes_arr_cap;
+	size_t locate_nodes_cnt;
+	size_t _locate_nodes_arr_cap;
 } VoxelSpaceObject_t;
 
 typedef struct VoxelSpace_t {
-	CCTNum_t min_v[3];
-	CCTNum_t max_v[3];
-	CCTNum_t split_size[3];
+	long long min_v[3];
+	long long max_v[3];
+	unsigned long long split_size[3];
 	CCTNum_t epsilon;
 	struct VoxelSpaceNode_t* nodes;
-	unsigned int nodes_cnt;
-	unsigned int _dimension_node_max_sz[3];
-	unsigned int _dimension_stride0;
+	size_t nodes_cnt;
+	size_t _dimension_node_max_sz[3];
+	size_t _dimension_stride0;
 	unsigned int _cap_expand;
 } VoxelSpace_t;
 
 typedef struct VoxelSpaceFinder_t {
 	const VoxelSpace_t* _vs;
-	unsigned int _start_idx[3];
-	unsigned int _end_idx[3];
-	unsigned int _cur_idx[3];
+	size_t _start_idx[3];
+	size_t _end_idx[3];
+	size_t _cur_idx[3];
 } VoxelSpaceFinder_t;
 
 #ifdef __cplusplus
@@ -50,6 +50,7 @@ extern "C" {
 __declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]);
 
 __declspec_dll VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
+__declspec_dll VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3]));
 __declspec_dll void voxelspaceRemove(VoxelSpaceObject_t* obj);
 
 __declspec_dll const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder);
