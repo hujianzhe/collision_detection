@@ -50,6 +50,38 @@ static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) {
 	}
 }
 
+static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const unsigned int start_idx[3], const unsigned int end_idx[3]) {
+	size_t x, y, z;
+	size_t cnt = (end_idx[0] - start_idx[0]) * (end_idx[1] - start_idx[1]) * (end_idx[2] - start_idx[2]);
+	if (cnt > obj->_locate_nodes_arr_cap) {
+		unsigned int cap = cnt + vs->_cap_expand;
+		VoxelSpaceNode_t** p = (VoxelSpaceNode_t**)realloc(obj->locate_nodes, sizeof(VoxelSpaceNode_t*) * cap);
+		if (!p) {
+			return 0;
+		}
+		obj->locate_nodes = p;
+		obj->_locate_nodes_arr_cap = cap;
+	}
+	for (x = start_idx[0]; x < end_idx[0]; ++x) {
+		for (y = start_idx[1]; y < end_idx[1]; ++y) {
+			for (z = start_idx[2]; z < end_idx[2]; ++z) {
+				VoxelSpaceNode_t* node = get_node(vs, x, y, z);
+				cnt = node->objs_cnt + 1;
+				if (cnt > node->_objs_arr_cap) {
+					unsigned int cap = cnt + vs->_cap_expand;
+					VoxelSpaceObject_t** p = (VoxelSpaceObject_t**)realloc(node->objs, sizeof(VoxelSpaceObject_t*) * cap);
+					if (!p) {
+						return 0;
+					}
+					node->objs = p;
+					node->_objs_arr_cap = cap;
+				}
+			}
+		}
+	}
+	return 1;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -95,37 +127,13 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CC
 }
 
 VoxelSpaceObject_t* voxelspaceUpdateObject(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
-	size_t i, x, y, z, cnt;
+	size_t i, x, y, z;
 	unsigned int start_idx[3], end_idx[3];
 
 	node_indices_floor(vs, min_v, start_idx);
 	node_indices_ceil(vs, max_v, end_idx);
-	cnt = (end_idx[0] - start_idx[0]) * (end_idx[1] - start_idx[1]) * (end_idx[2] - start_idx[2]);
-	if (cnt > obj->_locate_nodes_arr_cap) {
-		unsigned int cap = cnt + vs->_cap_expand;
-		VoxelSpaceNode_t** p = (VoxelSpaceNode_t**)realloc(obj->locate_nodes, sizeof(VoxelSpaceNode_t*) * cap);
-		if (!p) {
-			return NULL;
-		}
-		obj->locate_nodes = p;
-		obj->_locate_nodes_arr_cap = cap;
-	}
-	for (x = start_idx[0]; x < end_idx[0]; ++x) {
-		for (y = start_idx[1]; y < end_idx[1]; ++y) {
-			for (z = start_idx[2]; z < end_idx[2]; ++z) {
-				VoxelSpaceNode_t* node = get_node(vs, x, y, z);
-				cnt = node->objs_cnt + 1;
-				if (cnt > node->_objs_arr_cap) {
-					unsigned int cap = cnt + vs->_cap_expand;
-					VoxelSpaceObject_t** p = (VoxelSpaceObject_t**)realloc(node->objs, sizeof(VoxelSpaceObject_t*) * cap);
-					if (!p) {
-						return NULL;
-					}
-					node->objs = p;
-					node->_objs_arr_cap = cap;
-				}
-			}
-		}
+	if (!voxelspace_update_prepare_memory(vs, obj, start_idx, end_idx)) {
+		return NULL;
 	}
 
 	for (i = 0; i < obj->locate_nodes_cnt; ++i) {
