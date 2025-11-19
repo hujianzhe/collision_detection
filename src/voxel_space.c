@@ -3,6 +3,7 @@
 //
 
 #include "../inc/voxel_space.h"
+#include <limits.h>
 #include <stdlib.h>
 
 static void node_indices_floor(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
@@ -111,7 +112,13 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 			++cnt[i];
 		}
 	}
+	if (cnt[1] > SIZE_MAX / cnt[0] || cnt[0] * cnt[1] > SIZE_MAX / cnt[2]) {
+		return NULL;
+	}
 	nodes_cnt = cnt[0] * cnt[1] * cnt[2];
+	if (nodes_cnt > SIZE_MAX / sizeof(VoxelSpaceNode_t)) {
+		return NULL;
+	}
 	nodes = (VoxelSpaceNode_t*)calloc(1, sizeof(VoxelSpaceNode_t) * nodes_cnt);
 	if (!nodes) {
 		return NULL;
