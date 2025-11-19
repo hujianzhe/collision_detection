@@ -4,6 +4,7 @@
 
 #include "../inc/voxel_space.h"
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 static void node_indices_floor(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
