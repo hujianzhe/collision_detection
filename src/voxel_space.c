@@ -112,6 +112,9 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 		if (cnt[i] * vs->split_size[i] < delta) {
 			++cnt[i];
 		}
+		if ((long long)(cnt[i] * vs->split_size[i]) <= 0) {
+			return NULL;
+		}
 	}
 	if (cnt[1] > SIZE_MAX / cnt[0] || cnt[0] * cnt[1] > SIZE_MAX / cnt[2]) {
 		return NULL;
