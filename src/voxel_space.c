@@ -179,13 +179,18 @@ VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj
 		for (y = start_idx[1]; y < end_idx[1]; ++y) {
 			for (z = start_idx[2]; z < end_idx[2]; ++z) {
 				VoxelSpaceNode_t* node;
+				const long long v[3] = {
+					vs->min_v[0] + (long long)(x * vs->split_size[0]),
+					vs->min_v[1] + (long long)(y * vs->split_size[1]),
+					vs->min_v[2] + (long long)(z * vs->split_size[2])
+				};
 				CCTNum_t voxel_min_v[3], voxel_max_v[3];
-				voxel_min_v[0] = vs->min_v[0] + x * vs->split_size[0];
-				voxel_min_v[1] = vs->min_v[1] + y * vs->split_size[1];
-				voxel_min_v[2] = vs->min_v[2] + z * vs->split_size[2];
-				voxel_max_v[0] = voxel_min_v[0] + vs->split_size[0];
-				voxel_max_v[1] = voxel_min_v[1] + vs->split_size[1];
-				voxel_max_v[2] = voxel_min_v[2] + vs->split_size[2];
+				voxel_min_v[0] = v[0];
+				voxel_min_v[1] = v[1];
+				voxel_min_v[2] = v[2];
+				voxel_max_v[0] = v[0] + (long long)vs->split_size[0];
+				voxel_max_v[1] = v[1] + (long long)vs->split_size[1];
+				voxel_max_v[2] = v[2] + (long long)vs->split_size[2];
 				if (!fn_check_intersect(geo_data, geo_type, voxel_min_v, voxel_max_v)) {
 					continue;
 				}
