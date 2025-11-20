@@ -12,6 +12,10 @@ typedef struct VoxelSpaceNode_t {
 	struct VoxelSpaceObject_t** objs;
 	size_t objs_cnt;
 	size_t _objs_arr_cap;
+	union {
+		void* ptr;
+		unsigned long long u64;
+	} udata;
 } VoxelSpaceNode_t;
 
 typedef struct VoxelSpaceObject_t {
