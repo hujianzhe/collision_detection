@@ -138,6 +138,21 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	return vs;
 }
 
+void voxelspaceNodeIndices(const VoxelSpace_t* vs, const VoxelSpaceNode_t* node, size_t* x, size_t* y, size_t* z) {
+	size_t node_index = node - vs->nodes;
+	*x = node_index / vs->_dimension_stride0;
+	node_index %= vs->_dimension_stride0;
+	*y = node_index / vs->_dimension_node_max_sz[2];
+	*z = node_index % vs->_dimension_node_max_sz[2];
+}
+
+const VoxelSpaceNode_t* voxelspaceGetNode(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) {
+	if (x >= vs->_dimension_node_max_sz[0] || y >= vs->_dimension_node_max_sz[1] || z >= vs->_dimension_node_max_sz[2]) {
+		return NULL;
+	}
+	return get_node(vs, x, y, z);
+}
+
 VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
 	size_t i, x, y, z;
 	size_t start_idx[3], end_idx[3];
