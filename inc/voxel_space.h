@@ -54,6 +54,7 @@ extern "C" {
 __declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]);
 
 __declspec_dll void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z);
+__declspec_dll size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
 __declspec_dll void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]);
 __declspec_dll const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
 
