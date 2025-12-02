@@ -138,8 +138,7 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	return vs;
 }
 
-void voxelspaceNodeIndices(const VoxelSpace_t* vs, const VoxelSpaceNode_t* node, size_t* x, size_t* y, size_t* z) {
-	size_t node_index = node - vs->nodes;
+void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z) {
 	*x = node_index / vs->_dimension_stride0;
 	node_index %= vs->_dimension_stride0;
 	*y = node_index / vs->_dimension_node_max_sz[2];
@@ -160,7 +159,7 @@ void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_
 	max_v[2] = v[2] + (long long)vs->split_size[2];
 }
 
-const VoxelSpaceNode_t* voxelspaceGetNode(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) {
+const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) {
 	if (x >= vs->_dimension_node_max_sz[0] || y >= vs->_dimension_node_max_sz[1] || z >= vs->_dimension_node_max_sz[2]) {
 		return NULL;
 	}

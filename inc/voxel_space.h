@@ -53,9 +53,9 @@ extern "C" {
 
 __declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]);
 
-__declspec_dll void voxelspaceNodeIndices(const VoxelSpace_t* vs, const VoxelSpaceNode_t* node, size_t* x, size_t* y, size_t* z);
+__declspec_dll void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z);
 __declspec_dll void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]);
-__declspec_dll const VoxelSpaceNode_t* voxelspaceGetNode(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
+__declspec_dll const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
 
 __declspec_dll VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
 __declspec_dll VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3]));
