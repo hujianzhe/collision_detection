@@ -86,9 +86,8 @@ static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t
 extern "C" {
 #endif
 
-VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const CCTNum_t max_v_[3], const CCTNum_t split_size_[3]) {
+VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const CCTNum_t max_v_[3], const CCTNum_t split_size_[3], int alloc_nodes) {
 	size_t i, cnt[3], nodes_cnt;
-	VoxelSpaceNode_t* nodes;
 	vs->min_v[0] = CCTNum_floor(min_v_[0]);
 	vs->min_v[1] = CCTNum_floor(min_v_[1]);
 	vs->min_v[2] = CCTNum_floor(min_v_[2]);
@@ -118,13 +117,17 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	if (nodes_cnt > SIZE_MAX / sizeof(VoxelSpaceNode_t)) {
 		return NULL;
 	}
-	nodes = (VoxelSpaceNode_t*)calloc(1, sizeof(VoxelSpaceNode_t) * nodes_cnt);
-	if (!nodes) {
-		return NULL;
+	if (alloc_nodes) {
+		vs->nodes = (VoxelSpaceNode_t*)calloc(1, sizeof(VoxelSpaceNode_t) * nodes_cnt);
+		if (!vs->nodes) {
+			return NULL;
+		}
 	}
-	vs->nodes_cnt = nodes_cnt;
-	vs->nodes = nodes;
+	else {
+		vs->nodes = NULL;
+	}
 	vs->epsilon = CCTNum(0.001);
+	vs->_alloc_nodes = alloc_nodes;
 	vs->_dimension_node_max_sz[0] = cnt[0];
 	vs->_dimension_node_max_sz[1] = cnt[1];
 	vs->_dimension_node_max_sz[2] = cnt[2];
@@ -275,8 +278,9 @@ const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
 }
 
 void voxelspaceClear(VoxelSpace_t* vs) {
-	size_t i, j;
-	for (i = 0; i < vs->nodes_cnt; ++i) {
+	size_t i, j, nodes_cnt;
+	nodes_cnt = vs->_dimension_node_max_sz[0] * vs->_dimension_node_max_sz[1] * vs->_dimension_node_max_sz[2];
+	for (i = 0; i < nodes_cnt; ++i) {
 		VoxelSpaceNode_t* node = vs->nodes + i;
 		for (j = 0; j < node->objs_cnt; ++j) {
 			VoxelSpaceObject_t* obj = node->objs[j];
@@ -293,8 +297,12 @@ void voxelspaceClear(VoxelSpace_t* vs) {
 }
 
 void voxelspaceDestroy(VoxelSpace_t* vs) {
-	size_t i, j;
-	for (i = 0; i < vs->nodes_cnt; ++i) {
+	size_t i, j, nodes_cnt;
+	if (!vs->nodes) {
+		return;
+	}
+	nodes_cnt = vs->_dimension_node_max_sz[0] * vs->_dimension_node_max_sz[1] * vs->_dimension_node_max_sz[2];
+	for (i = 0; i < nodes_cnt; ++i) {
 		VoxelSpaceNode_t* node = vs->nodes + i;
 		for (j = 0; j < node->objs_cnt; ++j) {
 			VoxelSpaceObject_t* obj = node->objs[j];
@@ -306,9 +314,10 @@ void voxelspaceDestroy(VoxelSpace_t* vs) {
 		}
 		free(node->objs);
 	}
-	free(vs->nodes);
+	if (vs->_alloc_nodes) {
+		free(vs->nodes);
+	}
 	vs->nodes = NULL;
-	vs->nodes_cnt = 0;
 }
 
 #ifdef __cplusplus

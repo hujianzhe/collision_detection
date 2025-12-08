@@ -34,10 +34,10 @@ typedef struct VoxelSpace_t {
 	unsigned long long split_size[3];
 	CCTNum_t epsilon;
 	struct VoxelSpaceNode_t* nodes;
-	size_t nodes_cnt;
 	size_t _dimension_node_max_sz[3];
 	size_t _dimension_stride0;
 	unsigned int _cap_expand;
+	int _alloc_nodes;
 } VoxelSpace_t;
 
 typedef struct VoxelSpaceFinder_t {
@@ -51,7 +51,7 @@ typedef struct VoxelSpaceFinder_t {
 extern "C" {
 #endif
 
-__declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3]);
+__declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3], int alloc_nodes);
 
 __declspec_dll void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z);
 __declspec_dll size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
