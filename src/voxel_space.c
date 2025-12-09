@@ -8,13 +8,13 @@
 #include <stdlib.h>
 
 static void calculate_index(long long min_v, unsigned long long sz, size_t count, CCTNum_t v, size_t* p_floor_idx, size_t* p_ceil_idx) {
-	long long d;
-	long long vl = CCTNum_floor(v);
-	long long vh = CCTNum_ceil(v);
+	long long d, vl, vh;
+	vl = CCTNum_floor(v);
 	if (vl < min_v) {
 		*p_floor_idx = *p_ceil_idx = 0;
 		return;
 	}
+	vh = CCTNum_ceil(v);
 	if (vl == vh) {
 		d = vl - min_v;
 		*p_floor_idx = d / sz;
