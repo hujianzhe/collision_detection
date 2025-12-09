@@ -12,13 +12,10 @@ static void calculate_index(long long min_v, unsigned long long sz, size_t count
 	long long vl = CCTNum_floor(v);
 	long long vh = CCTNum_ceil(v);
 	if (vl < min_v) {
-		*p_floor_idx = 0;
+		*p_floor_idx = *p_ceil_idx = 0;
+		return;
 	}
 	if (vl == vh) {
-		if (vl < min_v) {
-			*p_ceil_idx = 0;
-			return;
-		}
 		d = vl - min_v;
 		*p_floor_idx = d / sz;
 		*p_ceil_idx = *p_floor_idx + 1;
