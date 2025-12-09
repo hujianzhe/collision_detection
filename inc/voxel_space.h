@@ -32,7 +32,6 @@ typedef struct VoxelSpace_t {
 	long long min_v[3];
 	long long max_v[3];
 	unsigned long long split_size[3];
-	CCTNum_t epsilon;
 	struct VoxelSpaceNode_t* nodes;
 	size_t _dimension_node_max_sz[3];
 	size_t _dimension_stride0;
@@ -45,6 +44,7 @@ typedef struct VoxelSpaceFinder_t {
 	size_t _start_idx[3];
 	size_t _end_idx[3];
 	size_t _cur_idx[3];
+	size_t _node_idx;
 } VoxelSpaceFinder_t;
 
 #ifdef __cplusplus
@@ -62,8 +62,8 @@ __declspec_dll VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpace
 __declspec_dll VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3]));
 __declspec_dll void voxelspaceRemove(VoxelSpaceObject_t* obj);
 
-__declspec_dll const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder);
-__declspec_dll const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder);
+__declspec_dll VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder);
+__declspec_dll VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder);
 
 __declspec_dll void voxelspaceClear(VoxelSpace_t* vs);
 __declspec_dll void voxelspaceDestroy(VoxelSpace_t* vs);

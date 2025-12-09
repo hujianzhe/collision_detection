@@ -7,36 +7,50 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static void node_indices_floor(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
-	size_t i;
-	for (i = 0; i < 3; ++i) {
-		long long pi = CCTNum_floor(p[i] - vs->epsilon);
-		if (pi < vs->min_v[i]) {
-			index_values[i] = 0;
-			continue;
+static void calculate_index(long long min_v, unsigned long long sz, size_t count, CCTNum_t v, size_t* p_floor_idx, size_t* p_ceil_idx) {
+	long long d;
+	long long vl = CCTNum_floor(v);
+	long long vh = CCTNum_ceil(v);
+	if (vl < min_v) {
+		*p_floor_idx = 0;
+	}
+	if (vl == vh) {
+		if (vl < min_v) {
+			*p_ceil_idx = 0;
+			return;
 		}
-		index_values[i] = (pi - vs->min_v[i]) / vs->split_size[i];
-		if (index_values[i] > vs->_dimension_node_max_sz[i]) {
-			index_values[i] = vs->_dimension_node_max_sz[i];
+		d = vl - min_v;
+		*p_floor_idx = d / sz;
+		*p_ceil_idx = *p_floor_idx + 1;
+		if (*p_floor_idx > 0 && 0 == d % sz) {
+			*p_floor_idx -= 1;
 		}
+	}
+	else {
+		d = vl - min_v;
+		*p_floor_idx = d / sz;
+		d = vh - min_v;
+		*p_ceil_idx = d / sz;
+		if (*p_ceil_idx <= *p_floor_idx) {
+			*p_ceil_idx = *p_floor_idx + 1;
+		}
+	}
+	if (*p_floor_idx > count) {
+		*p_floor_idx = count;
+	}
+	if (*p_ceil_idx > count) {
+		*p_ceil_idx = count;
 	}
 }
 
-static void node_indices_ceil(const VoxelSpace_t* vs, const CCTNum_t p[3], size_t index_values[3]) {
+static void node_range_indices(const VoxelSpace_t* vs, const CCTNum_t p1[3], const CCTNum_t p2[3], size_t start_idx[3], size_t end_idx[3]) {
 	size_t i;
 	for (i = 0; i < 3; ++i) {
-		long long pi = CCTNum_ceil(p[i]);
-		if (pi < vs->min_v[i]) {
-			index_values[i] = 0;
-			continue;
-		}
-		index_values[i] = (pi - vs->min_v[i]) / vs->split_size[i];
-		if (index_values[i] < vs->_dimension_node_max_sz[i]) {
-			++index_values[i];
-		}
-		else {
-			index_values[i] = vs->_dimension_node_max_sz[i];
-		}
+		size_t p1_start_idx, p1_end_idx, p2_start_idx, p2_end_idx;
+		calculate_index(vs->min_v[i], vs->split_size[i], vs->_dimension_node_max_sz[i], p1[i], &p1_start_idx, &p1_end_idx);
+		calculate_index(vs->min_v[i], vs->split_size[i], vs->_dimension_node_max_sz[i], p2[i], &p2_start_idx, &p2_end_idx);
+		start_idx[i] = (p1_start_idx < p2_start_idx ? p1_start_idx : p2_start_idx);
+		end_idx[i] = (p1_end_idx > p2_end_idx ? p1_end_idx : p2_end_idx);
 	}
 }
 
@@ -126,7 +140,6 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	else {
 		vs->nodes = NULL;
 	}
-	vs->epsilon = CCTNum(0.001);
 	vs->_alloc_nodes = alloc_nodes;
 	vs->_dimension_node_max_sz[0] = cnt[0];
 	vs->_dimension_node_max_sz[1] = cnt[1];
@@ -171,9 +184,7 @@ size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, si
 VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
 	size_t i, x, y, z;
 	size_t start_idx[3], end_idx[3];
-
-	node_indices_floor(vs, min_v, start_idx);
-	node_indices_ceil(vs, max_v, end_idx);
+	node_range_indices(vs, min_v, max_v, start_idx, end_idx);
 	if (!voxelspace_update_prepare_memory(vs, obj, start_idx, end_idx)) {
 		return NULL;
 	}
@@ -197,9 +208,7 @@ VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, 
 VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3])) {
 	size_t i, x, y, z;
 	size_t start_idx[3], end_idx[3];
-
-	node_indices_floor(vs, boundbox_min_v, start_idx);
-	node_indices_ceil(vs, boundbox_max_v, end_idx);
+	node_range_indices(vs, boundbox_min_v, boundbox_max_v, start_idx, end_idx);
 	if (!voxelspace_update_prepare_memory(vs, obj, start_idx, end_idx)) {
 		return NULL;
 	}
@@ -239,9 +248,13 @@ void voxelspaceRemove(VoxelSpaceObject_t* obj) {
 	obj->locate_nodes_cnt = 0;
 }
 
-const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) {
-	node_indices_floor(vs, min_v, finder->_start_idx);
-	node_indices_ceil(vs, max_v, finder->_end_idx);
+VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) {
+	node_range_indices(vs, min_v, max_v, finder->_start_idx, finder->_end_idx);
+	finder->_vs = vs;
+	finder->_cur_idx[0] = finder->_start_idx[0];
+	finder->_cur_idx[1] = finder->_start_idx[1];
+	finder->_cur_idx[2] = finder->_start_idx[2];
+	finder->_node_idx = voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
 	if (finder->_start_idx[0] >= finder->_end_idx[0]) {
 		return NULL;
 	}
@@ -251,28 +264,27 @@ const VoxelSpaceNode_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum
 	if (finder->_start_idx[2] >= finder->_end_idx[2]) {
 		return NULL;
 	}
-	finder->_vs = vs;
-	finder->_cur_idx[0] = finder->_start_idx[0];
-	finder->_cur_idx[1] = finder->_start_idx[1];
-	finder->_cur_idx[2] = finder->_start_idx[2];
-	return vs->nodes + voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+	return finder;
 }
 
-const VoxelSpaceNode_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
+VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
 	const VoxelSpace_t* vs = finder->_vs;
 	++finder->_cur_idx[2];
 	if (finder->_cur_idx[2] < finder->_end_idx[2]) {
-		return vs->nodes + voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		finder->_node_idx = voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		return finder;
 	}
 	finder->_cur_idx[2] = finder->_start_idx[2];
 	++finder->_cur_idx[1];
 	if (finder->_cur_idx[1] < finder->_end_idx[1]) {
-		return vs->nodes + voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		finder->_node_idx = voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		return finder;
 	}
 	finder->_cur_idx[1] = finder->_start_idx[1];
 	++finder->_cur_idx[0];
 	if (finder->_cur_idx[0] < finder->_end_idx[0]) {
-		return vs->nodes + voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		finder->_node_idx = voxelspaceNodeIndexFromXYZ(vs, finder->_cur_idx[0], finder->_cur_idx[1], finder->_cur_idx[2]);
+		return finder;
 	}
 	return NULL;
 }
