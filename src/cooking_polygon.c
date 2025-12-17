@@ -49,6 +49,30 @@ static GeometryPolygon_t* _init_new_polygon(GeometryPolygon_t* new_pg, const CCT
 	return new_pg;
 }
 
+static int _check_tri_edge_len(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, CCTNum_t min_len) {
+	CCTNum_t lensq, min_lensq = CCTNum_sq(min_len);
+	lensq = mathVec3DistanceSq(v[tri_v_indices[0]], v[tri_v_indices[1]]);
+	if (lensq < min_lensq) {
+		return 0;
+	}
+	lensq = mathVec3DistanceSq(v[tri_v_indices[0]], v[tri_v_indices[2]]);
+	if (lensq < min_lensq) {
+		return 0;
+	}
+	lensq = mathVec3DistanceSq(v[tri_v_indices[1]], v[tri_v_indices[2]]);
+	if (lensq < min_lensq) {
+		return 0;
+	}
+	return 1;
+}
+
+static void _save_invalid_triangle(GeometryCookingOutput_t* output, const CCTNum_t(*v)[3], const unsigned int* tri_v_indices) {
+	output->has_invalid_tri = 1;
+	mathVec3Copy(output->invalid_tri_v[0], v[tri_v_indices[0]]);
+	mathVec3Copy(output->invalid_tri_v[1], v[tri_v_indices[1]]);
+	mathVec3Copy(output->invalid_tri_v[2], v[tri_v_indices[2]]);
+}
+
 static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
 	unsigned int i, polygon_tri_v_indices_cnt;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
@@ -180,16 +204,26 @@ err:
 	return 0;
 }
 
-int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, int merged) {
+int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, const GeometryCookingOption_t* opt, GeometryCookingOutput_t* output) {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
 
+	/* check triangles valid */
 	tri_cnt = tri_v_indices_cnt / 3;
 	if (tri_cnt < 1) {
 		goto err;
 	}
-	if (merged) {
+	if (opt->tri_edge_min_len > CCTNum(0.0)) {
+		for (i = 0; i < tri_v_indices_cnt; i += 3) {
+			if (!_check_tri_edge_len(v, tri_v_indices + i, opt->tri_edge_min_len)) {
+				_save_invalid_triangle(output, v, tri_v_indices + i);
+				goto err;
+			}
+		}
+	}
+
+	if (opt->tri_merged) {
 		tri_merge_bits = (char*)calloc(1, tri_cnt / 8 + (tri_cnt % 8 ? 1 : 0));
 		if (!tri_merge_bits) {
 			goto err;
@@ -556,7 +590,7 @@ unsigned int* mathCookingConcavePolygonTriangleVertex(const unsigned int* v_indi
 extern "C" {
 #endif
 
-GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t* polygon) {
+const GeometryCookingOutput_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const GeometryCookingOption_t* opt, GeometryCookingOutput_t* output) {
 	CCTNum_t(*dup_v)[3] = NULL;
 	CCTNum_t N[3];
 	unsigned int* dup_tri_v_indices = NULL;
@@ -565,19 +599,30 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	unsigned int edge_v_indices_cnt, v_indices_cnt, dup_v_cnt, i;
 	unsigned int* concave_tri_edge_ids = NULL, *concave_tri_v_ids = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
+	GeometryPolygon_t* polygon = output->polygon_ptr;
+	output->error_code = 1;
+	output->has_invalid_tri = 0;
 	/* check */
 	if (tri_v_indices_cnt < 3) {
-		return NULL;
+		return output;
 	}
 	/* merge distinct vertices, rewrite indices */
 	if (!MathCookingStage_DistinctVertices(v, tri_v_indices, tri_v_indices_cnt, &dup_v, &dup_v_cnt, &dup_tri_v_indices)) {
 		goto err;
 	}
-	/* check all triangle in same plane */
+	/* check all triangles valid */
 	mathPlaneNormalByVertices3(v[tri_v_indices[0]], v[tri_v_indices[1]], v[tri_v_indices[2]], N);
 	for (i = 0; i < dup_v_cnt; ++i) {
 		if (!Plane_Contain_Point(v[tri_v_indices[0]], N, dup_v[i])) {
 			goto err;
+		}
+	}
+	if (opt->tri_edge_min_len > CCTNum(0.0)) {
+		for (i = 0; i < tri_v_indices_cnt; i += 3) {
+			if (!_check_tri_edge_len((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices + i, opt->tri_edge_min_len)) {
+				_save_invalid_triangle(output, (const CCTNum_t(*)[3])dup_v, dup_tri_v_indices + i);
+				goto err;
+			}
 		}
 	}
 	/* cooking edge */
@@ -626,7 +671,9 @@ GeometryPolygon_t* mathCookingPolygon(const CCTNum_t(*v)[3], const unsigned int*
 	polygon->mesh_v_ids = NULL;
 	polygon->mesh_edge_ids = NULL;
 	polygon->v_adjacent_infos = v_adjacent_infos;
-	return polygon;
+	/* finish */
+	output->error_code = 0;
+	return output;
 err:
 	free(dup_v);
 	free(v_indices);
@@ -636,7 +683,7 @@ err:
 	free(concave_tri_edge_ids);
 	free(dup_tri_v_indices);
 	free(v_adjacent_infos);
-	return NULL;
+	return output;
 }
 
 #ifdef	__cplusplus
