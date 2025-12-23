@@ -49,18 +49,33 @@ static GeometryPolygon_t* _init_new_polygon(GeometryPolygon_t* new_pg, const CCT
 	return new_pg;
 }
 
-static int _check_tri_edge_len(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, CCTNum_t min_len) {
-	CCTNum_t lensq, min_lensq = CCTNum_sq(min_len);
-	lensq = mathVec3DistanceSq(v[tri_v_indices[0]], v[tri_v_indices[1]]);
-	if (lensq < min_lensq) {
+static int _check_tri_valid(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, CCTNum_t min_edge_len, CCTNum_t cos_min_degree) {
+	CCTNum_t e01[3], e02[3], e12[3], cos_d, len;
+	mathVec3Sub(e01, v[tri_v_indices[1]], v[tri_v_indices[0]]);
+	mathVec3Sub(e02, v[tri_v_indices[2]], v[tri_v_indices[0]]);
+	mathVec3Sub(e12, v[tri_v_indices[2]], v[tri_v_indices[1]]);
+	len = mathVec3Normalized(e01, e01);
+	if (len <= min_edge_len) {
 		return 0;
 	}
-	lensq = mathVec3DistanceSq(v[tri_v_indices[0]], v[tri_v_indices[2]]);
-	if (lensq < min_lensq) {
+	len = mathVec3Normalized(e02, e02);
+	if (len <= min_edge_len) {
 		return 0;
 	}
-	lensq = mathVec3DistanceSq(v[tri_v_indices[1]], v[tri_v_indices[2]]);
-	if (lensq < min_lensq) {
+	len = mathVec3Normalized(e12, e12);
+	if (len <= min_edge_len) {
+		return 0;
+	}
+	cos_d = mathVec3Dot(e01, e02);
+	if (cos_d > cos_min_degree) {
+		return 0;
+	}
+	cos_d = mathVec3Dot(e01, e12);
+	if (cos_d > cos_min_degree) {
+		return 0;
+	}
+	cos_d = mathVec3Dot(e02, e12);
+	if (cos_d > cos_min_degree) {
 		return 0;
 	}
 	return 1;
@@ -214,9 +229,10 @@ int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v
 	if (tri_cnt < 1) {
 		goto err;
 	}
-	if (opt->tri_edge_min_len > CCTNum(0.0)) {
+	if (opt->tri_edge_min_len > CCTNum(0.0) || opt->tri_min_degree > CCTNum(0.0)) {
+		CCTNum_t cos_min_degree = CCTNum_cos(opt->tri_min_degree * CCT_RADIAN_PER_DEGREE);
 		for (i = 0; i < tri_v_indices_cnt; i += 3) {
-			if (!_check_tri_edge_len(v, tri_v_indices + i, opt->tri_edge_min_len)) {
+			if (!_check_tri_valid(v, tri_v_indices + i, opt->tri_edge_min_len, cos_min_degree)) {
 				_save_invalid_triangle(output, v, tri_v_indices + i);
 				goto err;
 			}
@@ -617,9 +633,10 @@ const GeometryCookingOutput_t* mathCookingPolygon(const CCTNum_t(*v)[3], const u
 			goto err;
 		}
 	}
-	if (opt->tri_edge_min_len > CCTNum(0.0)) {
+	if (opt->tri_edge_min_len > CCTNum(0.0) || opt->tri_min_degree > CCTNum(0.0)) {
+		CCTNum_t cos_min_degree = CCTNum_cos(opt->tri_min_degree * CCT_RADIAN_PER_DEGREE);
 		for (i = 0; i < tri_v_indices_cnt; i += 3) {
-			if (!_check_tri_edge_len((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices + i, opt->tri_edge_min_len)) {
+			if (!_check_tri_valid((const CCTNum_t(*)[3])dup_v, dup_tri_v_indices + i, opt->tri_edge_min_len, cos_min_degree)) {
 				_save_invalid_triangle(output, (const CCTNum_t(*)[3])dup_v, dup_tri_v_indices + i);
 				goto err;
 			}

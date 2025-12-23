@@ -10,6 +10,7 @@
 typedef struct GeometryCookingOption_t {
 	int tri_merged;
 	CCTNum_t tri_edge_min_len;
+	CCTNum_t tri_min_degree;
 } GeometryCookingOption_t;
 
 typedef struct GeometryCookingOutput_t {
