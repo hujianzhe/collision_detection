@@ -575,7 +575,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 				mathVec3AddScalar(p, ls2_dir, d);
 				mathVec3Sub(l, polygon1->v[polygon1->edge_v_indices_flat[j]], p);
 				mathVec3Sub(r, polygon1->v[polygon1->edge_v_indices_flat[j + 1]], p);
-				if (mathVec3Dot(l, r) < CCTNum(0.0)) {
+				if (mathVec3Dot(l, r) < CCT_EPSILON_NEGATE) {
 					free(polygon1_ls_dir_caches);
 					return 0;
 				}
@@ -609,7 +609,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 			mathVec3AddScalar(p, ls2_dir, d);
 			mathVec3Sub(l, ls1_v1, p);
 			mathVec3Sub(r, ls1_v2, p);
-			if (mathVec3Dot(l, r) < CCTNum(0.0)) {
+			if (mathVec3Dot(l, r) < CCT_EPSILON_NEGATE) {
 				return 0;
 			}
 		}
