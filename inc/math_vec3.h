@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 __declspec_dll int mathVec3IsZero(const CCTNum_t v[3]);
+__declspec_dll int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps);
 __declspec_dll int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]);
 __declspec_dll int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps);
 __declspec_dll int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]);

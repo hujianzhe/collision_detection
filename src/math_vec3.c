@@ -20,6 +20,12 @@ int mathVec3IsZero(const CCTNum_t v[3]) {
 			v[0] >= CCT_EPSILON_NEGATE && v[1] >= CCT_EPSILON_NEGATE && v[2] >= CCT_EPSILON_NEGATE;
 }
 
+int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps) {
+	CCTNum_t eps_negate = -eps;
+	return	v[0] <= eps && v[1] <= eps && v[2] <= eps &&
+			v[0] >= eps_negate && v[1] >= eps_negate && v[2] >= eps_negate;
+}
+
 int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	CCTNum_t delta;
 

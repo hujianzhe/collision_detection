@@ -28,8 +28,8 @@ typedef struct GeometryIteratorGJK_t {
 	CCTNum_t dir[3];
 	GeometrySimplexGJK_t simplex;
 	int overlap;
-	/* private */
-	unsigned int left_iter_times_;
+	unsigned int iter_times;
+	unsigned int max_iter_times;
 } GeometryIteratorGJK_t;
 
 #ifdef __cplusplus
