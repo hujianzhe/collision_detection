@@ -849,6 +849,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 			mathQuatMulVec3(obb->axis[0], q, obb->axis[0]);
 			mathQuatMulVec3(obb->axis[1], q, obb->axis[1]);
 			mathQuatMulVec3(obb->axis[2], q, obb->axis[2]);
+			mathBoxFixAxis3(obb->axis[0], obb->axis[1], obb->axis[2]);
 			return 1;
 		}
 		case GEOMETRY_BODY_POLYGON:
