@@ -267,14 +267,14 @@ CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
 	CCTNum_t t, s;
 	if (m[8] < CCTNum(0.0)) {
 		if (m[0] > m[4]) {
-			t = 1 + m[0] - m[4] - m[8];
+			t = CCTNum(1.0) + m[0] - m[4] - m[8];
 			q[0] = t;
 			q[1] = m[1] + m[3];
 			q[2] = m[6] + m[2];
 			q[3] = m[5] - m[7];
 		}
 		else {
-			t = 1 - m[0] + m[4] - m[8];
+			t = CCTNum(1.0) - m[0] + m[4] - m[8];
 			q[0] = m[1] + m[3];
 			q[1] = t;
 			q[2] = m[5] + m[7];
@@ -283,18 +283,18 @@ CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
 	}
 	else {
 		if (m[0] < -m[4]) {
-			t = 1 - m[0] - m[4] + m[8];
+			t = CCTNum(1.0) - m[0] - m[4] + m[8];
 			q[0] = m[6] + m[2];
 			q[1] = m[5] + m[7];
 			q[2] = t;
 			q[3] = m[1] - m[3];
 		}
 		else {
-			t = 1 + m[0] + m[4] + m[8];
+			t = CCTNum(1.0) + m[0] + m[4] + m[8];
 			q[0] = m[5] - m[7];
 			q[1] = m[6] - m[2];
 			q[2] = m[1] - m[3];
-			q[4] = t;
+			q[3] = t;
 		}
 	}
 	s = CCTNum(0.5) / CCTNum_sqrt(t);
