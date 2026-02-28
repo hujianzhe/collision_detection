@@ -2,50 +2,34 @@
 // Created by hujianzhe
 //
 
+#include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
 #include "../inc/aabb.h"
+
+extern const CCTConstVal_t CCTConstVal_;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-const CCTNum_t AABB_Axis[3][3] = {
-	{ CCTNums_3(1.0, 0.0, 0.0) },
-	{ CCTNums_3(0.0, 1.0, 0.0) },
-	{ CCTNums_3(0.0, 0.0, 1.0) }
-};
-
-const CCTNum_t AABB_Plane_Normal[6][3] = {
-	{ CCTNums_3(1.0, 0.0, 0.0) }, { CCTNums_3(-1.0, 0.0, 0.0) },
-	{ CCTNums_3(0.0, 1.0, 0.0) }, { CCTNums_3(0.0, -1.0, 0.0) },
-	{ CCTNums_3(0.0, 0.0, 1.0) }, { CCTNums_3(0.0, 0.0, -1.0) }
-};
-
-const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]) {
-	if (face_idx >= 6) {
-		return NULL;
+void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]) {
+	switch (face_idx) {
+		case 0:
+		case 2:
+		case 4:
+			mathVec3Copy(plane_v, max_v);
+			break;
+		case 1:
+		case 3:
+		case 5:
+			mathVec3Copy(plane_v, min_v);
+			break;
+		default:
+			mathVec3Set(plane_v, CCTNums_3(0.0, 0.0, 0.0));
+			mathVec3Set(plane_n, CCTNums_3(0.0, 0.0, 0.0));
+			return;
 	}
-	if (normal) {
-		const CCTNum_t* face_n = AABB_Plane_Normal[face_idx];
-		normal[0] = face_n[0];
-		normal[1] = face_n[1];
-		normal[2] = face_n[2];
-		return normal;
-	}
-	return AABB_Plane_Normal[face_idx];
-}
-
-CCTNum_t* mathAABBPlaneVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t v[3]) {
-	if (face_idx >= 6) {
-		return NULL;
-	}
-	if (face_idx & 0x1) {
-		return mathVec3Copy(v, min_v);
-	}
-	else {
-		return mathVec3Copy(v, max_v);
-	}
-	return NULL;
+	mathVec3Copy(plane_n, CCTConstVal_.AABB_Face_Normals[face_idx]);
 }
 
 void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]) {

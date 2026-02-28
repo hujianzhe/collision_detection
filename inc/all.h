@@ -6,6 +6,7 @@
 #define	UTIL_COLLISION_DETECTION_ALL_HEADER_H
 
 #include "number_define.h"
+#include "const_data.h"
 #include "aabb.h"
 #include "collision.h"
 #include "geometry_api.h"

@@ -42,9 +42,6 @@
 
 #define	GEOMETRY_BODY_BOX_MIN_HALF	(CCTNum(1e-4))
 
-#define	GEOMETRY_BODY_BOX_MIN_VERTICE_INDICE	0
-#define	GEOMETRY_BODY_BOX_MAX_VERTICE_INDICE	6
-
 typedef struct GeometryBoxMesh_t {
 	GeometryMesh_t mesh;
 	GeometryPolygon_t faces[6];
@@ -54,9 +51,6 @@ typedef struct GeometryBoxMesh_t {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern const unsigned int Box_Vertice_Indices_Default[8];
-extern const unsigned int Box_Face_MeshVerticeIds[6][4];
 
 __declspec_dll const unsigned int* mathBoxEdgeVertexIds(unsigned int edge_id, unsigned int v_ids[2]);
 __declspec_dll const unsigned int* mathBoxVertexAdjacentVertexIds(unsigned int v_id, unsigned int adj_v_ids[3]);
@@ -68,7 +62,6 @@ __declspec_dll void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum
 
 __declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]);
 __declspec_dll CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]);
-__declspec_dll CCTNum_t* mathBoxFaceNormal(const CCTNum_t axis[3][3], unsigned int face_id, CCTNum_t normal[3]);
 __declspec_dll GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_id, GeometryPolygon_t* polygon);
 __declspec_dll void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]);
 __declspec_dll void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);

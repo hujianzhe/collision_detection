@@ -2,14 +2,14 @@
 // Created by hujianzhe
 //
 
+#include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
 #include "../inc/plane.h"
 #include "../inc/polygon.h"
 #include <stdlib.h>
 
-static const unsigned int Triangle_Vertice_Indices_Default[3] = { 0, 1, 2 };
-static const unsigned int Triangle_Edge_Indices_Default[6] = { 0,1, 1,2, 2,0 };
+extern const CCTConstVal_t CCTConstVal_;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,11 +66,11 @@ int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], cons
 
 void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon) {
 	polygon->v = (CCTNum_t(*)[3])tri;
-	polygon->v_indices = Triangle_Vertice_Indices_Default;
+	polygon->v_indices = CCTConstVal_.Triangle_VertexIds;
 	polygon->v_indices_cnt = 3;
-	polygon->edge_v_indices_flat = Triangle_Edge_Indices_Default;
+	polygon->edge_v_indices_flat = CCTConstVal_.Triangle_Edge_VertexIds;
 	polygon->edge_cnt = 3;
-	polygon->tri_v_indices_flat = Triangle_Vertice_Indices_Default;
+	polygon->tri_v_indices_flat = CCTConstVal_.Triangle_VertexIds;
 	polygon->tri_cnt = 1;
 	polygon->is_convex = 1;
 	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);

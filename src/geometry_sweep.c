@@ -2,6 +2,7 @@
 // Created by hujianzhe
 //
 
+#include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
 #include "../inc/line_segment.h"
@@ -13,6 +14,8 @@
 #include "../inc/capsule.h"
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
+
+extern const CCTConstVal_t CCTConstVal_;
 
 extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
 extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
@@ -64,12 +67,11 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 ///////////////////////////////////////////////////////////////////////////////
 
 static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) {
-	static const unsigned int Segment_Indices_Default[2] = { 0, 1 };
 	mesh->v = (CCTNum_t(*)[3])ls;
-	mesh->v_indices = Segment_Indices_Default;
+	mesh->v_indices = CCTConstVal_.Segment_VertexIds;
 	mesh->v_indices_cnt = 2;
-	mesh->edge_v_ids_flat = Segment_Indices_Default;
-	mesh->edge_v_indices_flat = Segment_Indices_Default;
+	mesh->edge_v_ids_flat = CCTConstVal_.Segment_Edge_VertexIds;
+	mesh->edge_v_indices_flat = CCTConstVal_.Segment_Edge_VertexIds;
 	mesh->edge_cnt = 1;
 	mesh->is_convex = 1;
 	mesh->is_closed = 0;

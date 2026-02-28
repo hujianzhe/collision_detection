@@ -11,12 +11,7 @@
 extern "C" {
 #endif
 
-extern const CCTNum_t AABB_Axis[3][3];
-extern const CCTNum_t AABB_Plane_Normal[6][3];
-
-__declspec_dll CCTNum_t* mathAABBPlaneVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t v[3]);
-__declspec_dll const CCTNum_t* mathAABBPlaneNormal(unsigned int face_idx, CCTNum_t normal[3]);
-
+__declspec_dll void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]);
 __declspec_dll void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]);
 
 __declspec_dll void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]);

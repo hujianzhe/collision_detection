@@ -2,6 +2,7 @@
 // Created by hujianzhe
 //
 
+#include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
 #include "../inc/vertex.h"
 #include "../inc/line_segment.h"
@@ -14,6 +15,8 @@
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 #include <stdlib.h>
+
+extern const CCTConstVal_t CCTConstVal_;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -425,8 +428,8 @@ static void concave_polygon_point_Locate_proc(const GeometryPolygon_t* polygon, 
 }
 
 int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
-	if ((const void*)polygon->v_indices >= (const void*)Box_Face_MeshVerticeIds &&
-		(const void*)polygon->v_indices < (const void*)(Box_Face_MeshVerticeIds + 6))
+	if (polygon->v_indices >= CCTConstVal_.Box_Face_MeshVertexIds &&
+		polygon->v_indices < CCTConstVal_.Box_Face_MeshVertexIds + sizeof(CCTConstVal_.Box_Face_MeshVertexIds)/sizeof(CCTConstVal_.Box_Face_MeshVertexIds[0]))
 	{
 		CCTNum_t ls_vec[3], v[3], dot;
 		mathVec3Sub(v, p, polygon->v[polygon->v_indices[0]]);
@@ -636,7 +639,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 }
 
 int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
-	if (Box_Vertice_Indices_Default == mesh->v_indices) {
+	if (CCTConstVal_.Box_Vertices_Indices == mesh->v_indices) {
 		return Box_Contain_Point((const CCTNum_t(*)[3])mesh->v, p);
 	}
 	if (!AABB_Contain_Point(mesh->bound_box.min_v, mesh->bound_box.max_v, p)) {
@@ -909,16 +912,14 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
-				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v,
-					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathOBBVertices(obb2, v);
-				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v,
-					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+				return Sphere_Contain_VerticeIndices(sphere1->o, sphere1->radius, (const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{
@@ -1008,16 +1009,14 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
-				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v,
-					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathOBBVertices(obb2, v);
-				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v,
-					Box_Vertice_Indices_Default, sizeof(Box_Vertice_Indices_Default) / sizeof(Box_Vertice_Indices_Default[0]));
+				return Capsule_Contain_VerticeIndices(capsule1, (const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{

@@ -3,6 +3,9 @@
 //
 
 #include "../inc/math_vec3.h"
+#include "../inc/const_data.h"
+
+extern const CCTConstVal_t CCTConstVal_;
 
 #ifdef	__cplusplus
 extern "C" {
@@ -264,19 +267,14 @@ CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3])
 	return mathVec3Sub(r, v, temp_v);
 }
 
-static const CCTNum_t Axis_X[3] = { CCTNums_3(1.0, 0.0, 0.0) };
-static const CCTNum_t Axis_Y[3] = { CCTNums_3(0.0, 1.0, 0.0) };
-static const CCTNum_t Axis_Z[3] = { CCTNums_3(0.0, 0.0, 1.0) };
-static const CCTNum_t Vec3_Zero[3] = { CCTNums_3(0.0, 0.0, 0.0) };
-
 CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]) {
 	CCTNum_t temp_v[3], len;
-	mathVec3Cross(temp_v, exist_axis, Axis_X);
-	if (!mathVec3EqualEps(temp_v, Vec3_Zero, CCTNum(1e-2))) {
+	mathVec3Cross(temp_v, exist_axis, CCTConstVal_.Axis_X);
+	if (!mathVec3EqualEps(temp_v, CCTConstVal_.Vec3_Zero, CCTNum(1e-2))) {
 		len = mathVec3Len(temp_v);
 		return mathVec3MultiplyScalar(r, temp_v, CCTNum(1.0) / len);
 	}
-	mathVec3Cross(r, exist_axis, Axis_Y);
+	mathVec3Cross(r, exist_axis, CCTConstVal_.Axis_Y);
 	len = mathVec3Len(r);
 	return mathVec3MultiplyScalar(r, r, CCTNum(1.0) / len);
 }
