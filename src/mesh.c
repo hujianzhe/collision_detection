@@ -10,6 +10,8 @@
 
 extern const CCTConstVal_t CCTConstVal_;
 
+extern void Polygon_Clear(GeometryPolygon_t* polygon);
+
 static void free_all_faces(GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (!mesh->polygons) {
@@ -17,7 +19,7 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 	}
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		mesh->polygons[i].v = NULL;
-		mathPolygonClear(mesh->polygons + i);
+		Polygon_Clear(mesh->polygons + i);
 	}
 	mesh->polygons_cnt = 0;
 	free(mesh->polygons);
