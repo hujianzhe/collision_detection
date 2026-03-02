@@ -52,11 +52,6 @@ typedef struct GeometryBoxMesh_t {
 extern "C" {
 #endif
 
-__declspec_dll const unsigned int* mathBoxEdgeVertexIds(unsigned int edge_id, unsigned int v_ids[2]);
-__declspec_dll const unsigned int* mathBoxVertexAdjacentVertexIds(unsigned int v_id, unsigned int adj_v_ids[3]);
-__declspec_dll const unsigned int* mathBoxFaceMeshVertexIds(unsigned int face_id, unsigned int v_ids[4]);
-__declspec_dll const unsigned int* mathBoxEdgeAdjacentFaceIds(unsigned int edge_id, unsigned int adjacent_face_ids[2]);
-
 __declspec_dll void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]);
 __declspec_dll void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]);
 

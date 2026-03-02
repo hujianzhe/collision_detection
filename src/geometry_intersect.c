@@ -909,7 +909,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathAABBVertices(aabb1->min_v, aabb1->max_v, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8, plane2->v, plane2->normal);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_VertexIds, 8, plane2->v, plane2->normal);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
@@ -1004,14 +1004,14 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathAABBVertices(aabb2->min_v, aabb2->max_v, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8, plane1->v, plane1->normal);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_VertexIds, 8, plane1->v, plane1->normal);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
 				const GeometryOBB_t* obb2 = (const GeometryOBB_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathOBBVertices(obb2, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8, plane1->v, plane1->normal);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_VertexIds, 8, plane1->v, plane1->normal);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -1116,7 +1116,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 				const GeometryPlane_t* plane2 = (const GeometryPlane_t*)geo_data2;
 				CCTNum_t v[8][3];
 				mathOBBVertices(obb1, v);
-				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_Vertices_Indices, 8, plane2->v, plane2->normal);
+				return Vertices_Intersect_Plane((const CCTNum_t(*)[3])v, CCTConstVal_.Box_VertexIds, 8, plane2->v, plane2->normal);
 			}
 			case GEOMETRY_BODY_OBB:
 			{

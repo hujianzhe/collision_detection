@@ -68,7 +68,7 @@ void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon)
 	polygon->v = (CCTNum_t(*)[3])tri;
 	polygon->v_indices = CCTConstVal_.Triangle_VertexIds;
 	polygon->v_indices_cnt = 3;
-	polygon->edge_v_indices_flat = CCTConstVal_.Triangle_Edge_VertexIds;
+	polygon->edge_v_indices_flat = CCTConstVal_.Triangle_Edge_VertexIds_Flat;
 	polygon->edge_cnt = 3;
 	polygon->tri_v_indices_flat = CCTConstVal_.Triangle_VertexIds;
 	polygon->tri_cnt = 1;

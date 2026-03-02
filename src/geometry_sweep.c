@@ -70,8 +70,8 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->v = (CCTNum_t(*)[3])ls;
 	mesh->v_indices = CCTConstVal_.Segment_VertexIds;
 	mesh->v_indices_cnt = 2;
-	mesh->edge_v_ids_flat = CCTConstVal_.Segment_Edge_VertexIds;
-	mesh->edge_v_indices_flat = CCTConstVal_.Segment_Edge_VertexIds;
+	mesh->edge_v_ids_flat = CCTConstVal_.Segment_Edge_VertexIds_Flat;
+	mesh->edge_v_indices_flat = CCTConstVal_.Segment_Edge_VertexIds_Flat;
 	mesh->edge_cnt = 1;
 	mesh->is_convex = 1;
 	mesh->is_closed = 0;

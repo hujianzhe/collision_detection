@@ -2,10 +2,13 @@
 // Created by hujianzhe
 //
 
+#include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include <stdlib.h>
+
+extern const CCTConstVal_t CCTConstVal_;
 
 static void free_all_faces(GeometryMesh_t* mesh) {
 	unsigned int i;
@@ -304,6 +307,10 @@ err_0:
 
 void mathMeshClear(GeometryMesh_t* mesh) {
 	if (!mesh) {
+		return;
+	}
+	if ((const void*)mesh->v_indices >= (const void*)&CCTConstVal_ &&
+		(const void*)mesh->v_indices < (const void*)(&CCTConstVal_ + 1)) {
 		return;
 	}
 	free_all_faces(mesh);
