@@ -14,7 +14,7 @@
 extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info);
 extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern void Polygon_Clear(GeometryPolygon_t* polygon);
+extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon);
 extern int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -994,8 +994,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 	return output;
 err_1:
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		tmp_polygons[i].v = NULL;
-		Polygon_Clear(tmp_polygons + i);
+		Polygon_ClearWithoutVertices(tmp_polygons + i);
 	}
 	free(tmp_polygons);
 err_0:

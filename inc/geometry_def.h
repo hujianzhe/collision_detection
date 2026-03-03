@@ -142,7 +142,7 @@ enum {
 	GEOMETRY_BODY_SPHERE = 4,
 	GEOMETRY_BODY_AABB = 5,
 	GEOMETRY_BODY_OBB = 6,
-	GEOMETRY_BODY_POLYGON = 7,
+	GEOMETRY_BODY_POLYGON = 7, /* relay on mesh */
 	GEOMETRY_BODY_MESH = 8,
 	GEOMETRY_BODY_CAPSULE = 9,
 };
@@ -156,7 +156,6 @@ typedef struct GeometryBody_t {
 		GeometrySphere_t sphere;
 		GeometryAABB_t aabb;
 		GeometryOBB_t obb;
-		GeometryPolygon_t polygon;
 		GeometryMesh_t mesh;
 		GeometryCapsule_t capsule;
 	};

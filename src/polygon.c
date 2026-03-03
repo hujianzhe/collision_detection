@@ -15,7 +15,7 @@ extern const CCTConstVal_t CCTConstVal_;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void Polygon_Clear(GeometryPolygon_t* polygon) {
+void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon) {
 	if (!polygon) {
 		return;
 	}
@@ -57,10 +57,6 @@ void Polygon_Clear(GeometryPolygon_t* polygon) {
 	if (polygon->v_adjacent_infos) {
 		free((void*)polygon->v_adjacent_infos);
 		polygon->v_adjacent_infos = NULL;
-	}
-	if (polygon->v) {
-		free(polygon->v);
-		polygon->v = NULL;
 	}
 }
 
@@ -149,19 +145,6 @@ int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], cons
 		}
 		return 1;
 	}
-}
-
-void mathTriangleToPolygon(const CCTNum_t tri[3][3], GeometryPolygon_t* polygon) {
-	polygon->v = (CCTNum_t(*)[3])tri;
-	polygon->v_indices = CCTConstVal_.Triangle_VertexIds;
-	polygon->v_indices_cnt = 3;
-	polygon->edge_v_indices_flat = CCTConstVal_.Triangle_Edge_VertexIds_Flat;
-	polygon->edge_cnt = 3;
-	polygon->tri_v_indices_flat = CCTConstVal_.Triangle_VertexIds;
-	polygon->tri_cnt = 1;
-	polygon->is_convex = 1;
-	mathPlaneNormalByVertices3(tri[0], tri[1], tri[2], polygon->normal);
-	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center);
 }
 
 void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]) {

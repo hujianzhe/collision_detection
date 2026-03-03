@@ -520,22 +520,6 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 			mathVec3Copy(obb->o, v);
 			return;
 		}
-		case GEOMETRY_BODY_POLYGON:
-		{
-			unsigned int i;
-			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
-			CCTNum_t delta[3];
-			if (mathVec3EqualEps(v, polygon->center, CCTNum(0.0))) {
-				return;
-			}
-			mathVec3Sub(delta, v, polygon->center);
-			for (i = 0; i < polygon->v_indices_cnt; ++i) {
-				CCTNum_t* p = polygon->v[polygon->v_indices[i]];
-				mathVec3Add(p, p, delta);
-			}
-			mathVec3Copy(polygon->center, v);
-			return;
-		}
 		case GEOMETRY_BODY_MESH:
 		{
 			unsigned int i;
@@ -839,13 +823,6 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 			mathBoxFixAxis3(obb->axis[0], obb->axis[1], obb->axis[2]);
 			return 1;
 		}
-		case GEOMETRY_BODY_POLYGON:
-		{
-			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
-			indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, polygon->center, q);
-			mathQuatMulVec3(polygon->normal, q, polygon->normal);
-			return 1;
-		}
 		case GEOMETRY_BODY_MESH:
 		{
 			GeometryMesh_t* mesh = (GeometryMesh_t*)geo_data;
@@ -855,9 +832,6 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 			indices_rotate(mesh->v, mesh->v_indices, mesh->v_indices_cnt, o, q);
 			for (i = 0; i < mesh->polygons_cnt; ++i) {
 				GeometryPolygon_t* polygon = mesh->polygons + i;
-				if (polygon->v != mesh->v) {
-					indices_rotate(polygon->v, polygon->v_indices, polygon->v_indices_cnt, o, q);
-				}
 				mathQuatMulVec3(polygon->normal, q, polygon->normal);
 				point_rotate(polygon->center, o, q);
 			}
@@ -967,24 +941,6 @@ int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], 
 		{
 			GeometryOBB_t* obb = (GeometryOBB_t*)geo_data;
 			point_rotate(obb->o, base_p, q);
-			return 1;
-		}
-		case GEOMETRY_BODY_POLYGON:
-		{
-			GeometryPolygon_t* polygon = (GeometryPolygon_t*)geo_data;
-			unsigned int i;
-			CCTNum_t delta[3], new_center[3];
-			mathVec3Copy(new_center, polygon->center);
-			point_rotate(new_center, base_p, q);
-			mathVec3Sub(delta, new_center, polygon->center);
-			if (mathVec3IsZero(delta)) {
-				return 1;
-			}
-			mathVec3Copy(polygon->center, new_center);
-			for (i = 0; i < polygon->v_indices_cnt; ++i) {
-				CCTNum_t* v = polygon->v[polygon->v_indices[i]];
-				mathVec3Add(v, v, delta);
-			}
 			return 1;
 		}
 		case GEOMETRY_BODY_MESH:
