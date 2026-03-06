@@ -5,7 +5,7 @@
 #include "../inc/math_vec3.h"
 #include "../inc/gjk.h"
 
-static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t dir[3], CCTNum_t pp[3]) {
+static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) {
 	unsigned int i, max_v_idx = v_indices[0];
 	CCTNum_t max_d = mathVec3Dot(v[max_v_idx], dir);
 	for (i = 1; i < v_indices_cnt; ++i) {
@@ -17,9 +17,14 @@ static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices
 		}
 	}
 	mathVec3Copy(pp, v[max_v_idx]);
+	if (radius > CCTNum(0.0)) {
+		CCTNum_t dir_unit[3];
+		mathVec3Normalized(dir_unit, dir);
+		mathVec3AddScalar(pp, dir_unit, radius);
+	}
 }
 
-static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t dir[3], CCTNum_t pp[3]) {
+static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) {
 	unsigned int i, max_v_idx = 0;
 	CCTNum_t max_d = mathVec3Dot(v[max_v_idx], dir);
 	for (i = 1; i < v_cnt; ++i) {
@@ -30,6 +35,11 @@ static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, const CC
 		}
 	}
 	mathVec3Copy(pp, v[max_v_idx]);
+	if (radius > CCTNum(0.0)) {
+		CCTNum_t dir_unit[3];
+		mathVec3Normalized(dir_unit, dir);
+		mathVec3AddScalar(pp, dir_unit, radius);
+	}
 }
 
 static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], CCTNum_t sub_p[3]) {
@@ -37,16 +47,16 @@ static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexG
 	mathVec3Negate(neg_dir, dir);
 
 	if (geo1->v_indices) {
-		indices_support(geo1->v, geo1->v_indices, geo1->v_indices_cnt, dir, p1);
+		indices_support(geo1->v, geo1->v_indices, geo1->v_indices_cnt, geo1->radius, dir, p1);
 	}
 	else {
-		vertices_support(geo1->v, geo1->v_cnt, dir, p1);
+		vertices_support(geo1->v, geo1->v_cnt, geo1->radius, dir, p1);
 	}
 	if (geo2->v_indices) {
-		indices_support(geo2->v, geo2->v_indices, geo2->v_indices_cnt, neg_dir, p2);
+		indices_support(geo2->v, geo2->v_indices, geo2->v_indices_cnt, geo2->radius, neg_dir, p2);
 	}
 	else {
-		vertices_support(geo2->v, geo2->v_cnt, neg_dir, p2);
+		vertices_support(geo2->v, geo2->v_cnt, geo2->radius, neg_dir, p2);
 	}
 	mathVec3Sub(sub_p, p1, p2);
 }
@@ -222,12 +232,12 @@ static int simplex4(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 extern "C" {
 #endif
 
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3], GeometryIteratorGJK_t* iter) {
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, GeometryIteratorGJK_t* iter) {
 	GeometryIteratorGJK_t tmp_iter;
 	if (!iter) {
 		iter = &tmp_iter;
 	}
-	mathGJKBegin(iter, geo1, geo2, init_dir);
+	mathGJKBegin(iter, geo1, geo2, NULL);
 	while (mathGJKNext(iter));
 	return iter->overlap;
 }
