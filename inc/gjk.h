@@ -42,6 +42,8 @@ __declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvex
 __declspec_dll void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]);
 __declspec_dll int mathGJKNext(GeometryIteratorGJK_t* iter);
 
+__declspec_dll int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out);
+
 #ifdef __cplusplus
 }
 #endif

@@ -258,15 +258,10 @@ void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, 
 	iter->max_iter_times = 2 * (geo1->v_cnt + geo2->v_cnt);
 }
 
-int mathGJKNext(GeometryIteratorGJK_t* iter) {
-	GeometrySimplexGJK_t* s;
-	size_t i;
-	if (iter->iter_times >= iter->max_iter_times) {
-		return 0;
-	}
-	++iter->iter_times;
-	s = &iter->simplex;
-	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
+static int gjk_step_(GeometryIteratorGJK_t* iter) {
+	GeometrySimplexGJK_t* s = &iter->simplex;
+	unsigned int i;
+
 	if (mathVec3Dot(s->p[s->cnt], iter->dir) < CCTNum(0.0)) {
 		return 0;
 	}
@@ -301,6 +296,74 @@ int mathGJKNext(GeometryIteratorGJK_t* iter) {
 			return 0;
 		}
 	}
+	return 1;
+}
+
+int mathGJKNext(GeometryIteratorGJK_t* iter) {
+	GeometrySimplexGJK_t* s;
+
+	if (iter->iter_times >= iter->max_iter_times) {
+		return 0;
+	}
+	++iter->iter_times;
+	s = &iter->simplex;
+	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
+	return gjk_step_(iter);
+}
+
+static int gjk_next_with_offset(GeometryIteratorGJK_t* iter, const CCTNum_t offset[3]) {
+	GeometrySimplexGJK_t* s;
+
+	if (iter->iter_times >= iter->max_iter_times) {
+		return 0;
+	}
+	++iter->iter_times;
+	s = &iter->simplex;
+	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
+	mathVec3Sub(s->p[s->cnt], s->p[s->cnt], offset);
+	return gjk_step_(iter);
+}
+
+int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out) {
+	CCTNum_t dir_lensq, t_low, t_high, pt[3], neg_dir[3];
+	GeometryIteratorGJK_t iter;
+
+	if (mathGJK(geo1, geo2, &iter)) {
+		*t_out = CCTNum(0.0);
+		return 1;
+	}
+
+	dir_lensq = mathVec3LenSq(dir);
+	gjk_sub_point(geo1, geo2, dir, pt);
+	t_high = mathVec3Dot(pt, dir) / dir_lensq;
+	if (t_high < CCTNum(0.0)) {
+		return 0;
+	}
+	mathVec3Negate(neg_dir, dir);
+	gjk_sub_point(geo1, geo2, neg_dir, pt);
+	t_low = mathVec3Dot(pt, dir) / dir_lensq;
+	if (t_low > t_high) {
+		return 0;
+	}
+	if (t_low < CCTNum(0.0)) {
+		t_low = CCTNum(0.0);
+	}
+
+	while (t_high - t_low > CCT_EPSILON) {
+		CCTNum_t t_mid = (t_low + t_high) * CCTNum(0.5);
+		mathGJKBegin(&iter, geo1, geo2, NULL);
+		mathVec3Copy(iter.dir, dir);
+		mathVec3MultiplyScalar(pt, dir, t_mid);
+		while (gjk_next_with_offset(&iter, pt));
+		if (iter.overlap) {
+			t_high = t_mid;
+		}
+		else {
+			t_low = t_mid;
+		}
+	}
+
+	*t_out = t_high;
 	return 1;
 }
 
