@@ -320,12 +320,13 @@ static int gjk_next_with_offset(GeometryIteratorGJK_t* iter, const CCTNum_t offs
 	++iter->iter_times;
 	s = &iter->simplex;
 	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
-	mathVec3Sub(s->p[s->cnt], s->p[s->cnt], offset);
+	/* offset = t*dir: test (geo1 + t*dir) - geo2 => Minkowski (A-B) + t*dir */
+	mathVec3Add(s->p[s->cnt], s->p[s->cnt], offset);
 	return gjk_step_(iter);
 }
 
 int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out) {
-	CCTNum_t dir_lensq, t_low, t_high, pt[3], neg_dir[3];
+	CCTNum_t t_low, t_high, pt[3], neg_dir[3];
 	GeometryIteratorGJK_t iter;
 
 	if (mathGJK(geo1, geo2, &iter)) {
@@ -333,15 +334,15 @@ int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const G
 		return 1;
 	}
 
-	dir_lensq = mathVec3LenSq(dir);
+	/* dir unit: t such that origin in (A-B)+t*dir => t = -dot(p,dir) */
 	gjk_sub_point(geo1, geo2, dir, pt);
-	t_high = mathVec3Dot(pt, dir) / dir_lensq;
+	t_low = -mathVec3Dot(pt, dir);
+	mathVec3Negate(neg_dir, dir);
+	gjk_sub_point(geo1, geo2, neg_dir, pt);
+	t_high = -mathVec3Dot(pt, dir);
 	if (t_high < CCTNum(0.0)) {
 		return 0;
 	}
-	mathVec3Negate(neg_dir, dir);
-	gjk_sub_point(geo1, geo2, neg_dir, pt);
-	t_low = mathVec3Dot(pt, dir) / dir_lensq;
 	if (t_low > t_high) {
 		return 0;
 	}
