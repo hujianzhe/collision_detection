@@ -15,47 +15,47 @@ extern const CCTConstVal_t CCTConstVal_;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon) {
+void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) {
 	if (!polygon) {
 		return;
 	}
 	if (polygon->edge_v_ids_flat) {
-		free((void*)polygon->edge_v_ids_flat);
+		ac->fn_free(ac, (void*)polygon->edge_v_ids_flat);
 		polygon->edge_v_ids_flat = NULL;
 	}
 	if (polygon->edge_v_indices_flat) {
-		free((void*)polygon->edge_v_indices_flat);
+		ac->fn_free(ac, (void*)polygon->edge_v_indices_flat);
 		polygon->edge_v_indices_flat = NULL;
 	}
 	polygon->edge_cnt = 0;
 	if (polygon->tri_v_indices_flat) {
-		free((void*)polygon->tri_v_indices_flat);
+		ac->fn_free(ac, (void*)polygon->tri_v_indices_flat);
 		polygon->tri_v_indices_flat = NULL;
 	}
 	if (polygon->concave_tri_v_ids_flat) {
-		free((void*)polygon->concave_tri_v_ids_flat);
+		ac->fn_free(ac, (void*)polygon->concave_tri_v_ids_flat);
 		polygon->concave_tri_v_ids_flat = NULL;
 	}
 	if (polygon->concave_tri_edge_ids_flat) {
-		free((void*)polygon->concave_tri_edge_ids_flat);
+		ac->fn_free(ac, (void*)polygon->concave_tri_edge_ids_flat);
 		polygon->concave_tri_edge_ids_flat = NULL;
 	}
 	polygon->tri_cnt = 0;
 	if (polygon->v_indices) {
-		free((void*)polygon->v_indices);
+		ac->fn_free(ac, (void*)polygon->v_indices);
 		polygon->v_indices = NULL;
 		polygon->v_indices_cnt = 0;
 	}
 	if (polygon->mesh_v_ids) {
-		free((void*)polygon->mesh_v_ids);
+		ac->fn_free(ac, (void*)polygon->mesh_v_ids);
 		polygon->mesh_v_ids = NULL;
 	}
 	if (polygon->mesh_edge_ids) {
-		free((void*)polygon->mesh_edge_ids);
+		ac->fn_free(ac, (void*)polygon->mesh_edge_ids);
 		polygon->mesh_edge_ids = NULL;
 	}
 	if (polygon->v_adjacent_infos) {
-		free((void*)polygon->v_adjacent_infos);
+		ac->fn_free(ac, (void*)polygon->v_adjacent_infos);
 		polygon->v_adjacent_infos = NULL;
 	}
 }

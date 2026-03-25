@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-__declspec_dll GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src);
+__declspec_dll GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac);
 __declspec_dll void mathMeshClear(GeometryMesh_t* mesh);
 
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);

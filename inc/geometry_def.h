@@ -109,6 +109,7 @@ typedef struct GeometryPolygon_t {
 typedef struct GeometryMesh_t {
 	CCTNum_t (*v)[3]; /* vertices buffer */
 	GeometryAABB_t bound_box; /* AABB bound box, AABB.o is center position */
+	const CCTAllocator_t* allocator_ptr;
 	short is_convex;
 	short is_closed;
 

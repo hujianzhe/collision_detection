@@ -104,12 +104,21 @@
 	#error	"CCTNum_t type isn't defined, should be float/double/long double ."
 #endif
 
+typedef struct CCTAllocator_t {
+	void*(*fn_calloc)(const struct CCTAllocator_t*, size_t, size_t);
+	void*(*fn_malloc)(const struct CCTAllocator_t*, size_t);
+	void*(*fn_realloc)(const struct CCTAllocator_t*, void*, size_t);
+	void(*fn_free)(const struct CCTAllocator_t*, void*);
+	void* ctx;
+} CCTAllocator_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 __declspec_dll int CCTNum_chkval(CCTNum_t num);
 __declspec_dll int CCTNum_chkvals(const CCTNum_t* num, size_t cnt);
+__declspec_dll const CCTAllocator_t* CCTAllocator_stdc(CCTAllocator_t* ac);
 
 #ifdef __cplusplus
 }

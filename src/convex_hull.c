@@ -1,12 +1,6 @@
-
-
 #include "../inc/math_vec3.h"
 #include "../inc/convex_hull.h"
 #include <stdlib.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static CCTNum_t plane_signed_distance_unnorm(const CCTNum_t a[3],
                                              const CCTNum_t b[3],
@@ -599,6 +593,10 @@ static int init_tetrahedron_indices(const CCTNum_t (*v)[3], unsigned int v_cnt, 
 
 	return 1;
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int mathConvexHullBuild(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt) {
 	unsigned int i_arr[4];
