@@ -1,6 +1,5 @@
 #include "../inc/math_vec3.h"
-#include "../inc/convex_hull.h"
-#include <stdlib.h>
+#include "../inc/cooking.h"
 
 static CCTNum_t plane_signed_distance_unnorm(const CCTNum_t a[3],
                                              const CCTNum_t b[3],
@@ -127,12 +126,13 @@ static int build_convex_hull_2d_chain(const CCTNum_t *proj,
                                       unsigned int v_cnt,
                                       const unsigned int *idx,
                                       unsigned int **out_hull,
-                                      unsigned int *out_h_cnt) {
+                                      unsigned int *out_h_cnt,
+                                      const CCTAllocator_t* ac) {
 	unsigned int *hull;
 	unsigned int h_cnt, lower_size;
 	unsigned int k;
 
-	hull = (unsigned int*)malloc(sizeof(unsigned int) * (2 * v_cnt));
+	hull = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * 2 * v_cnt);
 	if (!hull) {
 		return 0;
 	}
@@ -179,7 +179,7 @@ static int build_convex_hull_2d_chain(const CCTNum_t *proj,
 	}
 
 	if (h_cnt < 3) {
-		free(hull);
+		ac->fn_free(ac, hull);
 		return 0;
 	}
 
@@ -191,30 +191,23 @@ static int build_convex_hull_2d_chain(const CCTNum_t *proj,
 static int triangulate_convex_hull_2d(const unsigned int *hull,
                                       unsigned int h_cnt,
                                       unsigned int **out_faces,
-                                      unsigned int *out_tri_v_indices_cnt) {
-	unsigned int tri_cnt;
-	unsigned int *faces;
-	unsigned int base;
-	unsigned int t;
-
+                                      unsigned int *out_tri_v_indices_cnt,
+                                      const CCTAllocator_t* ac) {
+	unsigned int tri_cnt, t;
+	unsigned int *faces, *p;
 	if (h_cnt < 3) {
 		return 0;
 	}
-
 	tri_cnt = h_cnt - 2;
-	faces = (unsigned int*)malloc(sizeof(unsigned int) * 3 * tri_cnt);
+	faces = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * 3 * tri_cnt);
 	if (!faces) {
 		return 0;
 	}
-
-	base = hull[0];
-	{
-		unsigned int *p = faces;
-		for (t = 0; t < tri_cnt; ++t) {
-			*(p++) = base;
-			*(p++) = hull[t + 1];
-			*(p++) = hull[t + 2];
-		}
+	p = faces;
+	for (t = 0; t < tri_cnt; ++t) {
+		*(p++) = hull[0];
+		*(p++) = hull[t + 1];
+		*(p++) = hull[t + 2];
 	}
 	*out_faces = faces;
 	*out_tri_v_indices_cnt = tri_cnt * 3;
@@ -225,36 +218,38 @@ static int build_convex_hull_2d(const CCTNum_t (*v)[3],
                                 unsigned int v_cnt,
                                 const unsigned int i_arr[3],
                                 unsigned int **ret_tri_v_indices,
-                                unsigned int *ret_tri_v_indices_cnt) {
+                                unsigned int *ret_tri_v_indices_cnt,
+                                const CCTAllocator_t* ac) {
 	CCTNum_t *proj = NULL;
 	unsigned int *idx = NULL;
 	unsigned int *hull = NULL;
-	unsigned int h_cnt = 0;
+	unsigned int h_cnt, ok = 0;
 
-	proj = (CCTNum_t*)malloc(sizeof(CCTNum_t) * 2 * v_cnt);
+	proj = (CCTNum_t*)ac->fn_malloc(ac, sizeof(CCTNum_t) * 2 * v_cnt);
 	if (!proj) {
 		goto cleanup;
 	}
-	idx = (unsigned int*)malloc(sizeof(unsigned int) * v_cnt);
+	idx = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * v_cnt);
 	if (!idx) {
 		goto cleanup;
 	}
 
 	project_points_onto_2d(v, v_cnt, i_arr, proj, idx);
 
-	if (!build_convex_hull_2d_chain(proj, v_cnt, idx, &hull, &h_cnt)) {
+	if (!build_convex_hull_2d_chain(proj, v_cnt, idx, &hull, &h_cnt, ac)) {
 		goto cleanup;
 	}
 
-	if (!triangulate_convex_hull_2d(hull, h_cnt, ret_tri_v_indices, ret_tri_v_indices_cnt)) {
+	if (!triangulate_convex_hull_2d(hull, h_cnt, ret_tri_v_indices, ret_tri_v_indices_cnt, ac)) {
 		goto cleanup;
 	}
+	ok = 1;
 
 cleanup:
-	free(proj);
-	free(idx);
-	free(hull);
-	return (*ret_tri_v_indices) != NULL;
+	ac->fn_free(ac, proj);
+	ac->fn_free(ac, idx);
+	ac->fn_free(ac, hull);
+	return ok;
 }
 
 static int collect_convex_hull_faces(unsigned int face_cnt,
@@ -263,7 +258,8 @@ static int collect_convex_hull_faces(unsigned int face_cnt,
                                     const unsigned int *fc,
                                     const unsigned char *fvalid,
                                     unsigned int **ret_tri_v_indices,
-                                    unsigned int *ret_tri_v_indices_cnt) {
+                                    unsigned int *ret_tri_v_indices_cnt,
+                                    const CCTAllocator_t* ac) {
 	unsigned int n = 0;
 	unsigned int f;
 	unsigned int *out;
@@ -276,7 +272,7 @@ static int collect_convex_hull_faces(unsigned int face_cnt,
 	if (n == 0) {
 		return 0;
 	}
-	out = (unsigned int*)malloc(sizeof(unsigned int) * 3 * n);
+	out = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * 3 * n);
 	if (!out) {
 		return 0;
 	}
@@ -292,7 +288,7 @@ static int collect_convex_hull_faces(unsigned int face_cnt,
 	return 1;
 }
 
-static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int i_arr[4], unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt) {
+static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int i_arr[4], unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) {
 	CCTNum_t interior[3];
 	unsigned int i0 = i_arr[0];
 	unsigned int i1 = i_arr[1];
@@ -313,23 +309,23 @@ static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	int ret = 0;
 
 	face_cap = (v_cnt < 16 ? 16 : (4 * v_cnt));
-	fa = (unsigned int*)malloc(sizeof(unsigned int) * face_cap);
+	fa = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face_cap);
 	if (!fa) {
 		goto cleanup;
 	}
-	fb = (unsigned int*)malloc(sizeof(unsigned int) * face_cap);
+	fb = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face_cap);
 	if (!fb) {
 		goto cleanup;
 	}
-	fc = (unsigned int*)malloc(sizeof(unsigned int) * face_cap);
+	fc = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face_cap);
 	if (!fc) {
 		goto cleanup;
 	}
-	fvalid = (unsigned char*)malloc(sizeof(unsigned char) * face_cap);
+	fvalid = (unsigned char*)ac->fn_malloc(ac, sizeof(unsigned char) * face_cap);
 	if (!fvalid) {
 		goto cleanup;
 	}
-	visible = (unsigned char*)malloc(sizeof(unsigned char) * face_cap);
+	visible = (unsigned char*)ac->fn_malloc(ac, sizeof(unsigned char) * face_cap);
 	if (!visible) {
 		goto cleanup;
 	}
@@ -342,15 +338,15 @@ static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 	face_cnt = 4;
 
 	edge_cap = 3 * face_cap;
-	edge_u = (unsigned int*)malloc(sizeof(unsigned int) * edge_cap);
+	edge_u = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * edge_cap);
 	if (!edge_u) {
 		goto cleanup;
 	}
-	edge_v = (unsigned int*)malloc(sizeof(unsigned int) * edge_cap);
+	edge_v = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * edge_cap);
 	if (!edge_v) {
 		goto cleanup;
 	}
-	edge_used = (unsigned char*)malloc(sizeof(unsigned char) * edge_cap);
+	edge_used = (unsigned char*)ac->fn_malloc(ac, sizeof(unsigned char) * edge_cap);
 	if (!edge_used) {
 		goto cleanup;
 	}
@@ -414,19 +410,19 @@ static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 					unsigned int new_cap = edge_cap * 2;
 					void* tmp_p;
 
-					tmp_p = realloc(edge_u, sizeof(unsigned int) * new_cap);
+					tmp_p = ac->fn_realloc(ac, edge_u, sizeof(unsigned int) * new_cap);
 					if (!tmp_p) {
 						goto cleanup;
 					}
 					edge_u = (unsigned int*)tmp_p;
 
-					tmp_p = realloc(edge_v, sizeof(unsigned int) * new_cap);
+					tmp_p = ac->fn_realloc(ac, edge_v, sizeof(unsigned int) * new_cap);
 					if (!tmp_p) {
 						goto cleanup;
 					}
 					edge_v = (unsigned int*)tmp_p;
 
-					tmp_p = realloc(edge_used, sizeof(unsigned char) * new_cap);
+					tmp_p = ac->fn_realloc(ac, edge_used, sizeof(unsigned char) * new_cap);
 					if (!tmp_p) {
 						goto cleanup;
 					}
@@ -465,31 +461,31 @@ static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 				unsigned int new_cap = face_cap * 2;
 				void* tmp_p;
 
-				tmp_p = realloc(fa, sizeof(unsigned int) * new_cap);
+				tmp_p = ac->fn_realloc(ac, fa, sizeof(unsigned int) * new_cap);
 				if (!tmp_p) {
 					goto cleanup;
 				}
 				fa = (unsigned int*)tmp_p;
 
-				tmp_p = realloc(fb, sizeof(unsigned int) * new_cap);
+				tmp_p = ac->fn_realloc(ac, fb, sizeof(unsigned int) * new_cap);
 				if (!tmp_p) {
 					goto cleanup;
 				}
 				fb = (unsigned int*)tmp_p;
 
-				tmp_p = realloc(fc, sizeof(unsigned int) * new_cap);
+				tmp_p = ac->fn_realloc(ac, fc, sizeof(unsigned int) * new_cap);
 				if (!tmp_p) {
 					goto cleanup;
 				}
 				fc = (unsigned int*)tmp_p;
 
-				tmp_p = realloc(fvalid, sizeof(unsigned char) * new_cap);
+				tmp_p = ac->fn_realloc(ac, fvalid, sizeof(unsigned char) * new_cap);
 				if (!tmp_p) {
 					goto cleanup;
 				}
 				fvalid = (unsigned char*)tmp_p;
 
-				tmp_p = realloc(visible, sizeof(unsigned char) * new_cap);
+				tmp_p = ac->fn_realloc(ac, visible, sizeof(unsigned char) * new_cap);
 				if (!tmp_p) {
 					goto cleanup;
 				}
@@ -513,21 +509,20 @@ static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, cons
 		}
 	}
 
-	if (!collect_convex_hull_faces(face_cnt, fa, fb, fc, fvalid,
-	                               ret_tri_v_indices, ret_tri_v_indices_cnt)) {
+	if (!collect_convex_hull_faces(face_cnt, fa, fb, fc, fvalid, ret_tri_v_indices, ret_tri_v_indices_cnt, ac)) {
 		goto cleanup;
 	}
 	ret = 1;
 
 cleanup:
-	free(edge_u);
-	free(edge_v);
-	free(edge_used);
-	free(fa);
-	free(fb);
-	free(fc);
-	free(fvalid);
-	free(visible);
+	ac->fn_free(ac, edge_u);
+	ac->fn_free(ac, edge_v);
+	ac->fn_free(ac, edge_used);
+	ac->fn_free(ac, fa);
+	ac->fn_free(ac, fb);
+	ac->fn_free(ac, fc);
+	ac->fn_free(ac, fvalid);
+	ac->fn_free(ac, visible);
 	return ret;
 }
 
@@ -598,15 +593,15 @@ static int init_tetrahedron_indices(const CCTNum_t (*v)[3], unsigned int v_cnt, 
 extern "C" {
 #endif
 
-int mathConvexHullBuild(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt) {
-	unsigned int i_arr[4];
-	int coplanar_non_degenerate;
-
+int mathCookingConvexHull(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) {
 	*ret_tri_v_indices_cnt = 0;
 	*ret_tri_v_indices = NULL;
 
 	if (v_cnt < 3) {
 		return 0;
+	}
+	if (!ac) {
+		ac = CCTAllocator_stdc(NULL);
 	}
 
 	if (v_cnt == 3) {
@@ -617,7 +612,7 @@ int mathConvexHullBuild(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int
 		if (mathVec3IsParallel(v0v1, v0v2)) {
 			return 0;
 		}
-		faces = (unsigned int*)malloc(sizeof(unsigned int) * 3);
+		faces = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * 3);
 		if (!faces) {
 			return 0;
 		}
@@ -628,16 +623,17 @@ int mathConvexHullBuild(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int
 		*ret_tri_v_indices_cnt = 3;
 		return 1;
 	}
-
-	if (!init_tetrahedron_indices(v, v_cnt, i_arr, &coplanar_non_degenerate)) {
-		return 0;
+	else {
+		unsigned int i_arr[4];
+		int coplanar_non_degenerate;
+		if (!init_tetrahedron_indices(v, v_cnt, i_arr, &coplanar_non_degenerate)) {
+			return 0;
+		}
+		if (coplanar_non_degenerate) {
+			return build_convex_hull_2d(v, v_cnt, i_arr, ret_tri_v_indices, ret_tri_v_indices_cnt, ac);
+		}
+		return build_convex_hull_3d(v, v_cnt, i_arr, ret_tri_v_indices, ret_tri_v_indices_cnt, ac);
 	}
-
-	if (coplanar_non_degenerate) {
-		return build_convex_hull_2d(v, v_cnt, i_arr, ret_tri_v_indices, ret_tri_v_indices_cnt);
-	}
-
-	return build_convex_hull_3d(v, v_cnt, i_arr, ret_tri_v_indices, ret_tri_v_indices_cnt);
 }
 
 #ifdef __cplusplus

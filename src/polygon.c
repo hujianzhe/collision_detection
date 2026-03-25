@@ -7,7 +7,6 @@
 #include "../inc/vertex.h"
 #include "../inc/plane.h"
 #include "../inc/polygon.h"
-#include <stdlib.h>
 
 extern const CCTConstVal_t CCTConstVal_;
 

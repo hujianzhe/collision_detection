@@ -9,7 +9,6 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include "../inc/cooking.h"
-#include <stdlib.h>
 
 extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
 extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
@@ -668,7 +667,7 @@ static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, 
 		v_idx[1] = polygon->edge_v_indices_flat[i];
 		edge_id = mathFindEdgeIdByVertexIndices(mesh_edge_v_indices, mesh_edge_v_indices_cnt, v_idx[0], v_idx[1]);
 		if (-1 == edge_id) {
-			free(mesh_edge_ids);
+			ac->fn_free(ac, mesh_edge_ids);
 			return NULL;
 		}
 		mesh_edge_ids[i >> 1] = edge_id;

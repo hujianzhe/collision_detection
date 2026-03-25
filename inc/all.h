@@ -22,7 +22,6 @@
 #include "plane.h"
 #include "polygon.h"
 #include "cooking.h"
-#include "convex_hull.h"
 #include "vertex.h"
 #include "capsule.h"
 #include "voxel_space.h"

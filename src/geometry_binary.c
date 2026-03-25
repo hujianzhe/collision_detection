@@ -6,7 +6,6 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 #include <stdint.h>
-#include <stdlib.h>
 
 static int safe_add(size_t* total, size_t v) {
 	if (SIZE_MAX - v < *total) {
@@ -59,7 +58,7 @@ static size_t BinarySave_GeometryMeshVertexAdjacentInfo(const GeometryMeshVertex
 	return off;
 }
 
-static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size_t len, GeometryMeshVertexAdjacentInfo_t* info) {
+static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size_t len, GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int* v_ids = NULL, *edge_ids = NULL, *face_ids = NULL;
@@ -68,9 +67,12 @@ static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size
 	if (sizeof(unsigned int) > len - off) {
 		goto err;
 	}
+	if (!ac) {
+		ac = CCTAllocator_stdc(NULL);
+	}
 	info->v_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	v_ids = (unsigned int*)malloc(sizeof(unsigned int) * info->v_cnt);
+	v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * info->v_cnt);
 	if (!v_ids) {
 		goto err;
 	}
@@ -88,7 +90,7 @@ static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size
 	}
 	info->edge_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	edge_ids = (unsigned int*)malloc(sizeof(unsigned int) * info->edge_cnt);
+	edge_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * info->edge_cnt);
 	if (!edge_ids) {
 		goto err;
 	}
@@ -106,7 +108,7 @@ static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size
 	}
 	info->face_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	face_ids = (unsigned int*)malloc(sizeof(unsigned int) * info->face_cnt);
+	face_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * info->face_cnt);
 	if (!face_ids) {
 		goto err;
 	}
@@ -121,9 +123,9 @@ static size_t BinaryLoad_GeometryMeshVertexAdjacentInfo(const void* buffer, size
 
 	return off;
 err:
-	free(v_ids);
-	free(edge_ids);
-	free(face_ids);
+	ac->fn_free(ac, v_ids);
+	ac->fn_free(ac, edge_ids);
+	ac->fn_free(ac, face_ids);
 	return 0;
 }
 
@@ -223,7 +225,7 @@ static size_t BinarySave_GeometryMeshFace(const GeometryPolygon_t* face, void* b
 	return off;
 }
 
-static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, GeometryPolygon_t* face) {
+static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, GeometryPolygon_t* face, const CCTAllocator_t* ac) {
 	unsigned int j;
 	unsigned int* v_indices = NULL, *mesh_v_ids = NULL;
 	unsigned int* edge_v_indices_flat = NULL, *edge_v_ids_flat = NULL, *mesh_edge_ids = NULL;
@@ -247,11 +249,11 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 	if (sizeof(unsigned int) > len - off) { goto err; }
 	face->v_indices_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	v_indices = (unsigned int*)malloc(sizeof(unsigned int) * face->v_indices_cnt);
+	v_indices = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->v_indices_cnt);
 	if (!v_indices) { goto err; }
-	mesh_v_ids = (unsigned int*)malloc(sizeof(unsigned int) * face->v_indices_cnt);
+	mesh_v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->v_indices_cnt);
 	if (!mesh_v_ids) { goto err; }
-	v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)malloc(sizeof(GeometryPolygonVertexAdjacentInfo_t) * face->v_indices_cnt);
+	v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(GeometryPolygonVertexAdjacentInfo_t) * face->v_indices_cnt);
 	if (!v_adjacent_infos) { goto err; }
 	for (j = 0; j < face->v_indices_cnt; ++j) {
 		if (sizeof(unsigned int) > len - off) { goto err; }
@@ -275,11 +277,11 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 	if (sizeof(unsigned int) > len - off) { goto err; }
 	face->edge_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	edge_v_indices_flat = (unsigned int*)malloc(sizeof(unsigned int) * (face->edge_cnt + face->edge_cnt));
+	edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->edge_cnt * 2);
 	if (!edge_v_indices_flat) { goto err; }
-	edge_v_ids_flat = (unsigned int*)malloc(sizeof(unsigned int) * (face->edge_cnt + face->edge_cnt));
+	edge_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->edge_cnt * 2);
 	if (!edge_v_ids_flat) { goto err; }
-	mesh_edge_ids = (unsigned int*)malloc(sizeof(unsigned int) * face->edge_cnt);
+	mesh_edge_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->edge_cnt);
 	if (!mesh_edge_ids) { goto err; }
 	for (j = 0; j < face->edge_cnt + face->edge_cnt; ++j) {
 		if (sizeof(unsigned int) > len - off) { goto err; }
@@ -303,7 +305,7 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 	if (sizeof(unsigned int) > len - off) { goto err; }
 	face->tri_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	tri_v_indices_flat = (unsigned int*)malloc(sizeof(unsigned int) * face->tri_cnt * 3);
+	tri_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->tri_cnt * 3);
 	if (!tri_v_indices_flat) { goto err; }
 	for (j = 0; j < face->tri_cnt * 3; ++j) {
 		if (sizeof(unsigned int) > len - off) { goto err; }
@@ -316,7 +318,7 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 		face->concave_tri_edge_ids_flat = NULL;
 	}
 	else {
-		concave_tri_v_ids_flat = (unsigned int*)malloc(sizeof(unsigned int) * face->tri_cnt * 3);
+		concave_tri_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->tri_cnt * 3);
 		if (!concave_tri_v_ids_flat) { goto err; }
 		for (j = 0; j < face->tri_cnt * 3; ++j) {
 			if (sizeof(unsigned int) > len - off) { goto err; }
@@ -325,7 +327,7 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 		}
 		face->concave_tri_v_ids_flat = concave_tri_v_ids_flat;
 
-		concave_tri_edge_ids_flat = (unsigned int*)malloc(sizeof(unsigned int) * face->tri_cnt * 3);
+		concave_tri_edge_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->tri_cnt * 3);
 		if (!concave_tri_edge_ids_flat) { goto err; }
 		for (j = 0; j < face->tri_cnt * 3; ++j) {
 			if (sizeof(unsigned int) > len - off) { goto err; }
@@ -336,15 +338,15 @@ static size_t BinaryLoad_GeometryMeshFace(const void* buffer, size_t len, Geomet
 	}
 	return off;
 err:
-	free(v_indices);
-	free(v_adjacent_infos);
-	free(mesh_v_ids);
-	free(edge_v_indices_flat);
-	free(edge_v_ids_flat);
-	free(mesh_edge_ids);
-	free(tri_v_indices_flat);
-	free(concave_tri_v_ids_flat);
-	free(concave_tri_edge_ids_flat);
+	ac->fn_free(ac, v_indices);
+	ac->fn_free(ac, v_adjacent_infos);
+	ac->fn_free(ac, mesh_v_ids);
+	ac->fn_free(ac, edge_v_indices_flat);
+	ac->fn_free(ac, edge_v_ids_flat);
+	ac->fn_free(ac, mesh_edge_ids);
+	ac->fn_free(ac, tri_v_indices_flat);
+	ac->fn_free(ac, concave_tri_v_ids_flat);
+	ac->fn_free(ac, concave_tri_edge_ids_flat);
 	return 0;
 }
 
@@ -455,7 +457,7 @@ size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer) {
 	return off;
 }
 
-size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) {
+size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh, const CCTAllocator_t* ac) {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int i, v_cnt;
@@ -468,6 +470,10 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 	if (sizeof(GeometryAABB_t) > len - off) {
 		goto err;
 	}
+	if (!ac) {
+		ac = CCTAllocator_stdc(NULL);
+	}
+	tmp.allocator_ptr = ac;
 	tmp.bound_box = *(const GeometryAABB_t*)&p[off];
 	off += sizeof(GeometryAABB_t);
 
@@ -488,7 +494,7 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 	}
 	v_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	tmp.v = (CCTNum_t(*)[3])malloc(sizeof(CCTNum_t[3]) * v_cnt);
+	tmp.v = (CCTNum_t(*)[3])ac->fn_malloc(ac, sizeof(CCTNum_t[3]) * v_cnt);
 	if (!tmp.v) {
 		goto err;
 	}
@@ -506,7 +512,7 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 	}
 	tmp.v_indices_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	mesh_v_indices = (unsigned int*)malloc(sizeof(unsigned int) * tmp.v_indices_cnt);
+	mesh_v_indices = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.v_indices_cnt);
 	if (!mesh_v_indices) {
 		goto err;
 	}
@@ -518,13 +524,13 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 		off += sizeof(unsigned int);
 	}
 	tmp.v_indices = mesh_v_indices;
-	mesh_v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)malloc(sizeof(GeometryMeshVertexAdjacentInfo_t) * tmp.v_indices_cnt);
+	mesh_v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(GeometryMeshVertexAdjacentInfo_t) * tmp.v_indices_cnt);
 	if (!mesh_v_adjacent_infos) {
 		goto err;
 	}
 	tmp.v_adjacent_infos = mesh_v_adjacent_infos;
 	for (i = 0; i < tmp.v_indices_cnt; ++i) {
-		size_t sz = BinaryLoad_GeometryMeshVertexAdjacentInfo(p + off, len - off, mesh_v_adjacent_infos + i);
+		size_t sz = BinaryLoad_GeometryMeshVertexAdjacentInfo(p + off, len - off, mesh_v_adjacent_infos + i, ac);
 		if (!sz) {
 			tmp.v_indices_cnt = i;
 			goto err;
@@ -537,15 +543,15 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 	}
 	tmp.edge_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	mesh_edge_v_indices_flat = (unsigned int*)malloc(sizeof(unsigned int) * (tmp.edge_cnt + tmp.edge_cnt));
+	mesh_edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.edge_cnt * 2);
 	if (!mesh_edge_v_indices_flat) {
 		goto err;
 	}
-	mesh_edge_v_ids_flat = (unsigned int*)malloc(sizeof(unsigned int) * (tmp.edge_cnt + tmp.edge_cnt));
+	mesh_edge_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.edge_cnt * 2);
 	if (!mesh_edge_v_ids_flat) {
 		goto err;
 	}
-	mesh_edge_adjacent_face_ids_flat = (unsigned int*)malloc(sizeof(unsigned int) * (tmp.edge_cnt + tmp.edge_cnt));
+	mesh_edge_adjacent_face_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.edge_cnt * 2);
 	if (!mesh_edge_adjacent_face_ids_flat) {
 		goto err;
 	}
@@ -579,14 +585,14 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh) 
 	}
 	tmp.polygons_cnt = *(const unsigned int*)&p[off];
 	off += sizeof(unsigned int);
-	mesh_polygons = (GeometryPolygon_t*)malloc(sizeof(GeometryPolygon_t) * tmp.polygons_cnt);
+	mesh_polygons = (GeometryPolygon_t*)ac->fn_malloc(ac, sizeof(GeometryPolygon_t) * tmp.polygons_cnt);
 	if (!mesh_polygons) {
 		goto err;
 	}
 	tmp.polygons = mesh_polygons;
 	for (i = 0; i < tmp.polygons_cnt; ++i) {
 		GeometryPolygon_t* face = mesh_polygons + i;
-		size_t sz = BinaryLoad_GeometryMeshFace(p + off, len - off, face);
+		size_t sz = BinaryLoad_GeometryMeshFace(p + off, len - off, face, ac);
 		if (!sz) {
 			tmp.polygons_cnt = i;
 			goto err;

@@ -6,7 +6,6 @@
 #include "../inc/math_vec3.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
-#include <stdlib.h>
 
 extern const CCTConstVal_t CCTConstVal_;
 
@@ -14,14 +13,16 @@ extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAl
 
 static void free_all_faces(GeometryMesh_t* mesh) {
 	unsigned int i;
+	const CCTAllocator_t* ac;
 	if (!mesh->polygons) {
 		return;
 	}
+	ac = mesh->allocator_ptr;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		Polygon_ClearWithoutVertices(mesh->polygons + i, mesh->allocator_ptr);
+		Polygon_ClearWithoutVertices(mesh->polygons + i, ac);
 	}
 	mesh->polygons_cnt = 0;
-	free(mesh->polygons);
+	ac->fn_free(ac, mesh->polygons);
 	mesh->polygons = NULL;
 }
 
@@ -287,6 +288,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src,
 		dup_edge_v_indices[i] = src->edge_v_indices_flat[i];
 	}
 	dst->v = dup_v;
+	dst->allocator_ptr = ac;
 	dst->bound_box = src->bound_box;
 	dst->polygons_cnt = src->polygons_cnt;
 	dst->edge_cnt = src->edge_cnt;
