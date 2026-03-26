@@ -294,6 +294,7 @@ GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src,
 	dst->edge_cnt = src->edge_cnt;
 	dst->is_convex = src->is_convex;
 	dst->is_closed = src->is_closed;
+	dst->_is_buffer_view = 0;
 	dst->v_indices_cnt = src->v_indices_cnt;
 	dst->polygons = dup_polygons;
 	dst->edge_v_ids_flat = dup_edge_v_ids;
@@ -322,9 +323,24 @@ void mathMeshClear(GeometryMesh_t* mesh) {
 		(const void*)mesh->v_indices < (const void*)(&CCTConstVal_ + 1)) {
 		return;
 	}
+	ac = mesh->allocator_ptr;
+	if (mesh->_is_buffer_view) {
+		ac->fn_free(ac, mesh->polygons);
+		mesh->polygons = NULL;
+		mesh->polygons_cnt = 0;
+		mesh->edge_adjacent_face_ids_flat = NULL;
+		mesh->edge_v_ids_flat = NULL;
+		mesh->edge_v_indices_flat = NULL;
+		mesh->edge_cnt = 0;
+		ac->fn_free(ac, (void*)mesh->v_adjacent_infos);
+		mesh->v_adjacent_infos = NULL;
+		mesh->v_indices = NULL;
+		mesh->v_indices_cnt = 0;
+		mesh->v = NULL;
+		return;
+	}
 	free_all_faces(mesh);
 	free_all_adjacent_infos(mesh);
-	ac = mesh->allocator_ptr;
 	if (mesh->edge_v_ids_flat) {
 		ac->fn_free(ac, (void*)mesh->edge_v_ids_flat);
 		mesh->edge_v_ids_flat = NULL;

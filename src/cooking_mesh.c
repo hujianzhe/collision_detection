@@ -993,6 +993,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 		}
 	}
 	mesh->is_closed = mathMeshIsClosed(mesh);
+	mesh->_is_buffer_view = 0;
 	/* finish */
 	mesh->allocator_ptr = ac;
 	output->error_code = 0;

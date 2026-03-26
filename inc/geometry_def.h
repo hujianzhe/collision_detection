@@ -110,8 +110,9 @@ typedef struct GeometryMesh_t {
 	CCTNum_t (*v)[3]; /* vertices buffer */
 	GeometryAABB_t bound_box; /* AABB bound box, AABB.o is center position */
 	const CCTAllocator_t* allocator_ptr;
-	short is_convex;
-	short is_closed;
+	unsigned char is_convex;
+	unsigned char is_closed;
+	unsigned char _is_buffer_view;
 
 	unsigned int v_indices_cnt; /* number of vertices index, also number of vertices */
 	unsigned int edge_cnt; /* number of edges */

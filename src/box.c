@@ -22,6 +22,7 @@ static void box_mesh_fill_common_fields(GeometryBoxMesh_t* bm) {
 	mesh->edge_cnt = 12;
 	mesh->is_convex = 1;
 	mesh->is_closed = 1;
+	mesh->_is_buffer_view = 0;
 	mesh->polygons = bm->faces;
 	mesh->polygons_cnt = 6;
 }

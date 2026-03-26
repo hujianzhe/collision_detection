@@ -75,6 +75,7 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->edge_cnt = 1;
 	mesh->is_convex = 1;
 	mesh->is_closed = 0;
+	mesh->_is_buffer_view = 0;
 	mesh->polygons = NULL;
 	mesh->polygons_cnt = 0;
 }
@@ -88,6 +89,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 	mesh->edge_cnt = polygon->edge_cnt;
 	mesh->is_convex = polygon->is_convex;
 	mesh->is_closed = 0;
+	mesh->_is_buffer_view = 0;
 	mesh->polygons = (GeometryPolygon_t*)polygon;
 	mesh->polygons_cnt = 1;
 }
