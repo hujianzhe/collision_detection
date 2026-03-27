@@ -32,8 +32,13 @@ enum {
 extern "C" {
 #endif
 
-__declspec_dll size_t mathGeometrySize(int geo_type);
 __declspec_dll int mathGeometryCheckParametersValid(const void* geo_data, int geo_type);
+
+__declspec_dll size_t mathGeometrySize(int geo_type);
+
+__declspec_dll size_t mathGeometryBinaryStreamSize(const void* geo_data, int geo_type);
+__declspec_dll size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer);
+__declspec_dll size_t mathGeometryBinaryStreamLoad(void* geo_data, int geo_type, const void* buffer, size_t len, const CCTAllocator_t* ac);
 
 __declspec_dll void* mathGeometryClone(void* dst_data, int* dst_type, const void* src_geo_data, int src_geo_type);
 __declspec_dll void mathGeometryClear(void* geo_data, int geo_type);
