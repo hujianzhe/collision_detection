@@ -35,6 +35,8 @@ typedef struct GeometryMeshVertexAdjacentInfo_t {
 } GeometryMeshVertexAdjacentInfo_t;
 
 /*********************************************************************/
+/* Required base alignment for binary read/write buffer addresses. */
+#define GEOMETRY_MEMORY_ADDRESS_ALIGN (sizeof(CCTNum_t))
 
 typedef struct GeometrySegment_t {
 	CCTNum_t v[2][3];

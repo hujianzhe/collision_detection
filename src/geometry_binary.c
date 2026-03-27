@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by hujianzhe
 //
 
@@ -56,10 +56,6 @@ static int pad_skip(const char* p, size_t len, size_t* off, size_t a) {
 	if (pad > len - *off) { return 0; }
 	*off += pad;
 	return 1;
-}
-
-static int check_mesh_binary_buffer_aligned(const void* p) {
-	return ((size_t)p % BIN_ALIGN_(GeometryAABB_t)) == 0;
 }
 
 static int read_u32(const char* p, size_t len, size_t* off, unsigned int* out) {
@@ -428,7 +424,7 @@ size_t mathMeshSaveBinary(const GeometryMesh_t* mesh, void* buffer) {
 	size_t off = 0;
 	char* p = (char*)buffer;
 	unsigned int i, v_cnt = 0;
-	if (!check_mesh_binary_buffer_aligned(buffer)) {
+	if (((size_t)buffer % GEOMETRY_MEMORY_ADDRESS_ALIGN) != 0) {
 		return 0;
 	}
 
@@ -504,7 +500,7 @@ size_t mathMeshLoadBinary(const void* buffer, size_t len, GeometryMesh_t* mesh, 
 	GeometryMeshVertexAdjacentInfo_t* mesh_v_adjacent_infos = NULL;
 	unsigned int* mesh_edge_v_indices_flat = NULL, *mesh_edge_v_ids_flat = NULL, *mesh_edge_adjacent_face_ids_flat = NULL;
 	GeometryPolygon_t* mesh_polygons = NULL;
-	if (!check_mesh_binary_buffer_aligned(buffer)) {
+	if (((size_t)buffer % GEOMETRY_MEMORY_ADDRESS_ALIGN) != 0) {
 		return 0;
 	}
 	if (!ac) {
@@ -637,7 +633,7 @@ size_t mathMeshLoadBinaryView(const void* buffer, size_t len, GeometryMesh_t* me
 	GeometryMesh_t tmp = { 0 };
 	GeometryMeshVertexAdjacentInfo_t* mesh_v_adjacent_infos = NULL;
 	GeometryPolygon_t* mesh_polygons = NULL;
-	if (!check_mesh_binary_buffer_aligned(buffer)) {
+	if (((size_t)buffer % GEOMETRY_MEMORY_ADDRESS_ALIGN) != 0) {
 		return 0;
 	}
 	if (!ac) {
