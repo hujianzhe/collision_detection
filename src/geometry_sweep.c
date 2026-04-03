@@ -1956,14 +1956,42 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 }
 
 static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
-	int plane_side;
 	GeometryMesh_t m1, m2;
-	if (Segment_Intersect_Polygon(ls, polygon, &plane_side)) {
-		set_intersect(result);
-		return result;
+	CCTNum_t p[3], d[3];
+	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
+	if (0 == res) {
+		GeometryBorderId_t bi;
+		unsigned int v_idx = (d[0] == d[2] ? 0 : 1);
+		if (!Ray_Sweep_Plane(ls[v_idx], dir, polygon->v[polygon->v_indices[0]], polygon->normal, result)) {
+			return NULL;
+		}
+		if (Polygon_Contain_Point_SamePlane(polygon, result->hit_plane_v, &bi)) {
+			result->peer[0].id = v_idx;
+			if (bi.v_id != -1) {
+				result->peer[1].hit_part = CCT_SWEEP_HIT_POINT;
+				result->peer[1].id = bi.v_id;
+			}
+			else if (bi.edge_id != -1) {
+				result->peer[1].hit_part = CCT_SWEEP_HIT_EDGE;
+				result->peer[1].id = bi.edge_id;
+			}
+			return result;
+		}
 	}
-	if (plane_side) {
-		if (!Ray_Intersect_Plane(ls[0], dir, polygon->v[polygon->v_indices[0]], polygon->normal)) {
+	else if (1 == res) {
+		if (Polygon_Contain_Point_SamePlane(polygon, p, NULL)) {
+			set_intersect(result);
+			return result;
+		}
+	}
+	else {
+		CCTNum_t dot;
+		if (Polygon_Contain_Point_SamePlane(polygon, ls[0], NULL) || Polygon_Contain_Point_SamePlane(polygon, ls[1], NULL)) {
+			set_intersect(result);
+			return result;
+		}
+		dot = mathVec3Dot(dir, polygon->normal);
+		if (dot > CCT_EPSILON || dot < CCT_EPSILON_NEGATE) {
 			return NULL;
 		}
 	}
