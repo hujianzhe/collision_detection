@@ -17,8 +17,6 @@ __declspec_dll void mathMeshClear(GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);
 __declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh);
 
-__declspec_dll size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac);
-
 #ifdef	__cplusplus
 }
 #endif

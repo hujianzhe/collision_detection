@@ -604,11 +604,7 @@ err:
 	return 0;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) {
+static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int i, v_cnt;
@@ -780,6 +776,10 @@ err:
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes) {
 	size_t off = 0;
 	char* p = (char*)buffer;
@@ -908,6 +908,69 @@ size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t l
 			}
 			return off + sz;
 		}
+	}
+	return 0;
+}
+
+size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh) {
+	size_t off = 0;
+	const char* p = (const char*)buffer;
+	unsigned int geo_type;
+	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!read_u32(p, len, &off, &geo_type)) { return 0; }
+	switch (geo_type) {
+		case GEOMETRY_BODY_MESH:
+			if (mesh) {
+				size_t sz = mathMeshBinaryStreamView(mesh, buffer, len, NULL);
+				if (sz) {
+					*geo_ptr = mesh;
+					return sz;
+				}
+			}
+			*geo_ptr = NULL;
+			return 0;
+		case GEOMETRY_BODY_POINT:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(CCTNum_t[3]) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(CCTNum_t[3]);
+			return off;
+		case GEOMETRY_BODY_SEGMENT:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometrySegment_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometrySegment_t);
+			return off;
+		case GEOMETRY_BODY_PLANE:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometryPlane_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometryPlane_t);
+			return off;
+		case GEOMETRY_BODY_SPHERE:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometrySphere_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometrySphere_t);
+			return off;
+		case GEOMETRY_BODY_AABB:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometryAABB_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometryAABB_t);
+			return off;
+		case GEOMETRY_BODY_OBB:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometryOBB_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometryOBB_t);
+			return off;
+		case GEOMETRY_BODY_CAPSULE:
+			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (sizeof(GeometryCapsule_t) > len - off) { return 0; }
+			*geo_ptr = &p[off];
+			off += sizeof(GeometryCapsule_t);
+			return off;
 	}
 	return 0;
 }

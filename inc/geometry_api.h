@@ -39,6 +39,7 @@ __declspec_dll size_t mathGeometrySize(int geo_type);
 __declspec_dll size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes);
 __declspec_dll int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len);
 __declspec_dll size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t len, const CCTAllocator_t* ac);
+__declspec_dll size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh);
 
 __declspec_dll void* mathGeometryClone(void* dst_data, int* dst_type, const void* src_geo_data, int src_geo_type);
 __declspec_dll void mathGeometryClear(void* geo_data, int geo_type);
