@@ -832,6 +832,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 	GeometryMesh_t* mesh = output->mesh_ptr;
 	output->error_code = 1;
 	output->has_invalid_tri = 0;
+	output->has_isolate_vertex = 0;
 	if (!ac) {
 		ac = CCTAllocator_stdc(NULL);
 	}
@@ -878,6 +879,8 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 		pg->v_adjacent_infos = v_adjacent_infos;
 		for (j = 0; j < v_indices_cnt; ++j) {
 			if (!Polygon_VertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
+				output->has_isolate_vertex = 1;
+				mathVec3Copy(output->isolate_v, pg->v[pg->v_indices[j]]);
 				goto err_1;
 			}
 		}

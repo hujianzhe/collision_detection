@@ -16,8 +16,12 @@ typedef struct GeometryCookingOption_t {
 typedef struct GeometryCookingOutput_t {
 	GeometryMesh_t* mesh_ptr;
 	int error_code;
-	int has_invalid_tri;
-	CCTNum_t invalid_tri_v[3][3];
+	unsigned char has_invalid_tri;
+	unsigned char has_isolate_vertex;
+	union {
+		CCTNum_t invalid_tri_v[3][3];
+		CCTNum_t isolate_v[3];
+	};
 } GeometryCookingOutput_t;
 
 #ifdef	__cplusplus
