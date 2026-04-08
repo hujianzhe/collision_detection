@@ -89,8 +89,8 @@ static int _check_tri_valid(const CCTNum_t(*v)[3], const unsigned int* tri_v_ind
 	return 1;
 }
 
-static void _save_invalid_triangle(GeometryCookingOutput_t* output, const CCTNum_t(*v)[3], const unsigned int tri_v_indices[3]) {
-	output->has_invalid_tri = 1;
+static void _save_invalid_triangle(MeshCookingOutput_t* output, const CCTNum_t(*v)[3], const unsigned int tri_v_indices[3]) {
+	output->err = MESH_COOKING_ERR_INVALID_TRIANGLES;
 	mathVec3Copy(output->invalid_tri_v[0], v[tri_v_indices[0]]);
 	mathVec3Copy(output->invalid_tri_v[1], v[tri_v_indices[1]]);
 	mathVec3Copy(output->invalid_tri_v[2], v[tri_v_indices[2]]);
@@ -227,7 +227,7 @@ err:
 	return 0;
 }
 
-static int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, const GeometryCookingOption_t* opt, GeometryCookingOutput_t* output, const CCTAllocator_t* ac) {
+static int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
@@ -817,7 +817,7 @@ static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int
 extern "C" {
 #endif
 
-const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const GeometryCookingOption_t* opt, GeometryCookingOutput_t* output, const CCTAllocator_t* ac) {
+const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt = 0, i;
@@ -830,9 +830,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 	GeometryMeshVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 	unsigned int* edge_adjacent_face_ids = NULL;
 	GeometryMesh_t* mesh = output->mesh_ptr;
-	output->error_code = 1;
-	output->has_invalid_tri = 0;
-	output->has_isolate_vertex = 0;
+	output->err = MESH_COOKING_ERR_UNKNOW;
 	if (!ac) {
 		ac = CCTAllocator_stdc(NULL);
 	}
@@ -879,7 +877,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 		pg->v_adjacent_infos = v_adjacent_infos;
 		for (j = 0; j < v_indices_cnt; ++j) {
 			if (!Polygon_VertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
-				output->has_isolate_vertex = 1;
+				output->err = MESH_COOKING_ERR_ISOLATE_VERTICES;
 				mathVec3Copy(output->isolate_v, pg->v[pg->v_indices[j]]);
 				goto err_1;
 			}
@@ -999,7 +997,7 @@ const GeometryCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsi
 	mesh->_is_buffer_view = 0;
 	/* finish */
 	mesh->allocator_ptr = ac;
-	output->error_code = 0;
+	output->err = 0;
 	return output;
 err_1:
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
