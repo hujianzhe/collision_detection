@@ -809,6 +809,42 @@ static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int
 	return 0;
 }
 
+static int MeshCookingStage_FaceDatas(GeometryPolygon_t* pg, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
+	unsigned int* edge_v_indices_flat = NULL, * v_indices = NULL, * edge_v_ids_flat = NULL;
+	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
+	unsigned int edge_v_indices_cnt, v_indices_cnt, j;
+	/* cooking edge */
+	if (!MeshCookingStage_GenerateFaceEdges((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices_flat, pg->tri_cnt * 3, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt, ac)) {
+		return 0;
+	}
+	pg->edge_cnt = edge_v_indices_cnt / 2;
+	pg->edge_v_indices_flat = edge_v_indices_flat;
+	/* cooking vertex indice */
+	if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat, ac)) {
+		return 0;
+	}
+	pg->v_indices = v_indices;
+	pg->v_indices_cnt = v_indices_cnt;
+	pg->edge_v_ids_flat = edge_v_ids_flat;
+	/* cooking vertex adjacent infos */
+	v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+	if (!v_adjacent_infos) {
+		return 0;
+	}
+	pg->v_adjacent_infos = v_adjacent_infos;
+	for (j = 0; j < v_indices_cnt; ++j) {
+		if (!Polygon_VertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
+			output->err = MESH_COOKING_ERR_ISOLATE_VERTICES;
+			mathVec3Copy(output->isolate_v, pg->v[pg->v_indices[j]]);
+			return 0;
+		}
+	}
+	/* fill polygon other data */
+	mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
+
+	return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -851,39 +887,11 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	/* cooking every face */
 	total_edge_v_indices_cnt = 0;
 	for (i = 0; i < tmp_polygons_cnt; ++i) {
-		unsigned int* edge_v_indices_flat = NULL, *v_indices = NULL, *edge_v_ids_flat = NULL;
-		GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
-		unsigned int edge_v_indices_cnt, v_indices_cnt, j;
 		GeometryPolygon_t* pg = tmp_polygons + i;
-		/* cooking edge */
-		if (!MeshCookingStage_GenerateFaceEdges((const CCTNum_t(*)[3])pg->v, pg->tri_v_indices_flat, pg->tri_cnt * 3, pg->normal, &edge_v_indices_flat, &edge_v_indices_cnt, ac)) {
+		if (!MeshCookingStage_FaceDatas(pg, output, ac)) {
 			goto err_1;
 		}
-		pg->edge_cnt = edge_v_indices_cnt / 2;
-		pg->edge_v_indices_flat = edge_v_indices_flat;
-		/* cooking vertex indice */
-		if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat, ac)) {
-			goto err_1;
-		}
-		total_edge_v_indices_cnt += edge_v_indices_cnt;
-		pg->v_indices = v_indices;
-		pg->v_indices_cnt = v_indices_cnt;
-		pg->edge_v_ids_flat = edge_v_ids_flat;
-		/* cooking vertex adjacent infos */
-		v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
-		if (!v_adjacent_infos) {
-			goto err_1;
-		}
-		pg->v_adjacent_infos = v_adjacent_infos;
-		for (j = 0; j < v_indices_cnt; ++j) {
-			if (!Polygon_VertexAdjacentInfo(edge_v_ids_flat, edge_v_indices_cnt, j, v_adjacent_infos + j)) {
-				output->err = MESH_COOKING_ERR_ISOLATE_VERTICES;
-				mathVec3Copy(output->isolate_v, pg->v[pg->v_indices[j]]);
-				goto err_1;
-			}
-		}
-		/* fill polygon other data */
-		mathVertexIndicesAverageXYZ((const CCTNum_t(*)[3])pg->v, v_indices, v_indices_cnt, pg->center);
+		total_edge_v_indices_cnt += pg->edge_cnt * 2;
 	}
 	/* merge face edge */
 	edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(edge_v_indices_flat[0]) * total_edge_v_indices_cnt);
@@ -896,15 +904,6 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	}
 	/* cooking vertex indice */
 	if (!MeshCookingStage_GenerateIndices(edge_v_indices_flat, total_edge_v_indices_cnt, &v_indices, &v_indices_cnt, &edge_v_ids_flat, ac)) {
-		goto err_1;
-	}
-	/* alloc adjacent infos buffer */
-	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
-	if (!v_adjacent_infos) {
-		goto err_1;
-	}
-	edge_adjacent_face_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt);
-	if (!edge_adjacent_face_ids) {
 		goto err_1;
 	}
 	/* cooking face map relationship data */
@@ -930,7 +929,34 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	mesh->edge_cnt = total_edge_v_indices_cnt / 2;
 	mesh->polygons = tmp_polygons;
 	mesh->polygons_cnt = tmp_polygons_cnt;
+	mesh->allocator_ptr = ac;
+	mesh->_is_buffer_view = 0;
+	/* check mesh is convex and closed */
+	if (mathMeshIsConvex(mesh)) {
+		mesh->is_convex = 1;
+		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = mesh->polygons + i;
+			polygon->is_convex = 1;
+		}
+		ConvexMesh_FacesNormalOut(mesh);
+	}
+	else {
+		mesh->is_convex = 0;
+		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = mesh->polygons + i;
+			polygon->is_convex = Polygon_IsConvex(
+				(const CCTNum_t(*)[3])polygon->v, polygon->normal,
+				polygon->edge_v_indices_flat, polygon->edge_cnt * 2,
+				polygon->v_indices, polygon->v_indices_cnt
+			);
+		}
+	}
+	mesh->is_closed = mathMeshIsClosed(mesh);
 	/* cooking vertex adjacent infos */
+	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+	if (!v_adjacent_infos) {
+		goto err_1;
+	}
 	for (i = 0; i < v_indices_cnt; ++i) {
 		if (Cooking_MeshVertexAdjacentInfo(mesh, i, v_adjacent_infos + i, ac)) {
 			continue;
@@ -942,6 +968,10 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	}
 	mesh->v_adjacent_infos = v_adjacent_infos;
 	/* cooking edge adjacent infos */
+	edge_adjacent_face_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt);
+	if (!edge_adjacent_face_ids) {
+		goto err_1;
+	}
 	for (i = 0; i < mesh->edge_cnt; ++i) {
 		if (!Cooking_MeshEdgeAdjacentFace(mesh, i, edge_adjacent_face_ids + i + i)) {
 			goto err_1;
@@ -949,54 +979,37 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	}
 	mesh->edge_adjacent_face_ids_flat = edge_adjacent_face_ids;
 	/* check mesh is convex and closed */
-	mesh->is_convex = mathMeshIsConvex(mesh);
-	if (mesh->is_convex) {
+	if (!mesh->is_convex) {
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			unsigned int *concave_tri_edge_ids, *concave_tri_v_ids;
 			GeometryPolygon_t* polygon = mesh->polygons + i;
-			polygon->is_convex = 1;
-		}
-		ConvexMesh_FacesNormalOut(mesh);
-	}
-	else {
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
-			GeometryPolygon_t* polygon = mesh->polygons + i;
-			unsigned int polygon_edge_v_indices_cnt = polygon->edge_cnt * 2;
-			polygon->is_convex = Polygon_IsConvex(
-				(const CCTNum_t(*)[3])polygon->v, polygon->normal,
-				polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt,
-				polygon->v_indices, polygon->v_indices_cnt
-			);
 			/* if concave, save triangle edge ids */
-			if (!polygon->is_convex) {
-				unsigned int* concave_tri_edge_ids, *concave_tri_v_ids;
-
-				concave_tri_edge_ids = Cooking_ConcavePolygonTriangleEdge(
-					(const CCTNum_t(*)[3])polygon->v,
-					polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt,
-					polygon->tri_v_indices_flat, polygon->tri_cnt * 3,
-					ac
-				);
-				if (!concave_tri_edge_ids) {
-					goto err_1;
-				}
-				polygon->concave_tri_edge_ids_flat = concave_tri_edge_ids;
-
-				concave_tri_v_ids = Cooking_ConcavePolygonTriangleVertex(
-					polygon->v_indices, polygon->v_indices_cnt,
-					polygon->tri_v_indices_flat, polygon->tri_cnt * 3,
-					ac
-				);
-				if (!concave_tri_v_ids) {
-					goto err_1;
-				}
-				polygon->concave_tri_v_ids_flat = concave_tri_v_ids;
+			if (polygon->is_convex) {
+				continue;
 			}
+			concave_tri_edge_ids = Cooking_ConcavePolygonTriangleEdge(
+				(const CCTNum_t(*)[3])polygon->v,
+				polygon->edge_v_indices_flat, polygon->edge_cnt * 2,
+				polygon->tri_v_indices_flat, polygon->tri_cnt * 3,
+				ac
+			);
+			if (!concave_tri_edge_ids) {
+				goto err_1;
+			}
+			polygon->concave_tri_edge_ids_flat = concave_tri_edge_ids;
+
+			concave_tri_v_ids = Cooking_ConcavePolygonTriangleVertex(
+				polygon->v_indices, polygon->v_indices_cnt,
+				polygon->tri_v_indices_flat, polygon->tri_cnt * 3,
+				ac
+			);
+			if (!concave_tri_v_ids) {
+				goto err_1;
+			}
+			polygon->concave_tri_v_ids_flat = concave_tri_v_ids;
 		}
 	}
-	mesh->is_closed = mathMeshIsClosed(mesh);
-	mesh->_is_buffer_view = 0;
 	/* finish */
-	mesh->allocator_ptr = ac;
 	output->err = 0;
 	return output;
 err_1:
