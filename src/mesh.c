@@ -202,7 +202,7 @@ err:
 extern "C" {
 #endif
 
-GeometryMesh_t* mathMeshDeepCopy(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac) {
+GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac) {
 	unsigned int i, dup_v_cnt = 0;
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
