@@ -15,7 +15,12 @@ extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], c
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
 extern int MeshVertices_IsConvex(const GeometryMesh_t* mesh);
+extern int Mesh_IsClosed(const GeometryMesh_t* mesh);
+extern int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac);
+extern int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac);
+extern int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac);
 extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
+extern int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -717,99 +722,6 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 	}
 }
 
-static int Cooking_MeshVertexAdjacentInfo(const GeometryMesh_t* mesh, unsigned int v_id, GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
-	unsigned int i, *tmp_p;
-	unsigned int mesh_edge_v_indices_cnt;
-	unsigned int *v_ids = NULL, *edge_ids = NULL, *face_ids = NULL;
-	/* find locate faces */
-	info->face_cnt = 0;
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		unsigned int offset = mathFindFaceIdByVertexIndices(mesh->polygons + i, mesh->polygons_cnt - i, &mesh->v_indices[v_id], 1);
-		if (-1 == offset) {
-			break;
-		}
-		++info->face_cnt;
-		tmp_p = (unsigned int*)ac->fn_realloc(ac, face_ids, info->face_cnt * sizeof(face_ids[0]));
-		if (!tmp_p) {
-			goto err;
-		}
-		i += offset;
-		face_ids = tmp_p;
-		face_ids[info->face_cnt - 1] = i;
-	}
-	if (info->face_cnt <= 0) {
-		/* no possiable */
-		goto err;
-	}
-	/* find locate edge */
-	info->v_cnt = info->edge_cnt = 0;
-	mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
-	for (i = 0; i < mesh_edge_v_indices_cnt; ++i) {
-		unsigned int adj_v_id;
-		if (mesh->edge_v_ids_flat[i++] == v_id) {
-			adj_v_id = mesh->edge_v_ids_flat[i];
-		}
-		else if (mesh->edge_v_ids_flat[i] == v_id) {
-			adj_v_id = mesh->edge_v_ids_flat[i - 1];
-		}
-		else {
-			continue;
-		}
-		++info->v_cnt;
-		tmp_p = (unsigned int*)ac->fn_realloc(ac, v_ids, info->v_cnt * sizeof(v_ids[0]));
-		if (!tmp_p) {
-			goto err;
-		}
-		v_ids = tmp_p;
-		v_ids[info->v_cnt - 1] = adj_v_id;
-
-		++info->edge_cnt;
-		tmp_p = (unsigned int*)ac->fn_realloc(ac, edge_ids, info->edge_cnt * sizeof(edge_ids[0]));
-		if (!tmp_p) {
-			goto err;
-		}
-		edge_ids = tmp_p;
-		edge_ids[info->edge_cnt - 1] = (i >> 1);
-	}
-	if (info->v_cnt != info->edge_cnt || info->v_cnt <= 0) {
-		/* no possiable */
-		goto err;
-	}
-	info->v_ids = v_ids;
-	info->edge_ids = edge_ids;
-	info->face_ids = face_ids;
-	return 1;
-err:
-	ac->fn_free(ac, v_ids);
-	ac->fn_free(ac, edge_ids);
-	ac->fn_free(ac, face_ids);
-	return 0;
-}
-
-static int Cooking_MeshEdgeAdjacentFace(const GeometryMesh_t* mesh, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) {
-	unsigned int i, cnt = 0;
-	const unsigned int v_idx[2] = {
-		mesh->edge_v_indices_flat[edge_id + edge_id],
-		mesh->edge_v_indices_flat[edge_id + edge_id + 1]
-	};
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		unsigned int offset = mathFindFaceIdByVertexIndices(mesh->polygons + i, mesh->polygons_cnt - i, v_idx, 2);
-		if (-1 == offset) {
-			break;
-		}
-		i += offset;
-		adjacent_faces_ids[cnt++] = i;
-		if (cnt >= 2) {
-			return 1;
-		}
-	}
-	if (1 == cnt) {
-		adjacent_faces_ids[1] = -1;
-		return 1;
-	}
-	return 0;
-}
-
 static int MeshCookingStage_FaceDatas(GeometryPolygon_t* pg, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
 	unsigned int* edge_v_indices_flat = NULL, * v_indices = NULL, * edge_v_ids_flat = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
@@ -933,7 +845,7 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	mesh->allocator_ptr = ac;
 	mesh->_is_buffer_view = 0;
 	/* check mesh is convex and closed */
-	mesh->is_closed = mathMeshIsClosed(mesh);
+	mesh->is_closed = Mesh_IsClosed(mesh);
 	if (MeshVertices_IsConvex(mesh)) {
 		mesh->is_convex = mesh->is_closed;
 		ConvexMesh_FacesNormalOut(mesh);
@@ -942,14 +854,14 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 		mesh->is_convex = 0;
 	}
 	if (mesh->is_convex) {
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
-			GeometryPolygon_t* polygon = mesh->polygons + i;
+		for (i = 0; i < tmp_polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = tmp_polygons + i;
 			polygon->is_convex = 1;
 		}
 	}
 	else {
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
-			GeometryPolygon_t* polygon = mesh->polygons + i;
+		for (i = 0; i < tmp_polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = tmp_polygons + i;
 			polygon->is_convex = Polygon_IsConvex(
 				(const CCTNum_t(*)[3])polygon->v, polygon->normal,
 				polygon->edge_v_indices_flat, polygon->edge_cnt * 2,
@@ -958,36 +870,41 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 		}
 	}
 	/* cooking vertex adjacent infos */
-	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
+	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_calloc(ac, v_indices_cnt, sizeof(v_adjacent_infos[0]));
 	if (!v_adjacent_infos) {
 		goto err_1;
 	}
 	for (i = 0; i < v_indices_cnt; ++i) {
-		if (Cooking_MeshVertexAdjacentInfo(mesh, i, v_adjacent_infos + i, ac)) {
-			continue;
+		GeometryMeshVertexAdjacentInfo_t* info = v_adjacent_infos + i;
+		if (MeshVertexAdjacentInfo_GetFaceIds(info, tmp_polygons, tmp_polygons_cnt, i, ac)) {
+			if (MeshVertexAdjacentInfo_GetEdgeIds(info, edge_v_ids_flat, total_edge_v_indices_cnt / 2, i, ac)) {
+				if (MeshVertexAdjacentInfo_GetVertexIds(info, edge_v_ids_flat, total_edge_v_indices_cnt / 2, i, ac)) {
+					continue;
+				}
+			}
 		}
-		while (i--) {
+		do {
 			MeshVertexAdjacentInfo_free(v_adjacent_infos + i, ac);
-		}
+		} while (i--);
 		goto err_1;
 	}
 	mesh->v_adjacent_infos = v_adjacent_infos;
-	/* cooking edge adjacent infos */
+	/* cooking edge adjacent faces */
 	edge_adjacent_face_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(edge_adjacent_face_ids[0]) * total_edge_v_indices_cnt);
 	if (!edge_adjacent_face_ids) {
 		goto err_1;
 	}
-	for (i = 0; i < mesh->edge_cnt; ++i) {
-		if (!Cooking_MeshEdgeAdjacentFace(mesh, i, edge_adjacent_face_ids + i + i)) {
+	for (i = 0; i < total_edge_v_indices_cnt; i += 2) {
+		if (!MeshEdgeAdjacentFace(tmp_polygons, tmp_polygons_cnt, edge_v_indices_flat, i / 2, edge_adjacent_face_ids + i)) {
 			goto err_1;
 		}
 	}
 	mesh->edge_adjacent_face_ids_flat = edge_adjacent_face_ids;
-	/* check mesh is convex and closed */
+	/* cooking cancave triangle datas if mesh isn't convex */
 	if (!mesh->is_convex) {
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
+		for (i = 0; i < tmp_polygons_cnt; ++i) {
 			unsigned int *concave_tri_edge_ids, *concave_tri_v_ids;
-			GeometryPolygon_t* polygon = mesh->polygons + i;
+			GeometryPolygon_t* polygon = tmp_polygons + i;
 			/* if concave, save triangle edge ids */
 			if (polygon->is_convex) {
 				continue;

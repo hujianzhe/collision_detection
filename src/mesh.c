@@ -13,6 +13,182 @@ extern const CCTConstVal_t CCTConstVal_;
 
 extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
 
+int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+	unsigned int i, ids_cnt = 0;
+	unsigned int* ids = NULL;
+	for (i = 0; i < polygons_cnt; ++i) {
+		unsigned int j;
+		unsigned int* tmp_p;
+		const GeometryPolygon_t* polygon = polygons + i;
+		for (j = 0; j < polygon->v_indices_cnt; ++j) {
+			if (polygon->mesh_v_ids[j] == v_id) {
+				break;
+			}
+		}
+		if (j >= polygon->v_indices_cnt) {
+			continue;
+		}
+		++ids_cnt;
+		tmp_p = (unsigned int*)ac->fn_realloc(ac, ids, sizeof(ids[0]) * ids_cnt);
+		if (!tmp_p) {
+			goto err;
+		}
+		ids = tmp_p;
+		ids[ids_cnt - 1] = i;
+	}
+	info->face_ids = ids;
+	info->face_cnt = ids_cnt;
+	return 1;
+err:
+	ac->fn_free(ac, ids);
+	return 0;
+}
+
+int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+	unsigned int i, ids_cnt = 0;
+	unsigned int* ids = NULL;
+	for (i = 0; i < edge_cnt * 2; i += 2) {
+		unsigned int* tmp_p;
+		if (edge_v_ids_flat[i] != v_id && edge_v_ids_flat[i + 1] != v_id) {
+			continue;
+		}
+		++ids_cnt;
+		tmp_p = (unsigned int*)ac->fn_realloc(ac, ids, sizeof(ids[0]) * ids_cnt);
+		if (!tmp_p) {
+			goto err;
+		}
+		ids = tmp_p;
+		ids[ids_cnt - 1] = i / 2;
+	}
+	info->edge_ids = ids;
+	info->edge_cnt = ids_cnt;
+	return 1;
+err:
+	ac->fn_free(ac, ids);
+	return 0;
+}
+
+int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+	unsigned int i, ids_cnt = 0;
+	unsigned int* ids = NULL;
+	for (i = 0; i < edge_cnt * 2; i += 2) {
+		unsigned int* tmp_p;
+		unsigned int adj_v_id;
+		if (edge_v_ids_flat[i] == v_id) {
+			adj_v_id = edge_v_ids_flat[i + 1];
+		}
+		else if (edge_v_ids_flat[i + 1] == v_id) {
+			adj_v_id = edge_v_ids_flat[i];
+		}
+		else {
+			continue;
+		}
+		++ids_cnt;
+		tmp_p = (unsigned int*)ac->fn_realloc(ac, ids, sizeof(ids[0]) * ids_cnt);
+		if (!tmp_p) {
+			goto err;
+		}
+		ids = tmp_p;
+		ids[ids_cnt - 1] = adj_v_id;
+	}
+	info->v_ids = ids;
+	info->v_cnt = ids_cnt;
+	return 1;
+err:
+	ac->fn_free(ac, ids);
+	return 0;
+}
+
+void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
+	ac->fn_free(ac, (void*)info->v_ids);
+	ac->fn_free(ac, (void*)info->edge_ids);
+	ac->fn_free(ac, (void*)info->face_ids);
+}
+
+int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) {
+	unsigned int i, cnt = 0;
+	const unsigned int v_idx[2] = {
+		edge_v_indices_flat[edge_id + edge_id],
+		edge_v_indices_flat[edge_id + edge_id + 1]
+	};
+	for (i = 0; i < polygons_cnt; ++i) {
+		unsigned int offset = mathFindFaceIdByVertexIndices(polygons + i, polygons_cnt - i, v_idx, 2);
+		if (-1 == offset) {
+			break;
+		}
+		i += offset;
+		adjacent_faces_ids[cnt++] = i;
+		if (cnt >= 2) {
+			return 1;
+		}
+	}
+	if (1 == cnt) {
+		adjacent_faces_ids[1] = -1;
+		return 1;
+	}
+	return 0;
+}
+
+int MeshVertices_IsConvex(const GeometryMesh_t* mesh) {
+	unsigned int i;
+	if (mesh->polygons_cnt < 4) {
+		return 0;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		int flag_sign = 0;
+		unsigned int j;
+		for (j = 0; j < mesh->v_indices_cnt; ++j) {
+			CCTNum_t vj[3], dot;
+			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
+			dot = mathVec3Dot(polygon->normal, vj);
+			/* some module needed epsilon */
+			if (dot > CCT_EPSILON) {
+				if (flag_sign < 0) {
+					return 0;
+				}
+				flag_sign = 1;
+			}
+			else if (dot < CCT_EPSILON_NEGATE) {
+				if (flag_sign > 0) {
+					return 0;
+				}
+				flag_sign = -1;
+			}
+		}
+	}
+	return 1;
+}
+
+int Mesh_IsClosed(const GeometryMesh_t* mesh) {
+	unsigned int i;
+	if (mesh->v_indices_cnt < 3) {
+		return 0;
+	}
+	for (i = 0; i < mesh->v_indices_cnt; ++i) {
+		unsigned int j, cnt = 0;
+		unsigned int vi = mesh->v_indices[i];
+		for (j = 0; j < mesh->polygons_cnt; ++j) {
+			unsigned int k;
+			const GeometryPolygon_t* polygon = mesh->polygons + j;
+			for (k = 0; k < polygon->v_indices_cnt; ++k) {
+				unsigned int vk = polygon->v_indices[k];
+				if (vi == vk || mathVec3Equal(mesh->v[vi], polygon->v[vk])) {
+					++cnt;
+					break;
+				}
+			}
+			if (cnt >= 3) {
+				break;
+			}
+		}
+		if (cnt < 3) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static void free_all_faces(GeometryMesh_t* mesh) {
 	unsigned int i;
 	const CCTAllocator_t* ac;
@@ -26,12 +202,6 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 	mesh->polygons_cnt = 0;
 	ac->fn_free(ac, mesh->polygons);
 	mesh->polygons = NULL;
-}
-
-void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
-	ac->fn_free(ac, (void*)info->v_ids);
-	ac->fn_free(ac, (void*)info->edge_ids);
-	ac->fn_free(ac, (void*)info->face_ids);
 }
 
 static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
@@ -200,37 +370,6 @@ err:
 	return 0;
 }
 
-int MeshVertices_IsConvex(const GeometryMesh_t* mesh) {
-	unsigned int i;
-	if (mesh->polygons_cnt < 4) {
-		return 0;
-	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		int flag_sign = 0;
-		unsigned int j;
-		for (j = 0; j < mesh->v_indices_cnt; ++j) {
-			CCTNum_t vj[3], dot;
-			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
-			dot = mathVec3Dot(polygon->normal, vj);
-			/* some module needed epsilon */
-			if (dot > CCT_EPSILON) {
-				if (flag_sign < 0) {
-					return 0;
-				}
-				flag_sign = 1;
-			}
-			else if (dot < CCT_EPSILON_NEGATE) {
-				if (flag_sign > 0) {
-					return 0;
-				}
-				flag_sign = -1;
-			}
-		}
-	}
-	return 1;
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -347,93 +486,16 @@ err_0:
 	return NULL;
 }
 
-void mathMeshClear(GeometryMesh_t* mesh) {
-	const CCTAllocator_t* ac;
-	if (!mesh) {
-		return;
-	}
-	if ((const void*)mesh->v_indices >= (const void*)&CCTConstVal_ &&
-		(const void*)mesh->v_indices < (const void*)(&CCTConstVal_ + 1)) {
-		return;
-	}
-	ac = mesh->allocator_ptr;
-	if (mesh->_is_buffer_view) {
-		ac->fn_free(ac, mesh->polygons);
-		mesh->polygons = NULL;
-		mesh->polygons_cnt = 0;
-		mesh->edge_adjacent_face_ids_flat = NULL;
-		mesh->edge_v_ids_flat = NULL;
-		mesh->edge_v_indices_flat = NULL;
-		mesh->edge_cnt = 0;
-		ac->fn_free(ac, (void*)mesh->v_adjacent_infos);
-		mesh->v_adjacent_infos = NULL;
-		mesh->v_indices = NULL;
-		mesh->v_indices_cnt = 0;
-		mesh->v = NULL;
-		return;
-	}
-	free_all_faces(mesh);
-	free_all_adjacent_infos(mesh);
-	if (mesh->edge_v_ids_flat) {
-		ac->fn_free(ac, (void*)mesh->edge_v_ids_flat);
-		mesh->edge_v_ids_flat = NULL;
-	}
-	if (mesh->edge_v_indices_flat) {
-		ac->fn_free(ac, (void*)mesh->edge_v_indices_flat);
-		mesh->edge_v_indices_flat = NULL;
-	}
-	mesh->edge_cnt = 0;
-	if (mesh->v_indices) {
-		ac->fn_free(ac, (void*)mesh->v_indices);
-		mesh->v_indices = NULL;
-		mesh->v_indices_cnt = 0;
-	}
-	if (mesh->v) {
-		ac->fn_free(ac, mesh->v);
-		mesh->v = NULL;
-	}
-}
-
-int mathMeshIsClosed(const GeometryMesh_t* mesh) {
-	unsigned int i;
-	if (mesh->v_indices_cnt < 3) {
-		return 0;
-	}
-	for (i = 0; i < mesh->v_indices_cnt; ++i) {
-		unsigned int j, cnt = 0;
-		unsigned int vi = mesh->v_indices[i];
-		for (j = 0; j < mesh->polygons_cnt; ++j) {
-			unsigned int k;
-			const GeometryPolygon_t* polygon = mesh->polygons + j;
-			for (k = 0; k < polygon->v_indices_cnt; ++k) {
-				unsigned int vk = polygon->v_indices[k];
-				if (vi == vk || mathVec3Equal(mesh->v[vi], polygon->v[vk])) {
-					++cnt;
-					break;
-				}
-			}
-			if (cnt >= 3) {
-				break;
-			}
-		}
-		if (cnt < 3) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-#ifdef __cplusplus
-}
-#endif
-
 GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, unsigned int face_cnt, const CCTAllocator_t* ac) {
 	unsigned int i, j;
 	unsigned all_face_convex;
 	CCTNum_t(*dup_v)[3] = NULL;
+	unsigned int v_adjacent_infos_init_cnt = 0;
+	GeometryMeshVertexAdjacentInfo_t* dup_v_adjacent_infos = NULL;
 	unsigned int dup_v_cnt, dup_edge_v_indices_cnt;
 	unsigned int *dup_v_indices_flat = NULL;
 	unsigned int *dup_edge_v_indices_flat = NULL, *dup_edge_v_ids_flat = NULL;
+	unsigned int* dup_edge_adjacent_face_ids_flat = NULL;
 	GeometryPolygon_t* dup_faces = NULL;
 	if (!ac) {
 		ac = CCTAllocator_stdc(NULL);
@@ -550,7 +612,7 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 			}
 		}
 	}
-	/* rebuild edge vertices indices */
+	/* rebuild edge */
 	dup_edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_edge_v_indices_flat[0]) * dup_edge_v_indices_cnt);
 	if (!dup_edge_v_indices_flat) {
 		goto err;
@@ -600,28 +662,58 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 	for (i = 0; i < dup_edge_v_indices_cnt; ++i) {
 		dup_edge_v_ids_flat[i] = dup_edge_v_indices_flat[i];
 	}
-	/* rebuild mesh adjacent infos */
-	/* TODO */
+	/* rebuild mesh vertices adjacent infos */
+	dup_v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_calloc(ac, dup_v_cnt, sizeof(dup_v_adjacent_infos[0]));
+	if (!dup_v_adjacent_infos) {
+		goto err;
+	}
+	for (i = 0; i < dup_v_cnt; ++i) {
+		GeometryMeshVertexAdjacentInfo_t* info = dup_v_adjacent_infos + i;
+		++v_adjacent_infos_init_cnt;
+		if (!MeshVertexAdjacentInfo_GetFaceIds(info, dup_faces, face_cnt, i, ac)) {
+			goto err;
+		}
+		if (!MeshVertexAdjacentInfo_GetEdgeIds(info, dup_edge_v_ids_flat, dup_edge_v_indices_cnt / 2, i, ac)) {
+			goto err;
+		}
+		if (!MeshVertexAdjacentInfo_GetVertexIds(info, dup_edge_v_ids_flat, dup_edge_v_indices_cnt / 2, i, ac)) {
+			goto err;
+		}
+	}
+	/* rebuild mesh edge adjacent faces */
+	dup_edge_adjacent_face_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_edge_adjacent_face_ids_flat[0]) * dup_edge_v_indices_cnt);
+	if (!dup_edge_adjacent_face_ids_flat) {
+		goto err;
+	}
+	for (i = 0; i < dup_edge_v_indices_cnt; i += 2) {
+		if (!MeshEdgeAdjacentFace(dup_faces, face_cnt, dup_edge_v_indices_flat, i / 2, dup_edge_adjacent_face_ids_flat + i)) {
+			goto err;
+		}
+	}
 	/* set mesh fields */
 	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, dup_mesh->bound_box.min_v, dup_mesh->bound_box.max_v);
 	mathAABBFixSize(dup_mesh->bound_box.min_v, dup_mesh->bound_box.max_v);
 	dup_mesh->v = dup_v;
 	dup_mesh->v_indices_cnt = dup_v_cnt;
 	dup_mesh->v_indices = dup_v_indices_flat;
-	dup_mesh->v_adjacent_infos = NULL;
+	dup_mesh->v_adjacent_infos = dup_v_adjacent_infos;
 	dup_mesh->edge_cnt = dup_edge_v_indices_cnt / 2;
 	dup_mesh->edge_v_indices_flat = dup_edge_v_indices_flat;
 	dup_mesh->edge_v_ids_flat = dup_edge_v_ids_flat;
-	dup_mesh->edge_adjacent_face_ids_flat = NULL;
+	dup_mesh->edge_adjacent_face_ids_flat = dup_edge_adjacent_face_ids_flat;
 	dup_mesh->polygons_cnt = face_cnt;
 	dup_mesh->polygons = dup_faces;
 	dup_mesh->allocator_ptr = ac;
 	dup_mesh->_is_buffer_view = 0;
-	dup_mesh->is_closed = mathMeshIsClosed(dup_mesh);
+	dup_mesh->is_closed = Mesh_IsClosed(dup_mesh);
 	dup_mesh->is_convex = (dup_mesh->is_closed && all_face_convex);
 	/* finish */
 	return dup_mesh;
 err:
+	for (i = 0; i < v_adjacent_infos_init_cnt; ++i) {
+		MeshVertexAdjacentInfo_free(dup_v_adjacent_infos + i, ac);
+	}
+	ac->fn_free(ac, dup_v_adjacent_infos);
 	for (i = 0; i < face_cnt; ++i) {
 		Polygon_ClearWithoutVertices(dup_faces + i, ac);
 	}
@@ -630,5 +722,57 @@ err:
 	ac->fn_free(ac, dup_v_indices_flat);
 	ac->fn_free(ac, dup_edge_v_indices_flat);
 	ac->fn_free(ac, dup_edge_v_ids_flat);
+	ac->fn_free(ac, dup_edge_adjacent_face_ids_flat);
 	return NULL;
 }
+
+void mathMeshClear(GeometryMesh_t* mesh) {
+	const CCTAllocator_t* ac;
+	if (!mesh) {
+		return;
+	}
+	if ((const void*)mesh->v_indices >= (const void*)&CCTConstVal_ &&
+		(const void*)mesh->v_indices < (const void*)(&CCTConstVal_ + 1)) {
+		return;
+	}
+	ac = mesh->allocator_ptr;
+	if (mesh->_is_buffer_view) {
+		ac->fn_free(ac, mesh->polygons);
+		mesh->polygons = NULL;
+		mesh->polygons_cnt = 0;
+		mesh->edge_adjacent_face_ids_flat = NULL;
+		mesh->edge_v_ids_flat = NULL;
+		mesh->edge_v_indices_flat = NULL;
+		mesh->edge_cnt = 0;
+		ac->fn_free(ac, (void*)mesh->v_adjacent_infos);
+		mesh->v_adjacent_infos = NULL;
+		mesh->v_indices = NULL;
+		mesh->v_indices_cnt = 0;
+		mesh->v = NULL;
+		return;
+	}
+	free_all_faces(mesh);
+	free_all_adjacent_infos(mesh);
+	if (mesh->edge_v_ids_flat) {
+		ac->fn_free(ac, (void*)mesh->edge_v_ids_flat);
+		mesh->edge_v_ids_flat = NULL;
+	}
+	if (mesh->edge_v_indices_flat) {
+		ac->fn_free(ac, (void*)mesh->edge_v_indices_flat);
+		mesh->edge_v_indices_flat = NULL;
+	}
+	mesh->edge_cnt = 0;
+	if (mesh->v_indices) {
+		ac->fn_free(ac, (void*)mesh->v_indices);
+		mesh->v_indices = NULL;
+		mesh->v_indices_cnt = 0;
+	}
+	if (mesh->v) {
+		ac->fn_free(ac, mesh->v);
+		mesh->v = NULL;
+	}
+}
+
+#ifdef __cplusplus
+}
+#endif
