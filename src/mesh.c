@@ -4,6 +4,8 @@
 
 #include "../inc/const_data.h"
 #include "../inc/math_vec3.h"
+#include "../inc/vertex.h"
+#include "../inc/box.h"
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 
@@ -424,3 +426,209 @@ int mathMeshIsConvex(const GeometryMesh_t* mesh) {
 #ifdef __cplusplus
 }
 #endif
+
+GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, unsigned int face_cnt, const CCTAllocator_t* ac) {
+	unsigned int i, j;
+	unsigned all_face_convex;
+	CCTNum_t(*dup_v)[3] = NULL;
+	unsigned int dup_v_cnt, dup_edge_v_indices_cnt;
+	unsigned int *dup_v_indices_flat = NULL;
+	unsigned int *dup_edge_v_indices_flat = NULL, *dup_edge_v_ids_flat = NULL;
+	GeometryPolygon_t* dup_faces = NULL;
+	if (!ac) {
+		ac = CCTAllocator_stdc(NULL);
+	}
+	/* collect count */
+	dup_faces = (GeometryPolygon_t*)ac->fn_calloc(ac, face_cnt, sizeof(dup_faces[0]));
+	if (!dup_faces) {
+		goto err;
+	}
+	dup_v_cnt = 0;
+	dup_edge_v_indices_cnt = 0;
+	all_face_convex = 1;
+	for (i = 0; i < face_cnt; ++i) {
+		const GeometryPolygon_t* src_face = faces + i;
+		GeometryPolygon_t* dup_face = dup_faces + i;
+		if (!src_face->is_convex) {
+			all_face_convex = 0;
+		}
+		mathVec3Copy(dup_face->center, src_face->center);
+		mathVec3Copy(dup_face->normal, src_face->normal);
+		dup_face->is_convex = src_face->is_convex;
+		dup_face->v_indices_cnt = src_face->v_indices_cnt;
+		dup_face->edge_cnt = src_face->edge_cnt;
+		dup_face->tri_cnt = src_face->tri_cnt;
+		dup_face->v_indices = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->v_indices[0]) * src_face->v_indices_cnt);
+		if (!dup_face->v_indices) {
+			goto err;
+		}
+		dup_face->mesh_v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->mesh_v_ids[0]) * src_face->v_indices_cnt);
+		if (!dup_face->mesh_v_ids) {
+			goto err;
+		}
+		dup_face->v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(dup_face->v_adjacent_infos[0]) * src_face->v_indices_cnt);
+		if (!dup_face->v_adjacent_infos) {
+			goto err;
+		}
+		dup_face->edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->edge_v_indices_flat[0]) * src_face->edge_cnt * 2);
+		if (!dup_face->edge_v_indices_flat) {
+			goto err;
+		}
+		dup_face->edge_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->edge_v_ids_flat[0]) * src_face->edge_cnt * 2);
+		if (!dup_face->edge_v_ids_flat) {
+			goto err;
+		}
+		dup_face->mesh_edge_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->mesh_edge_ids[0]) * src_face->edge_cnt * 2);
+		if (!dup_face->mesh_edge_ids) {
+			goto err;
+		}
+		dup_face->tri_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->tri_v_indices_flat[0]) * src_face->tri_cnt * 3);
+		if (!dup_face->tri_v_indices_flat) {
+			goto err;
+		}
+		if (src_face->concave_tri_v_ids_flat) {
+			dup_face->concave_tri_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->concave_tri_v_ids_flat[0]) * src_face->tri_cnt * 3);
+			if (!dup_face->concave_tri_v_ids_flat) {
+				goto err;
+			}
+		}
+		if (src_face->concave_tri_edge_ids_flat) {
+			dup_face->concave_tri_edge_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_face->concave_tri_edge_ids_flat[0]) * src_face->tri_cnt * 3);
+			if (!dup_face->concave_tri_edge_ids_flat) {
+				goto err;
+			}
+		}
+		dup_v_cnt += src_face->v_indices_cnt;
+		dup_edge_v_indices_cnt += src_face->edge_cnt * 2;
+	}
+	/* rebuild vertices */
+	dup_v = (CCTNum_t(*)[3])ac->fn_malloc(ac, sizeof(dup_v[0]) * dup_v_cnt);
+	if (!dup_v) {
+		goto err;
+	}
+	dup_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_v_indices_flat[0]) * dup_v_cnt);
+	if (!dup_v_indices_flat) {
+		goto err;
+	}
+	dup_v_cnt = 0;
+	for (i = 0; i < face_cnt; ++i) {
+		const GeometryPolygon_t* src_face = faces + i;
+		unsigned int* dup_face_v_indices = (unsigned int*)dup_faces[i].v_indices;
+		unsigned int* dup_face_mesh_v_ids = (unsigned int*)dup_faces[i].mesh_v_ids;
+		GeometryPolygonVertexAdjacentInfo_t* dup_face_v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)dup_faces[i].v_adjacent_infos;
+		for (j = 0; j < src_face->v_indices_cnt; ++j) {
+			unsigned int k;
+			const CCTNum_t* src_v = src_face->v[src_face->v_indices[j]];
+			for (k = 0; k < dup_v_cnt && !mathVec3Equal(dup_v[k], src_v); ++k);
+			if (k >= dup_v_cnt) {
+				dup_v_indices_flat[dup_v_cnt] = dup_v_cnt;
+				mathVec3Copy(dup_v[dup_v_cnt], src_v);
+				++dup_v_cnt;
+			}
+			dup_face_v_indices[j] = k;
+			dup_face_mesh_v_ids[j] = k;
+			dup_face_v_adjacent_infos[j] = src_face->v_adjacent_infos[j];
+		}
+		dup_faces[i].v = dup_v;
+	}
+	/* rebuild face tri vertices indices and concave datas */
+	for (i = 0; i < face_cnt; ++i) {
+		const GeometryPolygon_t* src_face = faces + i;
+		unsigned int* dup_face_tri_v_indices_flat = (unsigned int*)dup_faces[i].tri_v_indices_flat;
+		unsigned int* dup_face_concave_tri_v_ids_flat = (unsigned int*)dup_faces[i].concave_tri_v_ids_flat;
+		unsigned int* dup_face_concave_tri_edge_ids_flat = (unsigned int*)dup_faces[i].concave_tri_edge_ids_flat;
+		for (j = 0; j < src_face->tri_cnt * 3; ++j) {
+			unsigned int k;
+			const CCTNum_t* src_v = src_face->v[src_face->tri_v_indices_flat[j]];
+			for (k = 0; k < dup_v_cnt && !mathVec3Equal(dup_v[k], src_v); ++k);
+			dup_face_tri_v_indices_flat[j] = k;
+			if (src_face->concave_tri_v_ids_flat) {
+				dup_face_concave_tri_v_ids_flat[j] = src_face->concave_tri_v_ids_flat[j];
+			}
+			if (src_face->concave_tri_edge_ids_flat) {
+				dup_face_concave_tri_edge_ids_flat[j] = src_face->concave_tri_edge_ids_flat[j];
+			}
+		}
+	}
+	/* rebuild edge vertices indices */
+	dup_edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_edge_v_indices_flat[0]) * dup_edge_v_indices_cnt);
+	if (!dup_edge_v_indices_flat) {
+		goto err;
+	}
+	dup_edge_v_indices_cnt = 0;
+	for (i = 0; i < face_cnt; ++i) {
+		const GeometryPolygon_t* src_face = faces + i;
+		unsigned int* dup_face_edge_v_indices_flat = (unsigned int*)dup_faces[i].edge_v_indices_flat;
+		unsigned int* dup_face_edge_v_ids_flat = (unsigned int*)dup_faces[i].edge_v_ids_flat;
+		unsigned int* dup_face_mesh_edge_ids = (unsigned int*)dup_faces[i].mesh_edge_ids;
+		for (j = 0; j < src_face->edge_cnt * 2; j += 2) {
+			unsigned int k;
+			const CCTNum_t* src_edge_v0 = src_face->v[src_face->edge_v_indices_flat[j]];
+			const CCTNum_t* src_edge_v1 = src_face->v[src_face->edge_v_indices_flat[j + 1]];
+			for (k = 0; k < dup_edge_v_indices_cnt; k += 2) {
+				const CCTNum_t* dup_edge_v0 = dup_v[dup_edge_v_indices_flat[k]];
+				const CCTNum_t* dup_edge_v1 = dup_v[dup_edge_v_indices_flat[k + 1]];
+				if (mathVec3Equal(dup_edge_v0, src_edge_v0) && mathVec3Equal(dup_edge_v1, src_edge_v1)) {
+					dup_face_edge_v_indices_flat[j] = dup_edge_v_indices_flat[k];
+					dup_face_edge_v_indices_flat[j + 1] = dup_edge_v_indices_flat[k + 1];
+					break;
+				}
+				if (mathVec3Equal(dup_edge_v0, src_edge_v1) && mathVec3Equal(dup_edge_v1, src_edge_v0)) {
+					dup_face_edge_v_indices_flat[j] = dup_edge_v_indices_flat[k + 1];
+					dup_face_edge_v_indices_flat[j + 1] = dup_edge_v_indices_flat[k];
+					break;
+				}
+			}
+			dup_face_mesh_edge_ids[j / 2] = k / 2;
+			if (k >= dup_edge_v_indices_cnt) {
+				for (k = 0; k < dup_v_cnt && !mathVec3Equal(dup_v[k], src_edge_v0); ++k);
+				dup_edge_v_indices_flat[dup_edge_v_indices_cnt++] = k;
+				dup_face_edge_v_indices_flat[j] = k;
+
+				for (k = 0; k < dup_v_cnt && !mathVec3Equal(dup_v[k], src_edge_v1); ++k);
+				dup_edge_v_indices_flat[dup_edge_v_indices_cnt++] = k;
+				dup_face_edge_v_indices_flat[j + 1] = k;
+			}
+			dup_face_edge_v_ids_flat[j] = src_face->edge_v_ids_flat[j];
+			dup_face_edge_v_ids_flat[j + 1] = src_face->edge_v_ids_flat[j + 1];
+		}
+	}
+	dup_edge_v_ids_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(dup_edge_v_ids_flat[0]) * dup_edge_v_indices_cnt);
+	if (!dup_edge_v_ids_flat) {
+		goto err;
+	}
+	for (i = 0; i < dup_edge_v_indices_cnt; ++i) {
+		dup_edge_v_ids_flat[i] = dup_edge_v_indices_flat[i];
+	}
+	/* rebuild mesh adjacent infos */
+	/* TODO */
+	/* set mesh fields */
+	mathVerticesFindMinMaxXYZ((const CCTNum_t(*)[3])dup_v, dup_v_cnt, dup_mesh->bound_box.min_v, dup_mesh->bound_box.max_v);
+	mathAABBFixSize(dup_mesh->bound_box.min_v, dup_mesh->bound_box.max_v);
+	dup_mesh->v = dup_v;
+	dup_mesh->v_indices_cnt = dup_v_cnt;
+	dup_mesh->v_indices = dup_v_indices_flat;
+	dup_mesh->v_adjacent_infos = NULL;
+	dup_mesh->edge_cnt = dup_edge_v_indices_cnt / 2;
+	dup_mesh->edge_v_indices_flat = dup_edge_v_indices_flat;
+	dup_mesh->edge_v_ids_flat = dup_edge_v_ids_flat;
+	dup_mesh->edge_adjacent_face_ids_flat = NULL;
+	dup_mesh->polygons_cnt = face_cnt;
+	dup_mesh->polygons = dup_faces;
+	dup_mesh->allocator_ptr = ac;
+	dup_mesh->_is_buffer_view = 0;
+	dup_mesh->is_closed = mathMeshIsClosed(dup_mesh);
+	dup_mesh->is_convex = (dup_mesh->is_closed && all_face_convex);
+	/* finish */
+	return dup_mesh;
+err:
+	for (i = 0; i < face_cnt; ++i) {
+		Polygon_ClearWithoutVertices(dup_faces + i, ac);
+	}
+	ac->fn_free(ac, dup_faces);
+	ac->fn_free(ac, dup_v);
+	ac->fn_free(ac, dup_v_indices_flat);
+	ac->fn_free(ac, dup_edge_v_indices_flat);
+	ac->fn_free(ac, dup_edge_v_ids_flat);
+	return NULL;
+}

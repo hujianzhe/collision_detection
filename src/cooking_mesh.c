@@ -932,16 +932,21 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	mesh->allocator_ptr = ac;
 	mesh->_is_buffer_view = 0;
 	/* check mesh is convex and closed */
+	mesh->is_closed = mathMeshIsClosed(mesh);
 	if (mathMeshIsConvex(mesh)) {
-		mesh->is_convex = 1;
-		for (i = 0; i < mesh->polygons_cnt; ++i) {
-			GeometryPolygon_t* polygon = mesh->polygons + i;
-			polygon->is_convex = 1;
-		}
+		mesh->is_convex = mesh->is_closed;
 		ConvexMesh_FacesNormalOut(mesh);
 	}
 	else {
 		mesh->is_convex = 0;
+	}
+	if (mesh->is_convex) {
+		for (i = 0; i < mesh->polygons_cnt; ++i) {
+			GeometryPolygon_t* polygon = mesh->polygons + i;
+			polygon->is_convex = 1;
+		}
+	}
+	else {
 		for (i = 0; i < mesh->polygons_cnt; ++i) {
 			GeometryPolygon_t* polygon = mesh->polygons + i;
 			polygon->is_convex = Polygon_IsConvex(
@@ -951,7 +956,6 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 			);
 		}
 	}
-	mesh->is_closed = mathMeshIsClosed(mesh);
 	/* cooking vertex adjacent infos */
 	v_adjacent_infos = (GeometryMeshVertexAdjacentInfo_t*)ac->fn_malloc(ac, sizeof(v_adjacent_infos[0]) * v_indices_cnt);
 	if (!v_adjacent_infos) {
