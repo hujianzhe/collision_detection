@@ -15,7 +15,6 @@ __declspec_dll GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const Geometry
 __declspec_dll void mathMeshClear(GeometryMesh_t* mesh);
 
 __declspec_dll int mathMeshIsClosed(const GeometryMesh_t* mesh);
-__declspec_dll int mathMeshIsConvex(const GeometryMesh_t* mesh);
 
 #ifdef	__cplusplus
 }

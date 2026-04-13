@@ -200,6 +200,37 @@ err:
 	return 0;
 }
 
+int MeshVerticesIsConvex(const GeometryMesh_t* mesh) {
+	unsigned int i;
+	if (mesh->polygons_cnt < 4) {
+		return 0;
+	}
+	for (i = 0; i < mesh->polygons_cnt; ++i) {
+		const GeometryPolygon_t* polygon = mesh->polygons + i;
+		int flag_sign = 0;
+		unsigned int j;
+		for (j = 0; j < mesh->v_indices_cnt; ++j) {
+			CCTNum_t vj[3], dot;
+			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
+			dot = mathVec3Dot(polygon->normal, vj);
+			/* some module needed epsilon */
+			if (dot > CCT_EPSILON) {
+				if (flag_sign < 0) {
+					return 0;
+				}
+				flag_sign = 1;
+			}
+			else if (dot < CCT_EPSILON_NEGATE) {
+				if (flag_sign > 0) {
+					return 0;
+				}
+				flag_sign = -1;
+			}
+		}
+	}
+	return 1;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -387,37 +418,6 @@ int mathMeshIsClosed(const GeometryMesh_t* mesh) {
 		}
 		if (cnt < 3) {
 			return 0;
-		}
-	}
-	return 1;
-}
-
-int mathMeshIsConvex(const GeometryMesh_t* mesh) {
-	unsigned int i;
-	if (mesh->polygons_cnt < 4) {
-		return 0;
-	}
-	for (i = 0; i < mesh->polygons_cnt; ++i) {
-		const GeometryPolygon_t* polygon = mesh->polygons + i;
-		int flag_sign = 0;
-		unsigned int j;
-		for (j = 0; j < mesh->v_indices_cnt; ++j) {
-			CCTNum_t vj[3], dot;
-			mathVec3Sub(vj, mesh->v[mesh->v_indices[j]], polygon->v[polygon->v_indices[0]]);
-			dot = mathVec3Dot(polygon->normal, vj);
-			/* some module needed epsilon */
-			if (dot > CCT_EPSILON) {
-				if (flag_sign < 0) {
-					return 0;
-				}
-				flag_sign = 1;
-			}
-			else if (dot < CCT_EPSILON_NEGATE) {
-				if (flag_sign > 0) {
-					return 0;
-				}
-				flag_sign = -1;
-			}
 		}
 	}
 	return 1;

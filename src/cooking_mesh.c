@@ -15,6 +15,7 @@ extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAl
 extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
 extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
 extern int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
+extern int MeshVerticesIsConvex(const GeometryMesh_t* mesh);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -933,7 +934,7 @@ const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned
 	mesh->_is_buffer_view = 0;
 	/* check mesh is convex and closed */
 	mesh->is_closed = mathMeshIsClosed(mesh);
-	if (mathMeshIsConvex(mesh)) {
+	if (MeshVerticesIsConvex(mesh)) {
 		mesh->is_convex = mesh->is_closed;
 		ConvexMesh_FacesNormalOut(mesh);
 	}
