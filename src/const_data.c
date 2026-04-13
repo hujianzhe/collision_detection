@@ -98,14 +98,14 @@ const CCTConstVal_t CCTConstVal_ = {
 		0,1,2,3
 	},
 	/* Box_Vertex_AdjacentInfos */{
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[0], Box_Vertex_Adjacent_EdgeIds[0], Box_Vertex_Adjacent_FaceIds[0] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[1], Box_Vertex_Adjacent_EdgeIds[1], Box_Vertex_Adjacent_FaceIds[1] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[2], Box_Vertex_Adjacent_EdgeIds[2], Box_Vertex_Adjacent_FaceIds[2] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[3], Box_Vertex_Adjacent_EdgeIds[3], Box_Vertex_Adjacent_FaceIds[3] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[4], Box_Vertex_Adjacent_EdgeIds[4], Box_Vertex_Adjacent_FaceIds[4] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[5], Box_Vertex_Adjacent_EdgeIds[5], Box_Vertex_Adjacent_FaceIds[5] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[6], Box_Vertex_Adjacent_EdgeIds[6], Box_Vertex_Adjacent_FaceIds[6] },
-		{ 3,3,3, Box_Vertex_Adjacent_VertexIds[7], Box_Vertex_Adjacent_EdgeIds[7], Box_Vertex_Adjacent_FaceIds[7] }
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[0], Box_Vertex_Adjacent_EdgeIds[0], Box_Vertex_Adjacent_FaceIds[0] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[1], Box_Vertex_Adjacent_EdgeIds[1], Box_Vertex_Adjacent_FaceIds[1] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[2], Box_Vertex_Adjacent_EdgeIds[2], Box_Vertex_Adjacent_FaceIds[2] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[3], Box_Vertex_Adjacent_EdgeIds[3], Box_Vertex_Adjacent_FaceIds[3] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[4], Box_Vertex_Adjacent_EdgeIds[4], Box_Vertex_Adjacent_FaceIds[4] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[5], Box_Vertex_Adjacent_EdgeIds[5], Box_Vertex_Adjacent_FaceIds[5] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[6], Box_Vertex_Adjacent_EdgeIds[6], Box_Vertex_Adjacent_FaceIds[6] },
+		{ {3}, 3, Box_Vertex_Adjacent_VertexIds[7], Box_Vertex_Adjacent_EdgeIds[7], Box_Vertex_Adjacent_FaceIds[7] }
 	},
 	/* Box_Face_Vertex_AdjacentInfos */{
 		{ {1,3}, {0,3} },

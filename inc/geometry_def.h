@@ -24,9 +24,10 @@ typedef struct GeometryPolygonVertexAdjacentInfo_t {
 typedef struct GeometryMeshVertexAdjacentInfo_t {
 	/* v_ids[i] must locate in edge_ids[i] */
 	/* v_cnt must equal edge_cnt */
-
-	unsigned int v_cnt;
-	unsigned int edge_cnt;
+	union {
+		unsigned int v_cnt;
+		unsigned int edge_cnt;
+	};
 	unsigned int face_cnt;
 
 	const unsigned int* v_ids;
