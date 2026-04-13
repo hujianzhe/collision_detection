@@ -486,7 +486,7 @@ err_0:
 	return NULL;
 }
 
-GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, unsigned int face_cnt, const CCTAllocator_t* ac) {
+GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, const unsigned int* face_ids, unsigned int face_cnt, const CCTAllocator_t* ac) {
 	unsigned int i, j;
 	unsigned all_face_convex;
 	CCTNum_t(*dup_v)[3] = NULL;
@@ -509,7 +509,7 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 	dup_edge_v_indices_cnt = 0;
 	all_face_convex = 1;
 	for (i = 0; i < face_cnt; ++i) {
-		const GeometryPolygon_t* src_face = faces + i;
+		const GeometryPolygon_t* src_face = faces + face_ids[i];
 		GeometryPolygon_t* dup_face = dup_faces + i;
 		if (!src_face->is_convex) {
 			all_face_convex = 0;
@@ -574,7 +574,7 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 	}
 	dup_v_cnt = 0;
 	for (i = 0; i < face_cnt; ++i) {
-		const GeometryPolygon_t* src_face = faces + i;
+		const GeometryPolygon_t* src_face = faces + face_ids[i];
 		unsigned int* dup_face_v_indices = (unsigned int*)dup_faces[i].v_indices;
 		unsigned int* dup_face_mesh_v_ids = (unsigned int*)dup_faces[i].mesh_v_ids;
 		GeometryPolygonVertexAdjacentInfo_t* dup_face_v_adjacent_infos = (GeometryPolygonVertexAdjacentInfo_t*)dup_faces[i].v_adjacent_infos;
@@ -595,7 +595,7 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 	}
 	/* rebuild face tri vertices indices and concave datas */
 	for (i = 0; i < face_cnt; ++i) {
-		const GeometryPolygon_t* src_face = faces + i;
+		const GeometryPolygon_t* src_face = faces + face_ids[i];
 		unsigned int* dup_face_tri_v_indices_flat = (unsigned int*)dup_faces[i].tri_v_indices_flat;
 		unsigned int* dup_face_concave_tri_v_ids_flat = (unsigned int*)dup_faces[i].concave_tri_v_ids_flat;
 		unsigned int* dup_face_concave_tri_edge_ids_flat = (unsigned int*)dup_faces[i].concave_tri_edge_ids_flat;
@@ -619,7 +619,7 @@ GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon
 	}
 	dup_edge_v_indices_cnt = 0;
 	for (i = 0; i < face_cnt; ++i) {
-		const GeometryPolygon_t* src_face = faces + i;
+		const GeometryPolygon_t* src_face = faces + face_ids[i];
 		unsigned int* dup_face_edge_v_indices_flat = (unsigned int*)dup_faces[i].edge_v_indices_flat;
 		unsigned int* dup_face_edge_v_ids_flat = (unsigned int*)dup_faces[i].edge_v_ids_flat;
 		unsigned int* dup_face_mesh_edge_ids = (unsigned int*)dup_faces[i].mesh_edge_ids;
