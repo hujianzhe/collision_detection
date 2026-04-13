@@ -28,7 +28,7 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 	mesh->polygons = NULL;
 }
 
-void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
+void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
 	ac->fn_free(ac, (void*)info->v_ids);
 	ac->fn_free(ac, (void*)info->edge_ids);
 	ac->fn_free(ac, (void*)info->face_ids);
@@ -40,7 +40,7 @@ static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
 	if (mesh->v_adjacent_infos) {
 		for (i = 0; i < mesh->v_indices_cnt; ++i) {
 			const GeometryMeshVertexAdjacentInfo_t* info = (mesh->v_adjacent_infos + i);
-			free_data_mesh_vertex_adjacent_info((GeometryMeshVertexAdjacentInfo_t*)info, ac);
+			MeshVertexAdjacentInfo_free((GeometryMeshVertexAdjacentInfo_t*)info, ac);
 		}
 		ac->fn_free(ac, (void*)mesh->v_adjacent_infos);
 		mesh->v_adjacent_infos = NULL;
@@ -200,7 +200,7 @@ err:
 	return 0;
 }
 
-int MeshVerticesIsConvex(const GeometryMesh_t* mesh) {
+int MeshVertices_IsConvex(const GeometryMesh_t* mesh) {
 	unsigned int i;
 	if (mesh->polygons_cnt < 4) {
 		return 0;
@@ -304,7 +304,7 @@ GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, co
 
 		if (!deep_copy_vertex_adjacent_info(dup_v_adjacent_infos + i, src->v_adjacent_infos + i, ac)) {
 			while (i--) {
-				free_data_mesh_vertex_adjacent_info(dup_v_adjacent_infos + i, ac);
+				MeshVertexAdjacentInfo_free(dup_v_adjacent_infos + i, ac);
 			}
 			goto err_0;
 		}

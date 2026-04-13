@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
-extern void free_data_mesh_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
+extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
 
 #define BIN_ALIGN_DEF_(sym, T) typedef struct gbin_p_##sym { char c; T v; } gbin_p_##sym##_t
 #define BIN_ALIGN_(sym)       offsetof(gbin_p_##sym##_t, v)
@@ -592,7 +592,7 @@ err:
 	}
 	if (mesh_v_adjacent_infos) {
 		for (i = 0; i < tmp.v_indices_cnt; ++i) {
-			free_data_mesh_vertex_adjacent_info(mesh_v_adjacent_infos + i, ac);
+			MeshVertexAdjacentInfo_free(mesh_v_adjacent_infos + i, ac);
 		}
 		ac->fn_free(ac, mesh_v_adjacent_infos);
 	}
