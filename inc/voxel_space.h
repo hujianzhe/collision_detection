@@ -29,6 +29,7 @@ typedef struct VoxelSpace_t {
 	long long min_v[3];
 	long long max_v[3];
 	unsigned long long split_size[3];
+	size_t nodes_cnt;
 	struct VoxelSpaceNode_t* nodes;
 	size_t _dimension_node_max_sz[3];
 	size_t _dimension_stride0;
