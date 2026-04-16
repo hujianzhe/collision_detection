@@ -61,7 +61,7 @@ static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) {
 	}
 }
 
-static int voxelspace_update_prepare_memory(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const size_t start_idx[3], const size_t end_idx[3]) {
+static int voxelspace_update_prepare_memory(const VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const size_t start_idx[3], const size_t end_idx[3]) {
 	size_t x, y, z;
 	size_t cnt = (end_idx[0] - start_idx[0]) * (end_idx[1] - start_idx[1]) * (end_idx[2] - start_idx[2]);
 	if (cnt > obj->_locate_nodes_arr_cap) {

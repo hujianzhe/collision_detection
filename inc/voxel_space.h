@@ -17,6 +17,7 @@ typedef struct VoxelSpaceNode_t {
 typedef struct VoxelSpaceObject_t {
 	union {
 		void* ptr;
+		size_t usize;
 		unsigned long long u64;
 	} udata;
 	struct VoxelSpaceNode_t** locate_nodes;
