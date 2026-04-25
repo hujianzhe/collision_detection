@@ -1001,7 +1001,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 			return 0;
 		}
 		part_id = mathFindFaceIdByVertexIndices(mesh->polygons, mesh->polygons_cnt, v_idx, 3);
-		if (idx != -1) {
+		if (part_id != -1) {
 			dst_info->hit_part = CCT_SWEEP_HIT_FACE;
 			dst_info->id = part_id;
 			return 1;
