@@ -898,7 +898,8 @@ namespace obj3d
 
 					// If Vertex is not an interior vertex
 					double angle = math::RadianBetweenV3(pPrev.Position - pCur.Position, pNext.Position - pCur.Position) * (double)(180.0 / 3.14159265359);
-					if (angle <= 0.0 && angle >= 180.0)
+					// if (angle <= 0.0 && angle >= 180.0)	third lib typo mistake???
+					if (angle <= 0.0 || angle >= 180.0)
 						continue;
 
 					// If any vertices are within this triangle
