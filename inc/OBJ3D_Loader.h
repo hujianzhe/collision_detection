@@ -563,6 +563,7 @@ namespace obj3d
 					if (!Indices.empty() && !Vertices.empty())
 					{
 						// Create Mesh
+						/*	thrid lib: original code
 						tempMesh = Mesh(Vertices, Indices);
 						tempMesh.MeshName = meshname;
 						int i = 2;
@@ -573,6 +574,19 @@ namespace obj3d
 								if (m.MeshName == tempMesh.MeshName)
 									continue;
 							break;
+						}
+						*/
+						size_t i = 0;
+						for (auto &m : LoadedMeshes) {
+							if (m.MeshName.find(meshname) != std::string::npos) {
+								++i;
+							}
+						}
+						tempMesh = Mesh(Vertices, Indices);
+						if (i) {
+							tempMesh.MeshName = meshname + "_" + std::to_string(i + 1);
+						} else {
+							tempMesh.MeshName = meshname;
 						}
 
 						// Insert Mesh
