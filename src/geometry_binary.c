@@ -10,14 +10,6 @@
 extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
 extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
 
-#define BIN_ALIGN_DEF_(sym, T) typedef struct gbin_p_##sym { char c; T v; } gbin_p_##sym##_t
-#define BIN_ALIGN_(sym)       offsetof(gbin_p_##sym##_t, v)
-
-BIN_ALIGN_DEF_(short, short);
-BIN_ALIGN_DEF_(unsigned_char, unsigned char);
-BIN_ALIGN_DEF_(unsigned_int, unsigned int);
-BIN_ALIGN_DEF_(CCTNum_t, CCTNum_t);
-
 static size_t align_up_size(size_t v, size_t a) {
 	size_t r = v % a;
 	if (r != 0) {
@@ -94,7 +86,7 @@ static int write_u8(char* p, size_t* off, unsigned char v) {
 
 static size_t MeshBinaryStream_VertexAdjacentInfoSize(const GeometryMeshVertexAdjacentInfo_t* info, size_t total_size) {
 	unsigned int v_edge_shared_cnt = info->v_cnt;
-	if (!safe_align(&total_size, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!safe_align(&total_size, alignof(unsigned int))) { return 0; }
 	if (!safe_add(&total_size, sizeof(info->v_cnt) + sizeof(info->face_cnt))) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(info->v_ids[0]), v_edge_shared_cnt)) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(info->edge_ids[0]), v_edge_shared_cnt)) { return 0; }
@@ -108,7 +100,7 @@ static size_t MeshBinaryStream_VertexAdjacentInfoSave(const GeometryMeshVertexAd
 	unsigned int j;
 	unsigned int v_edge_shared_cnt = info->v_cnt;
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, v_edge_shared_cnt);
 	if (v_edge_shared_cnt > (nbytes - off) / sizeof(unsigned int)) { return 0; }
@@ -136,7 +128,7 @@ static size_t MeshBinaryStream_VertexAdjacentInfoLoad(const void* buffer, size_t
 	unsigned int j, v_edge_shared_cnt;
 	unsigned int* v_ids = NULL, *edge_ids = NULL, *face_ids = NULL;
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &v_edge_shared_cnt)) { goto err; }
 	info->v_cnt = v_edge_shared_cnt;
 	v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * v_edge_shared_cnt);
@@ -177,18 +169,18 @@ err:
 }
 
 static size_t MeshBinaryStream_FaceSize(const GeometryPolygon_t* face, size_t total_size) {
-	if (!safe_align(&total_size, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!safe_align(&total_size, alignof(CCTNum_t))) { return 0; }
 	/* center / normal (CCTNum_t aligned) */
 	if (!safe_add(&total_size, sizeof(face->center))) { return 0; }
-	if (!safe_align(&total_size, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!safe_align(&total_size, alignof(CCTNum_t))) { return 0; }
 	if (!safe_add(&total_size, sizeof(face->normal))) { return 0; }
 
 	/* is_convex (short aligned) */
-	if (!safe_align(&total_size, BIN_ALIGN_(short))) { return 0; }
+	if (!safe_align(&total_size, alignof(short))) { return 0; }
 	if (!safe_add(&total_size, sizeof(face->is_convex))) { return 0; }
 
 	/* v_indices_cnt (u32 aligned) */
-	if (!safe_align(&total_size, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!safe_align(&total_size, alignof(unsigned int))) { return 0; }
 	if (!safe_add(&total_size, sizeof(face->v_indices_cnt))) { return 0; }
 
 	if (!safe_add_mul(&total_size, sizeof(face->v_indices[0]), face->v_indices_cnt)) { return 0; }
@@ -196,14 +188,14 @@ static size_t MeshBinaryStream_FaceSize(const GeometryPolygon_t* face, size_t to
 	if (!safe_add_mul(&total_size, sizeof(face->v_adjacent_infos[0]), face->v_indices_cnt)) { return 0; }
 
 	/* edge_cnt (u32 aligned) */
-	if (!safe_align(&total_size, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!safe_align(&total_size, alignof(unsigned int))) { return 0; }
 	if (!safe_add(&total_size, sizeof(face->edge_cnt))) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(face->edge_v_indices[0]), face->edge_cnt)) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(face->edge_v_ids[0]), face->edge_cnt)) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(face->mesh_edge_ids[0]), face->edge_cnt)) { return 0; }
 
 	/* tri_cnt (u32 aligned) */
-	if (!safe_align(&total_size, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!safe_align(&total_size, alignof(unsigned int))) { return 0; }
 	if (!safe_add(&total_size, sizeof(face->tri_cnt))) { return 0; }
 	if (!safe_add_mul(&total_size, sizeof(face->tri_v_indices[0]), face->tri_cnt)) { return 0; }
 	if (!face->is_convex) {
@@ -218,19 +210,19 @@ static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buf
 	char* p = (char*)buffer;
 	unsigned int j;
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 	if (sizeof(face->center) > nbytes - off) { return 0; }
 	mathVec3Copy((CCTNum_t*)&p[off], face->center);
 	off += sizeof(face->center);
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 	if (sizeof(face->normal) > nbytes - off) { return 0; }
 	mathVec3Copy((CCTNum_t*)&p[off], face->normal);
 	off += sizeof(face->normal);
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(short))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(short))) { return 0; }
 	if (sizeof(short) > nbytes - off) { return 0; }
 	write_i16(p, &off, face->is_convex);
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, face->v_indices_cnt);
 	if (face->v_indices_cnt > (nbytes - off) / sizeof(unsigned int)) { return 0; }
@@ -247,7 +239,7 @@ static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buf
 		off += sizeof(GeometryPolygonVertexAdjacentInfo_t);
 	}
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, face->edge_cnt);
 	if (face->edge_cnt > (nbytes - off) / (sizeof(unsigned int) * 2)) { return 0; }
@@ -263,7 +255,7 @@ static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buf
 		write_u32(p, &off, face->mesh_edge_ids[j]);
 	}
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, face->tri_cnt);
 	if (face->tri_cnt > (nbytes - off) / (sizeof(unsigned int) * 3)) { return 0; }
@@ -292,20 +284,20 @@ static size_t MeshBinaryStream_FaceLoad(const void* buffer, size_t len, Geometry
 	const char* p = (const char*)buffer;
 	size_t off = 0;
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	if (sizeof(face->center) > len - off) { goto err; }
 	mathVec3Copy(face->center, (const CCTNum_t*)&p[off]);
 	off += sizeof(face->center);
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	if (sizeof(face->normal) > len - off) { goto err; }
 	mathVec3Copy(face->normal, (const CCTNum_t*)&p[off]);
 	off += sizeof(face->normal);
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(short))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(short))) { goto err; }
 	if (!read_i16(p, len, &off, &face->is_convex)) { goto err; }
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &face->v_indices_cnt)) { goto err; }
 	v_indices = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->v_indices_cnt);
 	if (!v_indices) { goto err; }
@@ -328,7 +320,7 @@ static size_t MeshBinaryStream_FaceLoad(const void* buffer, size_t len, Geometry
 	}
 	face->v_adjacent_infos = v_adjacent_infos;
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &face->edge_cnt)) { goto err; }
 	edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->edge_cnt * 2);
 	if (!edge_v_indices_flat) { goto err; }
@@ -349,7 +341,7 @@ static size_t MeshBinaryStream_FaceLoad(const void* buffer, size_t len, Geometry
 	}
 	face->mesh_edge_ids = mesh_edge_ids;
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &face->tri_cnt)) { goto err; }
 	tri_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * face->tri_cnt * 3);
 	if (!tri_v_indices_flat) { goto err; }
@@ -395,11 +387,11 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 	char* p = (char*)buffer;
 	unsigned int i, v_cnt;
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 	if (sizeof(GeometryAABB_t) > nbytes - off) { return 0; }
 	*(GeometryAABB_t*)&p[off] = mesh->bound_box;
 	off += sizeof(GeometryAABB_t);
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_char))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned char))) { return 0; }
 	if (sizeof(unsigned char) + sizeof(unsigned char) > nbytes - off) { return 0; }
 	write_u8(p, &off, mesh->is_convex);
 	write_u8(p, &off, mesh->is_closed);
@@ -410,10 +402,10 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 			v_cnt = mesh->v_indices[i] + 1;
 		}
 	}
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, v_cnt);
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 	if (v_cnt > (nbytes - off) / sizeof(CCTNum_t[3])) { return 0; }
 	{
 		CCTNum_t(*pv)[3] = (CCTNum_t(*)[3])&p[off];
@@ -431,7 +423,7 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 	}
 	off += sizeof(CCTNum_t[3]) * v_cnt;
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, mesh->v_indices_cnt);
 	if (mesh->v_indices_cnt > (nbytes - off) / sizeof(unsigned int)) { return 0; }
@@ -444,7 +436,7 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 		off += sz;
 	}
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, mesh->edge_cnt);
 	if (mesh->edge_cnt > (nbytes - off) / (sizeof(unsigned int) * 2)) { return 0; }
@@ -460,7 +452,7 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 		write_u32(p, &off, mesh->edge_adjacent_face_ids_flat[i]);
 	}
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, mesh->polygons_cnt);
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
@@ -489,29 +481,29 @@ static size_t MeshBinaryStreamLoad(GeometryMesh_t* mesh, const void* buffer, siz
 	tmp.v_indices_cnt = 0;
 	tmp.polygons_cnt = 0;
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	if (sizeof(GeometryAABB_t) > len - off) { goto err; }
 	tmp.bound_box = *(const GeometryAABB_t*)&p[off];
 	off += sizeof(GeometryAABB_t);
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_char))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned char))) { goto err; }
 	if (!read_u8(p, len, &off, &tmp.is_convex)) { goto err; }
 	if (!read_u8(p, len, &off, &tmp.is_closed)) { goto err; }
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &v_cnt)) { goto err; }
 	mesh_v = (CCTNum_t(*)[3])ac->fn_malloc(ac, sizeof(CCTNum_t[3]) * v_cnt);
 	if (!mesh_v) {
 		goto err;
 	}
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	for (i = 0; i < v_cnt; ++i) {
 		if (sizeof(CCTNum_t[3]) > len - off) { goto err; }
 		mathVec3Copy(mesh_v[i], (const CCTNum_t*)&p[off]);
 		off += sizeof(CCTNum_t[3]);
 	}
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.v_indices_cnt)) { goto err; }
 	mesh_v_indices = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.v_indices_cnt);
 	if (!mesh_v_indices) {
@@ -533,7 +525,7 @@ static size_t MeshBinaryStreamLoad(GeometryMesh_t* mesh, const void* buffer, siz
 		off += sz;
 	}
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.edge_cnt)) { goto err; }
 	mesh_edge_v_indices_flat = (unsigned int*)ac->fn_malloc(ac, sizeof(unsigned int) * tmp.edge_cnt * 2);
 	if (!mesh_edge_v_indices_flat) {
@@ -557,7 +549,7 @@ static size_t MeshBinaryStreamLoad(GeometryMesh_t* mesh, const void* buffer, siz
 		if (!read_u32(p, len, &off, &mesh_edge_adjacent_face_ids_flat[i])) { goto err; }
 	}
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.polygons_cnt)) { goto err; }
 	mesh_polygons = (GeometryPolygon_t*)ac->fn_malloc(ac, sizeof(GeometryPolygon_t) * tmp.polygons_cnt);
 	if (!mesh_polygons) {
@@ -619,30 +611,30 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 	tmp.allocator_ptr = ac;
 
 	/* meta */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &geo_type)) { goto err; }
 	if (geo_type != GEOMETRY_BODY_MESH) { goto err; }
 
 	/* AABB */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	if (sizeof(GeometryAABB_t) > len - off) { goto err; }
 	tmp.bound_box = *(const GeometryAABB_t*)&p[off];
 	off += sizeof(GeometryAABB_t);
 
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_char))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned char))) { goto err; }
 	if (!read_u8(p, len, &off, &tmp.is_convex)) { goto err; }
 	if (!read_u8(p, len, &off, &tmp.is_closed)) { goto err; }
 
 	/* vertices */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &v_cnt)) { goto err; }
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 	if (v_cnt > (len - off) / sizeof(CCTNum_t[3])) { goto err; }
 	tmp.v = (CCTNum_t(*)[3])&p[off];
 	off += sizeof(CCTNum_t[3]) * v_cnt;
 
 	/* v_indices */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.v_indices_cnt)) { goto err; }
 	if (tmp.v_indices_cnt > (len - off) / sizeof(unsigned int)) { goto err; }
 	tmp.v_indices = (const unsigned int*)&p[off];
@@ -657,7 +649,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 		unsigned int v_edge_shared_cnt, f_arr_cnt;
 
 		/* v/edge shared cnt */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 		if (!read_u32(p, len, &off, &v_edge_shared_cnt)) { goto err; }
 		if (v_edge_shared_cnt > (len - off) / sizeof(unsigned int)) { goto err; }
 		info->v_cnt = v_edge_shared_cnt;
@@ -670,7 +662,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 		off += sizeof(unsigned int) * v_edge_shared_cnt;
 
 		/* face_cnt */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 		if (!read_u32(p, len, &off, &f_arr_cnt)) { goto err; }
 		if (f_arr_cnt > (len - off) / sizeof(unsigned int)) { goto err; }
 		info->face_cnt = f_arr_cnt;
@@ -679,7 +671,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 	}
 
 	/* edges */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.edge_cnt)) { goto err; }
 	if (tmp.edge_cnt > (len - off) / (sizeof(unsigned int) * 2)) { goto err; }
 	tmp.edge_v_indices_flat = (const unsigned int*)&p[off];
@@ -692,7 +684,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 	off += sizeof(unsigned int) * tmp.edge_cnt * 2;
 
 	/* polygons (struct headers allocated; arrays point into buffer) */
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 	if (!read_u32(p, len, &off, &tmp.polygons_cnt)) { goto err; }
 	mesh_polygons = (GeometryPolygon_t*)ac->fn_malloc(ac, sizeof(GeometryPolygon_t) * tmp.polygons_cnt);
 	if (!mesh_polygons) { goto err; }
@@ -701,21 +693,21 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 		GeometryPolygon_t* face = mesh_polygons + i;
 		face->v = tmp.v;
 		/* center */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 		if (sizeof(CCTNum_t[3]) > len - off) { goto err; }
 		mathVec3Copy(face->center, (const CCTNum_t*)&p[off]);
 		off += sizeof(CCTNum_t[3]);
 		/* normal */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { goto err; }
 		if (sizeof(CCTNum_t[3]) > len - off) { goto err; }
 		mathVec3Copy(face->normal, (const CCTNum_t*)&p[off]);
 		off += sizeof(CCTNum_t[3]);
 		/* is_convex */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(short))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(short))) { goto err; }
 		if (!read_i16(p, len, &off, &face->is_convex)) { goto err; }
 
 		/* v_indices_cnt */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 		if (!read_u32(p, len, &off, &face->v_indices_cnt)) { goto err; }
 		if (face->v_indices_cnt > (len - off) / sizeof(unsigned int)) { goto err; }
 		face->v_indices = (const unsigned int*)&p[off];
@@ -728,7 +720,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 		off += sizeof(GeometryPolygonVertexAdjacentInfo_t) * face->v_indices_cnt;
 
 		/* edge_cnt */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 		if (!read_u32(p, len, &off, &face->edge_cnt)) { goto err; }
 		if (face->edge_cnt > (len - off) / (sizeof(unsigned int) * 2)) { goto err; }
 		face->edge_v_indices_flat = (const unsigned int*)&p[off];
@@ -741,7 +733,7 @@ static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer,
 		off += sizeof(unsigned int) * face->edge_cnt;
 
 		/* tri_cnt */
-		if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { goto err; }
+		if (!pad_skip(p, len, &off, alignof(unsigned int))) { goto err; }
 		if (!read_u32(p, len, &off, &face->tri_cnt)) { goto err; }
 		if (face->tri_cnt > (len - off) / (sizeof(unsigned int) * 3)) { goto err; }
 		face->tri_v_indices_flat = (const unsigned int*)&p[off];
@@ -782,48 +774,48 @@ size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* bu
 	size_t off = 0;
 	char* p = (char*)buffer;
 
-	if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, nbytes, &off, alignof(unsigned int))) { return 0; }
 	if (sizeof(unsigned int) > nbytes - off) { return 0; }
 	write_u32(p, &off, geo_type);
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(CCTNum_t[3]) > nbytes - off) { return 0; }
 			mathVec3Copy((CCTNum_t*)&p[off], (const CCTNum_t*)geo_data);
 			off += sizeof(CCTNum_t[3]);
 			return off;
 		case GEOMETRY_BODY_SEGMENT:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySegment_t) > nbytes - off) { return 0; }
 			*(GeometrySegment_t*)&p[off] = *(const GeometrySegment_t*)geo_data;
 			off += sizeof(GeometrySegment_t);
 			return off;
 		case GEOMETRY_BODY_PLANE:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryPlane_t) > nbytes - off) { return 0; }
 			*(GeometryPlane_t*)&p[off] = *(const GeometryPlane_t*)geo_data;
 			off += sizeof(GeometryPlane_t);
 			return off;
 		case GEOMETRY_BODY_SPHERE:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySphere_t) > nbytes - off) { return 0; }
 			*(GeometrySphere_t*)&p[off] = *(const GeometrySphere_t*)geo_data;
 			off += sizeof(GeometrySphere_t);
 			return off;
 		case GEOMETRY_BODY_AABB:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryAABB_t) > nbytes - off) { return 0; }
 			*(GeometryAABB_t*)&p[off] = *(const GeometryAABB_t*)geo_data;
 			off += sizeof(GeometryAABB_t);
 			return off;
 		case GEOMETRY_BODY_OBB:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryOBB_t) > nbytes - off) { return 0; }
 			*(GeometryOBB_t*)&p[off] = *(const GeometryOBB_t*)geo_data;
 			off += sizeof(GeometryOBB_t);
 			return off;
 		case GEOMETRY_BODY_CAPSULE:
-			if (!pad_skip(p, nbytes, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, nbytes, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryCapsule_t) > nbytes - off) { return 0; }
 			*(GeometryCapsule_t*)&p[off] = *(const GeometryCapsule_t*)geo_data;
 			off += sizeof(GeometryCapsule_t);
@@ -844,7 +836,7 @@ int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len) {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { return 0; }
 	if (!read_u32(p, len, &off, &geo_type)) { return 0; }
 	return geo_type;
 }
@@ -853,47 +845,47 @@ size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t l
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { return 0; }
 	if (!read_u32(p, len, &off, &geo_type)) { return 0; }
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(CCTNum_t[3]) > len - off) { return 0; }
 			mathVec3Copy((CCTNum_t*)geo_data, (const CCTNum_t*)&p[off]);
 			off += sizeof(CCTNum_t[3]);
 			return off;
 		case GEOMETRY_BODY_SEGMENT:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySegment_t) > len - off) { return 0; }
 			*(GeometrySegment_t*)geo_data = *(const GeometrySegment_t*)&p[off];
 			off += sizeof(GeometrySegment_t);
 			return off;
 		case GEOMETRY_BODY_PLANE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryPlane_t) > len - off) { return 0; }
 			*(GeometryPlane_t*)geo_data = *(const GeometryPlane_t*)&p[off];
 			off += sizeof(GeometryPlane_t);
 			return off;
 		case GEOMETRY_BODY_SPHERE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySphere_t) > len - off) { return 0; }
 			*(GeometrySphere_t*)geo_data = *(const GeometrySphere_t*)&p[off];
 			off += sizeof(GeometrySphere_t);
 			return off;
 		case GEOMETRY_BODY_AABB:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryAABB_t) > len - off) { return 0; }
 			*(GeometryAABB_t*)geo_data = *(const GeometryAABB_t*)&p[off];
 			off += sizeof(GeometryAABB_t);
 			return off;
 		case GEOMETRY_BODY_OBB:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryOBB_t) > len - off) { return 0; }
 			*(GeometryOBB_t*)geo_data = *(const GeometryOBB_t*)&p[off];
 			off += sizeof(GeometryOBB_t);
 			return off;
 		case GEOMETRY_BODY_CAPSULE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryCapsule_t) > len - off) { return 0; }
 			*(GeometryCapsule_t*)geo_data = *(const GeometryCapsule_t*)&p[off];
 			off += sizeof(GeometryCapsule_t);
@@ -914,7 +906,7 @@ size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, si
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;
-	if (!pad_skip(p, len, &off, BIN_ALIGN_(unsigned_int))) { return 0; }
+	if (!pad_skip(p, len, &off, alignof(unsigned int))) { return 0; }
 	if (!read_u32(p, len, &off, &geo_type)) { return 0; }
 	switch (geo_type) {
 		case GEOMETRY_BODY_MESH:
@@ -928,43 +920,43 @@ size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, si
 			*geo_ptr = NULL;
 			return 0;
 		case GEOMETRY_BODY_POINT:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(CCTNum_t[3]) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(CCTNum_t[3]);
 			return off;
 		case GEOMETRY_BODY_SEGMENT:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySegment_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometrySegment_t);
 			return off;
 		case GEOMETRY_BODY_PLANE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryPlane_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometryPlane_t);
 			return off;
 		case GEOMETRY_BODY_SPHERE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometrySphere_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometrySphere_t);
 			return off;
 		case GEOMETRY_BODY_AABB:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryAABB_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometryAABB_t);
 			return off;
 		case GEOMETRY_BODY_OBB:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryOBB_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometryOBB_t);
 			return off;
 		case GEOMETRY_BODY_CAPSULE:
-			if (!pad_skip(p, len, &off, BIN_ALIGN_(CCTNum_t))) { return 0; }
+			if (!pad_skip(p, len, &off, alignof(CCTNum_t))) { return 0; }
 			if (sizeof(GeometryCapsule_t) > len - off) { return 0; }
 			*geo_ptr = &p[off];
 			off += sizeof(GeometryCapsule_t);
