@@ -33,6 +33,10 @@
 		#else
 			#define	__CPP_LANG_VERSION	0
 		#endif
+		#if	__CPP_LANG_VERSION < 201400L
+			#define	alignof(t)	__alignof(t)
+			#define	alignas(n) __declspec(align(n))
+		#endif
 	#endif
 
 #elif	defined(__GNUC__) || defined(__GNUG__)
@@ -41,6 +45,10 @@
 			#define	__CPP_LANG_VERSION	__cplusplus
 		#else
 			#define	__CPP_LANG_VERSION	0
+		#endif
+		#if	__CPP_LANG_VERSION < 201400L
+			#define	alignof(t)	__alignof__(t)
+			#define	alignas(n)	__attribute__((aligned(n)))
 		#endif
 	#endif
 
