@@ -28,13 +28,22 @@
 	#endif
 
 	#ifndef	__CPP_LANG_VERSION
-		#define	__CPP_LANG_VERSION	_MSVC_LANG
+		#if _MSVC_LANG
+			#define	__CPP_LANG_VERSION	_MSVC_LANG
+		#else
+			#define	__CPP_LANG_VERSION	0
+		#endif
 	#endif
 
 #elif	defined(__GNUC__) || defined(__GNUG__)
 	#ifndef	__CPP_LANG_VERSION
-		#define	__CPP_LANG_VERSION	__cplusplus
+		#if __cplusplus
+			#define	__CPP_LANG_VERSION	__cplusplus
+		#else
+			#define	__CPP_LANG_VERSION	0
+		#endif
 	#endif
+
 	#ifndef NDEBUG	/* ANSI define */
 		#ifndef _DEBUG
 			#define	_DEBUG	/* same as VC */
