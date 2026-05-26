@@ -8,7 +8,6 @@
 #include "number_define.h"
 #include "const_data.h"
 #include "aabb.h"
-#include "collision.h"
 #include "geometry_api.h"
 #include "geometry_closest.h"
 #include "gjk.h"
