@@ -9,11 +9,9 @@
 #include "../inc/polygon.h"
 #include "../inc/mesh.h"
 
-extern const CCTConstVal_t CCTConstVal_;
+extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) noexcept;
 
-extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
-
-int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, ids_cnt = 0;
 	unsigned int* ids = NULL;
 	for (i = 0; i < polygons_cnt; ++i) {
@@ -44,7 +42,7 @@ err:
 	return 0;
 }
 
-int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, ids_cnt = 0;
 	unsigned int* ids = NULL;
 	for (i = 0; i < edge_cnt * 2; i += 2) {
@@ -68,7 +66,7 @@ err:
 	return 0;
 }
 
-int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) {
+int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, ids_cnt = 0;
 	unsigned int* ids = NULL;
 	for (i = 0; i < edge_cnt * 2; i += 2) {
@@ -99,13 +97,13 @@ err:
 	return 0;
 }
 
-void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
+void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) noexcept {
 	ac->fn_free(ac, (void*)info->v_ids);
 	ac->fn_free(ac, (void*)info->edge_ids);
 	ac->fn_free(ac, (void*)info->face_ids);
 }
 
-int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) {
+int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) noexcept {
 	unsigned int i, cnt = 0;
 	const unsigned int v_idx[2] = {
 		edge_v_indices_flat[edge_id + edge_id],
@@ -129,7 +127,7 @@ int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygon
 	return 0;
 }
 
-int MeshVertices_IsConvex(const GeometryMesh_t* mesh) {
+int MeshVertices_IsConvex(const GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	if (mesh->polygons_cnt < 4) {
 		return 0;
@@ -160,7 +158,7 @@ int MeshVertices_IsConvex(const GeometryMesh_t* mesh) {
 	return 1;
 }
 
-int Mesh_IsClosed(const GeometryMesh_t* mesh) {
+int Mesh_IsClosed(const GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	if (mesh->v_indices_cnt < 3) {
 		return 0;
@@ -189,7 +187,7 @@ int Mesh_IsClosed(const GeometryMesh_t* mesh) {
 	return 1;
 }
 
-static void free_all_faces(GeometryMesh_t* mesh) {
+static void free_all_faces(GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	const CCTAllocator_t* ac;
 	if (!mesh->polygons) {
@@ -204,7 +202,7 @@ static void free_all_faces(GeometryMesh_t* mesh) {
 	mesh->polygons = NULL;
 }
 
-static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
+static void free_all_adjacent_infos(GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	const CCTAllocator_t* ac = mesh->allocator_ptr;
 	if (mesh->v_adjacent_infos) {
@@ -221,7 +219,7 @@ static void free_all_adjacent_infos(GeometryMesh_t* mesh) {
 	}
 }
 
-static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon_t* src, const CCTAllocator_t* ac) {
+static int face_deep_copy_without_vertex(GeometryPolygon_t* dst, GeometryPolygon_t* src, const CCTAllocator_t* ac) noexcept {
 	unsigned int j;
 	unsigned int* dup_v_indices = NULL;
 	unsigned int* dup_tri_indices = NULL, *dup_concave_tri_edge_ids = NULL, *dup_concave_tri_v_ids = NULL;
@@ -328,7 +326,7 @@ err:
 	return 0;
 }
 
-static int deep_copy_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* dst, const GeometryMeshVertexAdjacentInfo_t* src, const CCTAllocator_t* ac) {
+static int deep_copy_vertex_adjacent_info(GeometryMeshVertexAdjacentInfo_t* dst, const GeometryMeshVertexAdjacentInfo_t* src, const CCTAllocator_t* ac) noexcept {
 	unsigned int i;
 	unsigned int *v_ids = NULL, *edge_ids = NULL, *face_ids = NULL;
 
@@ -374,7 +372,9 @@ err:
 extern "C" {
 #endif
 
-GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac) {
+extern CCTConstVal_t CCTConstVal_;
+
+GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, dup_v_cnt = 0;
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_v_indices = NULL;
@@ -486,7 +486,7 @@ err_0:
 	return NULL;
 }
 
-GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, const unsigned int* face_ids, unsigned int face_cnt, const CCTAllocator_t* ac) {
+GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, const unsigned int* face_ids, unsigned int face_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, j;
 	unsigned all_face_convex;
 	CCTNum_t(*dup_v)[3] = NULL;
@@ -726,7 +726,7 @@ err:
 	return NULL;
 }
 
-void mathMeshClear(GeometryMesh_t* mesh) {
+void mathMeshClear(GeometryMesh_t* mesh) noexcept {
 	const CCTAllocator_t* ac;
 	if (!mesh) {
 		return;

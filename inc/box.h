@@ -52,14 +52,14 @@ typedef struct GeometryBoxMesh_t {
 extern "C" {
 #endif
 
-__declspec_dll void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]);
-__declspec_dll void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]);
+__declspec_dll void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]) noexcept;
+__declspec_dll void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) noexcept;
 
-__declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]);
-__declspec_dll CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]);
-__declspec_dll GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_id, GeometryPolygon_t* polygon);
-__declspec_dll void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]);
-__declspec_dll void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
+__declspec_dll void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) noexcept;
+__declspec_dll CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]) noexcept;
+__declspec_dll GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_id, GeometryPolygon_t* polygon) noexcept;
+__declspec_dll void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]) noexcept;
+__declspec_dll void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept;
 
 #ifdef __cplusplus
 }

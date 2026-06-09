@@ -15,35 +15,41 @@
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
-extern const CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+}
+#endif
 
-extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]);
-extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
-extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]);
-extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side);
-extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh);
-extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]);
-extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r);
-extern int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, int* ret_plane_side);
-extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1);
-extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb);
-extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh);
-extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
-extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2);
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi);
-extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side);
-extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side);
-extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
-extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side);
-extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh);
-extern CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices);
-extern CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len);
+extern int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) noexcept;
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) noexcept;
+extern int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t p[3], CCTNum_t d[3]) noexcept;
+extern int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept;
+extern int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) noexcept;
+extern int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) noexcept;
+extern int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) noexcept;
+extern int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept;
+extern int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) noexcept;
+extern int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) noexcept;
+extern int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) noexcept;
+extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) noexcept;
+extern int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) noexcept;
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept;
+extern int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) noexcept;
+extern int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept;
+extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) noexcept;
+extern int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept;
+extern int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh) noexcept;
+extern CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) noexcept;
+extern CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static void set_intersect(CCTSweepResult_t* result) {
+static void set_intersect(CCTSweepResult_t* result) noexcept {
 	mathVec3Set(result->hit_plane_n, CCTNums_3(0.0, 0.0, 0.0));
 	result->distance = CCTNum(0.0);
 	result->overlap = 1;
@@ -54,7 +60,7 @@ static void set_intersect(CCTSweepResult_t* result) {
 	result->peer[1].id = 0;
 }
 
-static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
+static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) noexcept {
 	CCTSweepHitInfo_t hit_info_0 = result->peer[0];
 	result->peer[0] = result->peer[1];
 	result->peer[1] = hit_info_0;
@@ -66,7 +72,7 @@ static void reverse_result(CCTSweepResult_t* result, const CCTNum_t dir[3]) {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) {
+static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t ls[2][3]) noexcept {
 	mesh->v = (CCTNum_t(*)[3])ls;
 	mesh->v_indices = CCTConstVal_.Segment_VertexIds;
 	mesh->v_indices_cnt = 2;
@@ -80,7 +86,7 @@ static void sweep_mesh_convert_from_segment(GeometryMesh_t* mesh, const CCTNum_t
 	mesh->polygons_cnt = 0;
 }
 
-static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) {
+static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const GeometryPolygon_t* polygon) noexcept {
 	mesh->v = polygon->v;
 	mesh->v_indices = polygon->v_indices;
 	mesh->v_indices_cnt = polygon->v_indices_cnt;
@@ -98,7 +104,7 @@ static void sweep_mesh_convert_from_polygon(GeometryMesh_t* mesh, const Geometry
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t ls[2][3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t ls[2][3], CCTSweepResult_t* result) noexcept {
 	CCTNum_t v0[3], v1[3], N[3], dot;
 	mathVec3Sub(v0, ls[0], o);
 	mathVec3Sub(v1, ls[1], o);
@@ -187,7 +193,7 @@ static CCTSweepResult_t* Ray_Sweep_Segment(const CCTNum_t o[3], const CCTNum_t d
 	return result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) noexcept {
 	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
@@ -230,7 +236,7 @@ static CCTSweepResult_t* Ray_Sweep_MeshSegment(const CCTNum_t o[3], const CCTNum
 	return p_result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) noexcept {
 	CCTNum_t d, cos_theta;
 	d = mathPointProjectionPlane(o, plane_v, plane_n);
 	if (CCT_EPSILON_NEGATE <= d && d <= CCT_EPSILON) {
@@ -265,7 +271,7 @@ static CCTSweepResult_t* Ray_Sweep_Plane(const CCTNum_t o[3], const CCTNum_t dir
 	return result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	CCTNum_t dot;
 	GeometryMesh_t mesh;
 	GeometryBorderId_t bi;
@@ -297,7 +303,7 @@ static CCTSweepResult_t* Ray_Sweep_Polygon(const CCTNum_t o[3], const CCTNum_t d
 	return Ray_Sweep_MeshSegment(o, dir, &mesh, result);
 }
 
-static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t sp_o[3], CCTNum_t sp_radius, CCTSweepResult_t* result) noexcept {
 	CCTNum_t d_sq, oc_lensq, dir_d;
 	CCTNum_t oc[3];
 	CCTNum_t radius_sq = CCTNum_sq(sp_radius);
@@ -332,7 +338,7 @@ static CCTSweepResult_t* Ray_Sweep_Sphere(const CCTNum_t o[3], const CCTNum_t di
 	return result;
 }
 
-static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) noexcept {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
 	const GeometryPolygon_t* rface;
@@ -382,7 +388,7 @@ static CCTSweepResult_t* Ray_Sweep_ConvexMesh(const CCTNum_t o[3], const CCTNum_
 	return Ray_Sweep_MeshSegment(o, dir, mesh, result);
 }
 
-static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) noexcept {
 	CCTNum_t v[3];
 	CCTNum_t d, cos_theta;
 	if (check_intersect && Capsule_Contain_Point(capsule, o)) {
@@ -478,7 +484,7 @@ static CCTSweepResult_t* Ray_Sweep_Capsule(const CCTNum_t o[3], const CCTNum_t d
 	return result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const CCTNum_t dir[3], const CCTNum_t ls2[2][3], CCTSweepResult_t* result) noexcept {
 	int i;
 	CCTSweepResult_t* p_result;
 	CCTNum_t N[3], ls1_dir[3], ls2_dir[3], v[3];
@@ -925,7 +931,7 @@ static CCTSweepResult_t* Segment_Sweep_Segment(const CCTNum_t ls1[2][3], const C
 	}
 }
 
-static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInfo_t* src_info, const GeometryMesh_t* mesh) {
+static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInfo_t* src_info, const GeometryMesh_t* mesh) noexcept {
 	unsigned int part_id, idx, v_idx[3];
 	if (dst_info->hit_part == CCT_SWEEP_HIT_POINT && src_info->hit_part == CCT_SWEEP_HIT_POINT) {
 		unsigned int mesh_edge_v_indices_cnt;
@@ -1030,7 +1036,7 @@ static int merge_mesh_hit_info(CCTSweepHitInfo_t* dst_info, const CCTSweepHitInf
 	return 0;
 }
 
-static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1, const CCTNum_t dir[3], const GeometryMesh_t* s2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1, const CCTNum_t dir[3], const GeometryMesh_t* s2, CCTSweepResult_t* result) noexcept {
 	unsigned int i, j;
 	unsigned int s1_edge_v_indices_cnt, s2_edge_v_indices_cnt = s2->edge_cnt + s2->edge_cnt;
 	CCTSweepResult_t result_temp;
@@ -1131,7 +1137,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_MeshSegment(const GeometryMesh_t* s1,
 	return p_result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) noexcept {
 	unsigned int i;
 	CCTNum_t neg_dir[3];
 	GeometryBorderId_t bi;
@@ -1283,7 +1289,7 @@ static CCTSweepResult_t* Mesh_Sweep_Mesh_InternalProc(const GeometryMesh_t* mesh
 	return result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t circle_o[3], CCTNum_t circle_r, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t circle_o[3], CCTNum_t circle_r, CCTSweepResult_t* result) noexcept {
 	CCTNum_t lsdir[3], p[3], pco[3];
 	mathVec3Sub(lsdir, ls[1], ls[0]);
 	mathVec3Normalized(lsdir, lsdir);
@@ -1359,7 +1365,7 @@ static CCTSweepResult_t* Segment_Sweep_Circle_InSamePlane(const CCTNum_t ls[2][3
 	return result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) noexcept {
 	CCTNum_t lsdir[3], N[3];
 	if (check_intersect && Sphere_Intersect_Segment(center, radius, ls[0], ls[1])) {
 		set_intersect(result);
@@ -1442,7 +1448,7 @@ static CCTSweepResult_t* Segment_Sweep_Sphere(const CCTNum_t ls[2][3], const CCT
 	return NULL;
 }
 
-static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CCTNum_t ls_dir[3], CCTNum_t ls_len, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CCTNum_t ls_dir[3], CCTNum_t ls_len, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) noexcept {
 	CCTNum_t ls_dir_temp[3], axis_edge[2][3];
 	CCTNum_t plane_n[3], v[3], cos_theta;
 	CCTNum_t radius_sq = CCTNum_sq(capsule->radius);
@@ -1692,7 +1698,7 @@ static CCTSweepResult_t* Segment_Sweep_Capsule(const CCTNum_t ls[2][3], const CC
 	return NULL;
 }
 
-static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1, const CCTNum_t dir[3], const GeometryCapsule_t* capsule2, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1, const CCTNum_t dir[3], const GeometryCapsule_t* capsule2, int check_intersect, CCTSweepResult_t* result) noexcept {
 	CCTNum_t axis_edge[2][3];
 	GeometryCapsule_t new_capsule2 = *capsule2;
 	new_capsule2.radius += capsule1->radius;
@@ -1706,7 +1712,7 @@ static CCTSweepResult_t* Capsule_Sweep_Capsule(const GeometryCapsule_t* capsule1
 	return result;
 }
 
-static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) noexcept {
 	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
@@ -1775,7 +1781,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_Capsule(const GeometryMesh_t* mesh, c
 	return p_result;
 }
 
-static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t center[3], CCTNum_t radius, int check_intersect, CCTSweepResult_t* result) noexcept {
 	unsigned int i, mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
 	CCTSweepResult_t* p_result = NULL;
 	for (i = 0; i < mesh_edge_v_indices_cnt; ) {
@@ -1838,7 +1844,7 @@ static CCTSweepResult_t* MeshSegment_Sweep_Sphere(const GeometryMesh_t* mesh, co
 	return p_result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) noexcept {
 	int flag_sign = 0, flag_nohit;
 	unsigned int i, same_v_ids[3], same_v_cnt = 0;
 	CCTNum_t cos_theta = mathVec3Dot(dir, plane_n);
@@ -1945,7 +1951,7 @@ static CCTSweepResult_t* Mesh_Sweep_Plane(const GeometryMesh_t* mesh, const CCTN
 	return result;
 }
 
-static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryMesh_t* mesh, CCTSweepResult_t* result) noexcept {
 	GeometryMesh_t m1;
 	if (Segment_Intersect_ConvexMesh(ls, mesh)) {
 		set_intersect(result);
@@ -1955,7 +1961,7 @@ static CCTSweepResult_t* Segment_Sweep_ConvexMesh(const CCTNum_t ls[2][3], const
 	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, mesh, result);
 }
 
-static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	GeometryMesh_t m1, m2;
 	CCTNum_t p[3], d[3];
 	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
@@ -2000,7 +2006,7 @@ static CCTSweepResult_t* Segment_Sweep_Polygon(const CCTNum_t ls[2][3], const CC
 	return MeshSegment_Sweep_MeshSegment(&m1, dir, &m2, result);
 }
 
-static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1, const CCTNum_t dir[3], const GeometryPolygon_t* polygon2, CCTSweepResult_t* result) noexcept {
 	int plane_side;
 	GeometryMesh_t m1, m2;
 	if (Polygon_Intersect_Polygon(polygon1, polygon2, &plane_side)) {
@@ -2017,7 +2023,7 @@ static CCTSweepResult_t* Polygon_Sweep_Polygon(const GeometryPolygon_t* polygon1
 	return Mesh_Sweep_Mesh_InternalProc(&m1, dir, &m2, result);
 }
 
-static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	int plane_side;
 	GeometryMesh_t m2;
 	if (ConvexMesh_Intersect_Polygon(mesh, polygon, &plane_side)) {
@@ -2033,7 +2039,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Polygon(const GeometryMesh_t* mesh, co
 	return Mesh_Sweep_Mesh_InternalProc(mesh, dir, &m2, result);
 }
 
-static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1, const CCTNum_t dir[3], const GeometryMesh_t* mesh2, CCTSweepResult_t* result) noexcept {
 	if (ConvexMesh_Intersect_ConvexMesh(mesh1, mesh2)) {
 		set_intersect(result);
 		return result;
@@ -2041,7 +2047,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_ConvexMesh(const GeometryMesh_t* mesh1
 	return Mesh_Sweep_Mesh_InternalProc(mesh1, dir, mesh2, result);
 }
 
-static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t dir[3], const GeometryOBB_t* obb2, CCTSweepResult_t* result) noexcept {
 	GeometryBoxMesh_t mesh1, mesh2;
 	if (OBB_Intersect_OBB(obb1, obb2)) {
 		set_intersect(result);
@@ -2052,7 +2058,7 @@ static CCTSweepResult_t* OBB_Sweep_OBB(const GeometryOBB_t* obb1, const CCTNum_t
 	return Mesh_Sweep_Mesh_InternalProc(&mesh1.mesh, dir, &mesh2.mesh, result);
 }
 
-static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) noexcept {
 	unsigned int idx;
 	CCTNum_t cos_theta;
 	CCTNum_t axis_edge[2][3], d[2], abs_d[2];
@@ -2116,7 +2122,7 @@ static CCTSweepResult_t* Capsule_Sweep_Plane(const GeometryCapsule_t* capsule, c
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTSweepResult_t* result) noexcept {
 	CCTNum_t dn, dn_abs, cos_theta;
 	dn = mathPointProjectionPlane(o, plane_v, plane_n);
 	dn_abs = CCTNum_abs(dn);
@@ -2158,7 +2164,7 @@ static CCTSweepResult_t* Sphere_Sweep_Plane(const CCTNum_t o[3], CCTNum_t radius
 	return result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) noexcept {
 	unsigned int i;
 	CCTSweepResult_t* p_result;
 	CCTNum_t neg_dir[3];
@@ -2238,7 +2244,7 @@ static CCTSweepResult_t* Mesh_Sweep_Sphere_InternalProc(const GeometryMesh_t* me
 	return p_result;
 }
 
-static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	GeometryBorderId_t bi;
 	if (!result->hit_unique_point) {
 		const CCTNum_t* polygon_v0 = polygon->v[polygon->v_indices[0]];
@@ -2270,7 +2276,7 @@ static int Capsule_MoveTo_Polygon(const GeometryCapsuleExtra_t* extra, CCTNum_t 
 	return 0;
 }
 
-static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	int plane_side;
 	CCTNum_t neg_dir[3];
 	GeometryMesh_t m;
@@ -2299,7 +2305,7 @@ static CCTSweepResult_t* Capsule_Sweep_Polygon(const GeometryCapsule_t* capsule,
 	return result;
 }
 
-static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) noexcept {
 	unsigned int i, plane_flag = 0;
 	CCTNum_t neg_dir[3];
 	GeometryCapsuleExtra_t extra;
@@ -2363,7 +2369,7 @@ static CCTSweepResult_t* Mesh_Sweep_Capsule_InternalProc(const GeometryMesh_t* m
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryPolygon_t* polygon, CCTSweepResult_t* result) noexcept {
 	int plane_side;
 	CCTNum_t neg_dir[3];
 	GeometryMesh_t m;
@@ -2397,7 +2403,7 @@ static CCTSweepResult_t* Sphere_Sweep_Polygon(const CCTNum_t o[3], CCTNum_t radi
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t dir[3], const CCTNum_t o2[3], CCTNum_t r2, CCTSweepResult_t* result) noexcept {
 	if (!Ray_Sweep_Sphere(o1, dir, o2, r1 + r2, result)) {
 		return NULL;
 	}
@@ -2406,7 +2412,7 @@ static CCTSweepResult_t* Sphere_Sweep_Sphere(const CCTNum_t o1[3], CCTNum_t r1, 
 	return result;
 }
 
-static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) {
+static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, int check_intersect, CCTSweepResult_t* result) noexcept {
 	GeometryCapsule_t new_capsule;
 	if (check_intersect) {
 		CCTNum_t closest_p[3], lensq, radius_sum = radius + capsule->radius;
@@ -2427,7 +2433,7 @@ static CCTSweepResult_t* Sphere_Sweep_Capsule(const CCTNum_t o[3], CCTNum_t radi
 	return result;
 }
 
-static CCTSweepResult_t* ConvexMesh_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) {
+static CCTSweepResult_t* ConvexMesh_Sweep_Capsule(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const GeometryCapsule_t* capsule, CCTSweepResult_t* result) noexcept {
 	if (Capsule_Intersect_ConvexMesh(capsule, mesh)) {
 		set_intersect(result);
 		return result;
@@ -2435,7 +2441,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Capsule(const GeometryMesh_t* mesh, co
 	return Mesh_Sweep_Capsule_InternalProc(mesh, dir, capsule, result);
 }
 
-static CCTSweepResult_t* ConvexMesh_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
+static CCTSweepResult_t* ConvexMesh_Sweep_Sphere(const GeometryMesh_t* mesh, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) noexcept {
 	if (Sphere_Intersect_ConvexMesh(o, radius, mesh)) {
 		set_intersect(result);
 		return result;
@@ -2443,7 +2449,7 @@ static CCTSweepResult_t* ConvexMesh_Sweep_Sphere(const GeometryMesh_t* mesh, con
 	return Mesh_Sweep_Sphere_InternalProc(mesh, dir, o, radius, result);
 }
 
-static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) {
+static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum_t dir[3], const CCTNum_t o[3], CCTNum_t radius, CCTSweepResult_t* result) noexcept {
 	GeometryBoxMesh_t mesh;
 	if (Sphere_Intersect_OBB(o, radius, obb)) {
 		set_intersect(result);
@@ -2461,7 +2467,7 @@ static CCTSweepResult_t* OBB_Sweep_Sphere(const GeometryOBB_t* obb, const CCTNum
 extern "C" {
 #endif
 
-CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result) {
+CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result) noexcept {
 	CCTNum_t neg_dir[3];
 	int flag_neg_dir;
 	GeometryBoxMesh_t box_data;

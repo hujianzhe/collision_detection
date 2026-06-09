@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept {
 	mathVec3Midpoint(obb->o, min_v, max_v);
 	mathVec3Sub(obb->half, obb->o, min_v);
 	mathVec3Set(obb->axis[0], CCTNums_3(1.0, 0.0, 0.0));
@@ -18,7 +18,7 @@ GeometryOBB_t* mathOBBFromAABB(GeometryOBB_t* obb, const CCTNum_t min_v[3], cons
 	return obb;
 }
 
-void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t min_v[3], CCTNum_t max_v[3]) {
+void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t min_v[3], CCTNum_t max_v[3]) noexcept {
 	int i;
 	CCTNum_t v[8][3];
 	mathOBBVertices(obb, v);
@@ -37,11 +37,11 @@ void mathOBBToAABB(const GeometryOBB_t* obb, CCTNum_t min_v[3], CCTNum_t max_v[3
 	}
 }
 
-void mathOBBVertices(const GeometryOBB_t* obb, CCTNum_t v[8][3]) {
+void mathOBBVertices(const GeometryOBB_t* obb, CCTNum_t v[8][3]) noexcept {
 	mathBoxVertices(obb->o, obb->half, (const CCTNum_t(*)[3])obb->axis, v);
 }
 
-CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int v_id, CCTNum_t v[3]) {
+CCTNum_t* mathOBBVertex(const GeometryOBB_t* obb, unsigned int v_id, CCTNum_t v[3]) noexcept {
 	return mathBoxVertex(obb->o, obb->half, (const CCTNum_t(*)[3])obb->axis, v_id, v);
 }
 

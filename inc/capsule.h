@@ -17,8 +17,8 @@ typedef struct GeometryCapsuleExtra_t {
 extern "C" {
 #endif
 
-__declspec_dll void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]);
-__declspec_dll void mathCapsuleComputeExtendOBB(const GeometryCapsule_t* capsule, const CCTNum_t radius_axis1[3], GeometryOBB_t* obb);
+__declspec_dll void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) noexcept;
+__declspec_dll void mathCapsuleComputeExtendOBB(const GeometryCapsule_t* capsule, const CCTNum_t radius_axis1[3], GeometryOBB_t* obb) noexcept;
 
 #ifdef __cplusplus
 }

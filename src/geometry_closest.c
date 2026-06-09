@@ -9,9 +9,9 @@
 #include "../inc/obb.h"
 #include "../inc/geometry_closest.h"
 
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi);
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept;
 
-CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) {
+CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3], unsigned int* ls1_indices, unsigned int* ls2_indices) noexcept {
 	CCTNum_t lensq, min_lensq, v[3];
 
 	mathVec3Sub(v, ls1[0], ls2[0]);
@@ -46,7 +46,7 @@ CCTNum_t Segment_ClosestVertexIndices_Segment(const CCTNum_t ls1[2][3], const CC
 	return min_lensq;
 }
 
-CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) {
+CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) noexcept {
 	CCTNum_t v[3], N[3], d;
 	CCTNum_t ls1_dir_temp[3], ls2_dir_temp[3];
 	if (!ls1_dir) {
@@ -223,7 +223,7 @@ CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t l
 extern "C" {
 #endif
 
-void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) {
+void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t* lsdir_d1, CCTNum_t* lsdir_d2) noexcept {
 	CCTNum_t temp[3], n[3], v[3], nlensq_inv;
 	mathVec3Sub(v, lsv2, lsv1);
 	mathVec3Cross(n, lsdir1, lsdir2);
@@ -232,7 +232,7 @@ void mathLineClosestLine_opposite(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[
 	*lsdir_d2 = mathVec3Dot(mathVec3Cross(temp, v, lsdir1), n) * nlensq_inv;
 }
 
-void mathLineClosestLine_opposite_v2(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t closest_p1[3], CCTNum_t closest_p2[3]) {
+void mathLineClosestLine_opposite_v2(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3], CCTNum_t closest_p1[3], CCTNum_t closest_p2[3]) noexcept {
 	CCTNum_t d1, d2;
 	mathLineClosestLine_opposite(lsv1, lsdir1, lsv2, lsdir2, &d1, &d2);
 	mathVec3Copy(closest_p1, lsv1);
@@ -241,7 +241,7 @@ void mathLineClosestLine_opposite_v2(const CCTNum_t lsv1[3], const CCTNum_t lsdi
 	mathVec3AddScalar(closest_p2, lsdir2, d2);
 }
 
-void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t ls_v[3], vp[3], lensq, dot;
 	mathVec3Sub(vp, p, ls0);
 	mathVec3Sub(ls_v, ls1, ls0);
@@ -259,7 +259,7 @@ void mathSegmentClosestPoint(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const
 	mathVec3AddScalar(closest_p, ls_v, dot / lensq);
 }
 
-void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], const CCTNum_t lsdir[3], const CCTNum_t ls_half_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t v[3], d, abs_d;
 	mathVec3Sub(v, p, ls_center_p);
 	d = mathVec3Dot(v, lsdir);
@@ -277,7 +277,7 @@ void mathSegmentClosestPoint_v2(const CCTNum_t ls_center_p[3], const CCTNum_t ls
 	mathVec3AddScalar(closest_p, lsdir, d);
 }
 
-void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], const CCTNum_t ls_len, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t v[3], d;
 	mathVec3Sub(v, p, ls_v);
 	d = mathVec3Dot(v, lsdir);
@@ -293,7 +293,7 @@ void mathSegmentClosestPoint_v3(const CCTNum_t ls_v[3], const CCTNum_t lsdir[3],
 	}
 }
 
-void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t min_d;
 	unsigned int i, v_idx[2];
 	v_idx[0] = edge_v_indices_flat[0];
@@ -320,7 +320,7 @@ void mathSegmentIndicesClosestPoint(const CCTNum_t(*v)[3], const unsigned int* e
 	}
 }
 
-void mathAABBClosestPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathAABBClosestPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	int i;
 	for (i = 0; i < 3; ++i) {
 		if (p[i] < min_v[i]) {
@@ -335,7 +335,7 @@ void mathAABBClosestPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], cons
 	}
 }
 
-void mathOBBClosestPoint(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathOBBClosestPoint(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	int i;
 	CCTNum_t v[3];
 
@@ -353,7 +353,7 @@ void mathOBBClosestPoint(const GeometryOBB_t* obb, const CCTNum_t p[3], CCTNum_t
 	}
 }
 
-void mathSphereClosestPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathSphereClosestPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t v[3];
 	mathVec3Sub(v, p, o);
 	mathVec3Normalized(v, v);
@@ -361,7 +361,7 @@ void mathSphereClosestPoint(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t
 	mathVec3AddScalar(closest_p, v, radius);
 }
 
-void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t v[3];
 	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, p, closest_p);
 	mathVec3Sub(v, p, closest_p);
@@ -369,7 +369,7 @@ void mathCapsuleClosestPoint(const GeometryCapsule_t* capsule, const CCTNum_t p[
 	mathVec3AddScalar(closest_p, v, capsule->radius);
 }
 
-void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	unsigned int polygon_edge_v_indices_cnt;
 	CCTNum_t d = mathPointProjectionPlane(p, polygon->v[polygon->v_indices[0]], polygon->normal);
 	mathVec3Copy(closest_p, p);
@@ -381,7 +381,7 @@ void mathPolygonClosestPoint(const GeometryPolygon_t* polygon, const CCTNum_t p[
 	mathSegmentIndicesClosestPoint((const CCTNum_t(*)[3])polygon->v, polygon->edge_v_indices_flat, polygon_edge_v_indices_cnt, p, closest_p);
 }
 
-void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNum_t closest_p[3]) {
+void mathMeshClosestPoint(const GeometryMesh_t* mesh, const CCTNum_t p[3], CCTNum_t closest_p[3]) noexcept {
 	CCTNum_t min_d;
 	unsigned int i, flag = 0, mesh_edge_v_indices_cnt;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {

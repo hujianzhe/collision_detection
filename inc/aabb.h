@@ -11,19 +11,19 @@
 extern "C" {
 #endif
 
-__declspec_dll void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]);
-__declspec_dll void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]);
+__declspec_dll void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]) noexcept;
+__declspec_dll void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]) noexcept;
 
-__declspec_dll void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]);
-__declspec_dll CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int v_id, CCTNum_t v[3]);
+__declspec_dll void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]) noexcept;
+__declspec_dll CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int v_id, CCTNum_t v[3]) noexcept;
 
-__declspec_dll void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]);
-__declspec_dll void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]);
+__declspec_dll void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]) noexcept;
+__declspec_dll void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]) noexcept;
 
-__declspec_dll int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]);
+__declspec_dll int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept;
 
-int AABB_Contain_Point(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]);
-int AABB_Contain_AABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]);
+int AABB_Contain_Point(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) noexcept;
+int AABB_Contain_AABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept;
 
 #ifdef	__cplusplus
 }

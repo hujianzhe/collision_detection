@@ -8,9 +8,15 @@
 #include "../inc/vertex.h"
 #include "../inc/aabb.h"
 
-extern const CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+}
+#endif
 
-static void box_mesh_fill_common_fields(GeometryBoxMesh_t* bm) {
+static void box_mesh_fill_common_fields(GeometryBoxMesh_t* bm) noexcept {
 	GeometryMesh_t* mesh = &bm->mesh;
 	mesh->v = bm->v;
 	mesh->v_indices = CCTConstVal_.Box_VertexIds;
@@ -27,7 +33,7 @@ static void box_mesh_fill_common_fields(GeometryBoxMesh_t* bm) {
 	mesh->polygons_cnt = 6;
 }
 
-static CCTNum_t* box_face_normal(const CCTNum_t axis[3][3], unsigned int face_id, CCTNum_t normal[3]) {
+static CCTNum_t* box_face_normal(const CCTNum_t axis[3][3], unsigned int face_id, CCTNum_t normal[3]) noexcept {
 	if (face_id < 2) {
 		if (0 == face_id) {
 			return mathVec3Copy(normal, axis[0]);
@@ -57,7 +63,7 @@ static CCTNum_t* box_face_normal(const CCTNum_t axis[3][3], unsigned int face_id
 extern "C" {
 #endif
 
-void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]) {
+void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]) noexcept {
 	const CCTNum_t min_sz = GEOMETRY_BODY_BOX_MIN_HALF + GEOMETRY_BODY_BOX_MIN_HALF;
 	if (max_v[0] - min_v[0] < min_sz) {
 		max_v[0] += GEOMETRY_BODY_BOX_MIN_HALF;
@@ -73,7 +79,7 @@ void mathAABBFixSize(CCTNum_t min_v[3], CCTNum_t max_v[3]) {
 	}
 }
 
-void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) {
+void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) noexcept {
 	CCTNum_t new_axis1[3], new_axis2[3];
 	mathVec3Normalized(axis0, axis0);
 	mathVec3Cross(new_axis2, axis0, axis1);
@@ -88,7 +94,7 @@ void mathBoxFixAxis3(CCTNum_t axis0[3], CCTNum_t axis1[3], CCTNum_t axis2[3]) {
 	mathVec3Normalized(axis1, new_axis1);
 }
 
-void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) {
+void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], CCTNum_t v[8][3]) noexcept {
 	CCTNum_t AX[3][3];
 	mathVec3MultiplyScalar(AX[0], axis[0], half[0]);
 	mathVec3MultiplyScalar(AX[1], axis[1], half[1]);
@@ -135,7 +141,7 @@ void mathBoxVertices(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t
 	mathVec3Add(v[7], v[7], AX[2]);
 }
 
-CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]) {
+CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNum_t axis[3][3], unsigned int v_id, CCTNum_t v[3]) noexcept {
 	CCTNum_t AX[3][3];
 	if (v_id >= 8) {
 		return NULL;
@@ -189,7 +195,7 @@ CCTNum_t* mathBoxVertex(const CCTNum_t o[3], const CCTNum_t half[3], const CCTNu
 	return NULL;
 }
 
-GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_id, GeometryPolygon_t* polygon) {
+GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3], unsigned int face_id, GeometryPolygon_t* polygon) noexcept {
 	if (!box_face_normal(axis, face_id, polygon->normal)) {
 		return NULL;
 	}
@@ -211,7 +217,7 @@ GeometryPolygon_t* mathBoxFace(const CCTNum_t v[8][3], const CCTNum_t axis[3][3]
 	return polygon;
 }
 
-void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]) {
+void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t half[3], const CCTNum_t axis[3][3]) noexcept {
 	unsigned int i;
 	GeometryMesh_t* mesh = &bm->mesh;
 	const CCTNum_t(*v)[3] = (const CCTNum_t(*)[3])bm->v;
@@ -223,7 +229,7 @@ void mathBoxMesh(GeometryBoxMesh_t* bm, const CCTNum_t center[3], const CCTNum_t
 	}
 }
 
-void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+void mathAABBMesh(GeometryBoxMesh_t* bm, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept {
 	unsigned int i;
 	GeometryMesh_t* mesh = &bm->mesh;
 	const CCTNum_t(*v)[3] = (const CCTNum_t(*)[3])bm->v;

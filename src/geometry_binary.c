@@ -7,10 +7,10 @@
 #include "../inc/geometry_api.h"
 #include <stdint.h>
 
-extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
-extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
+extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) noexcept;
+extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) noexcept;
 
-static size_t align_up_size(size_t v, size_t a) {
+static size_t align_up_size(size_t v, size_t a) noexcept {
 	size_t r = v % a;
 	if (r != 0) {
 		return v + (a - r);
@@ -18,27 +18,27 @@ static size_t align_up_size(size_t v, size_t a) {
 	return v;
 }
 
-static int safe_add(size_t* total, size_t v) {
+static int safe_add(size_t* total, size_t v) noexcept {
 	if (SIZE_MAX - v < *total) {
 		return 0;
 	}
 	*total += v;
 	return 1;
 }
-static int safe_add_mul(size_t* total, unsigned int mul_left, size_t mul_right) {
+static int safe_add_mul(size_t* total, unsigned int mul_left, size_t mul_right) noexcept {
 	if (mul_left > SIZE_MAX / mul_right) {
 		return 0;
 	}
 	return safe_add(total, mul_left * mul_right);
 }
 
-static int safe_align(size_t* total, size_t a) {
+static int safe_align(size_t* total, size_t a) noexcept {
 	size_t aligned = align_up_size(*total, a);
 	size_t pad = aligned - *total;
 	return safe_add(total, pad);
 }
 
-static int pad_skip(const char* p, size_t len, size_t* off, size_t a) {
+static int pad_skip(const char* p, size_t len, size_t* off, size_t a) noexcept {
 	size_t addr, aligned, pad;
 	if (!a) { return 1; }
 	addr = (size_t)p + *off;
@@ -49,42 +49,42 @@ static int pad_skip(const char* p, size_t len, size_t* off, size_t a) {
 	return 1;
 }
 
-static int read_u32(const char* p, size_t len, size_t* off, unsigned int* out) {
+static int read_u32(const char* p, size_t len, size_t* off, unsigned int* out) noexcept {
 	if (sizeof(unsigned int) > len - *off) { return 0; }
 	*out = *(const unsigned int*)(p + *off);
 	*off += sizeof(unsigned int);
 	return 1;
 }
-static int read_i16(const char* p, size_t len, size_t* off, short* out) {
+static int read_i16(const char* p, size_t len, size_t* off, short* out) noexcept {
 	if (sizeof(short) > len - *off) { return 0; }
 	*out = *(const short*)(p + *off);
 	*off += sizeof(short);
 	return 1;
 }
-static int read_u8(const char* p, size_t len, size_t* off, unsigned char* out) {
+static int read_u8(const char* p, size_t len, size_t* off, unsigned char* out) noexcept {
 	if (sizeof(unsigned char) > len - *off) { return 0; }
 	*out = *(const unsigned char*)(p + *off);
 	*off += sizeof(unsigned char);
 	return 1;
 }
 
-static int write_u32(char* p, size_t* off, unsigned int v) {
+static int write_u32(char* p, size_t* off, unsigned int v) noexcept {
 	*(unsigned int*)(p + *off) = v;
 	*off += sizeof(unsigned int);
 	return 1;
 }
-static int write_i16(char* p, size_t* off, short v) {
+static int write_i16(char* p, size_t* off, short v) noexcept {
 	*(short*)(p + *off) = v;
 	*off += sizeof(short);
 	return 1;
 }
-static int write_u8(char* p, size_t* off, unsigned char v) {
+static int write_u8(char* p, size_t* off, unsigned char v) noexcept {
 	*(unsigned char*)(p + *off) = v;
 	*off += sizeof(unsigned char);
 	return 1;
 }
 
-static size_t MeshBinaryStream_VertexAdjacentInfoSize(const GeometryMeshVertexAdjacentInfo_t* info, size_t total_size) {
+static size_t MeshBinaryStream_VertexAdjacentInfoSize(const GeometryMeshVertexAdjacentInfo_t* info, size_t total_size) noexcept {
 	unsigned int v_edge_shared_cnt = info->v_cnt;
 	if (!safe_align(&total_size, alignof(unsigned int))) { return 0; }
 	if (!safe_add(&total_size, sizeof(info->v_cnt) + sizeof(info->face_cnt))) { return 0; }
@@ -94,7 +94,7 @@ static size_t MeshBinaryStream_VertexAdjacentInfoSize(const GeometryMeshVertexAd
 	return total_size;
 }
 
-static size_t MeshBinaryStream_VertexAdjacentInfoSave(const GeometryMeshVertexAdjacentInfo_t* info, void* buffer, size_t nbytes) {
+static size_t MeshBinaryStream_VertexAdjacentInfoSave(const GeometryMeshVertexAdjacentInfo_t* info, void* buffer, size_t nbytes) noexcept {
 	size_t off = 0;
 	char* p = (char*)buffer;
 	unsigned int j;
@@ -122,7 +122,7 @@ static size_t MeshBinaryStream_VertexAdjacentInfoSave(const GeometryMeshVertexAd
 	return off;
 }
 
-static size_t MeshBinaryStream_VertexAdjacentInfoLoad(const void* buffer, size_t len, GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) {
+static size_t MeshBinaryStream_VertexAdjacentInfoLoad(const void* buffer, size_t len, GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int j, v_edge_shared_cnt;
@@ -168,7 +168,7 @@ err:
 	return 0;
 }
 
-static size_t MeshBinaryStream_FaceSize(const GeometryPolygon_t* face, size_t total_size) {
+static size_t MeshBinaryStream_FaceSize(const GeometryPolygon_t* face, size_t total_size) noexcept {
 	if (!safe_align(&total_size, alignof(CCTNum_t))) { return 0; }
 	/* center / normal (CCTNum_t aligned) */
 	if (!safe_add(&total_size, sizeof(face->center))) { return 0; }
@@ -205,7 +205,7 @@ static size_t MeshBinaryStream_FaceSize(const GeometryPolygon_t* face, size_t to
 	return total_size;
 }
 
-static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buffer, size_t nbytes) {
+static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buffer, size_t nbytes) noexcept {
 	size_t off = 0;
 	char* p = (char*)buffer;
 	unsigned int j;
@@ -275,7 +275,7 @@ static size_t MeshBinaryStream_FaceSave(const GeometryPolygon_t* face, void* buf
 	return off;
 }
 
-static size_t MeshBinaryStream_FaceLoad(const void* buffer, size_t len, GeometryPolygon_t* face, const CCTAllocator_t* ac) {
+static size_t MeshBinaryStream_FaceLoad(const void* buffer, size_t len, GeometryPolygon_t* face, const CCTAllocator_t* ac) noexcept {
 	unsigned int j;
 	unsigned int* v_indices = NULL, *mesh_v_ids = NULL;
 	unsigned int* edge_v_indices_flat = NULL, *edge_v_ids_flat = NULL, *mesh_edge_ids = NULL;
@@ -382,7 +382,7 @@ err:
 	return 0;
 }
 
-static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, size_t nbytes) {
+static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, size_t nbytes) noexcept {
 	size_t off = 0;
 	char* p = (char*)buffer;
 	unsigned int i, v_cnt;
@@ -464,7 +464,7 @@ static size_t MeshBinaryStreamSave(const GeometryMesh_t* mesh, void* buffer, siz
 	return off;
 }
 
-static size_t MeshBinaryStreamLoad(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) {
+static size_t MeshBinaryStreamLoad(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int i, v_cnt;
@@ -597,7 +597,7 @@ err:
 	return 0;
 }
 
-static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) {
+static size_t mathMeshBinaryStreamView(GeometryMesh_t* mesh, const void* buffer, size_t len, const CCTAllocator_t* ac) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int i, v_cnt;
@@ -770,7 +770,7 @@ err:
 extern "C" {
 #endif
 
-size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes) {
+size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes) noexcept {
 	size_t off = 0;
 	char* p = (char*)buffer;
 
@@ -832,7 +832,7 @@ size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* bu
 	return 0;
 }
 
-int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len) {
+int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;
@@ -841,7 +841,7 @@ int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len) {
 	return geo_type;
 }
 
-size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t len, const CCTAllocator_t* ac) {
+size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t len, const CCTAllocator_t* ac) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;
@@ -902,7 +902,7 @@ size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t l
 	return 0;
 }
 
-size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh) {
+size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh) noexcept {
 	size_t off = 0;
 	const char* p = (const char*)buffer;
 	unsigned int geo_type;

@@ -8,13 +8,11 @@
 #include "../inc/plane.h"
 #include "../inc/polygon.h"
 
-extern const CCTConstVal_t CCTConstVal_;
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) {
+void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) noexcept {
 	if (!polygon) {
 		return;
 	}
@@ -59,7 +57,7 @@ void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator
 	}
 }
 
-int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt) {
+int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt) noexcept {
 	unsigned int i;
 	if (v_indices_cnt < 3) {
 		return 0;
@@ -101,7 +99,7 @@ int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsi
 extern "C" {
 #endif
 
-void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) {
+void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) noexcept {
 	CCTNum_t v0[3], v1[3], v2[3];
 	mathVec3MultiplyScalar(v0, tri_p0, CCTNum(1.0) - u - v);
 	mathVec3MultiplyScalar(v1, tri_p1, u);
@@ -110,7 +108,7 @@ void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], co
 	mathVec3Add(p, p, v2);
 }
 
-int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) {
+int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) noexcept {
 	CCTNum_t ap[3], ab[3], ac[3], N[3], dot;
 	mathVec3Sub(ap, p, tri_p0);
 	mathVec3Sub(ab, tri_p1, tri_p0);
@@ -146,7 +144,7 @@ int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], cons
 	}
 }
 
-void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]) {
+void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]) noexcept {
 	CCTNum_t v[3];
 	unsigned int i = edge_id + edge_id;
 	unsigned int v_idx[2];

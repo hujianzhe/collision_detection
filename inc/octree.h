@@ -47,18 +47,18 @@ typedef struct OctreeFinder_t {
 extern "C" {
 #endif
 
-__declspec_dll unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size);
+__declspec_dll unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size) noexcept;
 
-__declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node);
-__declspec_dll void octreeUpdate(Octree_t* tree, OctreeObject_t* obj);
-__declspec_dll void octreeRemove(OctreeObject_t* obj);
+__declspec_dll Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) noexcept;
+__declspec_dll void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) noexcept;
+__declspec_dll void octreeRemove(OctreeObject_t* obj) noexcept;
 
-__declspec_dll OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder);
-__declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder);
+__declspec_dll OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder) noexcept;
+__declspec_dll void octreeFinderDestroy(OctreeFinder_t* finder) noexcept;
 
-__declspec_dll void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder);
-__declspec_dll void octreeClear(Octree_t* tree);
-__declspec_dll void octreeDestroy(Octree_t* tree);
+__declspec_dll void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) noexcept;
+__declspec_dll void octreeClear(Octree_t* tree) noexcept;
+__declspec_dll void octreeDestroy(Octree_t* tree) noexcept;
 
 #ifdef __cplusplus
 }

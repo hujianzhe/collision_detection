@@ -11,9 +11,9 @@
 extern "C" {
 #endif
 
-__declspec_dll GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac);
-__declspec_dll GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, const unsigned int* face_ids, unsigned int face_cnt, const CCTAllocator_t* ac);
-__declspec_dll void mathMeshClear(GeometryMesh_t* mesh);
+__declspec_dll GeometryMesh_t* mathMeshClone(GeometryMesh_t* dst, const GeometryMesh_t* src, const CCTAllocator_t* ac) noexcept;
+__declspec_dll GeometryMesh_t* mathMeshDupFaces(GeometryMesh_t* dup_mesh, const GeometryPolygon_t* faces, const unsigned int* face_ids, unsigned int face_cnt, const CCTAllocator_t* ac) noexcept;
+__declspec_dll void mathMeshClear(GeometryMesh_t* mesh) noexcept;
 
 #ifdef	__cplusplus
 }

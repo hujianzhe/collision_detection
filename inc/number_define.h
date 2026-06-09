@@ -116,9 +116,9 @@ typedef struct CCTAllocator_t {
 extern "C" {
 #endif
 
-__declspec_dll int CCTNum_chkval(CCTNum_t num);
-__declspec_dll int CCTNum_chkvals(const CCTNum_t* num, size_t cnt);
-__declspec_dll const CCTAllocator_t* CCTAllocator_stdc(CCTAllocator_t* ac);
+__declspec_dll int CCTNum_chkval(CCTNum_t num) noexcept;
+__declspec_dll int CCTNum_chkvals(const CCTNum_t* num, size_t cnt) noexcept;
+__declspec_dll const CCTAllocator_t* CCTAllocator_stdc(CCTAllocator_t* ac) noexcept;
 
 #ifdef __cplusplus
 }

@@ -37,7 +37,11 @@ static const unsigned int Box_Vertex_Adjacent_FaceIds[8][3] = {
 	{ 1, 2, 4 }
 };
 
-const CCTConstVal_t CCTConstVal_ = {
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+CCTConstVal_t CCTConstVal_ = {
 	/* Axis_X, Axis_Y, Axis_Z, AABB_Axis */{{
 		{ CCTNums_3(1.0, 0.0, 0.0) },
 		{ CCTNums_3(0.0, 1.0, 0.0) },
@@ -119,11 +123,7 @@ const CCTConstVal_t CCTConstVal_ = {
 	},
 };
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-const CCTConstVal_t* CCT_ConstVal() { return &CCTConstVal_; }
+const CCTConstVal_t* CCT_ConstVal() noexcept { return &CCTConstVal_; }
 
 #ifdef	__cplusplus
 }

@@ -5,7 +5,7 @@
 #include "../inc/math_vec3.h"
 #include "../inc/gjk.h"
 
-static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) {
+static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) noexcept {
 	unsigned int i, max_v_idx = v_indices[0];
 	CCTNum_t max_d = mathVec3Dot(v[max_v_idx], dir);
 	for (i = 1; i < v_indices_cnt; ++i) {
@@ -24,7 +24,7 @@ static void indices_support(const CCTNum_t(*v)[3], const unsigned int* v_indices
 	}
 }
 
-static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) {
+static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t radius, const CCTNum_t dir[3], CCTNum_t pp[3]) noexcept {
 	unsigned int i, max_v_idx = 0;
 	CCTNum_t max_d = mathVec3Dot(v[max_v_idx], dir);
 	for (i = 1; i < v_cnt; ++i) {
@@ -42,7 +42,7 @@ static void vertices_support(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t
 	}
 }
 
-static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], CCTNum_t sub_p[3]) {
+static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t dir[3], CCTNum_t sub_p[3]) noexcept {
 	CCTNum_t neg_dir[3], p1[3], p2[3];
 	mathVec3Negate(neg_dir, dir);
 
@@ -61,7 +61,7 @@ static void gjk_sub_point(const GeometryConvexGJK_t* geo1, const GeometryConvexG
 	mathVec3Sub(sub_p, p1, p2);
 }
 
-static int simplex2(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
+static int simplex2(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) noexcept {
 	const CCTNum_t* a = s->p[0];
 	const CCTNum_t* b = s->p[1];
 	CCTNum_t N[3], ls_v[3];
@@ -88,7 +88,7 @@ static int simplex2(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 	return 0;
 }
 
-static int simplex3(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
+static int simplex3(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) noexcept {
 	const CCTNum_t* a = s->p[0];
 	const CCTNum_t* b = s->p[1];
 	const CCTNum_t* c = s->p[2];
@@ -166,7 +166,7 @@ static int simplex3(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 	return 1;
 }
 
-static int simplex4(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
+static int simplex4(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) noexcept {
 	const CCTNum_t* a = s->p[0];
 	const CCTNum_t* b = s->p[1];
 	const CCTNum_t* c = s->p[2];
@@ -224,41 +224,7 @@ static int simplex4(GeometrySimplexGJK_t* s, CCTNum_t dir[3]) {
 	return 1;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, GeometryIteratorGJK_t* iter) {
-	GeometryIteratorGJK_t tmp_iter;
-	if (!iter) {
-		iter = &tmp_iter;
-	}
-	mathGJKBegin(iter, geo1, geo2, NULL);
-	while (mathGJKNext(iter));
-	return iter->overlap;
-}
-
-void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) {
-	GeometrySimplexGJK_t* s = &iter->simplex;
-	iter->geo1 = geo1;
-	iter->geo2 = geo2;
-	if (!init_dir || mathVec3IsZero(init_dir)) {
-		mathVec3Set(iter->dir, CCTNums_3(1.0, 0.0, 0.0));
-	}
-	else {
-		mathVec3Copy(iter->dir, init_dir);
-	}
-	s->cnt = 0;
-	iter->overlap = 0;
-	iter->iter_times = 0;
-	iter->max_iter_times = 2 * (geo1->v_cnt + geo2->v_cnt);
-}
-
-static int gjk_step_(GeometryIteratorGJK_t* iter) {
+static int gjk_step_(GeometryIteratorGJK_t* iter) noexcept {
 	GeometrySimplexGJK_t* s = &iter->simplex;
 	unsigned int i;
 
@@ -299,19 +265,7 @@ static int gjk_step_(GeometryIteratorGJK_t* iter) {
 	return 1;
 }
 
-int mathGJKNext(GeometryIteratorGJK_t* iter) {
-	GeometrySimplexGJK_t* s;
-
-	if (iter->iter_times >= iter->max_iter_times) {
-		return 0;
-	}
-	++iter->iter_times;
-	s = &iter->simplex;
-	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
-	return gjk_step_(iter);
-}
-
-static int gjk_next_with_offset(GeometryIteratorGJK_t* iter, const CCTNum_t offset[3]) {
+static int gjk_next_with_offset(GeometryIteratorGJK_t* iter, const CCTNum_t offset[3]) noexcept {
 	GeometrySimplexGJK_t* s;
 
 	if (iter->iter_times >= iter->max_iter_times) {
@@ -325,7 +279,53 @@ static int gjk_next_with_offset(GeometryIteratorGJK_t* iter, const CCTNum_t offs
 	return gjk_step_(iter);
 }
 
-int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out) {
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, GeometryIteratorGJK_t* iter) noexcept {
+	GeometryIteratorGJK_t tmp_iter;
+	if (!iter) {
+		iter = &tmp_iter;
+	}
+	mathGJKBegin(iter, geo1, geo2, NULL);
+	while (mathGJKNext(iter));
+	return iter->overlap;
+}
+
+void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) noexcept {
+	GeometrySimplexGJK_t* s = &iter->simplex;
+	iter->geo1 = geo1;
+	iter->geo2 = geo2;
+	if (!init_dir || mathVec3IsZero(init_dir)) {
+		mathVec3Set(iter->dir, CCTNums_3(1.0, 0.0, 0.0));
+	}
+	else {
+		mathVec3Copy(iter->dir, init_dir);
+	}
+	s->cnt = 0;
+	iter->overlap = 0;
+	iter->iter_times = 0;
+	iter->max_iter_times = 2 * (geo1->v_cnt + geo2->v_cnt);
+}
+
+int mathGJKNext(GeometryIteratorGJK_t* iter) noexcept {
+	GeometrySimplexGJK_t* s;
+
+	if (iter->iter_times >= iter->max_iter_times) {
+		return 0;
+	}
+	++iter->iter_times;
+	s = &iter->simplex;
+	gjk_sub_point(iter->geo1, iter->geo2, iter->dir, s->p[s->cnt]);
+	return gjk_step_(iter);
+}
+
+int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out) noexcept {
 	CCTNum_t t_low, t_high, pt[3], neg_dir[3];
 	GeometryIteratorGJK_t iter;
 

@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) {
+CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], const CCTNum_t lsdir[3], CCTNum_t np[3]) noexcept {
 	CCTNum_t vp[3], dot;
 	mathVec3Sub(vp, p, ls_v);
 	dot = mathVec3Dot(vp, lsdir);
@@ -18,7 +18,7 @@ CCTNum_t mathPointProjectionLine(const CCTNum_t p[3], const CCTNum_t ls_v[3], co
 	return dot;
 }
 
-void mathPointProjectionLine_v2(const CCTNum_t p[3], const CCTNum_t ls_v0[3], const CCTNum_t ls_v1[3], CCTNum_t np[3]) {
+void mathPointProjectionLine_v2(const CCTNum_t p[3], const CCTNum_t ls_v0[3], const CCTNum_t ls_v1[3], CCTNum_t np[3]) noexcept {
 	CCTNum_t ls_v[3], vp[3], lensq, dot;
 	mathVec3Sub(vp, p, ls_v0);
 	mathVec3Sub(ls_v, ls_v1, ls_v0);
@@ -28,7 +28,7 @@ void mathPointProjectionLine_v2(const CCTNum_t p[3], const CCTNum_t ls_v0[3], co
 	mathVec3AddScalar(np, ls_v, dot / lensq);
 }
 
-CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]) {
+CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], const CCTNum_t lsv2[3], const CCTNum_t lsdir2[3]) noexcept {
 	CCTNum_t v[3], dot, lensq;
 	mathPointProjectionLine(lsv1, lsv2, lsdir2, v);
 	if (mathVec3Equal(lsv1, v)) {
@@ -40,7 +40,7 @@ CCTNum_t mathLineCrossLine(const CCTNum_t lsv1[3], const CCTNum_t lsdir1[3], con
 	return lensq / dot;
 }
 
-int mathPointProjectionSegment(const CCTNum_t p[3], const CCTNum_t ls0[3], const CCTNum_t ls1[3], CCTNum_t np[3], CCTNum_t epsilon) {
+int mathPointProjectionSegment(const CCTNum_t p[3], const CCTNum_t ls0[3], const CCTNum_t ls1[3], CCTNum_t np[3], CCTNum_t epsilon) noexcept {
 	CCTNum_t ls_v[3], vp[3], lensq, dot;
 	mathVec3Sub(vp, p, ls0);
 	mathVec3Sub(ls_v, ls1, ls0);

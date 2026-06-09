@@ -16,13 +16,19 @@
 #include "../inc/geometry_api.h"
 #include <stdlib.h>
 
-extern const CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) {
+int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) noexcept {
 	CCTNum_t pv1[3], pv2[3], N[3], dot;
 	mathVec3Sub(pv1, ls0, p);
 	mathVec3Sub(pv2, ls1, p);
@@ -34,7 +40,7 @@ int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CC
 	return dot <= CCT_EPSILON;
 }
 
-static int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+static int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) noexcept {
 	int i;
 	CCTNum_t v1[3], v2[3], N[3];
 	mathVec3Sub(v1, ls1[1], ls1[0]);
@@ -55,21 +61,21 @@ static int Segment_Contain_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[
 	return 1;
 }
 
-int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) {
+int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) noexcept {
 	CCTNum_t v[3], dot;
 	mathVec3Sub(v, plane_v, p);
 	dot = mathVec3Dot(plane_normal, v);
 	return CCT_EPSILON_NEGATE <= dot && dot <= CCT_EPSILON;
 }
 
-int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) {
+int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) noexcept {
 	CCTNum_t op[3], op_lensq;
 	mathVec3Sub(op, p, o);
 	op_lensq = mathVec3LenSq(op);
 	return CCTNum_sq(radius) >= op_lensq;
 }
 
-static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) {
+static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2) noexcept {
 	CCTNum_t o1o2[3], len_sq;
 	if (r1 < r2) {
 		return 0;
@@ -79,7 +85,7 @@ static int Sphere_Contain_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum
 	return len_sq <= CCTNum_sq(r1 - r2);
 }
 
-static int Sphere_Contain_Capsule(const CCTNum_t o[3], CCTNum_t r, const GeometryCapsule_t* capsule) {
+static int Sphere_Contain_Capsule(const CCTNum_t o[3], CCTNum_t r, const GeometryCapsule_t* capsule) noexcept {
 	CCTNum_t sp_o[3];
 	mathVec3Copy(sp_o, capsule->o);
 	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
@@ -90,7 +96,7 @@ static int Sphere_Contain_Capsule(const CCTNum_t o[3], CCTNum_t r, const Geometr
 	return Sphere_Contain_Sphere(o, r, sp_o, capsule->radius);
 }
 
-static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
+static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) noexcept {
 	CCTNum_t vp[3], edge_v[3], dot;
 	mathVec3Sub(vp, p, v[0]);
 
@@ -112,7 +118,7 @@ static int Box_Contain_Point(const CCTNum_t v[8][3], const CCTNum_t p[3]) {
 	return 1;
 }
 
-int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
+int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) noexcept {
 	CCTNum_t op[3], dot;
 	mathVec3Sub(op, p, obb->o);
 	dot = mathVec3Dot(op, obb->axis[0]);
@@ -130,7 +136,7 @@ int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) {
 	return 1;
 }
 
-static int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+static int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) noexcept {
 	CCTNum_t AX[3][3], p[3];
 	if (obb0 == obb1) {
 		return 1;
@@ -198,7 +204,7 @@ static int OBB_Contain_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1)
 	return 1;
 }
 
-static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCTNum_t radius) {
+static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCTNum_t radius) noexcept {
 	int i;
 	CCTNum_t v[3];
 	mathVec3Sub(v, o, obb->o);
@@ -212,7 +218,7 @@ static int OBB_Contain_Sphere(const GeometryOBB_t* obb, const CCTNum_t o[3], CCT
 	return 1;
 }
 
-int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) {
+int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) noexcept {
 	CCTNum_t v[3], dot, lensq, radius_sq = CCTNum_sq(capsule->radius);
 	mathVec3Sub(v, p, capsule->o);
 	dot = mathVec3Dot(v, capsule->axis);
@@ -234,7 +240,7 @@ int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3])
 	return lensq <= radius_sq;
 }
 
-static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t* capsule) {
+static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t* capsule) noexcept {
 	CCTNum_t sp_o[3];
 	mathVec3Copy(sp_o, capsule->o);
 	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
@@ -245,7 +251,7 @@ static int OBB_Contain_Capsule(const GeometryOBB_t* obb, const GeometryCapsule_t
 	return OBB_Contain_Sphere(obb, sp_o, capsule->radius);
 }
 
-static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) {
+static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh) noexcept {
 	CCTNum_t p[8][3];
 	unsigned int i;
 	mathAABBVertices(mesh->bound_box.min_v, mesh->bound_box.max_v, p);
@@ -266,7 +272,7 @@ static int OBB_Contain_Mesh(const GeometryOBB_t* obb, const GeometryMesh_t* mesh
 	return 1;
 }
 
-static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; ) {
 		CCTNum_t ls_dir[3], ls_n[3], v[3], test_dot, dot;
@@ -324,7 +330,7 @@ static int ConvexPolygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygo
 	return 1;
 }
 
-int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t N[3], const CCTNum_t p[3]) {
+int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], const CCTNum_t c[3], const CCTNum_t N[3], const CCTNum_t p[3]) noexcept {
 	CCTNum_t test_dot, dot, test_v[3];
 	CCTNum_t ab[3], ac[3], bc[3], edge_N[3];
 	/* edge ab test */
@@ -386,7 +392,7 @@ int Triangle_Contain_Point_SamePlane(const CCTNum_t a[3], const CCTNum_t b[3], c
 	return 1;
 }
 
-static void concave_polygon_point_Locate_proc(const GeometryPolygon_t* polygon, unsigned int tri_v_flat_idx, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+static void concave_polygon_point_Locate_proc(const GeometryPolygon_t* polygon, unsigned int tri_v_flat_idx, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept {
 	CCTNum_t l[3], r[3], N[3];
 	unsigned int j;
 	for (j = tri_v_flat_idx; j < tri_v_flat_idx + 3; ) {
@@ -427,7 +433,7 @@ static void concave_polygon_point_Locate_proc(const GeometryPolygon_t* polygon, 
 	bi->v_id = bi->edge_id = -1;
 }
 
-int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept {
 	if (polygon->v_indices >= CCTConstVal_.Box_Face_MeshVertexIds_Flat &&
 		polygon->v_indices < CCTConstVal_.Box_Face_MeshVertexIds_Flat + sizeof(CCTConstVal_.Box_Face_MeshVertexIds_Flat)/sizeof(CCTConstVal_.Box_Face_MeshVertexIds_Flat[0]))
 	{
@@ -471,7 +477,7 @@ int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTN
 	return 0;
 }
 
-int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) {
+int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) noexcept {
 	CCTNum_t v[3], dot;
 	if (polygon->v_indices_cnt < 3) {
 		return 0;
@@ -484,7 +490,7 @@ int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3])
 	return Polygon_Contain_Point_SamePlane(polygon, p, NULL);
 }
 
-static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t ls_p0[3], const CCTNum_t ls_p1[3]) {
+static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNum_t ls_p0[3], const CCTNum_t ls_p1[3]) noexcept {
 	CCTNum_t ls_dir[3], v[3], dot;
 	mathVec3Sub(ls_dir, ls_p1, ls_p0);
 	dot = mathVec3Dot(ls_dir, polygon->normal);
@@ -531,7 +537,7 @@ static int Polygon_Contain_Segment(const GeometryPolygon_t* polygon, const CCTNu
 	return 1;
 }
 
-static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) {
+static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2) noexcept {
 	unsigned int i, polygon1_edge_v_indices_cnt, polygon2_edge_v_indices_cnt;
 	CCTNum_t(*polygon1_ls_dir_caches)[3];
 	if (!mathPlaneEqual(polygon1->v[polygon1->v_indices[0]], polygon1->normal, polygon2->v[polygon2->v_indices[0]], polygon2->normal)) {
@@ -620,7 +626,7 @@ static int Polygon_Contain_Polygon(const GeometryPolygon_t* polygon1, const Geom
 	return 1;
 }
 
-static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, const CCTNum_t p[3]) noexcept {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		CCTNum_t v[3], dot;
@@ -638,7 +644,7 @@ static int ConvexMesh_Contain_Point_InternalProc(const GeometryMesh_t* mesh, con
 	return 1;
 }
 
-int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
+int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) noexcept {
 	if (CCTConstVal_.Box_VertexIds == mesh->v_indices) {
 		return Box_Contain_Point((const CCTNum_t(*)[3])mesh->v, p);
 	}
@@ -648,7 +654,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) {
 	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
 }
 
-static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) noexcept {
 	unsigned int i;
 	if (!mathAABBIntersectAABB(mesh1->bound_box.min_v, mesh1->bound_box.max_v, mesh2->bound_box.min_v, mesh2->bound_box.max_v)) {
 		return 0;
@@ -662,7 +668,7 @@ static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMe
 	return 1;
 }
 
-static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept {
 	CCTNum_t p[8][3];
 	unsigned int i;
 	if (!AABB_Contain_AABB(mesh->bound_box.min_v, mesh->bound_box.max_v, min_v, max_v)) {
@@ -677,7 +683,7 @@ static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t mi
 	return 1;
 }
 
-static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_t* obb) {
+static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_t* obb) noexcept {
 	CCTNum_t p[8][3];
 	unsigned int i;
 	mathOBBVertices(obb, p);
@@ -689,7 +695,7 @@ static int ConvexMesh_Contain_OBB(const GeometryMesh_t* mesh, const GeometryOBB_
 	return 1;
 }
 
-static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t o[3], CCTNum_t radius) {
+static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t o[3], CCTNum_t radius) noexcept {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		const GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -703,7 +709,7 @@ static int ConvexMesh_Contain_Sphere(const GeometryMesh_t* mesh, const CCTNum_t 
 	return 1;
 }
 
-static int ConvexMesh_Contain_Capsule(const GeometryMesh_t* mesh, const GeometryCapsule_t* capsule) {
+static int ConvexMesh_Contain_Capsule(const GeometryMesh_t* mesh, const GeometryCapsule_t* capsule) noexcept {
 	CCTNum_t sp_o[3];
 	mathVec3Copy(sp_o, capsule->o);
 	mathVec3SubScalar(sp_o, capsule->axis, capsule->half);
@@ -714,7 +720,7 @@ static int ConvexMesh_Contain_Capsule(const GeometryMesh_t* mesh, const Geometry
 	return ConvexMesh_Contain_Sphere(mesh, sp_o, capsule->radius);
 }
 
-static int ConvexMesh_Contain_VerticeIndices(const GeometryMesh_t* mesh, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+static int ConvexMesh_Contain_VerticeIndices(const GeometryMesh_t* mesh, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) noexcept {
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
@@ -725,7 +731,7 @@ static int ConvexMesh_Contain_VerticeIndices(const GeometryMesh_t* mesh, const C
 	return 1;
 }
 
-static int OBB_Contain_VerticeIndices(const GeometryOBB_t* obb, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+static int OBB_Contain_VerticeIndices(const GeometryOBB_t* obb, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) noexcept {
 	size_t i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
@@ -736,7 +742,7 @@ static int OBB_Contain_VerticeIndices(const GeometryOBB_t* obb, const CCTNum_t(*
 	return 1;
 }
 
-static int AABB_Contain_VerticeIndices(const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3], const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+static int AABB_Contain_VerticeIndices(const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3], const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) noexcept {
 	size_t i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
@@ -747,7 +753,7 @@ static int AABB_Contain_VerticeIndices(const CCTNum_t aabb_min_v[3], const CCTNu
 	return 1;
 }
 
-static int Sphere_Contain_VerticeIndices(const CCTNum_t o[3], CCTNum_t r, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+static int Sphere_Contain_VerticeIndices(const CCTNum_t o[3], CCTNum_t r, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) noexcept {
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
@@ -758,7 +764,7 @@ static int Sphere_Contain_VerticeIndices(const CCTNum_t o[3], CCTNum_t r, const 
 	return 1;
 }
 
-static int Capsule_Contain_VerticeIndices(const GeometryCapsule_t* capsule, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) {
+static int Capsule_Contain_VerticeIndices(const GeometryCapsule_t* capsule, const CCTNum_t(*v)[3], const unsigned int* v_indices, size_t v_indices_cnt) noexcept {
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
@@ -769,13 +775,13 @@ static int Capsule_Contain_VerticeIndices(const GeometryCapsule_t* capsule, cons
 	return 1;
 }
 
-static int Capsule_Contain_Sphere(const GeometryCapsule_t* capsule, const CCTNum_t o[3], CCTNum_t r) {
+static int Capsule_Contain_Sphere(const GeometryCapsule_t* capsule, const CCTNum_t o[3], CCTNum_t r) noexcept {
 	CCTNum_t closest_p[3];
 	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
 	return Sphere_Contain_Sphere(closest_p, capsule->radius, o, r);
 }
 
-static int Capsule_Contain_Capsule(const GeometryCapsule_t* capsule1, const GeometryCapsule_t* capsule2) {
+static int Capsule_Contain_Capsule(const GeometryCapsule_t* capsule1, const GeometryCapsule_t* capsule2) noexcept {
 	CCTNum_t sp_o[3];
 	mathVec3Copy(sp_o, capsule2->o);
 	mathVec3SubScalar(sp_o, capsule2->axis, capsule2->half);
@@ -794,7 +800,7 @@ static int Capsule_Contain_Capsule(const GeometryCapsule_t* capsule1, const Geom
 extern "C" {
 #endif
 
-int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) {
+int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) noexcept {
 	if (geo_data1 == geo_data2) {
 		return 1;
 	}

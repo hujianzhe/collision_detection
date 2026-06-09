@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 
-void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
+void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) noexcept {
 	int i;
 	CCTNum_t axis_edge[2][3];
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, axis_edge[0], axis_edge[1]);
@@ -29,7 +29,7 @@ void mathCapsuleFindMaxMinXYZ(const GeometryCapsule_t* capsule, CCTNum_t v_minXY
 	}
 }
 
-void mathCapsuleComputeExtendOBB(const GeometryCapsule_t* capsule, const CCTNum_t radius_axis1[3], GeometryOBB_t* obb) {
+void mathCapsuleComputeExtendOBB(const GeometryCapsule_t* capsule, const CCTNum_t radius_axis1[3], GeometryOBB_t* obb) noexcept {
 	mathVec3Copy(obb->o, capsule->o);
 	obb->half[0] = capsule->half + capsule->radius;
 	obb->half[1] = capsule->radius;

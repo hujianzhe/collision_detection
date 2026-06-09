@@ -32,39 +32,39 @@ enum {
 extern "C" {
 #endif
 
-__declspec_dll int mathGeometryCheckParametersValid(const void* geo_data, int geo_type);
+__declspec_dll int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) noexcept;
 
-__declspec_dll size_t mathGeometrySize(int geo_type);
+__declspec_dll size_t mathGeometrySize(int geo_type) noexcept;
 
-__declspec_dll size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes);
-__declspec_dll int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len);
-__declspec_dll size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t len, const CCTAllocator_t* ac);
-__declspec_dll size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh);
+__declspec_dll size_t mathGeometryBinaryStreamSave(const void* geo_data, int geo_type, void* buffer, size_t nbytes) noexcept;
+__declspec_dll int mathGeometryBinaryStreamLoadGeometryType(const void* buffer, size_t len) noexcept;
+__declspec_dll size_t mathGeometryBinaryStreamLoad(void* geo_data, const void* buffer, size_t len, const CCTAllocator_t* ac) noexcept;
+__declspec_dll size_t mathGeometryBinaryStreamView(const void** geo_ptr, const void* buffer, size_t len, GeometryMesh_t* mesh) noexcept;
 
-__declspec_dll void* mathGeometryClone(void* dst_data, int* dst_type, const void* src_geo_data, int src_geo_type);
-__declspec_dll void mathGeometryClear(void* geo_data, int geo_type);
-__declspec_dll void mathGeometryClearBody(GeometryBody_t* b);
+__declspec_dll void* mathGeometryClone(void* dst_data, int* dst_type, const void* src_geo_data, int src_geo_type) noexcept;
+__declspec_dll void mathGeometryClear(void* geo_data, int geo_type) noexcept;
+__declspec_dll void mathGeometryClearBody(GeometryBody_t* b) noexcept;
 
-__declspec_dll CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]);
-__declspec_dll void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]);
+__declspec_dll CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]) noexcept;
+__declspec_dll void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) noexcept;
 
-__declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb);
-__declspec_dll CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type);
-__declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate);
+__declspec_dll GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb) noexcept;
+__declspec_dll CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) noexcept;
+__declspec_dll GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate) noexcept;
 
-__declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]);
-__declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian);
-__declspec_dll CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]);
+__declspec_dll int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) noexcept;
+__declspec_dll int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) noexcept;
+__declspec_dll CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]) noexcept;
 
-__declspec_dll int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]);
-__declspec_dll int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian);
+__declspec_dll int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) noexcept;
+__declspec_dll int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian) noexcept;
 
-__declspec_dll CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]);
-__declspec_dll CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]);
+__declspec_dll CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) noexcept;
+__declspec_dll CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]) noexcept;
 
-__declspec_dll int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
-__declspec_dll int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2);
-__declspec_dll CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result);
+__declspec_dll int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) noexcept;
+__declspec_dll int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) noexcept;
+__declspec_dll CCTSweepResult_t* mathGeometrySweep(const void* geo_data1, int geo_type1, const CCTNum_t dir[3], const void* geo_data2, int geo_type2, CCTSweepResult_t* result) noexcept;
 
 #ifdef	__cplusplus
 }

@@ -4,7 +4,7 @@
 static CCTNum_t plane_signed_distance_unnorm(const CCTNum_t a[3],
                                              const CCTNum_t b[3],
                                              const CCTNum_t c[3],
-                                             const CCTNum_t p[3]) {
+                                             const CCTNum_t p[3]) noexcept {
 	CCTNum_t ab[3], ac[3], ap[3], n[3];
 	mathVec3Sub(ab, b, a);
 	mathVec3Sub(ac, c, a);
@@ -15,7 +15,7 @@ static CCTNum_t plane_signed_distance_unnorm(const CCTNum_t a[3],
 
 static CCTNum_t cross_2d(const CCTNum_t a[2],
                          const CCTNum_t b[2],
-                         const CCTNum_t c[2]) {
+                         const CCTNum_t c[2]) noexcept {
 	CCTNum_t abx = b[0] - a[0];
 	CCTNum_t aby = b[1] - a[1];
 	CCTNum_t acx = c[0] - a[0];
@@ -25,7 +25,7 @@ static CCTNum_t cross_2d(const CCTNum_t a[2],
 
 static void sort_indices_by_proj_2d(const CCTNum_t *proj,
                                     unsigned int *idx,
-                                    unsigned int n) {
+                                    unsigned int n) noexcept {
 	unsigned int i, j;
 	for (i = 0; i < n; ++i) {
 		idx[i] = i;
@@ -47,7 +47,7 @@ static void project_points_onto_2d(const CCTNum_t (*v)[3],
                                    unsigned int v_cnt,
                                    const unsigned int i_arr[3],
                                    CCTNum_t *proj,
-                                   unsigned int *idx) {
+                                   unsigned int *idx) noexcept {
 	unsigned int i0 = i_arr[0];
 	unsigned int i1 = i_arr[1];
 	unsigned int i2 = i_arr[2];
@@ -94,7 +94,7 @@ static void init_tetra_faces(const CCTNum_t (*v)[3],
                              unsigned int *fa,
                              unsigned int *fb,
                              unsigned int *fc,
-                             unsigned char *fvalid) {
+                             unsigned char *fvalid) noexcept {
 	unsigned int i0 = i_arr[0];
 	unsigned int i1 = i_arr[1];
 	unsigned int i2 = i_arr[2];
@@ -127,7 +127,7 @@ static int build_convex_hull_2d_chain(const CCTNum_t *proj,
                                       const unsigned int *idx,
                                       unsigned int **out_hull,
                                       unsigned int *out_h_cnt,
-                                      const CCTAllocator_t* ac) {
+                                      const CCTAllocator_t* ac) noexcept {
 	unsigned int *hull;
 	unsigned int h_cnt, lower_size;
 	unsigned int k;
@@ -192,7 +192,7 @@ static int triangulate_convex_hull_2d(const unsigned int *hull,
                                       unsigned int h_cnt,
                                       unsigned int **out_faces,
                                       unsigned int *out_tri_v_indices_cnt,
-                                      const CCTAllocator_t* ac) {
+                                      const CCTAllocator_t* ac) noexcept {
 	unsigned int tri_cnt, t;
 	unsigned int *faces, *p;
 	if (h_cnt < 3) {
@@ -219,7 +219,7 @@ static int build_convex_hull_2d(const CCTNum_t (*v)[3],
                                 const unsigned int i_arr[3],
                                 unsigned int **ret_tri_v_indices,
                                 unsigned int *ret_tri_v_indices_cnt,
-                                const CCTAllocator_t* ac) {
+                                const CCTAllocator_t* ac) noexcept {
 	CCTNum_t *proj = NULL;
 	unsigned int *idx = NULL;
 	unsigned int *hull = NULL;
@@ -259,7 +259,7 @@ static int collect_convex_hull_faces(unsigned int face_cnt,
                                     const unsigned char *fvalid,
                                     unsigned int **ret_tri_v_indices,
                                     unsigned int *ret_tri_v_indices_cnt,
-                                    const CCTAllocator_t* ac) {
+                                    const CCTAllocator_t* ac) noexcept {
 	unsigned int n = 0;
 	unsigned int f;
 	unsigned int *out;
@@ -288,7 +288,7 @@ static int collect_convex_hull_faces(unsigned int face_cnt,
 	return 1;
 }
 
-static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int i_arr[4], unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) {
+static int build_convex_hull_3d(const CCTNum_t (*v)[3], unsigned int v_cnt, const unsigned int i_arr[4], unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	CCTNum_t interior[3];
 	unsigned int i0 = i_arr[0];
 	unsigned int i1 = i_arr[1];
@@ -526,7 +526,7 @@ cleanup:
 	return ret;
 }
 
-static int init_tetrahedron_indices(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int i_arr[4], int *coplanar_non_degenerate) {
+static int init_tetrahedron_indices(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int i_arr[4], int *coplanar_non_degenerate) noexcept {
 	unsigned int i;
 	CCTNum_t maxd2 = CCTNum(0.0);
 	CCTNum_t max_area2 = CCTNum(0.0);
@@ -593,7 +593,7 @@ static int init_tetrahedron_indices(const CCTNum_t (*v)[3], unsigned int v_cnt, 
 extern "C" {
 #endif
 
-int mathCookingConvexHull(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) {
+int mathCookingConvexHull(const CCTNum_t (*v)[3], unsigned int v_cnt, unsigned int **ret_tri_v_indices, unsigned int *ret_tri_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	*ret_tri_v_indices_cnt = 0;
 	*ret_tri_v_indices = NULL;
 

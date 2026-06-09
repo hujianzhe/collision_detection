@@ -15,23 +15,29 @@
 #include "../inc/geometry_closest.h"
 #include "../inc/geometry_api.h"
 
-extern const CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern CCTConstVal_t CCTConstVal_;
+#ifdef __cplusplus
+}
+#endif
 
-extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
-extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]);
-extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi);
-extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]);
-extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]);
-extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]);
-extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]);
-extern CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len);
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) noexcept;
+extern int Sphere_Contain_Point(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t p[3]) noexcept;
+extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) noexcept;
+extern int Polygon_Contain_Point_SamePlane(const GeometryPolygon_t* polygon, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept;
+extern int Polygon_Contain_Point(const GeometryPolygon_t* polygon, const CCTNum_t p[3]) noexcept;
+extern int OBB_Contain_Point(const GeometryOBB_t* obb, const CCTNum_t p[3]) noexcept;
+extern int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) noexcept;
+extern int Capsule_Contain_Point(const GeometryCapsule_t* capsule, const CCTNum_t p[3]) noexcept;
+extern CCTNum_t Segment_ClosestLenSq_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls1_dir[3], CCTNum_t ls1_len, const CCTNum_t ls2[2][3], const CCTNum_t ls2_dir[3], CCTNum_t ls2_len) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) noexcept {
 	CCTNum_t n[3];
 	mathVec3Cross(n, n1, n2);
 	if (!mathVec3IsZero(n)) {
@@ -40,7 +46,7 @@ static int Plane_Intersect_Plane(const CCTNum_t v1[3], const CCTNum_t n1[3], con
 	return Plane_Contain_Point(v1, n1, v2) ? 2 : 0;
 }
 
-int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) noexcept {
 	CCTNum_t d, cos_theta;
 	d = mathPointProjectionPlane(o, plane_v, plane_n);
 	if (CCTNum(0.0) == d) {
@@ -57,7 +63,7 @@ int Ray_Intersect_Plane(const CCTNum_t o[3], const CCTNum_t dir[3], const CCTNum
 	return 1;
 }
 
-static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) noexcept {
 	int flag_sign = 0;
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
@@ -81,7 +87,7 @@ static int Vertices_Intersect_Plane(const CCTNum_t(*v)[3], const unsigned int* v
 	return 0;
 }
 
-static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) {
+static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls2[2][3]) noexcept {
 	CCTNum_t d, ls1_len, cos_theta;
 	CCTNum_t v[3], N[3], p[3];
 	CCTNum_t ls1_dir[3], ls2_dir[3];
@@ -162,7 +168,7 @@ static int Segment_Intersect_Segment(const CCTNum_t ls1[2][3], const CCTNum_t ls
 	return d <= CCTNum(0.0);
 }
 
-int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t intersect_p[3], CCTNum_t d[3]) {
+int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t intersect_p[3], CCTNum_t d[3]) noexcept {
 	CCTNum_t temp_d[3];
 	if (!d) {
 		d = temp_d;
@@ -208,7 +214,7 @@ int Segment_Intersect_Plane(const CCTNum_t ls[2][3], const CCTNum_t plane_v[3], 
 	return 1;
 }
 
-int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side) {
+int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept {
 	unsigned int i, polygon_edge_v_indices_cnt;
 	CCTNum_t p[3], d[3];
 	int res = Segment_Intersect_Plane(ls, polygon->v[polygon->v_indices[0]], polygon->normal, p, d);
@@ -239,7 +245,7 @@ int Segment_Intersect_Polygon(const CCTNum_t ls[2][3], const GeometryPolygon_t* 
 	return 0;
 }
 
-int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) {
+int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	if (ConvexMesh_Contain_Point(mesh, ls[0])) {
 		return 1;
@@ -255,14 +261,14 @@ int Segment_Intersect_ConvexMesh(const CCTNum_t ls[2][3], const GeometryMesh_t* 
 	return 0;
 }
 
-static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) {
+static int Segment_Intersect_Capsule(const CCTNum_t ls[2][3], const GeometryCapsule_t* capsule) noexcept {
 	CCTNum_t edge[2][3], min_lensq;
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	min_lensq = Segment_ClosestLenSq_Segment(ls, NULL, 0, (const CCTNum_t(*)[3])edge, capsule->axis, capsule->half + capsule->half);
 	return min_lensq <= CCTNum_sq(capsule->radius);
 }
 
-int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) {
+int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryPolygon_t* polygon2, int* ret_plane_side) noexcept {
 	int plane_side = 0;
 	unsigned int i, polygon2_edge_v_indices_cnt;
 	unsigned int polygon1_edge_v_indices_cnt = polygon1->edge_cnt + polygon1->edge_cnt;
@@ -303,7 +309,7 @@ int Polygon_Intersect_Polygon(const GeometryPolygon_t* polygon1, const GeometryP
 	return 0;
 }
 
-int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side) {
+int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept {
 	int plane_side = 0;
 	unsigned int i, polygon_edge_v_indices_cnt;
 	unsigned int mesh_edge_v_indices_cnt = mesh->edge_cnt + mesh->edge_cnt;
@@ -344,7 +350,7 @@ int ConvexMesh_Intersect_Polygon(const GeometryMesh_t* mesh, const GeometryPolyg
 	return 0;
 }
 
-static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) noexcept {
 	CCTNum_t edge[2][3], d[3], abs_d;
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, edge[0], edge[1]);
 	if (Segment_Intersect_Plane((const CCTNum_t(*)[3])edge, plane_v, plane_n, NULL, d)) {
@@ -360,13 +366,13 @@ static int Capsule_Intersect_Plane(const GeometryCapsule_t* capsule, const CCTNu
 	return 1;
 }
 
-static void capsule_fill_extra(const GeometryCapsule_t* capsule, GeometryCapsuleExtra_t* capsule_extra) {
+static void capsule_fill_extra(const GeometryCapsule_t* capsule, GeometryCapsuleExtra_t* capsule_extra) noexcept {
 	mathTwoVertexFromCenterHalf(capsule->o, capsule->axis, capsule->half, capsule_extra->axis_edge[0], capsule_extra->axis_edge[1]);
 	capsule_extra->axis_len = capsule->half + capsule->half;
 	capsule_extra->radius_sq = CCTNum_sq(capsule->radius);
 }
 
-int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) {
+int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCapsuleExtra_t* capsule_extra, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept {
 	int res, i, polygon_edge_v_indices_cnt;
 	CCTNum_t p[3], d[3];
 	if (ret_plane_side) {
@@ -437,7 +443,7 @@ int Capsule_Intersect_Polygon(const GeometryCapsule_t* capsule, const GeometryCa
 	return 0;
 }
 
-int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh) {
+int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	struct GeometryCapsuleExtra_t capsule_extra;
 	if (ConvexMesh_Contain_Point(mesh, capsule->o)) {
@@ -461,7 +467,7 @@ int Capsule_Intersect_ConvexMesh(const GeometryCapsule_t* capsule, const Geometr
 	return 0;
 }
 
-static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const GeometryCapsule_t* c2) {
+static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const GeometryCapsule_t* c2) noexcept {
 	CCTNum_t c1_edge[2][3], c2_edge[2][3], min_lensq, radius_sum;
 	mathTwoVertexFromCenterHalf(c1->o, c1->axis, c1->half, c1_edge[0], c1_edge[1]);
 	mathTwoVertexFromCenterHalf(c2->o, c2->axis, c2->half, c2_edge[0], c2_edge[1]);
@@ -473,7 +479,7 @@ static int Capsule_Intersect_Capsule(const GeometryCapsule_t* c1, const Geometry
 	return min_lensq <= CCTNum_sq(radius_sum) + CCT_EPSILON;
 }
 
-int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) {
+int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t ls0[3], const CCTNum_t ls1[3]) noexcept {
 	CCTNum_t lensq, radius_sq;
 	CCTNum_t closest_p[3];
 	mathSegmentClosestPoint(ls0, ls1, o, closest_p);
@@ -488,7 +494,7 @@ int Sphere_Intersect_Segment(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_
 	return 1;
 }
 
-static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const GeometryCapsule_t* capsule) {
+static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const GeometryCapsule_t* capsule) noexcept {
 	CCTNum_t lensq, radius_sq;
 	CCTNum_t closest_p[3];
 	mathSegmentClosestPoint_v2(capsule->o, capsule->axis, capsule->half, o, closest_p);
@@ -503,7 +509,7 @@ static int Sphere_Intersect_Capsule(const CCTNum_t o[3], CCTNum_t radius, const 
 	return 1;
 }
 
-int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) {
+int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], CCTNum_t new_o[3], CCTNum_t* new_r) noexcept {
 	CCTNum_t abs_d, d;
 	d = mathPointProjectionPlane(o, plane_v, plane_normal);
 	if (new_o) {
@@ -529,7 +535,7 @@ int Sphere_Intersect_Plane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t 
 	return 2;
 }
 
-int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, int* ret_plane_side) {
+int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const GeometryPolygon_t* polygon, int* ret_plane_side) noexcept {
 	int res;
 	unsigned int i, polygon_edge_v_indices_cnt;
 	CCTNum_t p[3];
@@ -563,7 +569,7 @@ int Sphere_Intersect_Polygon(const CCTNum_t o[3], CCTNum_t radius, const Geometr
 	return 0;
 }
 
-int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) {
+int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	if (ConvexMesh_Contain_Point(mesh, o)) {
 		return 1;
@@ -577,14 +583,14 @@ int Sphere_Intersect_ConvexMesh(const CCTNum_t o[3], CCTNum_t radius, const Geom
 	return 0;
 }
 
-int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) {
+int Sphere_Intersect_OBB(const CCTNum_t o[3], CCTNum_t radius, const GeometryOBB_t* obb) noexcept {
 	CCTNum_t v[3];
 	mathOBBClosestPoint(obb, o, v);
 	mathVec3Sub(v, o, v);
 	return mathVec3LenSq(v) <= CCTNum_sq(radius);
 }
 
-static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) {
+static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTNum_t o2[3], CCTNum_t r2, CCTNum_t p[3]) noexcept {
 	CCTNum_t o1o2[3];
 	CCTNum_t o1o2_lensq, radius_sum_sq = CCTNum_sq(r1 + r2);
 	mathVec3Sub(o1o2, o2, o1);
@@ -602,14 +608,14 @@ static int Sphere_Intersect_Sphere(const CCTNum_t o1[3], CCTNum_t r1, const CCTN
 	return 1;
 }
 
-static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3]) {
+static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, const CCTNum_t aabb_min_v[3], const CCTNum_t aabb_max_v[3]) noexcept {
 	CCTNum_t closest_v[3];
 	mathAABBClosestPoint(aabb_min_v, aabb_max_v, sp_o, closest_v);
 	mathVec3Sub(closest_v, closest_v, sp_o);
 	return mathVec3LenSq(closest_v) <= CCTNum_sq(sp_radius);
 }
 
-static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls[2][3]) {
+static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls[2][3]) noexcept {
 	int i;
 	CCTNum_t v[8][3];
 	if (AABB_Contain_Point(min_v, max_v, ls[0]) || AABB_Contain_Point(min_v, max_v, ls[1])) {
@@ -626,7 +632,7 @@ static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[
 	return 0;
 }
 
-static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) {
+static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) noexcept {
 	int i;
 	CCTNum_t v[8][3];
 	if (OBB_Contain_Point(obb, ls[0]) || OBB_Contain_Point(obb, ls[1])) {
@@ -643,7 +649,7 @@ static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* o
 	return 0;
 }
 
-int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
+int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) noexcept {
 	/* these code is copy from PhysX-3.4 */
 	CCTNum_t v[3], T[3];
 	CCTNum_t R[3][3], FR[3][3], ra, rb, t;
@@ -758,7 +764,7 @@ int OBB_Intersect_OBB(const GeometryOBB_t* obb0, const GeometryOBB_t* obb1) {
 	return 1;
 }
 
-int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) {
+int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryMesh_t* mesh2) noexcept {
 	unsigned int i;
 	for (i = 0; i < mesh1->v_indices_cnt; ++i) {
 		const CCTNum_t* p = mesh1->v[mesh1->v_indices[i]];
@@ -782,7 +788,7 @@ int ConvexMesh_Intersect_ConvexMesh(const GeometryMesh_t* mesh1, const GeometryM
 extern "C" {
 #endif
 
-int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) {
+int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_data2, int geo_type2) noexcept {
 	GeometryBoxMesh_t box_data;
 	const GeometryMesh_t* mesh2;
 	if (geo_data1 == geo_data2) {

@@ -32,8 +32,8 @@ typedef struct MeshCookingOutput_t {
 extern "C" {
 #endif
 
-__declspec_dll int mathCookingConvexHull(const CCTNum_t(*v)[3], unsigned int v_cnt, unsigned int** ret_tri_v_indices, unsigned int* ret_tri_v_indices_cnt, const CCTAllocator_t* ac);
-__declspec_dll const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac);
+__declspec_dll int mathCookingConvexHull(const CCTNum_t(*v)[3], unsigned int v_cnt, unsigned int** ret_tri_v_indices, unsigned int* ret_tri_v_indices_cnt, const CCTAllocator_t* ac) noexcept;
+__declspec_dll const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) noexcept;
 
 #ifdef	__cplusplus
 }

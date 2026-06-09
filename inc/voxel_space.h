@@ -49,22 +49,22 @@ typedef struct VoxelSpaceFinder_t {
 extern "C" {
 #endif
 
-__declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3], int alloc_nodes);
+__declspec_dll VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t split_size[3], int alloc_nodes) noexcept;
 
-__declspec_dll void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z);
-__declspec_dll size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
-__declspec_dll void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]);
-__declspec_dll const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z);
+__declspec_dll void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z) noexcept;
+__declspec_dll size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) noexcept;
+__declspec_dll void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]) noexcept;
+__declspec_dll const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) noexcept;
 
-__declspec_dll VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]);
-__declspec_dll VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3]));
-__declspec_dll void voxelspaceRemove(VoxelSpaceObject_t* obj);
+__declspec_dll VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept;
+__declspec_dll VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3])) noexcept;
+__declspec_dll void voxelspaceRemove(VoxelSpaceObject_t* obj) noexcept;
 
-__declspec_dll VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder);
-__declspec_dll VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder);
+__declspec_dll VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) noexcept;
+__declspec_dll VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) noexcept;
 
-__declspec_dll void voxelspaceClear(VoxelSpace_t* vs);
-__declspec_dll void voxelspaceDestroy(VoxelSpace_t* vs);
+__declspec_dll void voxelspaceClear(VoxelSpace_t* vs) noexcept;
+__declspec_dll void voxelspaceDestroy(VoxelSpace_t* vs) noexcept;
 
 #ifdef __cplusplus
 }

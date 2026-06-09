@@ -10,23 +10,23 @@
 #include "../inc/mesh.h"
 #include "../inc/cooking.h"
 
-extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac);
-extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]);
-extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]);
-extern int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt);
-extern int MeshVertices_IsConvex(const GeometryMesh_t* mesh);
-extern int Mesh_IsClosed(const GeometryMesh_t* mesh);
-extern int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac);
-extern int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac);
-extern int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac);
-extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac);
-extern int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]);
+extern void Polygon_ClearWithoutVertices(GeometryPolygon_t* polygon, const CCTAllocator_t* ac) noexcept;
+extern int Segment_Contain_Point(const CCTNum_t ls0[3], const CCTNum_t ls1[3], const CCTNum_t p[3]) noexcept;
+extern int Plane_Contain_Point(const CCTNum_t plane_v[3], const CCTNum_t plane_normal[3], const CCTNum_t p[3]) noexcept;
+extern int Polygon_IsConvex(const CCTNum_t(*v)[3], const CCTNum_t normal[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* v_indices, unsigned int v_indices_cnt) noexcept;
+extern int MeshVertices_IsConvex(const GeometryMesh_t* mesh) noexcept;
+extern int Mesh_IsClosed(const GeometryMesh_t* mesh) noexcept;
+extern int MeshVertexAdjacentInfo_GetFaceIds(GeometryMeshVertexAdjacentInfo_t* info, const GeometryPolygon_t* polygons, unsigned int polygons_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept;
+extern int MeshVertexAdjacentInfo_GetEdgeIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept;
+extern int MeshVertexAdjacentInfo_GetVertexIds(GeometryMeshVertexAdjacentInfo_t* info, const unsigned int* edge_v_ids_flat, unsigned int edge_cnt, unsigned int v_id, const CCTAllocator_t* ac) noexcept;
+extern void MeshVertexAdjacentInfo_free(GeometryMeshVertexAdjacentInfo_t* info, const CCTAllocator_t* ac) noexcept;
+extern int MeshEdgeAdjacentFace(const GeometryPolygon_t* polygons, unsigned int polygons_cnt, const unsigned int* edge_v_indices_flat, unsigned int edge_id, unsigned int adjacent_faces_ids[2]) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static GeometryPolygon_t* _polygon_insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int tri_v_indices[3], const CCTAllocator_t* ac) {
+static GeometryPolygon_t* _polygon_insert_tri_indices(GeometryPolygon_t* polygon, const unsigned int tri_v_indices[3], const CCTAllocator_t* ac) noexcept {
 	unsigned int cnt = polygon->tri_cnt * 3;
 	unsigned int* new_p = (unsigned int*)ac->fn_realloc(ac, (void*)polygon->tri_v_indices_flat, sizeof(polygon->tri_v_indices_flat[0]) * (cnt + 3));
 	if (!new_p) {
@@ -40,7 +40,7 @@ static GeometryPolygon_t* _polygon_insert_tri_indices(GeometryPolygon_t* polygon
 	return polygon;
 }
 
-static GeometryPolygon_t* _polygon_init(GeometryPolygon_t* new_pg, const CCTNum_t(*v)[3], const CCTNum_t N[3], const unsigned int tri_v_indices[3], const CCTAllocator_t* ac) {
+static GeometryPolygon_t* _polygon_init(GeometryPolygon_t* new_pg, const CCTNum_t(*v)[3], const CCTNum_t N[3], const unsigned int tri_v_indices[3], const CCTAllocator_t* ac) noexcept {
 	new_pg->tri_v_indices_flat = NULL;
 	new_pg->tri_cnt = 0;
 	if (!_polygon_insert_tri_indices(new_pg, tri_v_indices, ac)) {
@@ -63,7 +63,7 @@ static GeometryPolygon_t* _polygon_init(GeometryPolygon_t* new_pg, const CCTNum_
 	return new_pg;
 }
 
-static int _check_tri_valid(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, CCTNum_t min_edge_len, CCTNum_t cos_min_degree) {
+static int _check_tri_valid(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, CCTNum_t min_edge_len, CCTNum_t cos_min_degree) noexcept {
 	CCTNum_t e01[3], e02[3], e12[3], cos_d, len;
 	mathVec3Sub(e01, v[tri_v_indices[1]], v[tri_v_indices[0]]);
 	mathVec3Sub(e02, v[tri_v_indices[2]], v[tri_v_indices[0]]);
@@ -95,14 +95,14 @@ static int _check_tri_valid(const CCTNum_t(*v)[3], const unsigned int* tri_v_ind
 	return 1;
 }
 
-static void _save_invalid_triangle(MeshCookingOutput_t* output, const CCTNum_t(*v)[3], const unsigned int tri_v_indices[3]) {
+static void _save_invalid_triangle(MeshCookingOutput_t* output, const CCTNum_t(*v)[3], const unsigned int tri_v_indices[3]) noexcept {
 	output->err = MESH_COOKING_ERR_INVALID_TRIANGLES;
 	mathVec3Copy(output->invalid_tri_v[0], v[tri_v_indices[0]]);
 	mathVec3Copy(output->invalid_tri_v[1], v[tri_v_indices[1]]);
 	mathVec3Copy(output->invalid_tri_v[2], v[tri_v_indices[2]]);
 }
 
-static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
+static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_t p0[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) noexcept {
 	unsigned int i, polygon_tri_v_indices_cnt;
 	const CCTNum_t* tri_p[] = { p0, p1, p2 };
 	for (i = 0; i < 3; ++i) {
@@ -198,7 +198,7 @@ static int _polygon_can_merge_triangle(GeometryPolygon_t* polygon, const CCTNum_
 	return 0;
 }
 
-static int MathCookingStage_DistinctVertices(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices, const CCTAllocator_t* ac) {
+static int MathCookingStage_DistinctVertices(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, CCTNum_t(**ret_v)[3], unsigned int* ret_v_cnt, unsigned int** ret_tri_v_indices, const CCTAllocator_t* ac) noexcept {
 	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt, i;
 	CCTNum_t(*dup_v)[3] = NULL, (*tmp_v)[3] = NULL;
@@ -233,7 +233,7 @@ err:
 	return 0;
 }
 
-static int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
+static int MeshCookingStage_SplitFaces(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, GeometryPolygon_t** ret_polygons, unsigned int* ret_polygons_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, tri_cnt, tmp_polygons_cnt = 0;
 	char* tri_merge_bits = NULL;
 	GeometryPolygon_t* tmp_polygons = NULL;
@@ -343,7 +343,7 @@ err:
 	return 0;
 }
 
-static int MeshCookingStage_GenerateFaceEdges(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt, const CCTAllocator_t* ac) {
+static int MeshCookingStage_GenerateFaceEdges(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTNum_t plane_n[3], unsigned int** ret_edge_v_indices, unsigned int* ret_edge_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, j;
 	unsigned int* tmp_edge_pair_indices = NULL;
 	unsigned int tmp_edge_pair_indices_cnt = 0;
@@ -508,7 +508,7 @@ err:
 	return 0;
 }
 
-static int MeshCookingStage_GenerateIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat, const CCTAllocator_t* ac) {
+static int MeshCookingStage_GenerateIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int** ret_v_indices, unsigned int* ret_v_indices_cnt, unsigned int** ret_edge_v_ids_flat, const CCTAllocator_t* ac) noexcept {
 	unsigned int* tmp_edge_v_ids_flat;
 	unsigned int* tmp_v_indices;
 	unsigned int tmp_v_indices_cnt, i;
@@ -554,7 +554,7 @@ static int MeshCookingStage_GenerateIndices(const unsigned int* edge_v_indices_f
 	return 1;
 }
 
-static unsigned int MeshCookingStage_MergeFaceEdges(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) {
+static unsigned int MeshCookingStage_MergeFaceEdges(unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const GeometryPolygon_t* polygon) noexcept {
 	unsigned int i, polygon_edge_v_indices_cnt = polygon->edge_cnt + polygon->edge_cnt;
 	for (i = 0; i < polygon_edge_v_indices_cnt; i += 2) {
 		unsigned int j;
@@ -575,7 +575,7 @@ static unsigned int MeshCookingStage_MergeFaceEdges(unsigned int* edge_v_indices
 	return edge_v_indices_cnt;
 }
 
-static GeometryPolygonVertexAdjacentInfo_t* Polygon_VertexAdjacentInfo(const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info) {
+static GeometryPolygonVertexAdjacentInfo_t* Polygon_VertexAdjacentInfo(const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, unsigned int v_id, GeometryPolygonVertexAdjacentInfo_t* info) noexcept {
 	unsigned int i, j = 0;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		if (edge_v_ids_flat[i++] == v_id) {
@@ -598,7 +598,7 @@ static GeometryPolygonVertexAdjacentInfo_t* Polygon_VertexAdjacentInfo(const uns
 	return NULL;
 }
 
-static unsigned int find_edge_id(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) {
+static unsigned int find_edge_id(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) noexcept {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		const CCTNum_t* edge_v0 = v[edge_v_indices_flat[i++]];
@@ -610,7 +610,7 @@ static unsigned int find_edge_id(const CCTNum_t(*v)[3], const unsigned int* edge
 	return -1;
 }
 
-static unsigned int* Cooking_ConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt, const CCTAllocator_t* ac) {
+static unsigned int* Cooking_ConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const unsigned int* tri_v_indices_flat, unsigned int tri_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, j;
 	unsigned int* tri_edge_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(tri_edge_ids[0]) * tri_v_indices_cnt);
 	if (!tri_edge_ids) {
@@ -640,7 +640,7 @@ static unsigned int* Cooking_ConcavePolygonTriangleEdge(const CCTNum_t(*v)[3], c
 	return tri_edge_ids;
 }
 
-static unsigned int* Cooking_ConcavePolygonTriangleVertex(const unsigned int* v_indices, unsigned int v_indices_cnt, const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTAllocator_t* ac) {
+static unsigned int* Cooking_ConcavePolygonTriangleVertex(const unsigned int* v_indices, unsigned int v_indices_cnt, const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, j;
 	unsigned int* tri_v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(tri_v_ids[0]) * tri_v_indices_cnt);
 	if (!tri_v_ids) {
@@ -660,7 +660,7 @@ static unsigned int* Cooking_ConcavePolygonTriangleVertex(const unsigned int* v_
 	return tri_v_ids;
 }
 
-static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_v_indices, unsigned int mesh_edge_v_indices_cnt, const CCTAllocator_t* ac) {
+static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_edge_v_indices, unsigned int mesh_edge_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i, polygon_edge_v_indices_cnt;
 	unsigned int* mesh_edge_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(mesh_edge_ids[0]) * polygon->edge_cnt);
 	if (!mesh_edge_ids) {
@@ -681,7 +681,7 @@ static unsigned int* Polygon_Save_MeshEdgeIds(const GeometryPolygon_t* polygon, 
 	return mesh_edge_ids;
 }
 
-static unsigned int* Polygon_Save_MeshVertexIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_v_indices, unsigned int mesh_v_indices_cnt, const CCTAllocator_t* ac) {
+static unsigned int* Polygon_Save_MeshVertexIds(const GeometryPolygon_t* polygon, const unsigned int* mesh_v_indices, unsigned int mesh_v_indices_cnt, const CCTAllocator_t* ac) noexcept {
 	unsigned int i;
 	unsigned int* mesh_v_ids = (unsigned int*)ac->fn_malloc(ac, sizeof(mesh_v_ids[0]) * polygon->v_indices_cnt);
 	if (!mesh_v_ids) {
@@ -704,7 +704,7 @@ static unsigned int* Polygon_Save_MeshVertexIds(const GeometryPolygon_t* polygon
 	return mesh_v_ids;
 }
 
-static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
+static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) noexcept {
 	unsigned int i;
 	for (i = 0; i < mesh->polygons_cnt; ++i) {
 		GeometryPolygon_t* polygon = mesh->polygons + i;
@@ -722,7 +722,7 @@ static void ConvexMesh_FacesNormalOut(GeometryMesh_t* mesh) {
 	}
 }
 
-static int MeshCookingStage_FaceDatas(GeometryPolygon_t* pg, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
+static int MeshCookingStage_FaceDatas(GeometryPolygon_t* pg, MeshCookingOutput_t* output, const CCTAllocator_t* ac) noexcept {
 	unsigned int* edge_v_indices_flat = NULL, * v_indices = NULL, * edge_v_ids_flat = NULL;
 	GeometryPolygonVertexAdjacentInfo_t* v_adjacent_infos = NULL;
 	unsigned int edge_v_indices_cnt, v_indices_cnt, j;
@@ -766,7 +766,7 @@ static int MeshCookingStage_FaceDatas(GeometryPolygon_t* pg, MeshCookingOutput_t
 extern "C" {
 #endif
 
-const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) {
+const MeshCookingOutput_t* mathCookingMesh(const CCTNum_t(*v)[3], const unsigned int* tri_v_indices, unsigned int tri_v_indices_cnt, const MeshCookingOption_t* opt, MeshCookingOutput_t* output, const CCTAllocator_t* ac) noexcept {
 	CCTNum_t(*dup_v)[3] = NULL;
 	unsigned int* dup_tri_v_indices = NULL;
 	unsigned int dup_v_cnt = 0, i;

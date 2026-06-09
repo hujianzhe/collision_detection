@@ -13,21 +13,21 @@
 #include "../inc/capsule.h"
 #include "../inc/geometry_api.h"
 
-static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
+static void point_rotate(CCTNum_t p[3], const CCTNum_t mark_pos[3], const CCTNum_t q[4]) noexcept {
 	CCTNum_t v[3];
 	mathVec3Sub(v, p, mark_pos);
 	mathQuatMulVec3(v, q, v);
 	mathVec3Add(p, mark_pos, v);
 }
 
-static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t mark_pos[3], const CCTNum_t q[4]) {
+static void indices_rotate(CCTNum_t(*p)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t mark_pos[3], const CCTNum_t q[4]) noexcept {
 	unsigned int i;
 	for (i = 0; i < indices_cnt; ++i) {
 		point_rotate(p[indices[i]], mark_pos, q);
 	}
 }
 
-static CCTNum_t indices_separate_distance(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+static CCTNum_t indices_separate_distance(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) noexcept {
 	unsigned int i;
 	CCTNum_t d = mathPointProjectionPlane(v[indices[0]], plane_v, separate_dir);
 	for (i = 1; i < indices_cnt; ++i) {
@@ -39,7 +39,7 @@ static CCTNum_t indices_separate_distance(const CCTNum_t(*v)[3], const unsigned 
 	return d;
 }
 
-static CCTNum_t vertices_separate_distance(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+static CCTNum_t vertices_separate_distance(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) noexcept {
 	unsigned int i;
 	CCTNum_t d = mathPointProjectionPlane(v[0], plane_v, separate_dir);
 	for (i = 1; i < v_cnt; ++i) {
@@ -51,7 +51,7 @@ static CCTNum_t vertices_separate_distance(const CCTNum_t(*v)[3], unsigned int v
 	return d;
 }
 
-static CCTNum_t indices_dir_projection_length(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t dir[3]) {
+static CCTNum_t indices_dir_projection_length(const CCTNum_t(*v)[3], const unsigned int* indices, unsigned int indices_cnt, const CCTNum_t dir[3]) noexcept {
 	CCTNum_t max_d, min_d;
 	unsigned int i;
 	min_d = max_d = mathVec3Dot(v[indices[0]], dir);
@@ -67,7 +67,7 @@ static CCTNum_t indices_dir_projection_length(const CCTNum_t(*v)[3], const unsig
 	return max_d - min_d;
 }
 
-static CCTNum_t vertices_dir_projection_length(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t dir[3]) {
+static CCTNum_t vertices_dir_projection_length(const CCTNum_t(*v)[3], unsigned int v_cnt, const CCTNum_t dir[3]) noexcept {
 	CCTNum_t max_d, min_d;
 	unsigned int i;
 	min_d = max_d = mathVec3Dot(v[0], dir);
@@ -91,7 +91,7 @@ static CCTNum_t vertices_dir_projection_length(const CCTNum_t(*v)[3], unsigned i
 extern "C" {
 #endif
 
-size_t mathGeometrySize(int geo_type) {
+size_t mathGeometrySize(int geo_type) noexcept {
 	static const size_t s_geometry_size[] = {
 		0,
 		sizeof(CCTNum_t[3]),
@@ -111,7 +111,7 @@ size_t mathGeometrySize(int geo_type) {
 	return s_geometry_size[(size_t)geo_type];
 }
 
-int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
+int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) noexcept {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -355,7 +355,7 @@ int mathGeometryCheckParametersValid(const void* geo_data, int geo_type) {
 	return 0;
 }
 
-void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int src_geo_type) {
+void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int src_geo_type) noexcept {
 	switch (src_geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -416,13 +416,13 @@ void* mathGeometryClone(void* dst, int* dst_type, const void* src_geo_data, int 
 	return dst;
 }
 
-void mathGeometryClear(void* geo_data, int geo_type) {
+void mathGeometryClear(void* geo_data, int geo_type) noexcept {
 	if (GEOMETRY_BODY_MESH == geo_type) {
 		mathMeshClear((GeometryMesh_t*)geo_data);
 	}
 }
 
-void mathGeometryClearBody(GeometryBody_t* b) {
+void mathGeometryClearBody(GeometryBody_t* b) noexcept {
 	if (!b) {
 		return;
 	}
@@ -430,7 +430,7 @@ void mathGeometryClearBody(GeometryBody_t* b) {
 	b->type = 0;
 }
 
-CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]) {
+CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v[3]) noexcept {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -475,7 +475,7 @@ CCTNum_t* mathGeometryGetPosition(const void* geo_data, int geo_type, CCTNum_t v
 	return NULL;
 }
 
-void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) {
+void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) noexcept {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -549,7 +549,7 @@ void mathGeometrySetPosition(void* geo_data, int geo_type, const CCTNum_t v[3]) 
 	}
 }
 
-GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb) {
+GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, GeometryAABB_t* aabb) noexcept {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -622,7 +622,7 @@ GeometryAABB_t* mathGeometryBoundingBox(const void* geo_data, int geo_type, Geom
 	return aabb;
 }
 
-CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
+CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) noexcept {
 	CCTNum_t l[3];
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
@@ -683,7 +683,7 @@ CCTNum_t mathGeometryBoundingSphereRadius(const void* geo_data, int geo_type) {
 	return CCTNum(0.0);
 }
 
-GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate) {
+GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t inflate, GeometryBody_t* geo_inflate) noexcept {
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
 		{
@@ -786,7 +786,7 @@ GeometryBody_t* mathGeometryInflate(const void* geo_data, int geo_type, CCTNum_t
 	return NULL;
 }
 
-int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
+int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) noexcept {
 	if (mathQuatIsZeroOrIdentity(q)) {
 		return 1;
 	}
@@ -857,7 +857,7 @@ int mathGeometryRotate(void* geo_data, int geo_type, const CCTNum_t q[4]) {
 	return 0;
 }
 
-int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t axis[3], CCTNum_t radian) noexcept {
 	CCTNum_t q[4];
 	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
 		return 1;
@@ -877,7 +877,7 @@ int mathGeometryRotateAxisRadian(void* geo_data, int geo_type, const CCTNum_t ax
 	return mathGeometryRotate(geo_data, geo_type, q);
 }
 
-CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]) {
+CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const CCTNum_t from_front[3], const CCTNum_t to_up[3], const CCTNum_t to_front[3]) noexcept {
 	if (!mathVec3Equal(from_up, to_up)) {
 		CCTNum_t front_q[4];
 		CCTNum_t to_right[3], up_in_plane[3], temp_front[3];
@@ -906,7 +906,7 @@ CCTNum_t* mathRotateFromUpFront(CCTNum_t q[4], const CCTNum_t from_up[3], const 
 	return q;
 }
 
-int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) {
+int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t q[4]) noexcept {
 	if (mathQuatIsZeroOrIdentity(q)) {
 		return 1;
 	}
@@ -982,7 +982,7 @@ int mathGeometryRevolve(void* geo_data, int geo_type, const CCTNum_t base_p[3], 
 	return 0;
 }
 
-int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian) {
+int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t base_p[3], const CCTNum_t axis[3], CCTNum_t radian) noexcept {
 	CCTNum_t q[4];
 	if (CCT_EPSILON_NEGATE <= radian && radian <= CCT_EPSILON) {
 		return 1;
@@ -991,7 +991,7 @@ int mathGeometryRevolveAxisRadian(void* geo_data, int geo_type, const CCTNum_t b
 	return mathGeometryRevolve(geo_data, geo_type, base_p, q);
 }
 
-CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) {
+CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const CCTNum_t plane_v[3], const CCTNum_t separate_dir[3]) noexcept {
 	CCTNum_t v[8][3];
 	switch (geo_type) {
 		case GEOMETRY_BODY_POINT:
@@ -1051,7 +1051,7 @@ CCTNum_t mathGeometrySeparateDistance(const void* geo_data, int geo_type, const 
 	return CCTNum(0.0);
 }
 
-CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]) {
+CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, const CCTNum_t dir[3]) noexcept {
 	CCTNum_t v[8][3];
 	switch (geo_type) {
 		case GEOMETRY_BODY_SPHERE:

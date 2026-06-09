@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static void calculate_index(long long min_v, unsigned long long sz, size_t count, CCTNum_t v, size_t* p_floor_idx, size_t* p_ceil_idx) {
+static void calculate_index(long long min_v, unsigned long long sz, size_t count, CCTNum_t v, size_t* p_floor_idx, size_t* p_ceil_idx) noexcept {
 	long long d, vl, vh;
 	vl = CCTNum_floor(v);
 	if (vl < min_v) {
@@ -40,7 +40,7 @@ static void calculate_index(long long min_v, unsigned long long sz, size_t count
 	}
 }
 
-static void node_range_indices(const VoxelSpace_t* vs, const CCTNum_t p1[3], const CCTNum_t p2[3], size_t start_idx[3], size_t end_idx[3]) {
+static void node_range_indices(const VoxelSpace_t* vs, const CCTNum_t p1[3], const CCTNum_t p2[3], size_t start_idx[3], size_t end_idx[3]) noexcept {
 	size_t i;
 	for (i = 0; i < 3; ++i) {
 		size_t p1_start_idx, p1_end_idx, p2_start_idx, p2_end_idx;
@@ -51,7 +51,7 @@ static void node_range_indices(const VoxelSpace_t* vs, const CCTNum_t p1[3], con
 	}
 }
 
-static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) {
+static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) noexcept {
 	size_t i;
 	for (i = 0; i < node->objs_cnt; ++i) {
 		if (node->objs[i] == obj) {
@@ -61,7 +61,7 @@ static void node_remove_obj(VoxelSpaceNode_t* node, VoxelSpaceObject_t* obj) {
 	}
 }
 
-static int voxelspace_update_prepare_memory(const VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const size_t start_idx[3], const size_t end_idx[3]) {
+static int voxelspace_update_prepare_memory(const VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const size_t start_idx[3], const size_t end_idx[3]) noexcept {
 	size_t x, y, z;
 	size_t cnt = (end_idx[0] - start_idx[0]) * (end_idx[1] - start_idx[1]) * (end_idx[2] - start_idx[2]);
 	if (cnt > obj->_locate_nodes_arr_cap) {
@@ -97,7 +97,7 @@ static int voxelspace_update_prepare_memory(const VoxelSpace_t* vs, VoxelSpaceOb
 extern "C" {
 #endif
 
-VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const CCTNum_t max_v_[3], const CCTNum_t split_size_[3], int alloc_nodes) {
+VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const CCTNum_t max_v_[3], const CCTNum_t split_size_[3], int alloc_nodes) noexcept {
 	size_t i, cnt[3], nodes_cnt;
 	vs->min_v[0] = CCTNum_floor(min_v_[0]);
 	vs->min_v[1] = CCTNum_floor(min_v_[1]);
@@ -147,14 +147,14 @@ VoxelSpace_t* voxelspaceInit(VoxelSpace_t* vs, const CCTNum_t min_v_[3], const C
 	return vs;
 }
 
-void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z) {
+void voxelspaceNodeIndexToXYZ(const VoxelSpace_t* vs, size_t node_index, size_t* x, size_t* y, size_t* z) noexcept {
 	*x = node_index / vs->_dimension_stride0;
 	node_index %= vs->_dimension_stride0;
 	*y = node_index / vs->_dimension_node_max_sz[2];
 	*z = node_index % vs->_dimension_node_max_sz[2];
 }
 
-void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]) {
+void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_t z, CCTNum_t min_v[3], CCTNum_t max_v[3]) noexcept {
 	const long long v[3] = {
 		vs->min_v[0] + (long long)(x * vs->split_size[0]),
 		vs->min_v[1] + (long long)(y * vs->split_size[1]),
@@ -168,18 +168,18 @@ void voxelspaceNodeBoundingBox(const VoxelSpace_t* vs, size_t x, size_t y, size_
 	max_v[2] = v[2] + (long long)vs->split_size[2];
 }
 
-const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) {
+const VoxelSpaceNode_t* voxelspaceGetNodeByXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) noexcept {
 	if (x >= vs->_dimension_node_max_sz[0] || y >= vs->_dimension_node_max_sz[1] || z >= vs->_dimension_node_max_sz[2]) {
 		return NULL;
 	}
 	return vs->nodes + voxelspaceNodeIndexFromXYZ(vs, x, y, z);
 }
 
-size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) {
+size_t voxelspaceNodeIndexFromXYZ(const VoxelSpace_t* vs, size_t x, size_t y, size_t z) noexcept {
 	return x * vs->_dimension_stride0 + y * vs->_dimension_node_max_sz[2] + z;
 }
 
-VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) {
+VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept {
 	size_t i, x, y, z;
 	size_t start_idx[3], end_idx[3];
 	node_range_indices(vs, min_v, max_v, start_idx, end_idx);
@@ -203,7 +203,7 @@ VoxelSpaceObject_t* voxelspaceUpdate(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, 
 	return obj;
 }
 
-VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3])) {
+VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj, const CCTNum_t boundbox_min_v[3], const CCTNum_t boundbox_max_v[3], const void* geo_data, int geo_type, int(*fn_check_intersect)(const void*, int, const CCTNum_t[3], const CCTNum_t[3])) noexcept {
 	size_t i, x, y, z;
 	size_t start_idx[3], end_idx[3];
 	node_range_indices(vs, boundbox_min_v, boundbox_max_v, start_idx, end_idx);
@@ -233,7 +233,7 @@ VoxelSpaceObject_t* voxelspaceUpdateEx(VoxelSpace_t* vs, VoxelSpaceObject_t* obj
 	return obj;
 }
 
-void voxelspaceRemove(VoxelSpaceObject_t* obj) {
+void voxelspaceRemove(VoxelSpaceObject_t* obj) noexcept {
 	size_t i;
 	for (i = 0; i < obj->locate_nodes_cnt; ++i) {
 		node_remove_obj(obj->locate_nodes[i], obj);
@@ -246,7 +246,7 @@ void voxelspaceRemove(VoxelSpaceObject_t* obj) {
 	obj->locate_nodes_cnt = 0;
 }
 
-VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) {
+VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t min_v[3], const CCTNum_t max_v[3], VoxelSpaceFinder_t* finder) noexcept {
 	node_range_indices(vs, min_v, max_v, finder->_start_idx, finder->_end_idx);
 	finder->_vs = vs;
 	finder->_cur_idx[0] = finder->_start_idx[0];
@@ -265,7 +265,7 @@ VoxelSpaceFinder_t* voxelspaceFindBegin(const VoxelSpace_t* vs, const CCTNum_t m
 	return finder;
 }
 
-VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
+VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) noexcept {
 	const VoxelSpace_t* vs = finder->_vs;
 	++finder->_cur_idx[2];
 	if (finder->_cur_idx[2] < finder->_end_idx[2]) {
@@ -287,7 +287,7 @@ VoxelSpaceFinder_t* voxelspaceFindNext(VoxelSpaceFinder_t* finder) {
 	return NULL;
 }
 
-void voxelspaceClear(VoxelSpace_t* vs) {
+void voxelspaceClear(VoxelSpace_t* vs) noexcept {
 	size_t i, j;
 	if (!vs->nodes || !vs->_alloc_nodes) {
 		return;
@@ -308,7 +308,7 @@ void voxelspaceClear(VoxelSpace_t* vs) {
 	}
 }
 
-void voxelspaceDestroy(VoxelSpace_t* vs) {
+void voxelspaceDestroy(VoxelSpace_t* vs) noexcept {
 	size_t i, j;
 	if (!vs->nodes || !vs->_alloc_nodes) {
 		return;

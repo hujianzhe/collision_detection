@@ -37,12 +37,12 @@ typedef struct GeometryIteratorGJK_t {
 extern "C" {
 #endif
 
-__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, GeometryIteratorGJK_t* iter);
+__declspec_dll int mathGJK(const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, GeometryIteratorGJK_t* iter) noexcept;
 
-__declspec_dll void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]);
-__declspec_dll int mathGJKNext(GeometryIteratorGJK_t* iter);
+__declspec_dll void mathGJKBegin(GeometryIteratorGJK_t* iter, const GeometryConvexGJK_t* geo1, const GeometryConvexGJK_t* geo2, const CCTNum_t init_dir[3]) noexcept;
+__declspec_dll int mathGJKNext(GeometryIteratorGJK_t* iter) noexcept;
 
-__declspec_dll int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out);
+__declspec_dll int mathGJKSweep(const GeometryConvexGJK_t* geo1, const CCTNum_t dir[3], const GeometryConvexGJK_t* geo2, CCTNum_t* t_out) noexcept;
 
 #ifdef __cplusplus
 }

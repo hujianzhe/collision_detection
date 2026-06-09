@@ -11,38 +11,38 @@
 extern "C" {
 #endif
 
-__declspec_dll int mathVec3IsZero(const CCTNum_t v[3]);
-__declspec_dll int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps);
-__declspec_dll int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps);
-__declspec_dll int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps);
+__declspec_dll int mathVec3IsZero(const CCTNum_t v[3]) noexcept;
+__declspec_dll int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps) noexcept;
+__declspec_dll int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) noexcept;
+__declspec_dll int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) noexcept;
 
-__declspec_dll CCTNum_t mathVec3MinElement(const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]);
-__declspec_dll CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z);
-__declspec_dll CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3LenSq(const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3Len(const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]);
-__declspec_dll CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]);
-__declspec_dll CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t p2[3]);
-__declspec_dll CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]);
-__declspec_dll CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3AddScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n);
-__declspec_dll CCTNum_t* mathVec3SubScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n);
-__declspec_dll CCTNum_t* mathVec3Sub(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3MultiplyScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n);
-__declspec_dll CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n);
-__declspec_dll CCTNum_t mathVec3Dot(const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t mathVec3Radian(const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]);
-__declspec_dll CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]);
-__declspec_dll CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]);
-__declspec_dll CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]);
+__declspec_dll CCTNum_t mathVec3MinElement(const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z) noexcept;
+__declspec_dll CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3LenSq(const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3Len(const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3AddScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept;
+__declspec_dll CCTNum_t* mathVec3SubScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept;
+__declspec_dll CCTNum_t* mathVec3Sub(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3MultiplyScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept;
+__declspec_dll CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept;
+__declspec_dll CCTNum_t mathVec3Dot(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t mathVec3Radian(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) noexcept;
+__declspec_dll CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]) noexcept;
 
 #ifdef	__cplusplus
 }

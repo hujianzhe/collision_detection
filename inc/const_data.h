@@ -46,7 +46,7 @@ typedef struct CCTConstVal_t {
 extern "C" {
 #endif
 
-__declspec_dll const CCTConstVal_t* CCT_ConstVal();
+__declspec_dll const CCTConstVal_t* CCT_ConstVal() noexcept;
 
 #ifdef	__cplusplus
 }

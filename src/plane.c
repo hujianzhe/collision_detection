@@ -9,13 +9,13 @@
 extern "C" {
 #endif
 
-CCTNum_t mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) {
+CCTNum_t mathPointProjectionPlane(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3]) noexcept {
 	CCTNum_t pv[3];
 	mathVec3Sub(pv, plane_v, p);
 	return mathVec3Dot(pv, plane_n);
 }
 
-CCTNum_t mathPointProjectionPlanePoint(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t np[3]) {
+CCTNum_t mathPointProjectionPlanePoint(const CCTNum_t p[3], const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t np[3]) noexcept {
 	CCTNum_t pv[3], d;
 	mathVec3Sub(pv, plane_v, p);
 	d = mathVec3Dot(pv, plane_n);
@@ -24,7 +24,7 @@ CCTNum_t mathPointProjectionPlanePoint(const CCTNum_t p[3], const CCTNum_t plane
 	return d;
 }
 
-CCTNum_t mathSphereProjectionPlane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t sphere_np[3]) {
+CCTNum_t mathSphereProjectionPlane(const CCTNum_t o[3], CCTNum_t radius, const CCTNum_t plane_v[3], const CCTNum_t plane_n[3], CCTNum_t sphere_np[3]) noexcept {
 	CCTNum_t d = mathPointProjectionPlane(o, plane_v, plane_n);
 	mathVec3Copy(sphere_np, o);
 	if (d > CCTNum(0.0)) {
@@ -38,7 +38,7 @@ CCTNum_t mathSphereProjectionPlane(const CCTNum_t o[3], CCTNum_t radius, const C
 	return d;
 }
 
-CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]) {
+CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t normal[3]) noexcept {
 	CCTNum_t v0v1[3], v0v2[3];
 	mathVec3Sub(v0v1, v1, v0);
 	mathVec3Sub(v0v2, v2, v0);
@@ -46,7 +46,7 @@ CCTNum_t mathPlaneNormalByVertices3(const CCTNum_t v0[3], const CCTNum_t v1[3], 
 	return mathVec3Normalized(normal, normal);
 }
 
-int mathPlaneEqual(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) {
+int mathPlaneEqual(const CCTNum_t v1[3], const CCTNum_t n1[3], const CCTNum_t v2[3], const CCTNum_t n2[3]) noexcept {
 	CCTNum_t v[3], dot;
 	mathVec3Sub(v, v2, v1);
 	dot = mathVec3Dot(n1, v);

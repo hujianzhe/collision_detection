@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], const unsigned int* src_indices, unsigned int indices_cnt, CCTNum_t(*dst_v)[3], unsigned int* dst_indices) {
+unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], const unsigned int* src_indices, unsigned int indices_cnt, CCTNum_t(*dst_v)[3], unsigned int* dst_indices) noexcept {
 	unsigned int i, dst_v_cnt = 0;
 	for (i = 0; i < indices_cnt; ++i) {
 		unsigned int j;
@@ -27,7 +27,7 @@ unsigned int mathVerticesMerge(const CCTNum_t(*src_v)[3], const unsigned int* sr
 	return dst_v_cnt;
 }
 
-int mathEdgeVertexIndicesMergeEdgeVertexIndices(const CCTNum_t(*v)[3], const unsigned int a_edge_v_indices[2], const unsigned int b_edge_v_indices[2], unsigned int final_edge_v_indices[2]) {
+int mathEdgeVertexIndicesMergeEdgeVertexIndices(const CCTNum_t(*v)[3], const unsigned int a_edge_v_indices[2], const unsigned int b_edge_v_indices[2], unsigned int final_edge_v_indices[2]) noexcept {
 	CCTNum_t v1[3], v2[3], N[3];
 	unsigned int i, same_cnt;
 	unsigned int a_same_idx, b_same_idx;
@@ -109,7 +109,7 @@ int mathEdgeVertexIndicesMergeEdgeVertexIndices(const CCTNum_t(*v)[3], const uns
 	return 1;
 }
 
-int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
+int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) noexcept {
 	unsigned int i;
 	if (v_indices_cnt <= 0) {
 		return 0;
@@ -131,7 +131,7 @@ int mathVertexIndicesFindMinMaxXYZ(const CCTNum_t(*v)[3], const unsigned int* v_
 	return 1;
 }
 
-int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) {
+int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_t v_minXYZ[3], CCTNum_t v_maxXYZ[3]) noexcept {
 	unsigned int i;
 	if (v_cnt <= 0) {
 		return 0;
@@ -153,7 +153,7 @@ int mathVerticesFindMinMaxXYZ(const CCTNum_t(*v)[3], unsigned int v_cnt, CCTNum_
 	return 1;
 }
 
-int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_avgXYZ[3]) {
+int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, CCTNum_t v_avgXYZ[3]) noexcept {
 	unsigned int i;
 	if (v_indices_cnt <= 0) {
 		return 0;
@@ -173,21 +173,21 @@ int mathVertexIndicesAverageXYZ(const CCTNum_t(*v)[3], const unsigned int* v_ind
 	return 1;
 }
 
-void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]) {
+void mathTwoVertexFromCenterHalf(const CCTNum_t center_p[3], const CCTNum_t dir[3], CCTNum_t half_len, CCTNum_t start_v[3], CCTNum_t end_v[3]) noexcept {
 	mathVec3Copy(start_v, center_p);
 	mathVec3SubScalar(start_v, dir, half_len);
 	mathVec3Copy(end_v, center_p);
 	mathVec3AddScalar(end_v, dir, half_len);
 }
 
-void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3], CCTNum_t center_p[3], CCTNum_t dir[3], CCTNum_t* half) {
+void mathTwoVertexToCenterHalf(const CCTNum_t start_v[3], const CCTNum_t end_v[3], CCTNum_t center_p[3], CCTNum_t dir[3], CCTNum_t* half) noexcept {
 	mathVec3Sub(dir, end_v, start_v);
 	*half = mathVec3Normalized(dir, dir) * CCTNum(0.5);
 	mathVec3Copy(center_p, start_v);
 	mathVec3AddScalar(center_p, dir, *half);
 }
 
-unsigned int mathFindVertexId(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) {
+unsigned int mathFindVertexId(const CCTNum_t(*v)[3], const unsigned int* v_indices, unsigned int v_indices_cnt, const CCTNum_t p[3]) noexcept {
 	unsigned int i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		unsigned int v_idx = v_indices[i];
@@ -198,7 +198,7 @@ unsigned int mathFindVertexId(const CCTNum_t(*v)[3], const unsigned int* v_indic
 	return -1;
 }
 
-unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) {
+unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, unsigned int v_idx0, unsigned int v_idx1) noexcept {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		unsigned int idx = edge_v_indices_flat[i++];
@@ -218,7 +218,7 @@ unsigned int mathFindEdgeIdByVertexIndices(const unsigned int* edge_v_indices_fl
 	return -1;
 }
 
-unsigned int mathFindEdgeIdByVertices(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) {
+unsigned int mathFindEdgeIdByVertices(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p0[3], const CCTNum_t p1[3]) noexcept {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		const CCTNum_t* pv = v[edge_v_indices_flat[i++]];
@@ -238,7 +238,7 @@ unsigned int mathFindEdgeIdByVertices(const CCTNum_t(*v)[3], const unsigned int*
 	return -1;
 }
 
-int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices, const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderId_t* bi) {
+int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices, const unsigned int* edge_v_ids_flat, unsigned int edge_v_indices_cnt, const CCTNum_t p[3], GeometryBorderId_t* bi) noexcept {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		CCTNum_t l[3], r[3], N[3], dot;
@@ -277,7 +277,7 @@ int mathFindBorderIdByPoint(const CCTNum_t(*v)[3], const unsigned int* v_indices
 	return 0;
 }
 
-unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]) {
+unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int* edge_v_indices_flat, unsigned int edge_v_indices_cnt, const CCTNum_t v0[3], const CCTNum_t v1[3]) noexcept {
 	unsigned int i;
 	for (i = 0; i < edge_v_indices_cnt; ++i) {
 		unsigned int idx = edge_v_indices_flat[i++];
@@ -297,7 +297,7 @@ unsigned int mathFindEdgeIndexByVertex(const CCTNum_t(*v)[3], const unsigned int
 	return -1;
 }
 
-unsigned int mathFindFaceIdByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) {
+unsigned int mathFindFaceIdByVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, const unsigned int* v_idx, unsigned int v_idx_cnt) noexcept {
 	unsigned int i;
 	for (i = 0; i < faces_cnt; ++i) {
 		const GeometryPolygon_t* face = faces + i;
@@ -320,7 +320,7 @@ unsigned int mathFindFaceIdByVertexIndices(const GeometryPolygon_t* faces, unsig
 	return -1;
 }
 
-unsigned int mathFindAdjacentFaceIdByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1) {
+unsigned int mathFindAdjacentFaceIdByEdgeVertexIndices(const GeometryPolygon_t* faces, unsigned int faces_cnt, unsigned int edge_v_idx0, unsigned int edge_v_idx1, unsigned int* face_idx0, unsigned int* face_idx1) noexcept {
 	unsigned int i;
 	*face_idx0 = *face_idx1 = -1;
 	for (i = 0; i < faces_cnt; ++i) {

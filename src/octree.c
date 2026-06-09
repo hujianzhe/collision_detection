@@ -7,7 +7,7 @@
 #include "../inc/octree.h"
 #include <stdlib.h>
 
-static void insert_obj_to_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) {
+static void insert_obj_to_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) noexcept {
 	if (oct_node->obj_list_head) {
 		oct_node->obj_list_head->prev = oct_obj;
 	}
@@ -18,7 +18,7 @@ static void insert_obj_to_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) 
 	oct_obj->oct = oct_node;
 }
 
-static void del_obj_from_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) {
+static void del_obj_from_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) noexcept {
 	if (oct_node->obj_list_head == oct_obj) {
 		oct_node->obj_list_head = oct_obj->next;
 	}
@@ -32,7 +32,7 @@ static void del_obj_from_list(OctreeNode_t* oct_node, OctreeObject_t* oct_obj) {
 	oct_obj->oct = NULL;
 }
 
-static size_t octree_level_nodes_cnt(unsigned int deep_num) {
+static size_t octree_level_nodes_cnt(unsigned int deep_num) noexcept {
 	size_t cnt = 1;
 	if (deep_num > 1) {
 		size_t i;
@@ -44,7 +44,7 @@ static size_t octree_level_nodes_cnt(unsigned int deep_num) {
 	return cnt;
 }
 
-static size_t octree_total_nodes_cnt(unsigned int max_deep_num) {
+static size_t octree_total_nodes_cnt(unsigned int max_deep_num) noexcept {
 	size_t total_cnt = 0;
 	size_t i;
 	for (i = 1; i <= max_deep_num; ++i) {
@@ -53,7 +53,7 @@ static size_t octree_total_nodes_cnt(unsigned int max_deep_num) {
 	return total_cnt;
 }
 
-static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3]) {
+static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CCTNum_t half[3]) noexcept {
 	mathVec3Sub(root->min_v, pos, half);
 	mathVec3Add(root->max_v, pos, half);
 	root->obj_list_head = NULL;
@@ -63,7 +63,7 @@ static void octree_node_init(OctreeNode_t* root, const CCTNum_t pos[3], const CC
 	root->childs = NULL;
 }
 
-static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
+static void octree_node_split(Octree_t* tree, OctreeNode_t* root) noexcept {
 	int i;
 	OctreeObject_t* obj, *obj_next;
 	CCTNum_t new_o[8][3], new_min_v[3], new_max_v[3], root_pos[3], new_half[3];
@@ -105,7 +105,7 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) {
 extern "C" {
 #endif
 
-unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size) {
+unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNum_t cell_size) noexcept {
 	CCTNum_t min_half_value;
 	if (half_size[0] < half_size[1]) {
 		if (half_size[0] < half_size[2]) {
@@ -127,7 +127,7 @@ unsigned int octreeCalculateDeepNumByCellSize(const CCTNum_t half_size[3], CCTNu
 	return CCTNum_floor(CCTNum_log(min_half_value / cell_size, CCTNum(2.0)) + CCTNum(1.0));
 }
 
-Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) {
+Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[3], unsigned int max_deep_num, unsigned int split_cnt_per_node) noexcept {
 	OctreeNode_t* nodes;
 	size_t nodes_cnt;
 
@@ -148,7 +148,7 @@ Octree_t* octreeInit(Octree_t* tree, const CCTNum_t pos[3], const CCTNum_t half[
 	return tree;
 }
 
-void octreeRemove(OctreeObject_t* obj) {
+void octreeRemove(OctreeObject_t* obj) noexcept {
 	OctreeNode_t* oct = obj->oct;
 	if (!oct) {
 		return;
@@ -156,7 +156,7 @@ void octreeRemove(OctreeObject_t* obj) {
 	del_obj_from_list(oct, obj);
 }
 
-void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) {
+void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) noexcept {
 	OctreeNode_t* root = &tree->nodes[0];
 	OctreeNode_t* obj_oct = obj->oct;
 	OctreeNode_t* oct = obj_oct ? obj_oct : root;
@@ -213,7 +213,7 @@ void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) {
 	}
 }
 
-OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder) {
+OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder) noexcept {
 	if (finder->cap < tree->nodes_cnt) {
 		const OctreeNode_t** p = (const OctreeNode_t**)realloc(finder->nodes, sizeof(OctreeNode_t*) * tree->nodes_cnt);
 		if (!p) {
@@ -226,7 +226,7 @@ OctreeFinder_t* octreeFinderAlloc(const Octree_t* tree, OctreeFinder_t* finder) 
 	return finder;
 }
 
-void octreeFinderDestroy(OctreeFinder_t* finder) {
+void octreeFinderDestroy(OctreeFinder_t* finder) noexcept {
 	if (finder->nodes) {
 		free(finder->nodes);
 		finder->nodes = NULL;
@@ -235,7 +235,7 @@ void octreeFinderDestroy(OctreeFinder_t* finder) {
 	finder->cnt = 0;
 }
 
-void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) {
+void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum_t max_v[3], OctreeFinder_t* finder) noexcept {
 	size_t pop_idx;
 	const OctreeNode_t* root = tree->nodes;
 	finder->cnt = 0;
@@ -260,7 +260,7 @@ void octreeFindNodes(const Octree_t* tree, const CCTNum_t min_v[3], const CCTNum
 	}
 }
 
-void octreeClear(Octree_t* tree) {
+void octreeClear(Octree_t* tree) noexcept {
 	size_t i;
 	for (i = 0; i < tree->nodes_cnt; ++i) {
 		OctreeNode_t* node = tree->nodes + i;
@@ -274,7 +274,7 @@ void octreeClear(Octree_t* tree) {
 	}
 }
 
-void octreeDestroy(Octree_t* tree) {
+void octreeDestroy(Octree_t* tree) noexcept {
 	size_t i;
 	for (i = 0; i < tree->nodes_cnt; ++i) {
 		OctreeNode_t* node = tree->nodes + i;

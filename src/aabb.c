@@ -6,13 +6,13 @@
 #include "../inc/math_vec3.h"
 #include "../inc/aabb.h"
 
-extern const CCTConstVal_t CCTConstVal_;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]) {
+extern CCTConstVal_t CCTConstVal_;
+
+void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t plane_v[3], CCTNum_t plane_n[3]) noexcept {
 	switch (face_idx) {
 		case 0:
 		case 2:
@@ -32,7 +32,7 @@ void mathAABBPlane(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned in
 	mathVec3Copy(plane_n, CCTConstVal_.AABB_Face_Normals[face_idx]);
 }
 
-void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]) {
+void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int face_idx, CCTNum_t bb_min[3], CCTNum_t bb_max[3]) noexcept {
 	switch (face_idx) {
 		case 0:
 			bb_min[0] = max_v[0] - GEOMETRY_BODY_BOX_MIN_HALF;
@@ -73,7 +73,7 @@ void mathAABBPlaneBoundBox(const CCTNum_t min_v[3], const CCTNum_t max_v[3], uns
 	}
 }
 
-void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]) {
+void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t v[8][3]) noexcept {
 	v[0][0] = min_v[0]; v[0][1] = min_v[1]; v[0][2] = min_v[2];
 	v[1][0] = max_v[0]; v[1][1] = min_v[1]; v[1][2] = min_v[2];
 	v[2][0] = max_v[0]; v[2][1] = max_v[1]; v[2][2] = min_v[2];
@@ -84,7 +84,7 @@ void mathAABBVertices(const CCTNum_t min_v[3], const CCTNum_t max_v[3], CCTNum_t
 	v[7][0] = min_v[0]; v[7][1] = max_v[1]; v[7][2] = max_v[2];
 }
 
-CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int v_id, CCTNum_t v[3]) {
+CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsigned int v_id, CCTNum_t v[3]) noexcept {
 	switch (v_id) {
 		case 0:
 			v[0] = min_v[0]; v[1] = min_v[1]; v[2] = min_v[2];
@@ -114,7 +114,7 @@ CCTNum_t* mathAABBVertex(const CCTNum_t min_v[3], const CCTNum_t max_v[3], unsig
 	return NULL;
 }
 
-void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]) {
+void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t p[3]) noexcept {
 	if (dst_min_v[0] > p[0]) {
 		dst_min_v[0] = p[0];
 	}
@@ -135,7 +135,7 @@ void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTN
 	}
 }
 
-void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]) {
+void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]) noexcept {
 	if (dst_min_v[0] > src_min_v[0]) {
 		dst_min_v[0] = src_min_v[0];
 	}
@@ -156,19 +156,19 @@ void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNu
 	}
 }
 
-int AABB_Contain_Point(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) {
+int AABB_Contain_Point(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) noexcept {
 	return	min_v[0] <= p[0] && p[0] <= max_v[0] &&
 			min_v[1] <= p[1] && p[1] <= max_v[1] &&
 			min_v[2] <= p[2] && p[2] <= max_v[2];
 }
 
-int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) {
+int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
 	return	a_min_v[0] <= b_max_v[0] && a_max_v[0] >= b_min_v[0] &&
 			a_min_v[1] <= b_max_v[1] && a_max_v[1] >= b_min_v[1] &&
 			a_min_v[2] <= b_max_v[2] && a_max_v[2] >= b_min_v[2];
 }
 
-int AABB_Contain_AABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) {
+int AABB_Contain_AABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
 	return AABB_Contain_Point(a_min_v, a_max_v, b_min_v) && AABB_Contain_Point(a_min_v, a_max_v, b_max_v);
 }
 

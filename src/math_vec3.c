@@ -5,31 +5,31 @@
 #include "../inc/math_vec3.h"
 #include "../inc/const_data.h"
 
-extern const CCTConstVal_t CCTConstVal_;
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z) {
+extern CCTConstVal_t CCTConstVal_;
+
+CCTNum_t* mathVec3Set(CCTNum_t r[3], CCTNum_t x, CCTNum_t y, CCTNum_t z) noexcept {
 	r[0] = x;
 	r[1] = y;
 	r[2] = z;
 	return r;
 }
 
-int mathVec3IsZero(const CCTNum_t v[3]) {
+int mathVec3IsZero(const CCTNum_t v[3]) noexcept {
 	return	v[0] <= CCT_EPSILON && v[1] <= CCT_EPSILON && v[2] <= CCT_EPSILON &&
 			v[0] >= CCT_EPSILON_NEGATE && v[1] >= CCT_EPSILON_NEGATE && v[2] >= CCT_EPSILON_NEGATE;
 }
 
-int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps) {
+int mathVec3IsZeroEps(const CCTNum_t v[3], CCTNum_t eps) noexcept {
 	CCTNum_t eps_negate = -eps;
 	return	v[0] <= eps && v[1] <= eps && v[2] <= eps &&
 			v[0] >= eps_negate && v[1] >= eps_negate && v[2] >= eps_negate;
 }
 
-int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	CCTNum_t delta;
 
 	delta = v1[0] - v2[0];
@@ -47,7 +47,7 @@ int mathVec3Equal(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	return 1;
 }
 
-int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
+int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) noexcept {
 	CCTNum_t delta;
 	if (CCTNum(0.0) == eps) {
 		return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
@@ -68,13 +68,13 @@ int mathVec3EqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
 	return 1;
 }
 
-int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+int mathVec3NegateEqual(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	return	CCTNum_abs(v1[0] + v2[0]) <= CCT_EPSILON &&
 			CCTNum_abs(v1[1] + v2[1]) <= CCT_EPSILON &&
 			CCTNum_abs(v1[2] + v2[2]) <= CCT_EPSILON;
 }
 
-int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) {
+int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t eps) noexcept {
 	if (CCTNum(0.0) == eps) {
 		return v1[0] == -v2[0] && v1[1] == -v2[1] && v1[2] == -v2[2];
 	}
@@ -83,28 +83,28 @@ int mathVec3NegateEqualEps(const CCTNum_t v1[3], const CCTNum_t v2[3], CCTNum_t 
 			CCTNum_abs(v1[2] + v2[2]) <= eps;
 }
 
-CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t* mathVec3MergeMin(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	r[0] = (v1[0] < v2[0] ? v1[0] : v2[0]);
 	r[1] = (v1[1] < v2[1] ? v1[1] : v2[1]);
 	r[2] = (v1[2] < v2[2] ? v1[2] : v2[2]);
 	return r;
 }
 
-CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t* mathVec3MergeMax(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	r[0] = (v1[0] > v2[0] ? v1[0] : v2[0]);
 	r[1] = (v1[1] > v2[1] ? v1[1] : v2[1]);
 	r[2] = (v1[2] > v2[2] ? v1[2] : v2[2]);
 	return r;
 }
 
-CCTNum_t mathVec3MinElement(const CCTNum_t v[3]) {
+CCTNum_t mathVec3MinElement(const CCTNum_t v[3]) noexcept {
 	if (v[0] < v[1]) {
 		return v[0] < v[2] ? v[0] : v[2];
 	}
 	return v[1] < v[2] ? v[1] : v[2];
 }
 
-CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]) {
+CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]) noexcept {
 	if (v[0] > v[1]) {
 		return v[0] > v[2] ? v[0] : v[2];
 	}
@@ -112,22 +112,22 @@ CCTNum_t mathVec3MaxElement(const CCTNum_t v[3]) {
 }
 
 /* r = v */
-CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]) {
+CCTNum_t* mathVec3Copy(CCTNum_t r[3], const CCTNum_t v[3]) noexcept {
 	r[0] = v[0];
 	r[1] = v[1];
 	r[2] = v[2];
 	return r;
 }
 
-CCTNum_t mathVec3LenSq(const CCTNum_t v[3]) {
+CCTNum_t mathVec3LenSq(const CCTNum_t v[3]) noexcept {
 	return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 }
 
-CCTNum_t mathVec3Len(const CCTNum_t v[3]) {
+CCTNum_t mathVec3Len(const CCTNum_t v[3]) noexcept {
 	return CCTNum_sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
-CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
+CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) noexcept {
 	CCTNum_t len_sq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 	if (len_sq > CCTNum(0.0)) {
 		CCTNum_t len = CCTNum_sqrt(len_sq);
@@ -143,14 +143,14 @@ CCTNum_t mathVec3Normalized(CCTNum_t r[3], const CCTNum_t v[3]) {
 	}
 }
 
-CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]) {
+CCTNum_t mathVec3DistanceSq(const CCTNum_t p1[3], const CCTNum_t p2[3]) noexcept {
 	CCTNum_t dx = p1[0] - p2[0];
 	CCTNum_t dy = p1[1] - p2[1];
 	CCTNum_t dz = p1[2] - p2[2];
 	return dx * dx + dy * dy + dz * dz;
 }
 
-CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) {
+CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t p2[3]) noexcept {
 	mp[0] = p1[0] + (p2[0] - p1[0]) * CCTNum(0.5);
 	mp[1] = p1[1] + (p2[1] - p1[1]) * CCTNum(0.5);
 	mp[2] = p1[2] + (p2[2] - p1[2]) * CCTNum(0.5);
@@ -158,7 +158,7 @@ CCTNum_t* mathVec3Midpoint(CCTNum_t mp[3], const CCTNum_t p1[3], const CCTNum_t 
 }
 
 /* r = -v */
-CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]) {
+CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]) noexcept {
 	r[0] = -v[0];
 	r[1] = -v[1];
 	r[2] = -v[2];
@@ -166,7 +166,7 @@ CCTNum_t* mathVec3Negate(CCTNum_t r[3], const CCTNum_t v[3]) {
 }
 
 /* r = v1 + v2 */
-CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	r[0] = v1[0] + v2[0];
 	r[1] = v1[1] + v2[1];
 	r[2] = v1[2] + v2[2];
@@ -174,7 +174,7 @@ CCTNum_t* mathVec3Add(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3])
 }
 
 /* r += v * n */
-CCTNum_t* mathVec3AddScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
+CCTNum_t* mathVec3AddScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept {
 	r[0] += v[0] * n;
 	r[1] += v[1] * n;
 	r[2] += v[2] * n;
@@ -182,7 +182,7 @@ CCTNum_t* mathVec3AddScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
 }
 
 /* r -= v * n */
-CCTNum_t* mathVec3SubScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
+CCTNum_t* mathVec3SubScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept {
 	r[0] -= v[0] * n;
 	r[1] -= v[1] * n;
 	r[2] -= v[2] * n;
@@ -190,7 +190,7 @@ CCTNum_t* mathVec3SubScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
 }
 
 /* r = v1 - v2 */
-CCTNum_t* mathVec3Sub(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t* mathVec3Sub(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	r[0] = v1[0] - v2[0];
 	r[1] = v1[1] - v2[1];
 	r[2] = v1[2] - v2[2];
@@ -198,7 +198,7 @@ CCTNum_t* mathVec3Sub(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3])
 }
 
 /* r = v*n */
-CCTNum_t* mathVec3MultiplyScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
+CCTNum_t* mathVec3MultiplyScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept {
 	r[0] = v[0] * n;
 	r[1] = v[1] * n;
 	r[2] = v[2] * n;
@@ -206,7 +206,7 @@ CCTNum_t* mathVec3MultiplyScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n)
 }
 
 /* r = v/n */
-CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) {
+CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n) noexcept {
 	if (n != CCTNum(0.0)) {
 		CCTNum_t inv = CCTNum(1.0) / n;
 		r[0] = v[0] * inv;
@@ -217,16 +217,16 @@ CCTNum_t* mathVec3DivisionScalar(CCTNum_t r[3], const CCTNum_t v[3], CCTNum_t n)
 }
 
 /* r = v1 * v2, r = |v1|*|v2|*cos@ */
-CCTNum_t mathVec3Dot(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t mathVec3Dot(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
-CCTNum_t mathVec3Radian(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t mathVec3Radian(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	return CCTNum_acos(mathVec3Dot(v1, v2) / CCTNum_sqrt(mathVec3LenSq(v1) * mathVec3LenSq(v2)));
 }
 
 /* r = v1 X v2, r = |v1|*|v2|*sin@ */
-CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	CCTNum_t x = v1[1] * v2[2] - v1[2] * v2[1];
 	CCTNum_t y = v1[2] * v2[0] - v1[0] * v2[2];
 	CCTNum_t z = v1[0] * v2[1] - v1[1] * v2[0];
@@ -236,7 +236,7 @@ CCTNum_t* mathVec3Cross(CCTNum_t r[3], const CCTNum_t v1[3], const CCTNum_t v2[3
 	return r;
 }
 
-int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
+int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) noexcept {
 	CCTNum_t x, y, z;
 	x = v1[1] * v2[2] - v1[2] * v2[1];
 	if (x > CCT_EPSILON || x < CCT_EPSILON_NEGATE) {
@@ -253,21 +253,21 @@ int mathVec3IsParallel(const CCTNum_t v1[3], const CCTNum_t v2[3]) {
 	return 1;
 }
 
-CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
+CCTNum_t* mathVec3Reflect(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) noexcept {
 	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
 	mathVec3MultiplyScalar(temp_v, n, dot + dot);
 	return mathVec3Sub(r, v, temp_v);
 }
 
-CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) {
+CCTNum_t* mathVec3Glide(CCTNum_t r[3], const CCTNum_t v[3], const CCTNum_t n[3]) noexcept {
 	CCTNum_t temp_v[3];
 	CCTNum_t dot = mathVec3Dot(v, n);
 	mathVec3MultiplyScalar(temp_v, n, dot);
 	return mathVec3Sub(r, v, temp_v);
 }
 
-CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]) {
+CCTNum_t* mathVec3AnyOtherAxis(CCTNum_t r[3], const CCTNum_t exist_axis[3]) noexcept {
 	CCTNum_t temp_v[3], len;
 	mathVec3Cross(temp_v, exist_axis, CCTConstVal_.Axis_X);
 	if (!mathVec3EqualEps(temp_v, CCTConstVal_.Vec3_Zero, CCTNum(1e-2))) {

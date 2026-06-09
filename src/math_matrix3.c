@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]) {
+void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3], CCTNum_t R[9]) noexcept {
 	if (T) {
 		T[0] = m[12];
 		T[1] = m[13];
@@ -34,18 +34,18 @@ void mathMat44TransformSplit(const CCTNum_t m[16], CCTNum_t T[3], CCTNum_t S[3],
 	}
 }
 
-CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]) {
+CCTNum_t* mathMat44SetPositionPart(CCTNum_t m[16], const CCTNum_t p[3]) noexcept {
 	m[12] = p[0];
 	m[13] = p[1];
 	m[14] = p[2];
 	return m;
 }
 
-CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column_idx, unsigned int row_idx) {
+CCTNum_t* mathMat44Element(const CCTNum_t m[16], unsigned int column_idx, unsigned int row_idx) noexcept {
 	return (CCTNum_t*)&m[(column_idx << 2) + row_idx];
 }
 
-CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]) {
+CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]) noexcept {
 	m33[0] = m44[0];
 	m33[1] = m44[1];
 	m33[2] = m44[2];
@@ -60,7 +60,7 @@ CCTNum_t* mathMat44ToMat33(const CCTNum_t m44[16], CCTNum_t m33[9]) {
 	return m33;
 }
 
-CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]) {
+CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]) noexcept {
 	if (r == m) {
 		return r;
 	}
@@ -71,7 +71,7 @@ CCTNum_t* mathMat44Copy(CCTNum_t r[16], const CCTNum_t m[16]) {
 	return r;
 }
 
-CCTNum_t* mathMat44Identity(CCTNum_t m[16]) {
+CCTNum_t* mathMat44Identity(CCTNum_t m[16]) noexcept {
 	m[0] = CCTNum(1.0);
 	m[1] = CCTNum(0.0);
 	m[2] = CCTNum(0.0);
@@ -95,7 +95,7 @@ CCTNum_t* mathMat44Identity(CCTNum_t m[16]) {
 	return m;
 }
 
-CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) {
+CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) noexcept {
 	int i;
 	for (i = 0; i < 16; ++i) {
 		r[i] = m1[i] + m2[i];
@@ -103,7 +103,7 @@ CCTNum_t* mathMat44Add(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[
 	return r;
 }
 
-CCTNum_t* mathMat44MultiplyScalar(CCTNum_t r[16], const CCTNum_t m[16], CCTNum_t n) {
+CCTNum_t* mathMat44MultiplyScalar(CCTNum_t r[16], const CCTNum_t m[16], CCTNum_t n) noexcept {
 	int i;
 	for (i = 0; i < 16; ++i) {
 		r[i] = m[i] * n;
@@ -112,7 +112,7 @@ CCTNum_t* mathMat44MultiplyScalar(CCTNum_t r[16], const CCTNum_t m[16], CCTNum_t
 }
 
 /* r = m1*m2  */
-CCTNum_t* mathMat44MulMat44(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) {
+CCTNum_t* mathMat44MulMat44(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_t m2[16]) noexcept {
 	int i, j;
 	for (i = 0; i < 4; ++i) {
 		for (j = 0; j < 16; j += 4) {
@@ -122,7 +122,7 @@ CCTNum_t* mathMat44MulMat44(CCTNum_t r[16], const CCTNum_t m1[16], const CCTNum_
 	return r;
 }
 
-CCTNum_t* mathMat44Transpose(CCTNum_t r[16], const CCTNum_t m[16]) {
+CCTNum_t* mathMat44Transpose(CCTNum_t r[16], const CCTNum_t m[16]) noexcept {
 	CCTNum_t t;
 
 	t = m[1];
@@ -159,7 +159,7 @@ CCTNum_t* mathMat44Transpose(CCTNum_t r[16], const CCTNum_t m[16]) {
 	return r;
 }
 
-CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]) {
+CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]) noexcept {
 	CCTNum_t t;
 
 	r[3] = -m[0]*m[12] - m[1]*m[13] - m[2]*m[14];
@@ -193,7 +193,7 @@ CCTNum_t* mathMat44Inverse(CCTNum_t r[16], const CCTNum_t m[16]) {
 	return r;
 }
 
-CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) {
+CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) noexcept {
 	CCTNum_t x = v[0], y = v[1], z = v[2];
 	r[0] = m[0]*x + m[4]*y + m[8]*z + m[12];
 	r[1] = m[1]*x + m[5]*y + m[9]*z + m[13];
@@ -201,7 +201,7 @@ CCTNum_t* mathMat44TransformVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTN
 	return r;
 }
 
-CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) {
+CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_t v[3]) noexcept {
 	CCTNum_t x = v[0], y = v[1], z = v[2];
 	r[0] = m[0]*x + m[4]*y + m[8]*z;
 	r[1] = m[1]*x + m[5]*y + m[9]*z;
@@ -209,7 +209,7 @@ CCTNum_t* mathMat44RotateVec3(CCTNum_t r[3], const CCTNum_t m[16], const CCTNum_
 	return r;
 }
 
-CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]) {
+CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]) noexcept {
 	CCTNum_t x = q[0];
 	CCTNum_t y = q[1];
 	CCTNum_t z = q[2];
@@ -254,16 +254,16 @@ CCTNum_t* mathMat44FromQuat(CCTNum_t m[16], const CCTNum_t q[4]) {
 	return m;
 }
 
-CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]) {
+CCTNum_t* mathMat44ToQuat(const CCTNum_t m[16], CCTNum_t q[4]) noexcept {
 	CCTNum_t m33[9];
 	return mathMat33ToQuat(mathMat44ToMat33(m, m33), q);
 }
 
-CCTNum_t* mathMat33Element(const CCTNum_t m[9], unsigned int column_idx, unsigned int row_idx) {
+CCTNum_t* mathMat33Element(const CCTNum_t m[9], unsigned int column_idx, unsigned int row_idx) noexcept {
 	return (CCTNum_t*)&m[(column_idx * 3) + row_idx];
 }
 
-CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
+CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) noexcept {
 	CCTNum_t t, s;
 	if (m[8] < CCTNum(0.0)) {
 		if (m[0] > m[4]) {
@@ -305,12 +305,12 @@ CCTNum_t* mathMat33ToQuat(const CCTNum_t m[9], CCTNum_t q[4]) {
 	return q;
 }
 
-CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]) {
+CCTNum_t* mathMat33FromQuat(CCTNum_t m[9], const CCTNum_t q[4]) noexcept {
 	CCTNum_t m44[16];
 	return mathMat44ToMat33(mathMat44FromQuat(m44, q), m);
 }
 
-CCTNum_t* mathMat33Diagonal(CCTNum_t m[9], CCTNum_t v0, CCTNum_t v1, CCTNum_t v2) {
+CCTNum_t* mathMat33Diagonal(CCTNum_t m[9], CCTNum_t v0, CCTNum_t v1, CCTNum_t v2) noexcept {
 	m[0] = v0;
 	m[1] = CCTNum(0.0);
 	m[2] = CCTNum(0.0);

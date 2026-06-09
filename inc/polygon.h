@@ -11,10 +11,10 @@
 extern "C" {
 #endif
 
-__declspec_dll void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]);
-__declspec_dll int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v);
+__declspec_dll void mathTriangleGetPoint(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], CCTNum_t u, CCTNum_t v, CCTNum_t p[3]) noexcept;
+__declspec_dll int mathTrianglePointUV(const CCTNum_t tri_p0[3], const CCTNum_t tri_p1[3], const CCTNum_t tri_p2[3], const CCTNum_t p[3], CCTNum_t* p_u, CCTNum_t* p_v) noexcept;
 
-__declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]);
+__declspec_dll void mathPolygonEdgeNormalOuter(const GeometryPolygon_t* polygon, unsigned int edge_id, CCTNum_t edge_normal[3]) noexcept;
 
 #ifdef	__cplusplus
 }

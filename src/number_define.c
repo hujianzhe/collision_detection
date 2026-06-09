@@ -5,23 +5,23 @@
 #include "../inc/number_define.h"
 #include <stdlib.h>
 
-static void* fn_calloc(const CCTAllocator_t* ac, size_t nitems, size_t size) { return calloc(nitems, size); }
-static void* fn_malloc(const CCTAllocator_t* ac, size_t size) { return malloc(size); }
-static void* fn_realloc(const CCTAllocator_t* ac, void* ptr, size_t size) { return realloc(ptr, size); }
-static void fn_free(const CCTAllocator_t* ac, void* ptr) { free(ptr); }
+static void* fn_calloc(const CCTAllocator_t* ac, size_t nitems, size_t size) noexcept { return calloc(nitems, size); }
+static void* fn_malloc(const CCTAllocator_t* ac, size_t size) noexcept { return malloc(size); }
+static void* fn_realloc(const CCTAllocator_t* ac, void* ptr, size_t size) noexcept { return realloc(ptr, size); }
+static void fn_free(const CCTAllocator_t* ac, void* ptr) noexcept { free(ptr); }
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int CCTNum_chkval(CCTNum_t num) {
+int CCTNum_chkval(CCTNum_t num) noexcept {
 	if (isinf(num) || isnan(num)) {
 		return 0;
 	}
 	return 1;
 }
 
-int CCTNum_chkvals(const CCTNum_t* num, size_t cnt) {
+int CCTNum_chkvals(const CCTNum_t* num, size_t cnt) noexcept {
 	const CCTNum_t* end = num + cnt;
 	if (num >= end) {
 		return 0;
@@ -34,7 +34,7 @@ int CCTNum_chkvals(const CCTNum_t* num, size_t cnt) {
 	return 1;
 }
 
-const CCTAllocator_t* CCTAllocator_stdc(CCTAllocator_t* ac) {
+const CCTAllocator_t* CCTAllocator_stdc(CCTAllocator_t* ac) noexcept {
 	if (ac) {
 		ac->fn_calloc = fn_calloc;
 		ac->fn_malloc = fn_malloc;
