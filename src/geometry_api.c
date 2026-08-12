@@ -1063,10 +1063,8 @@ CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, con
 		{
 			const GeometryCapsule_t* capsule = (const GeometryCapsule_t*)geo_data;
 			CCTNum_t p0[3], p1[3], d0, d1;
-			mathVec3Copy(p0, capsule->o);
-			mathVec3AddScalar(p0, capsule->axis, capsule->half);
-			mathVec3Copy(p1, capsule->o);
-			mathVec3SubScalar(p1, capsule->axis, capsule->half);
+			mathVec3MultiplyScalar(p0, capsule->axis, capsule->half);
+			mathVec3MultiplyScalar(p1, capsule->axis, -capsule->half);
 			d0 = mathVec3Dot(p0, dir);
 			d1 = mathVec3Dot(p1, dir);
 			return CCTNum_abs(d1 - d0) + capsule->radius + capsule->radius;
@@ -1074,7 +1072,8 @@ CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, con
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
-			mathOBBVertices(obb, v);
+			CCTNum_t o[3] = { CCTNums_3(0.0, 0.0, 0.0) };
+			mathBoxVertices(o, obb->half, (const CCTNum_t(*)[3])obb->axis, v);
 			return vertices_dir_projection_length((const CCTNum_t(*)[3])v, 8, dir);
 		}
 		case GEOMETRY_BODY_AABB:
