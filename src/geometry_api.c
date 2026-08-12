@@ -1072,7 +1072,7 @@ CCTNum_t mathGeometryDirProjectionLength(const void* geo_data, int geo_type, con
 		case GEOMETRY_BODY_OBB:
 		{
 			const GeometryOBB_t* obb = (const GeometryOBB_t*)geo_data;
-			CCTNum_t o[3] = { CCTNums_3(0.0, 0.0, 0.0) };
+			const CCTNum_t o[3] = { CCTNums_3(0.0, 0.0, 0.0) };
 			mathBoxVertices(o, obb->half, (const CCTNum_t(*)[3])obb->axis, v);
 			return vertices_dir_projection_length((const CCTNum_t(*)[3])v, 8, dir);
 		}
