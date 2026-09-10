@@ -169,7 +169,9 @@ int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], 
 }
 
 int mathAABBContainAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
-	return mathAABBContainPoint(a_min_v, a_max_v, b_min_v) && mathAABBContainPoint(a_min_v, a_max_v, b_max_v);
+	return	a_min_v[0] <= b_min_v[0] && b_max_v[0] <= a_max_v[0] &&
+			a_min_v[1] <= b_min_v[1] && b_max_v[1] <= a_max_v[1] &&
+			a_min_v[2] <= b_min_v[2] && b_max_v[2] <= a_max_v[2];
 }
 
 #ifdef __cplusplus
