@@ -156,7 +156,7 @@ void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNu
 	}
 }
 
-int AABB_Contain_Point(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) noexcept {
+int mathAABBContainPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) noexcept {
 	return	min_v[0] <= p[0] && p[0] <= max_v[0] &&
 			min_v[1] <= p[1] && p[1] <= max_v[1] &&
 			min_v[2] <= p[2] && p[2] <= max_v[2];
@@ -168,8 +168,8 @@ int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], 
 			a_min_v[2] <= b_max_v[2] && a_max_v[2] >= b_min_v[2];
 }
 
-int AABB_Contain_AABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
-	return AABB_Contain_Point(a_min_v, a_max_v, b_min_v) && AABB_Contain_Point(a_min_v, a_max_v, b_max_v);
+int mathAABBContainAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
+	return mathAABBContainPoint(a_min_v, a_max_v, b_min_v) && mathAABBContainPoint(a_min_v, a_max_v, b_max_v);
 }
 
 #ifdef __cplusplus

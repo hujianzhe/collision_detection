@@ -91,7 +91,7 @@ static void octree_node_split(Octree_t* tree, OctreeNode_t* root) noexcept {
 		obj_next = obj->next;
 		for (i = 0; i < 8; ++i) {
 			OctreeNode_t* child = root->childs + i;
-			if (!AABB_Contain_AABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
+			if (!mathAABBContainAABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
 				continue;
 			}
 			del_obj_from_list(root, obj);
@@ -165,7 +165,7 @@ void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) noexcept {
 			int i, find = 0;
 			for (i = 0; i < 8; ++i) {
 				OctreeNode_t* child = oct->childs + i;
-				if (!AABB_Contain_AABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
+				if (!mathAABBContainAABB(child->min_v, child->max_v, obj->min_v, obj->max_v)) {
 					continue;
 				}
 				if (child->childs) {
@@ -186,7 +186,7 @@ void octreeUpdate(Octree_t* tree, OctreeObject_t* obj) noexcept {
 				continue;
 			}
 		}
-		if (AABB_Contain_AABB(oct->min_v, oct->max_v, obj->min_v, obj->max_v)) {
+		if (mathAABBContainAABB(oct->min_v, oct->max_v, obj->min_v, obj->max_v)) {
 			if (oct == obj_oct) {
 				return;
 			}

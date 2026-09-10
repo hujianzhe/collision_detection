@@ -618,7 +618,7 @@ static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, con
 static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls[2][3]) noexcept {
 	int i;
 	CCTNum_t v[8][3];
-	if (AABB_Contain_Point(min_v, max_v, ls[0]) || AABB_Contain_Point(min_v, max_v, ls[1])) {
+	if (mathAABBContainPoint(min_v, max_v, ls[0]) || mathAABBContainPoint(min_v, max_v, ls[1])) {
 		return 1;
 	}
 	mathAABBVertices(min_v, max_v, v);
@@ -814,7 +814,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Contain_Point(aabb2->min_v, aabb2->max_v, point1);
+				return mathAABBContainPoint(aabb2->min_v, aabb2->max_v, point1);
 			}
 			case GEOMETRY_BODY_SPHERE:
 			{
@@ -898,7 +898,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 		switch (geo_type2) {
 			case GEOMETRY_BODY_POINT:
 			{
-				return AABB_Contain_Point(aabb1->min_v, aabb1->max_v, (const CCTNum_t*)geo_data2);
+				return mathAABBContainPoint(aabb1->min_v, aabb1->max_v, (const CCTNum_t*)geo_data2);
 			}
 			case GEOMETRY_BODY_AABB:
 			{

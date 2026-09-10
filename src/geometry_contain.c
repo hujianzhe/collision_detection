@@ -648,7 +648,7 @@ int ConvexMesh_Contain_Point(const GeometryMesh_t* mesh, const CCTNum_t p[3]) no
 	if (CCTConstVal_.Box_VertexIds == mesh->v_indices) {
 		return Box_Contain_Point((const CCTNum_t(*)[3])mesh->v, p);
 	}
-	if (!AABB_Contain_Point(mesh->bound_box.min_v, mesh->bound_box.max_v, p)) {
+	if (!mathAABBContainPoint(mesh->bound_box.min_v, mesh->bound_box.max_v, p)) {
 		return 0;
 	}
 	return ConvexMesh_Contain_Point_InternalProc(mesh, p);
@@ -671,7 +671,7 @@ static int ConvexMesh_Contain_Mesh(const GeometryMesh_t* mesh1, const GeometryMe
 static int ConvexMesh_Contain_AABB(const GeometryMesh_t* mesh, const CCTNum_t min_v[3], const CCTNum_t max_v[3]) noexcept {
 	CCTNum_t p[8][3];
 	unsigned int i;
-	if (!AABB_Contain_AABB(mesh->bound_box.min_v, mesh->bound_box.max_v, min_v, max_v)) {
+	if (!mathAABBContainAABB(mesh->bound_box.min_v, mesh->bound_box.max_v, min_v, max_v)) {
 		return 0;
 	}
 	mathAABBVertices(min_v, max_v, p);
@@ -746,7 +746,7 @@ static int AABB_Contain_VerticeIndices(const CCTNum_t aabb_min_v[3], const CCTNu
 	size_t i;
 	for (i = 0; i < v_indices_cnt; ++i) {
 		const CCTNum_t* p = v[v_indices[i]];
-		if (!AABB_Contain_Point(aabb_min_v, aabb_max_v, p)) {
+		if (!mathAABBContainPoint(aabb_min_v, aabb_max_v, p)) {
 			return 0;
 		}
 	}
@@ -810,18 +810,18 @@ int mathGeometryContain(const void* geo_data1, int geo_type1, const void* geo_da
 			case GEOMETRY_BODY_POINT:
 			{
 				const CCTNum_t* point2 = (const CCTNum_t*)geo_data2;
-				return AABB_Contain_Point(aabb1->min_v, aabb1->max_v, point2);
+				return mathAABBContainPoint(aabb1->min_v, aabb1->max_v, point2);
 			}
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return	AABB_Contain_Point(aabb1->min_v, aabb1->max_v, segment2->v[0]) &&
-					AABB_Contain_Point(aabb1->min_v, aabb1->max_v, segment2->v[1]);
+				return	mathAABBContainPoint(aabb1->min_v, aabb1->max_v, segment2->v[0]) &&
+					mathAABBContainPoint(aabb1->min_v, aabb1->max_v, segment2->v[1]);
 			}
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Contain_AABB(aabb1->min_v, aabb1->max_v, aabb2->min_v, aabb2->max_v);
+				return mathAABBContainAABB(aabb1->min_v, aabb1->max_v, aabb2->min_v, aabb2->max_v);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
