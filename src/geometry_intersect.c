@@ -615,23 +615,6 @@ static int Sphere_Intersect_AABB(const CCTNum_t sp_o[3], CCTNum_t sp_radius, con
 	return mathVec3LenSq(closest_v) <= CCTNum_sq(sp_radius);
 }
 
-static int AABB_Intersect_Segment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls[2][3]) noexcept {
-	int i;
-	CCTNum_t v[8][3];
-	if (mathAABBContainPoint(min_v, max_v, ls[0]) || mathAABBContainPoint(min_v, max_v, ls[1])) {
-		return 1;
-	}
-	mathAABBVertices(min_v, max_v, v);
-	for (i = 0; i < 6; ++i) {
-		GeometryPolygon_t polygon;
-		mathBoxFace((const CCTNum_t(*)[3])v, CCTConstVal_.AABB_Axis, i, &polygon);
-		if (Segment_Intersect_Polygon(ls, &polygon, NULL)) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
 static int Segment_Intersect_OBB(const CCTNum_t ls[2][3], const GeometryOBB_t* obb) noexcept {
 	int i;
 	CCTNum_t v[8][3];
@@ -864,7 +847,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_AABB:
 			{
 				const GeometryAABB_t* aabb2 = (const GeometryAABB_t*)geo_data2;
-				return AABB_Intersect_Segment(aabb2->min_v, aabb2->max_v, segment1_v);
+				return mathAABBIntersectSegment(aabb2->min_v, aabb2->max_v, segment1_v[0], segment1_v[1]);
 			}
 			case GEOMETRY_BODY_OBB:
 			{
@@ -920,7 +903,7 @@ int mathGeometryIntersect(const void* geo_data1, int geo_type1, const void* geo_
 			case GEOMETRY_BODY_SEGMENT:
 			{
 				const GeometrySegment_t* segment2 = (const GeometrySegment_t*)geo_data2;
-				return AABB_Intersect_Segment(aabb1->min_v, aabb1->max_v, (const CCTNum_t(*)[3])segment2->v);
+				return mathAABBIntersectSegment(aabb1->min_v, aabb1->max_v, segment2->v[0], segment2->v[1]);
 			}
 			case GEOMETRY_BODY_POLYGON:
 			{

@@ -21,6 +21,7 @@ __declspec_dll void mathAABBMergePoint(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v
 __declspec_dll void mathAABBMergeAABB(CCTNum_t dst_min_v[3], CCTNum_t dst_max_v[3], const CCTNum_t src_min_v[3], const CCTNum_t src_max_v[3]) noexcept;
 
 __declspec_dll int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept;
+__declspec_dll int mathAABBIntersectSegment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls0[3], const CCTNum_t ls1[3]) noexcept;
 __declspec_dll int mathAABBContainPoint(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t p[3]) noexcept;
 __declspec_dll int mathAABBContainAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept;
 

@@ -168,6 +168,40 @@ int mathAABBIntersectAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], 
 			a_min_v[2] <= b_max_v[2] && a_max_v[2] >= b_min_v[2];
 }
 
+int mathAABBIntersectSegment(const CCTNum_t min_v[3], const CCTNum_t max_v[3], const CCTNum_t ls0[3], const CCTNum_t ls1[3]) noexcept {
+	CCTNum_t tmin = CCTNum(0.0);
+	CCTNum_t tmax = CCTNum(1.0);
+	int i;
+	for (i = 0; i < 3; ++i) {
+		CCTNum_t d = ls1[i] - ls0[i];
+		if (d == CCTNum(0.0)) {
+			if (ls0[i] < min_v[i] || ls0[i] > max_v[i]) {
+				return 0;
+			}
+		}
+		else {
+			CCTNum_t ood = CCTNum(1.0) / d;
+			CCTNum_t t1 = (min_v[i] - ls0[i]) * ood;
+			CCTNum_t t2 = (max_v[i] - ls0[i]) * ood;
+			if (t1 > t2) {
+				CCTNum_t tmp = t1;
+				t1 = t2;
+				t2 = tmp;
+			}
+			if (t1 > tmin) {
+				tmin = t1;
+			}
+			if (t2 < tmax) {
+				tmax = t2;
+			}
+			if (tmin > tmax) {
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
 int mathAABBContainAABB(const CCTNum_t a_min_v[3], const CCTNum_t a_max_v[3], const CCTNum_t b_min_v[3], const CCTNum_t b_max_v[3]) noexcept {
 	return	a_min_v[0] <= b_min_v[0] && b_max_v[0] <= a_max_v[0] &&
 			a_min_v[1] <= b_min_v[1] && b_max_v[1] <= a_max_v[1] &&
