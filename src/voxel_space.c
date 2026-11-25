@@ -300,11 +300,13 @@ void voxelspaceClear(VoxelSpace_t* vs) noexcept {
 				free(obj->locate_nodes);
 				obj->locate_nodes = NULL;
 				obj->locate_nodes_cnt = 0;
+				obj->_locate_nodes_arr_cap = 0;
 			}
 		}
 		free(node->objs);
 		node->objs = NULL;
 		node->objs_cnt = 0;
+		node->_objs_arr_cap = 0;
 	}
 }
 
